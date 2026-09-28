@@ -1,13 +1,17 @@
 # sonic-ui
 
-Native custom elements for audio interfaces: dials, keys, sliders and screens, drawn in CSS and skinned with custom properties. No framework, no runtime dependencies.
+Native custom elements for audio interfaces on the web: dials, sliders, keys, a segmented switch, a peak meter and a screen panel. The controls render in the light DOM and are drawn entirely in CSS, and their look comes from custom properties, so a skin is just a set of `--sonic-*` values. They need no framework and have no runtime dependencies.
 
-- [`packages/sonic-ui`](packages/sonic-ui): the library, `@xsynaptic/sonic-ui`
-- [`playground`](playground): an Astro site showing every control, a token tuner and the predefined skins
+The repository holds two packages:
+
+- [`packages/sonic-ui`](packages/sonic-ui) is the library, `@xsynaptic/sonic-ui`. Its README covers setup.
+- [`playground`](playground) is an Astro site that shows every control, a tuner for adjusting the tokens live, and the predefined skins.
+
+To run the playground, which rebuilds the library as you edit it:
 
 ```sh
 pnpm install
 pnpm dev
 ```
 
-MIT licensed.
+Released under the MIT license.

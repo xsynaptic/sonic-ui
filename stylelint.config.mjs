@@ -8,7 +8,11 @@ export default {
 			rules: {
 				'custom-property-pattern': '^_?sonic-[a-z0-9]+(-[a-z0-9]+)*$',
 				'property-disallowed-list': ['/^--sonic-/'],
-				'selector-disallowed-list': ['/:root/'],
+				'selector-disallowed-list': [
+					'/:root/',
+					// Only the pre-upgrade placeholder may name a tag, so a renamed element keeps every look
+					String.raw`/(^|[\s>+~(])sonic-(dial|key|meter|segmented|slider)(?![\w-]|,|[^\s,]*:not\(:defined)/`,
+				],
 			},
 		},
 		{

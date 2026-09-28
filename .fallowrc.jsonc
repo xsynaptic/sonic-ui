@@ -26,8 +26,7 @@
 		"maxCrap": 0,
 	},
 	"duplicates": {
-		// Below 70 the report is mostly shared idiom rather than shared logic
-		"minTokens": 70,
+		"minTokens": 40,
 		// The only setting that fails a dupes run, and zero means no limit; this low, any clone group fails
 		"threshold": 0.001,
 	},
