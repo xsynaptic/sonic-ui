@@ -1,0 +1,229 @@
+@layer sonic {
+	/* Resolved per control rather than on `:root`, so each follows its own cap and unit */
+	:is(
+		.sonic-dial,
+		.sonic-dial-readout,
+		.sonic-key,
+		.sonic-meter,
+		.sonic-screen,
+		.sonic-segmented,
+		.sonic-slider,
+		.sonic-slider-readout
+	) {
+		--_sonic-unlit: var(--sonic-unlit, #27272a);
+
+		/* Degrees left of overhead */
+		--_sonic-light-tilt: var(--sonic-light-tilt, 17deg);
+		--_sonic-light-fall: calc(180deg - var(--_sonic-light-tilt));
+		--_sonic-cast-x: calc(sin(var(--_sonic-light-tilt)) * var(--_sonic-unit));
+		--_sonic-cast-y: calc(cos(var(--_sonic-light-tilt)) * var(--_sonic-unit));
+	}
+
+	:is(.sonic-dial, .sonic-key, .sonic-meter, .sonic-segmented-segment, .sonic-slider) {
+		--_sonic-lit: var(--sonic-lit, #f59e0b);
+	}
+
+	.sonic-meter {
+		--_sonic-hot: var(--sonic-hot, #f97316);
+		--_sonic-clip: var(--sonic-clip, #ef4444);
+	}
+
+	:is(.sonic-dial, .sonic-key, .sonic-segmented-segment, .sonic-slider) {
+		--_sonic-cap: var(--sonic-cap, #3f3f46);
+		--_sonic-cap-hover: var(--sonic-cap-hover, #52525b);
+		--_sonic-focus: var(--sonic-focus, oklch(90% 0.23 128deg));
+
+		/* Derived from the cap, so a reskinned cap brings its marks along */
+		--_sonic-ink: var(--sonic-mark, color-mix(in oklab, var(--_sonic-cap) 30%, #fff));
+		--_sonic-etch: color-mix(in oklab, var(--_sonic-ink) 30%, transparent);
+		--_sonic-lit-disabled: color-mix(in oklab, var(--_sonic-ink) 25%, var(--_sonic-unlit));
+		--_sonic-skirt: linear-gradient(
+			var(--_sonic-light-fall),
+			color-mix(in oklab, var(--_sonic-cap) 70%, #fff),
+			color-mix(in oklab, var(--_sonic-cap) 55%, #000)
+		);
+
+		/* Inverted from the skirt, as a dished face takes light */
+		--_sonic-face: linear-gradient(
+			var(--_sonic-light-fall),
+			color-mix(in oklab, var(--_sonic-cap) 85%, #000),
+			color-mix(in oklab, var(--_sonic-cap) 90%, #fff)
+		);
+		--_sonic-sheen: linear-gradient(
+			105deg,
+			transparent 20%,
+			rgb(255 255 255 / 10%) 45%,
+			transparent 55%,
+			rgb(0 0 0 / 6%) 80%
+		);
+		--_sonic-press-transition:
+			scale 60ms cubic-bezier(0.4, 0, 0.2, 1), translate 60ms cubic-bezier(0.4, 0, 0.2, 1),
+			box-shadow 60ms cubic-bezier(0.4, 0, 0.2, 1);
+		--_sonic-face-shadow:
+			inset var(--_sonic-cast-x) var(--_sonic-cast-y) calc(1.5 * var(--_sonic-unit))
+				rgb(0 0 0 / 35%),
+			calc(0.5 * var(--_sonic-cast-x)) calc(0.5 * var(--_sonic-cast-y)) var(--_sonic-unit)
+				rgb(255 255 255 / 12%);
+		--_sonic-rim: 0 0 0 max(1px, 0.75 * var(--_sonic-unit))
+			color-mix(in oklab, var(--_sonic-cap) 40%, #000);
+		--_sonic-focus-shadow: 0 0 transparent;
+		--_sonic-focus-glow: 0 0 max(4px, 3 * var(--_sonic-unit)) max(1px, 0.5 * var(--_sonic-unit))
+			color-mix(in oklab, var(--_sonic-focus) 60%, transparent);
+	}
+
+	:is(.sonic-dial, .sonic-slider) {
+		--_sonic-lit-off: var(
+			--sonic-dimmed,
+			color-mix(in oklab, var(--_sonic-lit) 50%, var(--_sonic-unlit))
+		);
+	}
+
+	:is(.sonic-dial-readout, .sonic-screen, .sonic-slider-readout) {
+		--_sonic-glass: var(--sonic-glass, color-mix(in oklab, var(--_sonic-unlit) 45%, #000));
+	}
+
+	:is(.sonic-key, .sonic-screen, .sonic-segmented) {
+		--_sonic-well:
+			inset var(--_sonic-cast-x) var(--_sonic-cast-y) calc(2 * var(--_sonic-unit)) rgb(0 0 0 / 60%),
+			calc(0.5 * var(--_sonic-cast-x)) calc(0.5 * var(--_sonic-cast-y)) 0 rgb(255 255 255 / 6%);
+	}
+
+	:is(.sonic-key, .sonic-segmented) {
+		--_sonic-engraving: drop-shadow(
+				calc(-0.4 * var(--_sonic-cast-x)) calc(-0.4 * var(--_sonic-cast-y))
+					calc(0.4 * var(--_sonic-unit)) rgb(0 0 0 / 30%)
+			)
+			drop-shadow(
+				calc(0.3 * var(--_sonic-cast-x)) calc(0.3 * var(--_sonic-cast-y)) 0 rgb(255 255 255 / 7%)
+			);
+	}
+
+	/* The well's full blur would fill a slot this narrow */
+	:is(.sonic-meter, .sonic-slider) {
+		--_sonic-groove:
+			inset var(--_sonic-cast-x) var(--_sonic-cast-y) calc(0.75 * var(--_sonic-unit))
+				rgb(0 0 0 / 55%),
+			inset 0 0 calc(0.5 * var(--_sonic-unit)) rgb(0 0 0 / 30%),
+			calc(0.5 * var(--_sonic-cast-x)) calc(0.5 * var(--_sonic-cast-y)) 0 rgb(255 255 255 / 6%);
+	}
+
+	@media (hover: hover) {
+		:is(.sonic-dial, .sonic-key, .sonic-segmented-segment, .sonic-slider):not(
+				:disabled,
+				[aria-disabled='true']
+			):hover {
+			--_sonic-cap: var(--_sonic-cap-hover);
+		}
+	}
+
+	:is(.sonic-dial, .sonic-key, .sonic-segmented-segment, .sonic-slider):focus-visible {
+		--_sonic-cap: var(--_sonic-cap-hover);
+		--_sonic-focus-shadow: var(--_sonic-focus-glow);
+
+		/* Painted only in forced colours; inset so it adds no size */
+		outline: 2px solid transparent;
+		outline-offset: -2px;
+	}
+
+	/* Keeps the glow while focus is in the entry; its own rule, since an engine without `:state()` drops a whole selector list */
+	:state(editing) > :is(.sonic-dial, .sonic-slider) {
+		--_sonic-cap: var(--_sonic-cap-hover);
+		--_sonic-focus-shadow: var(--_sonic-focus-glow);
+	}
+
+	:is(.sonic-dial-readout, .sonic-slider-readout) {
+		--_sonic-readout-size: var(--sonic-readout-size, 1.5rem);
+		--_sonic-unit: calc(var(--_sonic-readout-size) / 32);
+
+		box-sizing: border-box;
+		display: grid;
+		place-items: center;
+		min-inline-size: calc(1.75 * var(--_sonic-readout-size));
+		block-size: var(--_sonic-readout-size);
+		padding: 0 calc(0.3 * var(--_sonic-readout-size));
+		margin: 0 0 calc(0.25 * var(--_sonic-readout-size));
+		position-area: block-start;
+		position-try-fallbacks: flip-block;
+		overflow: visible;
+		font: inherit;
+		font-size: calc(0.5 * var(--_sonic-readout-size));
+		font-variant-numeric: tabular-nums;
+		line-height: 1;
+		color: color-mix(in oklab, var(--_sonic-glass) 20%, #fff);
+		pointer-events: none;
+		cursor: default;
+		user-select: none;
+		background: radial-gradient(
+				closest-side,
+				color-mix(in oklab, var(--_sonic-glass) 88%, #fff),
+				var(--_sonic-glass)
+			)
+			var(--_sonic-glass);
+		border: 0;
+		border-radius: calc(0.25 * var(--_sonic-readout-size));
+		box-shadow:
+			calc(2 * var(--_sonic-cast-x)) calc(2 * var(--_sonic-cast-y)) calc(6 * var(--_sonic-unit))
+				rgb(0 0 0 / 55%),
+			inset 0 0 0 max(1px, var(--_sonic-unit)) rgb(255 255 255 / 8%);
+		opacity: 0;
+		translate: 0 calc(0.15 * var(--_sonic-readout-size));
+		transition:
+			opacity 120ms ease-out,
+			translate 120ms ease-out,
+			display 120ms allow-discrete,
+			overlay 120ms allow-discrete;
+
+		&:popover-open {
+			opacity: 1;
+			translate: 0;
+
+			@starting-style {
+				opacity: 0;
+				translate: 0 calc(0.15 * var(--_sonic-readout-size));
+			}
+		}
+
+		@media (prefers-reduced-motion: reduce) {
+			translate: 0;
+
+			&:popover-open {
+				@starting-style {
+					translate: 0;
+				}
+			}
+		}
+	}
+
+	:state(editing)
+		> :is(.sonic-dial, .sonic-slider)
+		> :is(.sonic-dial-readout, .sonic-slider-readout) {
+		pointer-events: auto;
+		cursor: text;
+	}
+
+	:is(.sonic-dial-entry, .sonic-slider-entry) {
+		inline-size: 6ch;
+		padding: 0;
+		font: inherit;
+		color: inherit;
+		text-align: center;
+		background: transparent;
+		border: 0;
+
+		&::selection {
+			color: var(--_sonic-lit);
+			background: transparent;
+		}
+
+		&:focus-visible {
+			outline: 2px solid transparent;
+			outline-offset: -2px;
+		}
+
+		@supports (field-sizing: content) {
+			inline-size: auto;
+			min-inline-size: 3ch;
+			field-sizing: content;
+		}
+	}
+}

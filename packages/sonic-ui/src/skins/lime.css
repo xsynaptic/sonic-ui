@@ -1,0 +1,10 @@
+@layer sonic {
+	.sonic-skin-lime {
+		--sonic-lit: oklch(83.8% 0.205 118deg);
+		--sonic-unlit: oklch(28.6% 0.0203 237deg);
+		--sonic-cap: oklch(32.4% 0.0229 237deg);
+		--sonic-cap-hover: oklch(37.2% 0.025 237deg);
+		--sonic-dial-ring-ratio: 0.05;
+		--sonic-dial-gap-ratio: 0.1;
+	}
+}

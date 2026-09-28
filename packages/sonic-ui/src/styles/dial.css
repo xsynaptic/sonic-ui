@@ -1,0 +1,265 @@
+@layer sonic {
+	/* On the host too, for the placeholder */
+	:is(sonic-dial, .sonic-dial) {
+		--_sonic-dial-size: var(--sonic-dial-size, 2.5rem);
+	}
+
+	:has(> .sonic-dial):not([hidden]) {
+		display: contents;
+	}
+
+	sonic-dial:not(:defined, [hidden]) {
+		display: block;
+		flex-shrink: 0;
+		inline-size: var(--_sonic-dial-size);
+		block-size: var(--_sonic-dial-size);
+	}
+
+	.sonic-dial {
+		--_sonic-dial-ring-ratio: var(--sonic-dial-ring-ratio, 0.075);
+		--_sonic-dial-gap-ratio: var(--sonic-dial-gap-ratio, 0.05);
+		--_sonic-dial-pointer-ratio: var(--sonic-dial-pointer-ratio, 0.06);
+
+		/* 0 for a straight bar */
+		--_sonic-dial-pointer-taper: var(--sonic-dial-pointer-taper, 0.5);
+
+		/* A fraction of the knob's angle */
+		--_sonic-dial-face-drift: var(--sonic-dial-face-drift, 0.1);
+		--_sonic-dial-notch-ratio: var(--sonic-dial-notch-ratio, 0.1);
+
+		/* Centred on six o'clock */
+		--_sonic-dial-sweep: var(--sonic-dial-sweep, 300deg);
+
+		/* Absolute, so a larger knob gets more ridges rather than wider ones */
+		--_sonic-dial-ridge-pitch: var(--sonic-dial-ridge-pitch, 4px);
+
+		/* Read by the element as px */
+		--_sonic-dial-travel: var(--sonic-dial-travel, 160px);
+		--_sonic-unit: calc(var(--_sonic-dial-size) / 40);
+		--_sonic-dial-lit: var(--_sonic-lit);
+		--_sonic-dial-notch-band: 0px;
+		--_sonic-dial-start: calc(180deg + (1turn - var(--_sonic-dial-sweep)) / 2);
+		--_sonic-dial-angle: calc(var(--_sonic-dial-value, 0) * var(--_sonic-dial-sweep));
+		--_sonic-dial-ring-width: calc(var(--_sonic-dial-size) * var(--_sonic-dial-ring-ratio));
+		--_sonic-dial-cap-inset: calc(
+			var(--_sonic-dial-notch-band) + var(--_sonic-dial-size) *
+				(var(--_sonic-dial-ring-ratio) + var(--_sonic-dial-gap-ratio))
+		);
+
+		/* `tan(atan2())` divides one length by another, which plain `calc()` can't yet do everywhere */
+		--_sonic-dial-ridge-angle: calc(
+			1turn /
+				round(
+					tan(
+							atan2(
+								var(--_sonic-dial-size) - 2 * var(--_sonic-dial-cap-inset),
+								var(--_sonic-dial-ridge-pitch)
+							)
+						) *
+						3.1416,
+					1
+				)
+		);
+
+		position: relative;
+		flex-shrink: 0;
+		inline-size: var(--_sonic-dial-size);
+		block-size: var(--_sonic-dial-size);
+		touch-action: none;
+		cursor: ns-resize;
+		user-select: none;
+		border-radius: 50%;
+	}
+
+	:state(dragging) > .sonic-dial {
+		--_sonic-cap: var(--_sonic-cap-hover);
+	}
+
+	[notched] > .sonic-dial {
+		--_sonic-dial-notch-band: calc(var(--_sonic-dial-size) * var(--_sonic-dial-notch-ratio));
+	}
+
+	/* Set on `--_sonic-dial-lit`, since `--_sonic-lit` cannot reference itself */
+	[dimmed] > .sonic-dial {
+		--_sonic-dial-lit: var(--_sonic-lit-off);
+	}
+
+	[disabled] > .sonic-dial {
+		--_sonic-dial-lit: var(--_sonic-lit-disabled);
+
+		cursor: default;
+	}
+
+	.sonic-dial-notches {
+		--_sonic-dial-notch-width: atan2(var(--_sonic-unit), var(--_sonic-dial-size) / 2);
+		--_sonic-dial-notch-pitch: calc(
+			var(--_sonic-dial-sweep) / (var(--_sonic-dial-positions, 2) - 1)
+		);
+
+		position: absolute;
+		inset: 0;
+		background: repeating-conic-gradient(
+			from calc(var(--_sonic-dial-start) - var(--_sonic-dial-notch-width) / 2),
+			var(--_sonic-etch) 0 var(--_sonic-dial-notch-width),
+			transparent 0 var(--_sonic-dial-notch-pitch)
+		);
+		border-radius: 50%;
+		mask:
+			radial-gradient(
+				closest-side,
+				transparent calc(100% - var(--_sonic-dial-notch-band) * 0.8),
+				#000 0 calc(100% - var(--_sonic-dial-notch-band) * 0.25),
+				transparent 0
+			),
+			conic-gradient(
+				from calc(var(--_sonic-dial-start) - var(--_sonic-dial-notch-width)),
+				#000 calc(var(--_sonic-dial-sweep) + 2 * var(--_sonic-dial-notch-width)),
+				transparent 0
+			);
+		mask-composite: intersect;
+	}
+
+	:is(.sonic-dial-ring, .sonic-dial-modulation) {
+		position: absolute;
+		inset: var(--_sonic-dial-notch-band);
+		border-radius: 50%;
+		mask: radial-gradient(
+			closest-side,
+			transparent calc(100% - var(--_sonic-dial-ring-width) - 0.5px),
+			#000 calc(100% - var(--_sonic-dial-ring-width)),
+			#000 calc(100% - var(--_sonic-dial-band-inset) - 0.5px),
+			transparent calc(100% - var(--_sonic-dial-band-inset))
+		);
+	}
+
+	.sonic-dial-ring {
+		--_sonic-dial-band-inset: 0px;
+		--_sonic-dial-lit-from: calc(
+			min(var(--_sonic-dial-origin, 0), var(--_sonic-dial-value, 0)) * var(--_sonic-dial-sweep)
+		);
+		--_sonic-dial-lit-to: calc(
+			max(var(--_sonic-dial-origin, 0), var(--_sonic-dial-value, 0)) * var(--_sonic-dial-sweep)
+		);
+
+		background:
+			radial-gradient(
+				closest-side,
+				rgb(0 0 0 / 55%) calc(100% - var(--_sonic-dial-ring-width)),
+				transparent calc(100% - var(--_sonic-dial-ring-width) * 0.4),
+				rgb(0 0 0 / 25%) 100%
+			),
+			conic-gradient(
+				from var(--_sonic-dial-start),
+				var(--_sonic-unlit) var(--_sonic-dial-lit-from),
+				var(--_sonic-dial-lit) 0 var(--_sonic-dial-lit-to),
+				var(--_sonic-unlit) 0 var(--_sonic-dial-sweep),
+				transparent 0
+			);
+	}
+
+	.sonic-dial-modulation {
+		--_sonic-dial-modulation: var(
+			--sonic-modulation,
+			color-mix(in oklab, var(--_sonic-dial-lit) 60%, #000)
+		);
+		--_sonic-dial-band-inset: calc(var(--_sonic-dial-ring-width) * 0.55);
+
+		background: conic-gradient(
+			from var(--_sonic-dial-start),
+			transparent calc(var(--_sonic-dial-modulation-from, 0) * var(--_sonic-dial-sweep)),
+			var(--_sonic-dial-modulation) 0
+				calc(var(--_sonic-dial-modulation-to, 0) * var(--_sonic-dial-sweep)),
+			transparent 0
+		);
+	}
+
+	:not([notched]) > .sonic-dial > .sonic-dial-notches,
+	:not([modulation]) > .sonic-dial > .sonic-dial-modulation {
+		display: none;
+	}
+
+	.sonic-dial-cap {
+		position: absolute;
+		inset: var(--_sonic-dial-cap-inset);
+		background: var(--_sonic-skirt);
+		border-radius: 50%;
+		box-shadow:
+			calc(2 * var(--_sonic-cast-x)) calc(2 * var(--_sonic-cast-y)) calc(4 * var(--_sonic-unit))
+				rgb(0 0 0 / 65%),
+			var(--_sonic-rim),
+			var(--_sonic-focus-shadow);
+
+		&::before,
+		&::after {
+			position: absolute;
+			content: '';
+			border-radius: 50%;
+		}
+
+		&::before {
+			inset: 0;
+			background: repeating-conic-gradient(
+				rgb(0 0 0 / 30%) 0,
+				rgb(255 255 255 / 12%) calc(var(--_sonic-dial-ridge-angle) / 2),
+				rgb(0 0 0 / 30%) var(--_sonic-dial-ridge-angle)
+			);
+			rotate: var(--_sonic-dial-angle);
+		}
+
+		&::after {
+			inset: 16%;
+			background:
+				conic-gradient(
+					from
+						calc(
+							var(--_sonic-dial-face-drift) * var(--_sonic-dial-angle) - var(--_sonic-light-tilt)
+						),
+					rgb(255 255 255 / 16%),
+					transparent 12%,
+					rgb(0 0 0 / 10%) 25%,
+					transparent 38%,
+					rgb(255 255 255 / 12%) 50%,
+					transparent 62%,
+					rgb(0 0 0 / 10%) 75%,
+					transparent 88%,
+					rgb(255 255 255 / 16%)
+				),
+				var(--_sonic-face);
+			box-shadow: var(--_sonic-face-shadow);
+		}
+	}
+
+	.sonic-dial-pointer {
+		position: absolute;
+		inset: var(--_sonic-dial-cap-inset);
+		pointer-events: none;
+		border-radius: 50%;
+		rotate: calc(var(--_sonic-dial-start) + var(--_sonic-dial-angle));
+
+		/* Evenly shaded, since any offset would turn with the knob */
+		&::before {
+			--_sonic-dial-pointer-width: calc(var(--_sonic-dial-size) * var(--_sonic-dial-pointer-ratio));
+
+			position: absolute;
+			inset-block-start: 6%;
+			inset-inline-start: 50%;
+			inline-size: var(--_sonic-dial-pointer-width);
+			block-size: 34%;
+			content: '';
+			background: var(--_sonic-ink);
+			border-radius: calc(var(--_sonic-dial-pointer-width) / 2);
+			box-shadow: inset 0 0 calc(0.75 * var(--_sonic-unit)) rgb(0 0 0 / 55%);
+			clip-path: polygon(
+				calc(50% * var(--_sonic-dial-pointer-taper)) 0,
+				calc(100% - 50% * var(--_sonic-dial-pointer-taper)) 0,
+				100% 100%,
+				0 100%
+			);
+			translate: -50% 0;
+		}
+	}
+
+	[disabled] > .sonic-dial > .sonic-dial-pointer::before {
+		background: var(--_sonic-etch);
+	}
+}

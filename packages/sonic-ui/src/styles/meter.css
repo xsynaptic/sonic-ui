@@ -1,0 +1,271 @@
+/* The size is the thickness */
+@layer sonic {
+	/* On the host too, for the placeholder */
+	:is(sonic-meter, .sonic-meter) {
+		--_sonic-meter-size: var(--sonic-meter-size, 0.5rem);
+		--_sonic-meter-length: var(--sonic-meter-length, 8rem);
+	}
+
+	:has(> .sonic-meter):not([hidden]) {
+		display: contents;
+	}
+
+	sonic-meter:not(:defined, [hidden]) {
+		display: block;
+		flex-shrink: 0;
+		inline-size: var(--_sonic-meter-size);
+		block-size: var(--_sonic-meter-length);
+	}
+
+	sonic-meter[orientation='horizontal']:not(:defined, [hidden]) {
+		inline-size: var(--_sonic-meter-length);
+		block-size: var(--_sonic-meter-size);
+	}
+
+	/* Laid on its side rather than rotated, as the slider is */
+	.sonic-meter {
+		/* Absolute, so a longer meter gains segments rather than stretching them */
+		--_sonic-meter-pitch: var(--sonic-meter-segment-pitch, 4px);
+
+		/* A fraction of the pitch */
+		--_sonic-meter-gap-ratio: var(--sonic-meter-gap-ratio, 0.25);
+		--_sonic-meter-radius-ratio: var(--sonic-meter-radius-ratio, 0.25);
+
+		/* A fraction of the light's length along the meter */
+		--_sonic-meter-segment-radius-ratio: var(--sonic-meter-segment-radius-ratio, 0.35);
+
+		/* dBFS */
+		--_sonic-meter-hot-from: var(--sonic-meter-hot-from, -12);
+		--_sonic-meter-clip-from: var(--sonic-meter-clip-from, -3);
+		--_sonic-unit: calc(var(--_sonic-meter-size) / 8);
+		--_sonic-meter-toward: to top;
+		--_sonic-meter-inset: calc(var(--_sonic-meter-size) * 0.125);
+		--_sonic-meter-lens: calc(var(--_sonic-meter-size) - 2 * var(--_sonic-meter-inset));
+		--_sonic-meter-gap: calc(var(--_sonic-meter-pitch) * var(--_sonic-meter-gap-ratio));
+		--_sonic-meter-segment: calc(var(--_sonic-meter-pitch) - var(--_sonic-meter-gap));
+		--_sonic-meter-segment-radius: calc(
+			var(--_sonic-meter-segment) * var(--_sonic-meter-segment-radius-ratio)
+		);
+
+		/* Whole segments only, so the last one ends flush */
+		--_sonic-meter-segments: round(
+			down,
+			var(--_sonic-meter-length) - 3 * var(--_sonic-meter-inset) - var(--_sonic-meter-lens) +
+				var(--_sonic-meter-gap),
+			var(--_sonic-meter-pitch)
+		);
+
+		position: relative;
+		flex-shrink: 0;
+		inline-size: var(--_sonic-meter-size);
+		block-size: var(--_sonic-meter-length);
+		background: color-mix(in oklab, var(--_sonic-unlit) 55%, #000);
+		border-radius: calc(var(--_sonic-meter-size) * var(--_sonic-meter-radius-ratio));
+
+		/* Over the segments, so the lip shades them too */
+		&::after {
+			position: absolute;
+			inset: 0;
+			pointer-events: none;
+			content: '';
+			border-radius: inherit;
+			box-shadow: var(--_sonic-groove);
+		}
+	}
+
+	[orientation='horizontal'] > .sonic-meter {
+		--_sonic-meter-toward: to right;
+
+		inline-size: var(--_sonic-meter-length);
+		block-size: var(--_sonic-meter-size);
+	}
+
+	/* Snapped to whole lights, so none is split between two colours */
+	:is(.sonic-meter-segments, .sonic-meter-level) {
+		--_sonic-meter-span: calc(var(--_sonic-meter-max, 0) - var(--_sonic-meter-min, -60));
+		--_sonic-meter-hot-at: round(
+			clamp(
+					0,
+					(var(--_sonic-meter-hot-from) - var(--_sonic-meter-min, -60)) / var(--_sonic-meter-span),
+					1
+				) *
+				var(--_sonic-meter-segments),
+			var(--_sonic-meter-pitch)
+		);
+		--_sonic-meter-clip-at: round(
+			clamp(
+					0,
+					(var(--_sonic-meter-clip-from) - var(--_sonic-meter-min, -60)) / var(--_sonic-meter-span),
+					1
+				) *
+				var(--_sonic-meter-segments),
+			var(--_sonic-meter-pitch)
+		);
+
+		/* Each rounded light is two crossed bands and four corner dots added together */
+		--_sonic-meter-lights:
+			linear-gradient(to top, #000 var(--_sonic-meter-segment), transparent 0)
+				var(--_sonic-meter-segment-radius) 100% /
+				calc(100% - 2 * var(--_sonic-meter-segment-radius)) var(--_sonic-meter-pitch) no-repeat
+				repeat,
+			linear-gradient(
+					to top,
+					transparent var(--_sonic-meter-segment-radius),
+					#000 0 calc(var(--_sonic-meter-segment) - var(--_sonic-meter-segment-radius)),
+					transparent 0
+				)
+				0 100% / 100% var(--_sonic-meter-pitch) no-repeat repeat,
+			radial-gradient(
+					circle var(--_sonic-meter-segment-radius) at left var(--_sonic-meter-segment-radius)
+						bottom var(--_sonic-meter-segment-radius),
+					#000 calc(100% - 0.5px),
+					transparent
+				)
+				0 100% / 100% var(--_sonic-meter-pitch) no-repeat repeat,
+			radial-gradient(
+					circle var(--_sonic-meter-segment-radius) at right var(--_sonic-meter-segment-radius)
+						bottom var(--_sonic-meter-segment-radius),
+					#000 calc(100% - 0.5px),
+					transparent
+				)
+				0 100% / 100% var(--_sonic-meter-pitch) no-repeat repeat,
+			radial-gradient(
+					circle var(--_sonic-meter-segment-radius) at left var(--_sonic-meter-segment-radius)
+						bottom calc(var(--_sonic-meter-segment) - var(--_sonic-meter-segment-radius)),
+					#000 calc(100% - 0.5px),
+					transparent
+				)
+				0 100% / 100% var(--_sonic-meter-pitch) no-repeat repeat,
+			radial-gradient(
+					circle var(--_sonic-meter-segment-radius) at right var(--_sonic-meter-segment-radius)
+						bottom calc(var(--_sonic-meter-segment) - var(--_sonic-meter-segment-radius)),
+					#000 calc(100% - 0.5px),
+					transparent
+				)
+				0 100% / 100% var(--_sonic-meter-pitch) no-repeat repeat;
+
+		position: absolute;
+		inset: auto var(--_sonic-meter-inset) var(--_sonic-meter-inset);
+		block-size: calc(var(--_sonic-meter-segments) - var(--_sonic-meter-gap));
+		mask: var(--_sonic-meter-lights);
+		mask-composite: add;
+	}
+
+	[orientation='horizontal'] > .sonic-meter > :is(.sonic-meter-segments, .sonic-meter-level) {
+		--_sonic-meter-lights:
+			linear-gradient(to right, #000 var(--_sonic-meter-segment), transparent 0) 0
+				var(--_sonic-meter-segment-radius) / var(--_sonic-meter-pitch)
+				calc(100% - 2 * var(--_sonic-meter-segment-radius)) repeat no-repeat,
+			linear-gradient(
+					to right,
+					transparent var(--_sonic-meter-segment-radius),
+					#000 0 calc(var(--_sonic-meter-segment) - var(--_sonic-meter-segment-radius)),
+					transparent 0
+				)
+				0 0 / var(--_sonic-meter-pitch) 100% repeat no-repeat,
+			radial-gradient(
+					circle var(--_sonic-meter-segment-radius) at left var(--_sonic-meter-segment-radius) top
+						var(--_sonic-meter-segment-radius),
+					#000 calc(100% - 0.5px),
+					transparent
+				)
+				0 0 / var(--_sonic-meter-pitch) 100% repeat no-repeat,
+			radial-gradient(
+					circle var(--_sonic-meter-segment-radius) at left var(--_sonic-meter-segment-radius)
+						/* fallow-ignore-next-line code-duplication -- one gradient per segment corner is geometry, not copied logic */
+						bottom var(--_sonic-meter-segment-radius),
+					#000 calc(100% - 0.5px),
+					transparent
+				)
+				0 0 / var(--_sonic-meter-pitch) 100% repeat no-repeat,
+			radial-gradient(
+					circle var(--_sonic-meter-segment-radius) at left
+						calc(var(--_sonic-meter-segment) - var(--_sonic-meter-segment-radius)) top
+						var(--_sonic-meter-segment-radius),
+					#000 calc(100% - 0.5px),
+					transparent
+				)
+				0 0 / var(--_sonic-meter-pitch) 100% repeat no-repeat,
+			radial-gradient(
+					circle var(--_sonic-meter-segment-radius) at left
+						calc(var(--_sonic-meter-segment) - var(--_sonic-meter-segment-radius)) bottom
+						var(--_sonic-meter-segment-radius),
+					#000 calc(100% - 0.5px),
+					transparent
+				)
+				0 0 / var(--_sonic-meter-pitch) 100% repeat no-repeat;
+
+		inset: var(--_sonic-meter-inset) auto var(--_sonic-meter-inset) var(--_sonic-meter-inset);
+		inline-size: calc(var(--_sonic-meter-segments) - var(--_sonic-meter-gap));
+		block-size: auto;
+	}
+
+	.sonic-meter-segments {
+		background: linear-gradient(
+			var(--_sonic-meter-toward),
+			color-mix(in oklab, var(--_sonic-lit) 12%, var(--_sonic-unlit)) 0 var(--_sonic-meter-hot-at),
+			color-mix(in oklab, var(--_sonic-hot) 12%, var(--_sonic-unlit)) 0 var(--_sonic-meter-clip-at),
+			color-mix(in oklab, var(--_sonic-clip) 12%, var(--_sonic-unlit)) 0
+		);
+	}
+
+	/* One mask for the bar and peak, so a frame repaints without layout */
+	.sonic-meter-level {
+		--_sonic-meter-lit: round(
+			down,
+			var(--_sonic-meter-level, 0) * var(--_sonic-meter-segments),
+			var(--_sonic-meter-pitch)
+		);
+		--_sonic-meter-held: round(
+			down,
+			var(--_sonic-meter-peak, 0) * var(--_sonic-meter-segments),
+			var(--_sonic-meter-pitch)
+		);
+
+		background: linear-gradient(
+			var(--_sonic-meter-toward),
+			var(--_sonic-lit) 0 var(--_sonic-meter-hot-at),
+			var(--_sonic-hot) 0 var(--_sonic-meter-clip-at),
+			var(--_sonic-clip) 0
+		);
+		mask:
+			linear-gradient(
+				var(--_sonic-meter-toward),
+				#000 var(--_sonic-meter-lit),
+				transparent 0 calc(var(--_sonic-meter-held) - var(--_sonic-meter-pitch)),
+				#000 0 var(--_sonic-meter-held),
+				transparent 0
+			),
+			var(--_sonic-meter-lights);
+		mask-composite: intersect, add, add, add, add, add, add;
+	}
+
+	.sonic-meter-clip {
+		position: absolute;
+		inset: var(--_sonic-meter-inset) var(--_sonic-meter-inset) auto;
+		block-size: var(--_sonic-meter-lens);
+		background:
+			linear-gradient(var(--_sonic-light-fall), rgb(255 255 255 / 10%), transparent 60%),
+			color-mix(in oklab, var(--_sonic-unlit) 60%, #000);
+		border-radius: 50%;
+
+		&::after {
+			position: absolute;
+			inset: 0;
+			content: '';
+			background: radial-gradient(
+				closest-side,
+				color-mix(in oklab, var(--_sonic-clip) 55%, #fff),
+				var(--_sonic-clip)
+			);
+			border-radius: inherit;
+			opacity: var(--_sonic-meter-clipped, 0);
+		}
+	}
+
+	[orientation='horizontal'] > .sonic-meter > .sonic-meter-clip {
+		inset: var(--_sonic-meter-inset) var(--_sonic-meter-inset) var(--_sonic-meter-inset) auto;
+		inline-size: var(--_sonic-meter-lens);
+		block-size: auto;
+	}
+}

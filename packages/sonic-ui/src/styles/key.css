@@ -1,0 +1,137 @@
+@layer sonic {
+	/* On the host too, for the placeholder */
+	:is(sonic-key, .sonic-key) {
+		--_sonic-key-size: var(--sonic-key-size, 2rem);
+	}
+
+	:has(> .sonic-key):not([hidden]) {
+		display: contents;
+	}
+
+	/* Hides the icon, which has no size before upgrade */
+	sonic-key:not(:defined, [hidden]) {
+		display: block;
+		visibility: hidden;
+		flex-shrink: 0;
+		inline-size: var(--_sonic-key-size);
+		block-size: var(--_sonic-key-size);
+		overflow: hidden;
+	}
+
+	/* The button is the well; the cap is the part that moves */
+	.sonic-key {
+		--_sonic-key-gap-ratio: var(--sonic-key-gap-ratio, 0);
+		--_sonic-key-radius-ratio: var(--sonic-key-radius-ratio, 0.2);
+		--_sonic-key-bevel-ratio: var(--sonic-key-bevel-ratio, 0.075);
+		--_sonic-key-face-radius-ratio: var(--sonic-key-face-radius-ratio, 0.15);
+		--_sonic-key-icon-ratio: var(--sonic-key-icon-ratio, 0.5);
+		--_sonic-key-depth-ratio: var(--sonic-key-depth-ratio, 0.03);
+		--_sonic-key-press-scale: var(--sonic-key-press-scale, 0.985);
+		--_sonic-unit: calc(var(--_sonic-key-size) / 32);
+		--_sonic-key-corner: calc(var(--_sonic-key-size) * var(--_sonic-key-radius-ratio));
+		--_sonic-key-gap: calc(var(--_sonic-key-size) * var(--_sonic-key-gap-ratio));
+		--_sonic-key-depth: calc(var(--_sonic-key-size) * var(--_sonic-key-depth-ratio));
+		--_sonic-key-shift: calc(var(--_sonic-key-depth) / -2);
+		--_sonic-key-scale: 1;
+		--_sonic-key-drop: calc(1.5 * var(--_sonic-cast-x)) calc(1.5 * var(--_sonic-cast-y))
+			calc(2 * var(--_sonic-unit)) rgb(0 0 0 / 65%);
+		--_sonic-key-glow: transparent;
+
+		position: relative;
+		flex-shrink: 0;
+		inline-size: var(--_sonic-key-size);
+		block-size: var(--_sonic-key-size);
+		padding: 0;
+		color: var(--_sonic-ink);
+		cursor: pointer;
+		background: linear-gradient(
+			var(--_sonic-light-fall),
+			color-mix(in oklab, var(--_sonic-unlit) 55%, #000),
+			color-mix(in oklab, var(--_sonic-unlit) 85%, #000)
+		);
+		border: 0;
+		border-radius: var(--_sonic-key-corner);
+		box-shadow: var(--_sonic-well);
+	}
+
+	/* A drifting finger would turn a held pad into a pan */
+	:where([momentary]) > .sonic-key {
+		touch-action: none;
+	}
+
+	.sonic-key:active:where(:not(:disabled)),
+	.sonic-key:is([aria-pressed='true'], :where([momentary][pressed]) > *) {
+		--_sonic-key-shift: calc(var(--_sonic-key-depth) / 2);
+		--_sonic-key-scale: var(--_sonic-key-press-scale);
+		--_sonic-key-drop: calc(0.5 * var(--_sonic-cast-x)) calc(0.5 * var(--_sonic-cast-y))
+			var(--_sonic-unit) rgb(0 0 0 / 65%);
+	}
+
+	.sonic-key:is([aria-pressed='true'], :where([momentary][pressed]) > *) {
+		--_sonic-key-glow: color-mix(in oklab, var(--_sonic-lit) 22%, transparent);
+
+		color: var(--_sonic-lit);
+
+		/* A full-strength floor shows as a hard line where the sunk cap uncovers it */
+		background: linear-gradient(
+			var(--_sonic-light-fall),
+			color-mix(in oklab, var(--_sonic-lit) 25%, #000),
+			color-mix(in oklab, var(--_sonic-lit) 60%, #000)
+		);
+	}
+
+	.sonic-key:disabled {
+		--_sonic-lit: var(--_sonic-lit-disabled);
+
+		color: var(--_sonic-etch);
+		cursor: default;
+	}
+
+	.sonic-key-cap {
+		position: absolute;
+		inset: var(--_sonic-key-gap);
+		display: grid;
+		place-items: center;
+		background: var(--_sonic-skirt);
+		border-radius: max(0px, var(--_sonic-key-corner) - var(--_sonic-key-gap));
+		box-shadow: var(--_sonic-key-drop), var(--_sonic-rim), var(--_sonic-focus-shadow);
+		scale: var(--_sonic-key-scale);
+		translate: 0 var(--_sonic-key-shift);
+		transition: var(--_sonic-press-transition);
+
+		&::before {
+			position: absolute;
+			inset: calc(var(--_sonic-key-size) * var(--_sonic-key-bevel-ratio));
+			content: '';
+			background:
+				radial-gradient(closest-side, var(--_sonic-key-glow), transparent), var(--_sonic-sheen),
+				var(--_sonic-face);
+			border-radius: calc(var(--_sonic-key-size) * var(--_sonic-key-face-radius-ratio));
+			box-shadow: var(--_sonic-face-shadow);
+		}
+
+		& > svg {
+			position: relative;
+			inline-size: calc(var(--_sonic-key-size) * var(--_sonic-key-icon-ratio));
+			block-size: calc(var(--_sonic-key-size) * var(--_sonic-key-icon-ratio));
+			filter: var(--_sonic-engraving);
+			mask-image: linear-gradient(var(--_sonic-light-fall), #000 15%, rgb(0 0 0 / 60%));
+			mask-repeat: no-repeat;
+		}
+	}
+
+	/* Engraving under the glow keeps a lit icon's edge */
+	.sonic-key:is([aria-pressed='true'], :where([momentary][pressed]) > *) .sonic-key-cap > svg {
+		filter: var(--_sonic-engraving)
+			drop-shadow(0 0 var(--_sonic-unit) color-mix(in oklab, var(--_sonic-lit) 35%, transparent));
+	}
+
+	.sonic-key:is([aria-pressed='true'], :where([momentary][pressed]) > *)
+		.sonic-key-cap
+		> [data-sonic-when='off'],
+	.sonic-key:not([aria-pressed='true'], :where([momentary][pressed]) > *)
+		.sonic-key-cap
+		> [data-sonic-when='on'] {
+		display: none;
+	}
+}

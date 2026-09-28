@@ -1,0 +1,147 @@
+@layer sonic {
+	/* On the host too, for the placeholder */
+	:is(sonic-segmented, .sonic-segmented) {
+		--_sonic-segmented-size: var(--sonic-segmented-size, 2rem);
+	}
+
+	:has(> .sonic-segmented):not([hidden]) {
+		display: contents;
+	}
+
+	/* Hides the options, which have no size before upgrade */
+	sonic-segmented:not(:defined, [hidden]) {
+		display: block;
+		visibility: hidden;
+		flex-shrink: 0;
+		inline-size: var(--_sonic-segmented-size);
+		block-size: var(--_sonic-segmented-size);
+		overflow: hidden;
+	}
+
+	.sonic-segmented {
+		--_sonic-segmented-gap-ratio: var(--sonic-segmented-gap-ratio, 0.06);
+		--_sonic-segmented-radius-ratio: var(--sonic-segmented-radius-ratio, 0.2);
+		--_sonic-segmented-bevel-ratio: var(--sonic-segmented-bevel-ratio, 0.075);
+		--_sonic-segmented-depth-ratio: var(--sonic-segmented-depth-ratio, 0.03);
+		--_sonic-segmented-press-scale: var(--sonic-segmented-press-scale, 0.985);
+		--_sonic-segmented-font-ratio: var(--sonic-segmented-font-ratio, 0.34);
+		--_sonic-segmented-icon-ratio: var(--sonic-segmented-icon-ratio, 0.5);
+		--_sonic-unit: calc(var(--_sonic-segmented-size) / 32);
+		--_sonic-segmented-corner: calc(
+			var(--_sonic-segmented-size) * var(--_sonic-segmented-radius-ratio)
+		);
+		--_sonic-segmented-depth: calc(
+			var(--_sonic-segmented-size) * var(--_sonic-segmented-depth-ratio)
+		);
+		--_sonic-segmented-gap: calc(var(--_sonic-segmented-size) * var(--_sonic-segmented-gap-ratio));
+
+		/* Concentric with the well's corner */
+		--_sonic-segmented-inner-corner: max(
+			0px,
+			var(--_sonic-segmented-corner) - var(--_sonic-segmented-gap)
+		);
+
+		box-sizing: border-box;
+		display: flex;
+		flex-shrink: 0;
+		gap: var(--_sonic-segmented-gap);
+		block-size: var(--_sonic-segmented-size);
+		padding: var(--_sonic-segmented-gap);
+		user-select: none;
+		background: linear-gradient(
+			var(--_sonic-light-fall),
+			color-mix(in oklab, var(--_sonic-unlit) 55%, #000),
+			color-mix(in oklab, var(--_sonic-unlit) 85%, #000)
+		);
+		border-radius: var(--_sonic-segmented-corner);
+		box-shadow: var(--_sonic-well);
+	}
+
+	.sonic-segmented-segment {
+		--_sonic-segmented-shift: calc(var(--_sonic-segmented-depth) / -2);
+		--_sonic-segmented-scale: 1;
+		--_sonic-segmented-drop: calc(1.5 * var(--_sonic-cast-x)) calc(1.5 * var(--_sonic-cast-y))
+			calc(2 * var(--_sonic-unit)) rgb(0 0 0 / 65%);
+		--_sonic-segmented-glow: transparent;
+
+		display: grid;
+		min-inline-size: calc(var(--_sonic-segmented-size) - 2 * var(--_sonic-segmented-gap));
+		padding: 0;
+		font: inherit;
+		font-size: calc(var(--_sonic-segmented-size) * var(--_sonic-segmented-font-ratio));
+		line-height: 1;
+		color: var(--_sonic-ink);
+		cursor: pointer;
+		background: transparent;
+		border: 0;
+		border-radius: var(--_sonic-segmented-inner-corner);
+	}
+
+	.sonic-segmented-segment:active:where(:not(:disabled)),
+	.sonic-segmented-segment[aria-checked='true'] {
+		--_sonic-segmented-shift: calc(var(--_sonic-segmented-depth) / 2);
+		--_sonic-segmented-scale: var(--_sonic-segmented-press-scale);
+		--_sonic-segmented-drop: calc(0.5 * var(--_sonic-cast-x)) calc(0.5 * var(--_sonic-cast-y))
+			var(--_sonic-unit) rgb(0 0 0 / 65%);
+	}
+
+	.sonic-segmented-segment[aria-checked='true'] {
+		--_sonic-segmented-glow: color-mix(in oklab, var(--_sonic-lit) 22%, transparent);
+
+		color: var(--_sonic-lit);
+		background: var(--_sonic-lit);
+		box-shadow: var(--_sonic-well);
+	}
+
+	.sonic-segmented-segment:disabled {
+		--_sonic-lit: var(--_sonic-lit-disabled);
+
+		color: var(--_sonic-etch);
+		cursor: default;
+	}
+
+	/* In flow, so a long label widens its segment rather than spilling over the next */
+	.sonic-segmented-cap {
+		position: relative;
+		display: grid;
+		place-items: center;
+		padding-inline: calc(var(--_sonic-segmented-size) * 0.25);
+		background: var(--_sonic-skirt);
+		border-radius: var(--_sonic-segmented-inner-corner);
+		box-shadow: var(--_sonic-segmented-drop), var(--_sonic-rim), var(--_sonic-focus-shadow);
+		scale: var(--_sonic-segmented-scale);
+		translate: 0 var(--_sonic-segmented-shift);
+		transition: var(--_sonic-press-transition);
+
+		&::before {
+			position: absolute;
+			inset: calc(var(--_sonic-segmented-size) * var(--_sonic-segmented-bevel-ratio));
+			content: '';
+			background:
+				radial-gradient(closest-side, var(--_sonic-segmented-glow), transparent),
+				var(--_sonic-sheen), var(--_sonic-face);
+			border-radius: max(
+				0px,
+				var(--_sonic-segmented-inner-corner) - var(--_sonic-segmented-size) *
+					var(--_sonic-segmented-bevel-ratio)
+			);
+			box-shadow: var(--_sonic-face-shadow);
+		}
+
+		& > * {
+			position: relative;
+			filter: var(--_sonic-engraving);
+		}
+
+		& > svg {
+			inline-size: calc(var(--_sonic-segmented-size) * var(--_sonic-segmented-icon-ratio));
+			block-size: calc(var(--_sonic-segmented-size) * var(--_sonic-segmented-icon-ratio));
+		}
+	}
+
+	/* Engraving under the glow keeps a lit label's edge */
+	.sonic-segmented-segment[aria-checked='true'] .sonic-segmented-cap > * {
+		filter: var(--_sonic-engraving)
+			drop-shadow(0 0 var(--_sonic-unit) color-mix(in oklab, var(--_sonic-lit) 35%, transparent));
+	}
+}

@@ -1,0 +1,76 @@
+{
+	"name": "@xsynaptic/sonic-ui",
+	"version": "0.0.0",
+	"description": "Native custom elements for audio interfaces: dials, sliders, keys, a segmented switch, a peak meter and a screen panel, skinned with CSS custom properties",
+	"keywords": [
+		"custom-elements",
+		"web-components",
+		"audio",
+		"knob",
+		"dial",
+		"slider",
+		"fader",
+		"synth"
+	],
+	"homepage": "https://github.com/xsynaptic/sonic-ui#readme",
+	"bugs": {
+		"url": "https://github.com/xsynaptic/sonic-ui/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/xsynaptic/sonic-ui.git",
+		"directory": "packages/sonic-ui"
+	},
+	"license": "MIT",
+	"author": "Alexander Synaptic <x@synapticism.com>",
+	"type": "module",
+	"engines": {
+		"node": ">=24.0.0"
+	},
+	"sideEffects": [
+		"./dist/define.js",
+		"./dist/define/*.js",
+		"./src/define.ts",
+		"./src/define/*.ts",
+		"*.css"
+	],
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		},
+		"./define": {
+			"types": "./dist/define.d.ts",
+			"import": "./dist/define.js"
+		},
+		"./define/*": {
+			"types": "./dist/define/*.d.ts",
+			"import": "./dist/define/*.js"
+		},
+		"./controls.css": "./dist/styles/controls.css",
+		"./material.css": "./dist/styles/material.css",
+		"./dial.css": "./dist/styles/dial.css",
+		"./key.css": "./dist/styles/key.css",
+		"./meter.css": "./dist/styles/meter.css",
+		"./screen.css": "./dist/styles/screen.css",
+		"./segmented.css": "./dist/styles/segmented.css",
+		"./slider.css": "./dist/styles/slider.css",
+		"./skins/*.css": "./dist/skins/*.css"
+	},
+	"imports": {
+		"#*": "./src/*"
+	},
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "tsdown",
+		"dev": "tsdown --watch",
+		"check-types": "tsc --noEmit"
+	},
+	"devDependencies": {
+		"publint": "^0.3.24",
+		"tsdown": "^0.23.0",
+		"typescript": "^6.0.3"
+	}
+}

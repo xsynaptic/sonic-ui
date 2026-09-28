@@ -1,0 +1,10 @@
+@layer sonic {
+	.sonic-skin-slate {
+		--sonic-lit: #22d3ee;
+		--sonic-unlit: #1e293b;
+		--sonic-cap: #334155;
+		--sonic-cap-hover: #475569;
+		--sonic-dial-ring-ratio: 0.12;
+		--sonic-dial-gap-ratio: 0.07;
+	}
+}
