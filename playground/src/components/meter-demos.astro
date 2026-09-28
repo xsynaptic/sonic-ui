@@ -1,0 +1,38 @@
+---
+import Play from '@lucide/astro/icons/play';
+
+import Cell from '#components/cell.astro';
+import Panel from '#components/panel.astro';
+---
+
+<Panel>
+	<Cell id="meter-stereo" label="Stereo">
+		<div aria-labelledby="meter-stereo" class="flex gap-1" role="group">
+			<sonic-meter></sonic-meter>
+			<sonic-meter></sonic-meter>
+		</div>
+	</Cell>
+	<Cell id="meter-horizontal" isWide={true} label="Horizontal">
+		<div aria-labelledby="meter-horizontal" class="grid gap-1" role="group">
+			<sonic-meter orientation="horizontal"></sonic-meter>
+			<sonic-meter orientation="horizontal"></sonic-meter>
+		</div>
+	</Cell>
+	<Cell id="meter-run" label="Run">
+		<sonic-key aria-labelledby="meter-run" data-run pressed toggle>
+			<Play aria-hidden="true" />
+		</sonic-key>
+	</Cell>
+</Panel>
+<Panel isLarge={true}>
+	<Cell id="meter-large-stereo" label="Stereo, large">
+		<div
+			aria-labelledby="meter-large-stereo"
+			class="flex gap-2 [--sonic-meter-length:16rem] [--sonic-meter-size:1.5rem]"
+			role="group"
+		>
+			<sonic-meter></sonic-meter>
+			<sonic-meter></sonic-meter>
+		</div>
+	</Cell>
+</Panel>

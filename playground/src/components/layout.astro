@@ -1,0 +1,77 @@
+---
+import '#styles/playground.css';
+
+interface Props {
+	title: string;
+}
+
+const { title } = Astro.props;
+
+const sections = [
+	{ id: 'tuner', label: 'Tuner' },
+	{ id: 'dial', label: 'Dial' },
+	{ id: 'slider', label: 'Slider' },
+	{ id: 'key', label: 'Key' },
+	{ id: 'switch', label: 'Switch' },
+	{ id: 'meter', label: 'Meter' },
+	{ id: 'screen', label: 'Screen' },
+];
+const skins = ['default', 'slate', 'lime', 'ivory'];
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta content="width=device-width, initial-scale=1" name="viewport" />
+		<link href="data:," rel="icon" />
+		<title>{title}</title>
+		<script is:inline>
+			try {
+				const skin = localStorage.getItem('sonic-playground-skin');
+
+				if (skin && skin !== 'default')
+					document.documentElement.classList.add(`sonic-skin-${skin}`);
+			} catch {
+				// Storage refused, as in some private windows; the default skin shows
+			}
+		</script>
+	</head>
+	<body class="bg-zinc-950 text-zinc-300 antialiased">
+		<nav class="sticky top-0 z-10 border-b border-zinc-800 bg-zinc-950/90 backdrop-blur">
+			<div class="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-2 sm:px-8">
+				<a class="font-mono text-sm font-bold text-zinc-100" href="#top">
+					sonic-ui
+				</a>
+				<ul class="flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs">
+					{sections.map((section) => (
+						<li>
+							<a class="text-zinc-400 hover:text-zinc-100" href={`#${section.id}`}>
+								{section.label}
+							</a>
+						</li>
+					))}
+				</ul>
+				<div class="ms-auto font-mono [--sonic-segmented-size:1.75rem]">
+					<sonic-segmented aria-label="Skin" data-skin-switch value="default">
+						{skins.map((skin) => (
+							<span data-sonic-value={skin}>{skin}</span>
+						))}
+					</sonic-segmented>
+				</div>
+			</div>
+		</nav>
+		<main class="mx-auto max-w-6xl px-4 py-10 sm:px-8" id="top">
+			<slot />
+		</main>
+		<script>
+			import '@xsynaptic/sonic-ui/define';
+
+			import '#scripts/skin.ts';
+			import '#scripts/formats.ts';
+			import '#scripts/motion.ts';
+			import '#scripts/screen-follow.ts';
+			import '#scripts/tuner.ts';
+		</script>
+	</body>
+</html>

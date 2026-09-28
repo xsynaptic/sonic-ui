@@ -1,0 +1,15 @@
+---
+import Pause from '@lucide/astro/icons/pause';
+import Play from '@lucide/astro/icons/play';
+import Square from '@lucide/astro/icons/square';
+
+const modes = [
+	{ Icon: Play, label: 'Play' },
+	{ Icon: Pause, label: 'Pause' },
+	{ Icon: Square, label: 'Stop' },
+];
+---
+
+{modes.map(({ Icon, label }) => (
+	<Icon aria-label={label} data-sonic-value={label.toLowerCase()} role="img" />
+))}

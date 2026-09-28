@@ -1,0 +1,31 @@
+---
+import Cell from '#components/cell.astro';
+import Panel from '#components/panel.astro';
+
+const screens = [
+	{ id: 'screen-frequency', label: 'Frequency', text: '440 Hz' },
+	{ id: 'screen-gain', label: 'Gain', text: '−6.0 dB' },
+	{ id: 'screen-note', label: 'Note', text: 'C♯3' },
+];
+---
+
+<Panel>
+	{screens.map((screen) => (
+		<Cell id={screen.id} isWide={true} label={screen.label}>
+			<div aria-labelledby={screen.id} class="sonic-screen font-mono text-sm" role="group">
+				{screen.text}
+			</div>
+		</Cell>
+	))}
+</Panel>
+<Panel isLarge={true}>
+	<Cell id="screen-large-frequency" isWide={true} label="Frequency, large">
+		<div
+			aria-labelledby="screen-large-frequency"
+			class="sonic-screen font-mono text-4xl [--sonic-screen-size:6rem]"
+			role="group"
+		>
+			440 Hz
+		</div>
+	</Cell>
+</Panel>

@@ -1,0 +1,65 @@
+---
+import InstrumentPanel from '#components/instrument-panel.astro';
+import { tokenGroups } from '#scripts/tuner-tokens.ts';
+
+const buttonClass =
+	'rounded border border-zinc-700 px-2.5 py-1 font-mono text-xs text-zinc-300 hover:border-zinc-500 hover:text-zinc-100';
+---
+
+<div class="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]" data-tuner>
+	<div>
+		<div data-tuner-panel>
+			<InstrumentPanel />
+		</div>
+		<div class="mt-3 flex flex-wrap items-center gap-3">
+			<span class="font-mono text-xs text-zinc-500" data-tuner-count></span>
+			<button class={buttonClass} data-tuner-copy type="button">
+				Copy CSS
+			</button>
+			<button class={buttonClass} data-tuner-reset type="button">
+				Reset
+			</button>
+		</div>
+		<pre
+			class="mt-3 max-h-40 overflow-auto bg-zinc-900 px-4 py-3 text-[0.8125rem] select-all"
+			data-tuner-output
+			hidden
+		></pre>
+	</div>
+	<div class="relative self-stretch">
+		<div class="overflow-y-auto overscroll-contain rounded-md border border-zinc-800 bg-zinc-900/60 [scrollbar-color:var(--color-zinc-700)_transparent] [scrollbar-width:thin] lg:absolute lg:inset-0">
+			{tokenGroups.map((group, index) => (
+				<details class="border-b border-zinc-800 px-4 py-3 last:border-b-0" open={index === 0}>
+					<summary class="cursor-pointer font-mono text-xs tracking-[0.12em] text-zinc-300 uppercase">
+						{group.name}
+					</summary>
+					<div class="mt-3 grid gap-2">
+						{group.tokens.map((token) => (
+							<label class="grid grid-cols-[6.5rem_minmax(0,1fr)_4.5rem] items-center gap-3 font-mono text-xs text-zinc-400">
+								<span>{token.label}</span>
+								{token.kind === 'range' ? (
+									<input
+										class="w-full min-w-0"
+										data-token={token.token}
+										max={token.max}
+										min={token.min}
+										step={token.step}
+										type="range"
+									/>
+								) : (
+									<input
+										class="h-6 w-full cursor-pointer bg-transparent"
+										data-token={token.token}
+										type="color"
+									/>
+								)}
+								<output class="truncate text-right text-zinc-300" />
+							</label>
+						))}
+					</div>
+				</details>
+			))}
+		</div>
+	</div>
+	<span aria-hidden="true" class="hidden" data-tuner-probe></span>
+</div>

@@ -1,0 +1,7 @@
+@layer theme, base, sonic, components, utilities;
+
+@import 'tailwindcss';
+@import '@xsynaptic/sonic-ui/controls.css';
+@import '@xsynaptic/sonic-ui/skins/slate.css';
+@import '@xsynaptic/sonic-ui/skins/lime.css';
+@import '@xsynaptic/sonic-ui/skins/ivory.css';

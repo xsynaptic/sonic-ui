@@ -1,0 +1,18 @@
+---
+import Volume2 from '@lucide/astro/icons/volume-2';
+import VolumeX from '@lucide/astro/icons/volume-x';
+
+interface Props {
+	isPressed: boolean;
+	labelledby: string;
+}
+
+const { isPressed, labelledby } = Astro.props;
+
+// Astro writes `false` onto a custom element as the string, which still counts as present
+---
+
+<sonic-key aria-labelledby={labelledby} pressed={isPressed ? '' : undefined} toggle>
+	<Volume2 aria-hidden="true" data-sonic-when="off" />
+	<VolumeX aria-hidden="true" data-sonic-when="on" />
+</sonic-key>

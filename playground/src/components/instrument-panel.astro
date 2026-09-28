@@ -1,0 +1,175 @@
+---
+import Play from '@lucide/astro/icons/play';
+import Square from '@lucide/astro/icons/square';
+
+import Cell from '#components/cell.astro';
+import FilterModes from '#components/filter-modes.astro';
+import MuteKey from '#components/mute-key.astro';
+
+const groupClass = 'flex flex-col gap-4 rounded-md border border-zinc-800/80 p-4';
+const titleClass = 'font-mono text-[0.625rem] tracking-[0.16em] text-zinc-500 uppercase';
+---
+
+<div
+	class="flex flex-wrap gap-3 rounded-lg border border-zinc-800 bg-zinc-900 p-3 shadow-[inset_0_1px_0_rgb(255_255_255/4%)]"
+	data-screen-scope
+>
+	<div class={groupClass}>
+		<p class={titleClass}>Filter</p>
+		<div class="flex flex-1 flex-wrap items-stretch gap-6">
+			<Cell id="panel-mode" label="Mode">
+				<sonic-segmented aria-labelledby="panel-mode" class="font-mono" value="lp">
+					<FilterModes hasNotch={false} />
+				</sonic-segmented>
+			</Cell>
+			<Cell id="panel-cutoff" label="Cutoff">
+				<sonic-dial
+					aria-labelledby="panel-cutoff"
+					data-format="hertz"
+					default="1000"
+					max="20000"
+					min="20"
+					readout
+					taper="log"
+					value="1200"
+				></sonic-dial>
+			</Cell>
+			<Cell id="panel-resonance" label="Res">
+				<sonic-dial
+					aria-labelledby="panel-resonance"
+					data-format="percent"
+					default="0"
+					readout
+					value="35"
+				></sonic-dial>
+			</Cell>
+			<Cell id="panel-envelope" label="Env">
+				<sonic-dial
+					aria-labelledby="panel-envelope"
+					data-format="signed-percent"
+					default="0"
+					max="100"
+					min="-100"
+					origin="0"
+					readout
+					value="40"
+				></sonic-dial>
+			</Cell>
+		</div>
+	</div>
+	<div class={groupClass}>
+		<p class={titleClass}>Envelope</p>
+		<div class="flex flex-1 flex-wrap items-stretch gap-6">
+			<Cell id="panel-attack" label="Attack">
+				<sonic-dial
+					aria-labelledby="panel-attack"
+					data-format="milliseconds"
+					max="2000"
+					midpoint="200"
+					readout
+					value="12"
+				></sonic-dial>
+			</Cell>
+			<Cell id="panel-release" label="Release">
+				<sonic-dial
+					aria-labelledby="panel-release"
+					data-format="milliseconds"
+					max="5000"
+					midpoint="500"
+					readout
+					value="420"
+				></sonic-dial>
+			</Cell>
+		</div>
+	</div>
+	<div class={groupClass}>
+		<p class={titleClass}>Auto-pan</p>
+		<div class="flex flex-1 flex-wrap items-stretch gap-6">
+			<Cell id="panel-rate" label="Rate">
+				<sonic-dial
+					aria-labelledby="panel-rate"
+					data-format="hertz"
+					id="panel-rate-dial"
+					max="10"
+					midpoint="1"
+					min="0.05"
+					readout
+					step="0.01"
+					value="0.4"
+				></sonic-dial>
+			</Cell>
+			<Cell id="panel-depth" label="Depth">
+				<sonic-dial
+					aria-labelledby="panel-depth"
+					id="panel-depth-dial"
+					max="50"
+					readout
+					value="30"
+				></sonic-dial>
+			</Cell>
+		</div>
+	</div>
+	<div class={groupClass} data-strip>
+		<p class={titleClass}>Channel</p>
+		<div class="flex flex-1 flex-wrap items-stretch gap-6">
+			<Cell id="panel-pan" label="Pan">
+				<sonic-dial
+					aria-labelledby="panel-pan"
+					data-format="pan"
+					data-lfo
+					data-lfo-depth="#panel-depth-dial"
+					data-lfo-rate="#panel-rate-dial"
+					data-strip-pan
+					default="0"
+					max="50"
+					min="-50"
+					origin="0"
+					readout
+					value="0"
+				></sonic-dial>
+			</Cell>
+			<Cell id="panel-mute" label="Mute">
+				<MuteKey isPressed={false} labelledby="panel-mute" />
+			</Cell>
+			<Cell id="panel-level" label="Level">
+				<sonic-slider
+					aria-labelledby="panel-level"
+					data-format="db"
+					data-strip-level
+					default="0"
+					max="6"
+					midpoint="-12"
+					min="-60"
+					orientation="vertical"
+					readout
+					step="0.5"
+					value="0"
+				></sonic-slider>
+				<div class="flex gap-1">
+					<sonic-meter></sonic-meter>
+					<sonic-meter></sonic-meter>
+				</div>
+			</Cell>
+		</div>
+	</div>
+	<div class={groupClass}>
+		<p class={titleClass}>Transport</p>
+		<div class="flex flex-1 flex-wrap items-stretch gap-6">
+			<Cell id="panel-run" label="Run">
+				<sonic-key aria-labelledby="panel-run" data-run pressed toggle>
+					<Play aria-hidden="true" />
+				</sonic-key>
+			</Cell>
+			<Cell id="panel-stop" label="Stop">
+				<sonic-key aria-labelledby="panel-stop" data-stop>
+					<Square aria-hidden="true" />
+				</sonic-key>
+			</Cell>
+			<Cell id="panel-screen" label="Display">
+				<div class="sonic-screen font-mono text-xs" data-screen-follow>
+					sonic-ui
+				</div>
+			</Cell>
+		</div>
+	</div>
+</div>

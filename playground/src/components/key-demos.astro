@@ -1,0 +1,45 @@
+---
+import Play from '@lucide/astro/icons/play';
+
+import Cell from '#components/cell.astro';
+import MuteKey from '#components/mute-key.astro';
+import Panel from '#components/panel.astro';
+
+const pads = ['Kick', 'Snare', 'Hat', 'Clap'];
+---
+
+<Panel>
+	<Cell id="key-play" label="Play">
+		<sonic-key aria-labelledby="key-play">
+			<Play aria-hidden="true" />
+		</sonic-key>
+	</Cell>
+	<Cell id="key-mute" label="Mute">
+		<MuteKey isPressed={true} labelledby="key-mute" />
+	</Cell>
+	{pads.map((pad) => (
+		<Cell id={`key-pad-${pad.toLowerCase()}`} label={pad}>
+			<sonic-key aria-labelledby={`key-pad-${pad.toLowerCase()}`} momentary />
+		</Cell>
+	))}
+	<Cell id="key-disabled" label="Disabled">
+		<sonic-key aria-labelledby="key-disabled" disabled>
+			<Play aria-hidden="true" />
+		</sonic-key>
+	</Cell>
+</Panel>
+<Panel isLarge={true}>
+	<Cell id="key-large-play" label="Play, large">
+		<sonic-key aria-labelledby="key-large-play" class="[--sonic-key-size:6rem]">
+			<Play aria-hidden="true" />
+		</sonic-key>
+	</Cell>
+	<Cell id="key-large-mute" label="Mute, large">
+		<div class="[--sonic-key-size:6rem]">
+			<MuteKey isPressed={true} labelledby="key-large-mute" />
+		</div>
+	</Cell>
+	<Cell id="key-large-pad" label="Pad, large">
+		<sonic-key aria-labelledby="key-large-pad" class="[--sonic-key-size:6rem]" momentary />
+	</Cell>
+</Panel>

@@ -1,0 +1,129 @@
+---
+import Play from '@lucide/astro/icons/play';
+
+import Cell from '#components/cell.astro';
+import Panel from '#components/panel.astro';
+---
+
+<Panel>
+	<Cell id="dial-volume" label="Volume">
+		<sonic-dial
+			aria-labelledby="dial-volume"
+			data-format="percent"
+			default="70"
+			readout
+			value="70"
+		></sonic-dial>
+	</Cell>
+	<Cell id="dial-pan" label="Pan">
+		<sonic-dial
+			aria-labelledby="dial-pan"
+			data-format="pan"
+			default="0"
+			max="50"
+			min="-50"
+			origin="0"
+			readout
+			value="-20"
+		></sonic-dial>
+	</Cell>
+	<Cell id="dial-filter" label="Filter type">
+		<sonic-dial
+			aria-labelledby="dial-filter"
+			data-format="filter"
+			max="3"
+			notched
+			readout
+			value="1"
+		></sonic-dial>
+	</Cell>
+	<Cell id="dial-cutoff" label="Cutoff">
+		<sonic-dial
+			aria-labelledby="dial-cutoff"
+			data-format="hertz"
+			max="20000"
+			min="20"
+			readout
+			taper="log"
+			value="1000"
+		></sonic-dial>
+	</Cell>
+	<Cell id="dial-attack" label="Attack">
+		<sonic-dial
+			aria-labelledby="dial-attack"
+			data-format="milliseconds"
+			max="2000"
+			midpoint="200"
+			readout
+			value="200"
+		></sonic-dial>
+	</Cell>
+	<Cell id="dial-phase" label="Phase">
+		<sonic-dial
+			aria-labelledby="dial-phase"
+			class="[--sonic-dial-sweep:360deg]"
+			data-format="degrees"
+			max="360"
+			readout
+			value="90"
+		></sonic-dial>
+	</Cell>
+	<Cell id="dial-wobble" label="Wobble">
+		<sonic-dial aria-labelledby="dial-wobble" data-lfo="25" readout value="50"></sonic-dial>
+	</Cell>
+	<Cell id="dial-run" label="Run">
+		<sonic-key aria-labelledby="dial-run" data-run pressed toggle>
+			<Play aria-hidden="true" />
+		</sonic-key>
+	</Cell>
+	<Cell id="dial-bypassed" label="Bypassed">
+		<sonic-dial aria-labelledby="dial-bypassed" dimmed value="60"></sonic-dial>
+	</Cell>
+	<Cell id="dial-disabled" label="Disabled">
+		<sonic-dial aria-labelledby="dial-disabled" disabled value="60"></sonic-dial>
+	</Cell>
+</Panel>
+<Panel isLarge={true}>
+	<Cell id="dial-large-volume" label="Volume, large">
+		<sonic-dial
+			aria-labelledby="dial-large-volume"
+			class="[--sonic-dial-size:8rem]"
+			data-format="percent"
+			default="70"
+			readout
+			value="70"
+		></sonic-dial>
+	</Cell>
+	<Cell id="dial-large-pan" label="Pan, large">
+		<sonic-dial
+			aria-labelledby="dial-large-pan"
+			class="[--sonic-dial-size:8rem]"
+			data-format="pan"
+			default="0"
+			max="50"
+			min="-50"
+			origin="0"
+			readout
+			value="-20"
+		></sonic-dial>
+	</Cell>
+	<Cell id="dial-large-filter" label="Filter type, large">
+		<sonic-dial
+			aria-labelledby="dial-large-filter"
+			class="[--sonic-dial-size:8rem]"
+			data-format="filter"
+			max="3"
+			notched
+			readout
+			value="1"
+		></sonic-dial>
+	</Cell>
+	<Cell id="dial-large-bypassed" label="Bypassed, large">
+		<sonic-dial
+			aria-labelledby="dial-large-bypassed"
+			class="[--sonic-dial-size:8rem]"
+			dimmed
+			value="60"
+		></sonic-dial>
+	</Cell>
+</Panel>

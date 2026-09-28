@@ -1,0 +1,96 @@
+---
+import Cell from '#components/cell.astro';
+import Panel from '#components/panel.astro';
+---
+
+<Panel>
+	<Cell id="slider-send" isWide={true} label="Send">
+		<sonic-slider
+			aria-labelledby="slider-send"
+			data-format="percent"
+			readout
+			value="40"
+		></sonic-slider>
+	</Cell>
+	<Cell id="slider-crossfader" isWide={true} label="Crossfader">
+		<sonic-slider
+			aria-labelledby="slider-crossfader"
+			default="0"
+			double-press="reset"
+			groove-press="none"
+			max="50"
+			min="-50"
+			origin="0"
+			value="-30"
+		></sonic-slider>
+	</Cell>
+	<Cell id="slider-fader" label="Fader">
+		<sonic-slider
+			aria-labelledby="slider-fader"
+			data-format="db"
+			default="0"
+			max="6"
+			midpoint="-12"
+			min="-60"
+			orientation="vertical"
+			readout
+			step="0.5"
+			value="0"
+		></sonic-slider>
+	</Cell>
+	<Cell id="slider-steps" label="Steps">
+		<sonic-slider
+			aria-labelledby="slider-steps"
+			max="10"
+			notched
+			orientation="vertical"
+			readout
+			value="7"
+		></sonic-slider>
+	</Cell>
+	<Cell id="slider-disabled" label="Disabled">
+		<sonic-slider
+			aria-labelledby="slider-disabled"
+			disabled
+			orientation="vertical"
+			value="60"
+		></sonic-slider>
+	</Cell>
+</Panel>
+<Panel isLarge={true}>
+	<Cell id="slider-large-send" isWide={true} label="Send, large">
+		<sonic-slider
+			aria-labelledby="slider-large-send"
+			class="[--sonic-slider-length:20rem] [--sonic-slider-size:4rem]"
+			data-format="percent"
+			readout
+			value="40"
+		></sonic-slider>
+	</Cell>
+	<Cell id="slider-large-fader" label="Fader, large">
+		<sonic-slider
+			aria-labelledby="slider-large-fader"
+			class="[--sonic-slider-length:16rem] [--sonic-slider-size:4rem]"
+			data-format="db"
+			default="0"
+			max="6"
+			midpoint="-12"
+			min="-60"
+			orientation="vertical"
+			readout
+			step="0.5"
+			value="0"
+		></sonic-slider>
+	</Cell>
+	<Cell id="slider-large-steps" label="Steps, large">
+		<sonic-slider
+			aria-labelledby="slider-large-steps"
+			class="[--sonic-slider-length:16rem] [--sonic-slider-size:4rem]"
+			max="10"
+			notched
+			orientation="vertical"
+			readout
+			value="7"
+		></sonic-slider>
+	</Cell>
+</Panel>

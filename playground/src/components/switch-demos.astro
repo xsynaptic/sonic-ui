@@ -1,0 +1,44 @@
+---
+import Cell from '#components/cell.astro';
+import FilterModes from '#components/filter-modes.astro';
+import Panel from '#components/panel.astro';
+import TransportModes from '#components/transport-modes.astro';
+---
+
+<Panel>
+	<Cell id="switch-filter" isWide={true} label="Filter mode">
+		<sonic-segmented aria-labelledby="switch-filter" class="font-mono" value="lp">
+			<FilterModes hasNotch={true} />
+		</sonic-segmented>
+	</Cell>
+	<Cell id="switch-transport" isWide={true} label="Transport">
+		<sonic-segmented aria-labelledby="switch-transport" value="play">
+			<TransportModes />
+		</sonic-segmented>
+	</Cell>
+	<Cell id="switch-disabled" isWide={true} label="Disabled">
+		<sonic-segmented aria-labelledby="switch-disabled" class="font-mono" disabled value="bp">
+			<FilterModes hasNotch={false} />
+		</sonic-segmented>
+	</Cell>
+</Panel>
+<Panel isLarge={true}>
+	<Cell id="switch-large-filter" isWide={true} label="Filter mode, large">
+		<sonic-segmented
+			aria-labelledby="switch-large-filter"
+			class="font-mono [--sonic-segmented-size:4rem]"
+			value="lp"
+		>
+			<FilterModes hasNotch={true} />
+		</sonic-segmented>
+	</Cell>
+	<Cell id="switch-large-transport" isWide={true} label="Transport, large">
+		<sonic-segmented
+			aria-labelledby="switch-large-transport"
+			class="[--sonic-segmented-size:4rem]"
+			value="play"
+		>
+			<TransportModes />
+		</sonic-segmented>
+	</Cell>
+</Panel>
