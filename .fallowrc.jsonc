@@ -1,0 +1,47 @@
+{
+	"$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
+	"rules": {
+		// Dead code and dependency hygiene belong to knip
+		"unused-files": "off",
+		"unused-exports": "off",
+		"unused-types": "off",
+		"unused-enum-members": "off",
+		"unused-class-members": "off",
+		"unused-dependencies": "off",
+		"unused-dev-dependencies": "off",
+		"unused-optional-dependencies": "off",
+		"unlisted-dependencies": "off",
+		"unresolved-imports": "off",
+		"duplicate-exports": "off",
+		"type-only-dependencies": "off",
+		"test-only-dependencies": "off",
+		"dev-dependencies-in-production": "off",
+		"unused-dependency-overrides": "off",
+		"misconfigured-dependency-overrides": "off",
+	},
+	"health": {
+		// ESLint scores neither cognitive complexity nor a template, so this is the one ceiling on either
+		"maxCognitive": 10,
+		// Zero disables CRAP, which fallow otherwise estimates from the module graph without coverage data
+		"maxCrap": 0,
+	},
+	"duplicates": {
+		// Below 70 the report is mostly shared idiom rather than shared logic
+		"minTokens": 70,
+		// The only setting that fails a dupes run, and zero means no limit; this low, any clone group fails
+		"threshold": 0.001,
+	},
+	"boundaries": {
+		// First match wins; a zone per real dependency rule, never one per directory
+		"zones": [
+			{ "name": "library", "patterns": ["packages/**"] },
+			{ "name": "playground", "patterns": ["playground/**"] },
+		],
+		"rules": [
+			// The library ships alone, so it reaches nothing outside itself
+			{ "from": "library", "allow": ["library"] },
+			// The playground reaches the library through its package name, which resolves into the built `dist`
+			{ "from": "playground", "allow": ["playground", "library"] },
+		],
+	},
+}

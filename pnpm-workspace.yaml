@@ -1,0 +1,20 @@
+packages:
+  - packages/*
+  - playground
+
+# Link the playground to the local package by range; StackBlitz boots the playground
+# directory as its own root and resolves the published package from npm instead
+linkWorkspacePackages: true
+saveWorkspaceProtocol: false
+
+# Intended to mitigate supply chain attacks
+minimumReleaseAge: 1440
+verifyDepsBeforeRun: error
+strictDepBuilds: true
+
+minimumReleaseAgeExclude:
+  - '@xsynaptic/*'
+
+allowBuilds:
+  esbuild: true
+  lefthook: true

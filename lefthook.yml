@@ -1,0 +1,61 @@
+# Print complete output on failure
+output:
+  - failure
+  - execution_out
+
+# Check-only; a hook that re-stages files sweeps in a concurrent session's edits
+pre-commit:
+  jobs:
+    - name: format
+      run: pnpm exec prettier --check --ignore-unknown {staged_files}
+
+pre-push:
+  jobs:
+    - name: gate
+      run: pnpm check
+
+check:
+  piped: true
+  jobs:
+    # Build first because the playground type-checks against the library's `dist` folder
+    - name: build
+      run: pnpm build
+    - name: verify
+      group:
+        parallel: true
+        jobs:
+          - name: types
+            run: pnpm check-types
+          - name: format
+            run: prettier --check . --cache --log-level warn
+          - name: lint
+            run: eslint --max-warnings 0 --cache --cache-location node_modules/.cache/eslint/
+          - name: css
+            run: stylelint "{packages/sonic-ui/src,playground/src}/**/*.{css,astro}" --cache --cache-location node_modules/.cache/stylelint/
+          - name: unused
+            run: knip
+          - name: dupes
+            run: fallow dupes --quiet
+          # Health prints its report even at zero findings, so output shows only on failure
+          - name: complexity
+            run: out=$(fallow health --complexity --quiet 2>&1) || { printf '%s\n' "$out"; exit 1; }
+          - name: architecture
+            run: fallow dead-code --boundary-violations --circular-deps --quiet
+          - name: test
+            run: vitest run --passWithNoTests
+
+fix:
+  piped: true
+  jobs:
+    - name: autofix
+      group:
+        piped: true
+        jobs:
+          - name: format
+            run: prettier --write . --cache --list-different
+          - name: css
+            run: stylelint "{packages/sonic-ui/src,playground/src}/**/*.{css,astro}" --fix --cache --cache-location node_modules/.cache/stylelint/
+          - name: lint
+            run: eslint --fix --cache --cache-location node_modules/.cache/eslint/
+    - name: report
+      run: pnpm check
