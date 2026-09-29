@@ -32,7 +32,7 @@ Tokens, hook classes, attributes and events are the API. Renaming one, or nestin
 
 ## The gate
 
-Run `pnpm fix` after a chunk of work; it autofixes, then runs `pnpm check`. `check` is green on main, so anything it reports is yours. Library changes get a changeset (`pnpm changeset`).
+Run `pnpm fix` after a chunk of work; it autofixes, then runs `pnpm check`. `check` is green on main, so anything it reports is yours. Library changes get a changeset (`pnpm changeset`) but until we reach 1.0 keep them short and group them rather than writing a lot of detail. Also until 1.0 we should limit what is added to READMEs and package descriptions to avoid drift.
 
 `pnpm test-e2e` runs on pre-push. Run it too after changing a gesture, a control's naming, or its drawn parts. It starts its own preview on port 4331 and fails if that port is taken.
 
