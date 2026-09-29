@@ -1,0 +1,19 @@
+---
+import Document from '#components/document.astro';
+import '#styles/playground.css';
+
+// A docked player bar: `backdrop-filter` makes the bar the containing block for fixed-position descendants
+// The dial sits near the bar's top edge with room below it, where a closed readout left rendered flipped under it
+---
+
+<Document bodyClass="bg-zinc-950 text-zinc-300" title="sonic-ui fixtures, docked bar">
+	<main class="min-h-[300vh] p-16">
+		<h1>Docked bar</h1>
+	</main>
+	<footer class="fixed inset-x-0 bottom-0 flex items-start bg-zinc-900/70 px-16 pt-2 pb-20 backdrop-blur-sm">
+		<sonic-dial aria-label="Volume" id="docked" readout value="50"></sonic-dial>
+	</footer>
+	<script>
+		import '@xsynaptic/sonic-ui/define/dial';
+	</script>
+</Document>

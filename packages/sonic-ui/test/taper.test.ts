@@ -1,29 +1,15 @@
 import { expect, test, vi } from 'vitest';
 
-// @vitest-environment happy-dom
-import type { SonicDial } from '#elements/dial.ts';
 import type { SonicSlider } from '#elements/slider.ts';
 
 import '#define/dial.ts';
 import '#define/slider.ts';
 import { logTaper, skewTaper } from '#lib/taper.ts';
 
-function mountDial(attributes: string): { control: HTMLElement; dial: SonicDial } {
-	document.body.innerHTML = `<sonic-dial ${attributes}></sonic-dial>`;
-
-	const dial = document.querySelector('sonic-dial');
-	const control = dial?.querySelector<HTMLElement>('.sonic-dial');
-	if (!dial || !control) throw new Error('The dial did not render');
-
-	return { control, dial };
-}
+import { mountDial, pressKey } from './helpers.ts';
 
 function renderedFraction(control: HTMLElement): number {
 	return Number(control.style.getPropertyValue('--_sonic-dial-value'));
-}
-
-function pressKey(control: HTMLElement, key: string): void {
-	control.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key }));
 }
 
 test('a 20 Hz to 20 kHz skew through 1 kHz puts 68 Hz and 5.7 kHz at the quarters', () => {
@@ -130,6 +116,17 @@ test.each([
 	['End', 25, 100],
 ])('%s moves a tapered dial at %d to %d', (key, from, expected) => {
 	const { control, dial } = mountDial(`midpoint="25" value="${String(from)}"`);
+
+	pressKey(control, key);
+	expect(dial.value).toBe(expected);
+});
+
+// At 0.25 on a midpoint of 25, a hundredth of the travel either way snaps back to 0.25
+test.each([
+	['ArrowUp', 0.5],
+	['ArrowDown', 0],
+])('%s moves a tapered dial stepping by 0.25 at least one step, to %s', (key, expected) => {
+	const { control, dial } = mountDial('midpoint="25" step="0.25" value="0.25"');
 
 	pressKey(control, key);
 	expect(dial.value).toBe(expected);

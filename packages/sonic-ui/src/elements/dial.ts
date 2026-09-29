@@ -40,7 +40,20 @@ export class SonicDial extends SonicRangeElement {
 		'modulation',
 	];
 
+	get modulation(): number {
+		return this.numberAttribute('modulation', 0);
+	}
+
+	set modulation(amount: number | undefined) {
+		this.reflect('modulation', amount);
+	}
+
 	readonly #dial = renderDial();
+
+	override connectedCallback(): void {
+		this.upgradeProperties('modulation');
+		super.connectedCallback();
+	}
 
 	protected connect(signal: AbortSignal): void {
 		const dial = this.#dial;
@@ -55,10 +68,14 @@ export class SonicDial extends SonicRangeElement {
 		}));
 	}
 
+	protected override focusTarget(): HTMLElement {
+		return this.#dial;
+	}
+
 	protected render(): void {
 		const dial = this.#dial;
 		const positions = this.positions();
-		const modulated = this.fraction(this.value + this.numberAttribute('modulation', 0));
+		const modulated = this.fraction(this.value + this.modulation);
 		const value = this.fraction(this.value);
 
 		dial.style.setProperty('--_sonic-dial-value', String(value));

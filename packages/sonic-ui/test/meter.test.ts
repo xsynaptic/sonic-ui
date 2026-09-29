@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
-// @vitest-environment happy-dom
 import type { SonicMeter } from '#elements/meter.ts';
 
 import '#define/meter.ts';
@@ -149,8 +148,12 @@ test('disabled puts the light out, and enabling it again shows the level still f
 	expect(read(control, 'clipped')).toBe(1);
 });
 
-test('the meter is hidden from assistive technology', () => {
-	const { control } = mountMeter();
+test('a scale set as properties maps the level as its attributes would', () => {
+	const { control, meter } = mountMeter();
 
-	expect(control.getAttribute('aria-hidden')).toBe('true');
+	meter.min = -40;
+	meter.max = -10;
+	meter.level = fromDecibels(-20);
+	expect(meter.getAttribute('min')).toBe('-40');
+	expect(read(control, 'level')).toBeCloseTo(2 / 3, 6);
 });

@@ -21,3 +21,12 @@ export function template<Root extends Element>(html: string, root: new () => Roo
 		return clone;
 	};
 }
+
+// Only the nodes the element assigns render, so a framework's own children stay put, bare text included
+export function attachSlot(host: HTMLElement): HTMLSlotElement {
+	const slot = document.createElement('slot');
+
+	host.attachShadow({ mode: 'open', slotAssignment: 'manual' }).append(slot);
+
+	return slot;
+}

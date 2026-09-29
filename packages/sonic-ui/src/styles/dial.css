@@ -1,5 +1,4 @@
 @layer sonic {
-	/* On the host too, for the placeholder */
 	:is(sonic-dial, .sonic-dial) {
 		--_sonic-dial-size: var(--sonic-dial-size, 2.5rem);
 	}
@@ -29,8 +28,6 @@
 
 		/* Centred on six o'clock */
 		--_sonic-dial-sweep: var(--sonic-dial-sweep, 300deg);
-
-		/* Absolute, so a larger knob gets more ridges rather than wider ones */
 		--_sonic-dial-ridge-pitch: var(--sonic-dial-ridge-pitch, 4px);
 
 		/* Read by the element as px */
@@ -84,7 +81,7 @@
 		--_sonic-dial-lit: var(--_sonic-lit-off);
 	}
 
-	[disabled] > .sonic-dial {
+	:disabled > .sonic-dial {
 		--_sonic-dial-lit: var(--_sonic-lit-disabled);
 
 		cursor: default;
@@ -140,14 +137,15 @@
 		--_sonic-dial-lit-to: calc(
 			max(var(--_sonic-dial-origin, 0), var(--_sonic-dial-value, 0)) * var(--_sonic-dial-sweep)
 		);
+		--_sonic-dial-ring-shade: radial-gradient(
+			closest-side,
+			rgb(0 0 0 / 55%) calc(100% - var(--_sonic-dial-ring-width)),
+			transparent calc(100% - var(--_sonic-dial-ring-width) * 0.4),
+			rgb(0 0 0 / 25%) 100%
+		);
 
 		background:
-			radial-gradient(
-				closest-side,
-				rgb(0 0 0 / 55%) calc(100% - var(--_sonic-dial-ring-width)),
-				transparent calc(100% - var(--_sonic-dial-ring-width) * 0.4),
-				rgb(0 0 0 / 25%) 100%
-			),
+			var(--_sonic-dial-ring-shade),
 			conic-gradient(
 				from var(--_sonic-dial-start),
 				var(--_sonic-unlit) var(--_sonic-dial-lit-from),
@@ -185,7 +183,7 @@
 		border-radius: 50%;
 		box-shadow:
 			calc(2 * var(--_sonic-cast-x)) calc(2 * var(--_sonic-cast-y)) calc(4 * var(--_sonic-unit))
-				rgb(0 0 0 / 65%),
+				var(--_sonic-drop-shade),
 			var(--_sonic-rim),
 			var(--_sonic-focus-shadow);
 
@@ -236,7 +234,6 @@
 		border-radius: 50%;
 		rotate: calc(var(--_sonic-dial-start) + var(--_sonic-dial-angle));
 
-		/* Evenly shaded, since any offset would turn with the knob */
 		&::before {
 			--_sonic-dial-pointer-width: calc(var(--_sonic-dial-size) * var(--_sonic-dial-pointer-ratio));
 
@@ -259,7 +256,30 @@
 		}
 	}
 
-	[disabled] > .sonic-dial > .sonic-dial-pointer::before {
+	:disabled > .sonic-dial > .sonic-dial-pointer::before {
 		background: var(--_sonic-etch);
+	}
+
+	@media (forced-colors: active) {
+		:is(.sonic-dial-notches, .sonic-dial-ring, .sonic-dial-modulation, .sonic-dial-pointer) {
+			forced-color-adjust: none;
+		}
+
+		.sonic-dial-ring {
+			--_sonic-dial-ring-shade: none;
+		}
+
+		.sonic-dial-modulation {
+			--_sonic-dial-modulation: CanvasText;
+		}
+
+		.sonic-dial-cap::before,
+		.sonic-dial-cap::after {
+			display: none;
+		}
+
+		.sonic-dial-pointer::before {
+			box-shadow: none;
+		}
 	}
 }

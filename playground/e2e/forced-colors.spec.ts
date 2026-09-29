@@ -1,0 +1,145 @@
+import type { Page } from '@playwright/test';
+
+import { expect, test } from '@playwright/test';
+
+// A part paints at all only if it opts out; forced colours drop gradients and force backgrounds to Canvas
+const drawnParts = [
+	'#locked .sonic-dial-notches',
+	'.sonic-dial-ring',
+	'#locked .sonic-dial-modulation',
+	'.sonic-dial-cap',
+	'.sonic-dial-pointer::before',
+	'.sonic-slider-groove',
+	'.sonic-slider-cap',
+	'.sonic-key-cap',
+	'.sonic-segmented-cap',
+	'.sonic-meter-segments',
+	'.sonic-meter-level',
+	'.sonic-meter-clip',
+];
+
+async function paintOf(
+	page: Page,
+	selector: string,
+): Promise<{ colour: string; drop: string; image: string }> {
+	return page.locator(selector).evaluate((cap) => {
+		const style = getComputedStyle(cap);
+
+		return {
+			colour: style.backgroundColor,
+			drop: style.boxShadow.split(/,(?![^(]*\))/, 1)[0]?.trim() ?? '',
+			image: style.backgroundImage,
+		};
+	});
+}
+
+async function systemColour(page: Page, keyword: string): Promise<string> {
+	return page.evaluate((colour) => {
+		const probe = document.createElement('div');
+
+		probe.style.cssText = `forced-color-adjust: none; background: ${colour}`;
+		document.body.append(probe);
+
+		const computed = getComputedStyle(probe).backgroundColor;
+
+		probe.remove();
+
+		return computed;
+	}, keyword);
+}
+
+const focusable = ['.sonic-dial', '.sonic-slider', '.sonic-key', '.sonic-segmented-segment'];
+
+test.skip(({ browserName }) => browserName === 'webkit', 'WebKit has no forced-colours mode');
+
+test.beforeEach(async ({ page }) => {
+	await page.emulateMedia({ forcedColors: 'active' });
+	await page.goto('/fixtures/');
+});
+
+test('every drawn part opts out of forced colours and paints', async ({ page }) => {
+	const parts = await page.evaluate((selectors) => {
+		return selectors.map((selector) => {
+			const [element, pseudo] = selector.split('::', 2);
+			const found = document.querySelector(element ?? '');
+			if (!found) return { missing: true, selector };
+
+			const style = getComputedStyle(found, pseudo === undefined ? undefined : `::${pseudo}`);
+
+			return {
+				adjust: style.forcedColorAdjust,
+				isPainted: style.backgroundImage !== 'none' || style.backgroundColor !== 'rgba(0, 0, 0, 0)',
+				selector,
+			};
+		});
+	}, drawnParts);
+
+	expect(parts).toEqual(
+		drawnParts.map((selector) => ({ adjust: 'none', isPainted: true, selector })),
+	);
+});
+
+// Opted out, the transparent focus outline would stay transparent
+test('every focusable element stays forced', async ({ page }) => {
+	const adjusts = await page.evaluate(
+		(selectors) =>
+			selectors.map((selector) => {
+				const found = document.querySelector(selector);
+
+				return found ? getComputedStyle(found).forcedColorAdjust : 'missing';
+			}),
+		focusable,
+	);
+
+	expect(adjusts).toEqual(focusable.map(() => 'auto'));
+});
+
+// A state rule that paints a cap directly would bring its gradient or drop back
+test('a hovered or latched cap keeps to system colours', async ({ page }) => {
+	const [buttonFace, highlight] = [
+		await systemColour(page, 'ButtonFace'),
+		await systemColour(page, 'Highlight'),
+	];
+	const key = page.locator('#mute .sonic-key');
+
+	await page.locator('#level .sonic-dial').hover();
+	const dial = await paintOf(page, '#level .sonic-dial-cap');
+
+	await key.hover();
+	const hovered = await paintOf(page, '#mute .sonic-key-cap');
+
+	await key.click();
+	const latched = await paintOf(page, '#mute .sonic-key-cap');
+	const segment = await paintOf(page, '#mode [aria-checked="true"] .sonic-segmented-cap');
+
+	const transparentDrop = expect.stringMatching(/^(rgba\(0, 0, 0, 0\)|transparent)/);
+
+	expect({ dial, hovered, latched, segment }).toEqual({
+		dial: { colour: buttonFace, drop: transparentDrop, image: 'none' },
+		hovered: { colour: buttonFace, drop: transparentDrop, image: 'none' },
+		latched: { colour: highlight, drop: transparentDrop, image: 'none' },
+		segment: { colour: highlight, drop: transparentDrop, image: 'none' },
+	});
+});
+
+test('a disabled latched cap inks in the colour its grey fill is drawn against', async ({
+	page,
+}) => {
+	const buttonFace = await systemColour(page, 'ButtonFace');
+
+	await page.locator('#mute .sonic-key').click();
+	await page.evaluate(() => {
+		for (const id of ['mute', 'mode'])
+			document.querySelector(`#${id}`)?.setAttribute('disabled', '');
+	});
+
+	const inks = await page.evaluate(() =>
+		['#mute .sonic-key-cap', '#mode [aria-checked="true"] .sonic-segmented-cap'].map((selector) => {
+			const cap = document.querySelector(selector);
+
+			return cap ? getComputedStyle(cap).color : 'missing';
+		}),
+	);
+
+	expect(inks).toEqual([buttonFace, buttonFace]);
+});

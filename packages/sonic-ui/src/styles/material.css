@@ -10,7 +10,7 @@
 		.sonic-slider,
 		.sonic-slider-readout
 	) {
-		--_sonic-unlit: var(--sonic-unlit, #27272a);
+		--_sonic-unlit: var(--sonic-unlit, oklch(27.4% 0.005 286deg));
 
 		/* Degrees left of overhead */
 		--_sonic-light-tilt: var(--sonic-light-tilt, 17deg);
@@ -20,20 +20,18 @@
 	}
 
 	:is(.sonic-dial, .sonic-key, .sonic-meter, .sonic-segmented-segment, .sonic-slider) {
-		--_sonic-lit: var(--sonic-lit, #f59e0b);
+		--_sonic-lit: var(--sonic-lit, oklch(76.9% 0.165 70deg));
 	}
 
 	.sonic-meter {
-		--_sonic-hot: var(--sonic-hot, #f97316);
-		--_sonic-clip: var(--sonic-clip, #ef4444);
+		--_sonic-hot: var(--sonic-hot, oklch(70.5% 0.187 48deg));
+		--_sonic-clip: var(--sonic-clip, oklch(63.7% 0.208 25deg));
 	}
 
 	:is(.sonic-dial, .sonic-key, .sonic-segmented-segment, .sonic-slider) {
-		--_sonic-cap: var(--sonic-cap, #3f3f46);
-		--_sonic-cap-hover: var(--sonic-cap-hover, #52525b);
+		--_sonic-cap: var(--sonic-cap, oklch(37% 0.012 286deg));
+		--_sonic-cap-hover: var(--sonic-cap-hover, oklch(44.2% 0.015 286deg));
 		--_sonic-focus: var(--sonic-focus, oklch(90% 0.23 128deg));
-
-		/* Derived from the cap, so a reskinned cap brings its marks along */
 		--_sonic-ink: var(--sonic-mark, color-mix(in oklab, var(--_sonic-cap) 30%, #fff));
 		--_sonic-etch: color-mix(in oklab, var(--_sonic-ink) 30%, transparent);
 		--_sonic-lit-disabled: color-mix(in oklab, var(--_sonic-ink) 25%, var(--_sonic-unlit));
@@ -66,6 +64,7 @@
 				rgb(255 255 255 / 12%);
 		--_sonic-rim: 0 0 0 max(1px, 0.75 * var(--_sonic-unit))
 			color-mix(in oklab, var(--_sonic-cap) 40%, #000);
+		--_sonic-drop-shade: rgb(0 0 0 / 65%);
 		--_sonic-focus-shadow: 0 0 transparent;
 		--_sonic-focus-glow: 0 0 max(4px, 3 * var(--_sonic-unit)) max(1px, 0.5 * var(--_sonic-unit))
 			color-mix(in oklab, var(--_sonic-focus) 60%, transparent);
@@ -120,7 +119,6 @@
 		--_sonic-cap: var(--_sonic-cap-hover);
 		--_sonic-focus-shadow: var(--_sonic-focus-glow);
 
-		/* Painted only in forced colours; inset so it adds no size */
 		outline: 2px solid transparent;
 		outline-offset: -2px;
 	}
@@ -136,7 +134,6 @@
 		--_sonic-unit: calc(var(--_sonic-readout-size) / 32);
 
 		box-sizing: border-box;
-		display: grid;
 		place-items: center;
 		min-inline-size: calc(1.75 * var(--_sonic-readout-size));
 		block-size: var(--_sonic-readout-size);
@@ -173,7 +170,9 @@
 			display 120ms allow-discrete,
 			overlay 120ms allow-discrete;
 
+		/* Grid only while open; a closed readout left rendered is placed against a filtered ancestor, and engines keep the flip it took there */
 		&:popover-open {
+			display: grid;
 			opacity: 1;
 			translate: 0;
 
@@ -224,6 +223,55 @@
 			inline-size: auto;
 			min-inline-size: 3ch;
 			field-sizing: content;
+		}
+	}
+
+	@media (forced-colors: active) {
+		:is(.sonic-dial, .sonic-key, .sonic-meter, .sonic-segmented-segment, .sonic-slider) {
+			--_sonic-lit: Highlight;
+			--_sonic-unlit: GrayText;
+		}
+
+		/* Tokens rather than properties, so a state rule that restates one still paints in system colours */
+		:is(.sonic-dial, .sonic-key, .sonic-segmented-segment, .sonic-slider) {
+			--_sonic-ink: ButtonText;
+			--_sonic-etch: ButtonText;
+			--_sonic-lit-disabled: GrayText;
+			--_sonic-skirt: ButtonFace;
+			--_sonic-face: ButtonFace;
+			--_sonic-sheen: none;
+			--_sonic-face-shadow: none;
+			--_sonic-rim: 0 0 0 max(1px, 0.75 * var(--_sonic-unit)) var(--_sonic-ink);
+			--_sonic-drop-shade: transparent;
+			--_sonic-focus-glow: 0 0 transparent;
+		}
+
+		/* Dimmed is a hint, not a state; the value stays readable */
+		:is(.sonic-dial, .sonic-slider) {
+			--_sonic-lit-off: Highlight;
+		}
+
+		:is(
+			:disabled > :is(.sonic-dial, .sonic-slider),
+			.sonic-key:disabled,
+			.sonic-segmented-segment:disabled
+		) {
+			--_sonic-ink: GrayText;
+			--_sonic-etch: GrayText;
+		}
+
+		/* Stands in for the glow, which forced colours drop; inset, it merged with the cap's rim */
+		:is(.sonic-dial, .sonic-key, .sonic-segmented-segment, .sonic-slider):focus-visible {
+			outline-offset: 2px;
+		}
+
+		:is(.sonic-dial-cap, .sonic-key-cap, .sonic-segmented-cap, .sonic-slider-cap) {
+			color: var(--_sonic-ink);
+			forced-color-adjust: none;
+		}
+
+		:is(.sonic-dial-readout, .sonic-slider-readout) {
+			border: 1px solid CanvasText;
 		}
 	}
 }

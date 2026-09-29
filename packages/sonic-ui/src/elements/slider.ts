@@ -42,7 +42,29 @@ export class SonicSlider extends SonicRangeElement {
 		'orientation',
 	];
 
+	// Named for the absent attribute, as `input.type` reads `text`
+	get groovePress(): 'jump' | 'none' {
+		return this.getAttribute('groove-press') === 'none' ? 'none' : 'jump';
+	}
+
+	set groovePress(gesture: 'jump' | 'none' | undefined) {
+		this.reflect('groove-press', gesture);
+	}
+
+	get orientation(): 'horizontal' | 'vertical' {
+		return this.getAttribute('orientation') === 'vertical' ? 'vertical' : 'horizontal';
+	}
+
+	set orientation(direction: 'horizontal' | 'vertical' | undefined) {
+		this.reflect('orientation', direction);
+	}
+
 	readonly #slider = renderSlider();
+
+	override connectedCallback(): void {
+		this.upgradeProperties('groovePress', 'orientation');
+		super.connectedCallback();
+	}
 
 	protected connect(signal: AbortSignal): void {
 		const slider = this.#slider;
@@ -55,12 +77,16 @@ export class SonicSlider extends SonicRangeElement {
 			const axis = this.#axis(slider, cap);
 			if (event.target instanceof Node && cap.contains(event.target)) return axis;
 
-			if (this.getAttribute('groove-press') === 'none') return;
+			if (this.groovePress === 'none') return;
 
 			this.input(this.valueAt((axis.position(event) - axis.startPx) / axis.travelPx));
 
 			return axis;
 		});
+	}
+
+	protected override focusTarget(): HTMLElement {
+		return this.#slider;
 	}
 
 	protected render(): void {
@@ -71,14 +97,14 @@ export class SonicSlider extends SonicRangeElement {
 		slider.style.setProperty('--_sonic-slider-origin', String(this.originFraction()));
 		if (positions === undefined) slider.style.removeProperty('--_sonic-slider-positions');
 		else slider.style.setProperty('--_sonic-slider-positions', String(positions));
-		this.renderAria(slider, this.#isVertical() ? 'vertical' : 'horizontal');
+		this.renderAria(slider, this.orientation);
 	}
 
 	#axis(slider: HTMLElement, cap: HTMLElement): SliderAxis {
 		const track = slider.getBoundingClientRect();
 		const capBox = cap.getBoundingClientRect();
 
-		if (this.#isVertical()) {
+		if (this.orientation === 'vertical') {
 			return {
 				position: (event) => -event.clientY,
 				startPx: capBox.height / 2 - track.bottom,
@@ -91,9 +117,5 @@ export class SonicSlider extends SonicRangeElement {
 			startPx: track.left + capBox.width / 2,
 			travelPx: Math.max(1, track.width - capBox.width),
 		};
-	}
-
-	#isVertical(): boolean {
-		return this.getAttribute('orientation') === 'vertical';
 	}
 }

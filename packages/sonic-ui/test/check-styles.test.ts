@@ -1,4 +1,3 @@
-// @vitest-environment happy-dom
 import { expect, test, vi } from 'vitest';
 
 import '#define/dial.ts';

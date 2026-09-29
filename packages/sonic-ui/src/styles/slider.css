@@ -1,6 +1,5 @@
 /* The size is the thickness across the travel */
 @layer sonic {
-	/* On the host too, for the placeholder */
 	:is(sonic-slider, .sonic-slider) {
 		--_sonic-slider-size: var(--sonic-slider-size, 2rem);
 		--_sonic-slider-length: var(--sonic-slider-length, 8rem);
@@ -67,7 +66,7 @@
 		--_sonic-slider-lit: var(--_sonic-lit-off);
 	}
 
-	[disabled] > .sonic-slider {
+	:disabled > .sonic-slider {
 		--_sonic-slider-lit: var(--_sonic-lit-disabled);
 		--_sonic-slider-cursor: default;
 	}
@@ -156,7 +155,7 @@
 		border-radius: var(--_sonic-slider-corner);
 		box-shadow:
 			calc(2 * var(--_sonic-cast-x)) calc(2 * var(--_sonic-cast-y)) calc(3 * var(--_sonic-unit))
-				rgb(0 0 0 / 65%),
+				var(--_sonic-drop-shade),
 			var(--_sonic-rim),
 			var(--_sonic-focus-shadow);
 		translate: var(--_sonic-slider-offset) 0;
@@ -194,11 +193,25 @@
 		}
 	}
 
-	[disabled] > .sonic-slider > .sonic-slider-cap::after {
+	:disabled > .sonic-slider > .sonic-slider-cap::after {
 		background: var(--_sonic-etch);
 	}
 
 	[groove-press='none'] > .sonic-slider > .sonic-slider-cap {
 		cursor: var(--_sonic-slider-cursor);
+	}
+
+	@media (forced-colors: active) {
+		:is(.sonic-slider-marks, .sonic-slider-groove) {
+			forced-color-adjust: none;
+		}
+
+		.sonic-slider-groove {
+			box-shadow: none;
+		}
+
+		.sonic-slider-cap::after {
+			box-shadow: none;
+		}
 	}
 }

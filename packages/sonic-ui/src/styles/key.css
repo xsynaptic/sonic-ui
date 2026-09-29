@@ -1,5 +1,4 @@
 @layer sonic {
-	/* On the host too, for the placeholder */
 	:is(sonic-key, .sonic-key) {
 		--_sonic-key-size: var(--sonic-key-size, 2rem);
 	}
@@ -8,7 +7,6 @@
 		display: contents;
 	}
 
-	/* Hides the icon, which has no size before upgrade */
 	sonic-key:not(:defined, [hidden]) {
 		display: block;
 		visibility: hidden;
@@ -18,7 +16,6 @@
 		overflow: hidden;
 	}
 
-	/* The button is the well; the cap is the part that moves */
 	.sonic-key {
 		--_sonic-key-gap-ratio: var(--sonic-key-gap-ratio, 0);
 		--_sonic-key-radius-ratio: var(--sonic-key-radius-ratio, 0.2);
@@ -34,7 +31,7 @@
 		--_sonic-key-shift: calc(var(--_sonic-key-depth) / -2);
 		--_sonic-key-scale: 1;
 		--_sonic-key-drop: calc(1.5 * var(--_sonic-cast-x)) calc(1.5 * var(--_sonic-cast-y))
-			calc(2 * var(--_sonic-unit)) rgb(0 0 0 / 65%);
+			calc(2 * var(--_sonic-unit)) var(--_sonic-drop-shade);
 		--_sonic-key-glow: transparent;
 
 		position: relative;
@@ -60,14 +57,14 @@
 	}
 
 	.sonic-key:active:where(:not(:disabled)),
-	.sonic-key:is([aria-pressed='true'], :where([momentary][pressed]) > *) {
+	.sonic-key:is([aria-pressed='true'], :where([momentary]:state(pressed)) > *) {
 		--_sonic-key-shift: calc(var(--_sonic-key-depth) / 2);
 		--_sonic-key-scale: var(--_sonic-key-press-scale);
 		--_sonic-key-drop: calc(0.5 * var(--_sonic-cast-x)) calc(0.5 * var(--_sonic-cast-y))
-			var(--_sonic-unit) rgb(0 0 0 / 65%);
+			var(--_sonic-unit) var(--_sonic-drop-shade);
 	}
 
-	.sonic-key:is([aria-pressed='true'], :where([momentary][pressed]) > *) {
+	.sonic-key:is([aria-pressed='true'], :where([momentary]:state(pressed)) > *) {
 		--_sonic-key-glow: color-mix(in oklab, var(--_sonic-lit) 22%, transparent);
 
 		color: var(--_sonic-lit);
@@ -121,17 +118,40 @@
 	}
 
 	/* Engraving under the glow keeps a lit icon's edge */
-	.sonic-key:is([aria-pressed='true'], :where([momentary][pressed]) > *) .sonic-key-cap > svg {
+	.sonic-key:is([aria-pressed='true'], :where([momentary]:state(pressed)) > *)
+		.sonic-key-cap
+		> svg {
 		filter: var(--_sonic-engraving)
 			drop-shadow(0 0 var(--_sonic-unit) color-mix(in oklab, var(--_sonic-lit) 35%, transparent));
 	}
 
-	.sonic-key:is([aria-pressed='true'], :where([momentary][pressed]) > *)
+	.sonic-key:is([aria-pressed='true'], :where([momentary]:state(pressed)) > *)
 		.sonic-key-cap
 		> [data-sonic-when='off'],
-	.sonic-key:not([aria-pressed='true'], :where([momentary][pressed]) > *)
+	.sonic-key:not([aria-pressed='true'], :where([momentary]:state(pressed)) > *)
 		.sonic-key-cap
 		> [data-sonic-when='on'] {
 		display: none;
+	}
+
+	@media (forced-colors: active) {
+		.sonic-key-cap > svg {
+			filter: none;
+			mask: none;
+		}
+
+		.sonic-key:is([aria-pressed='true'], :where([momentary]:state(pressed)) > *) {
+			--_sonic-skirt: var(--_sonic-lit);
+			--_sonic-face: var(--_sonic-lit);
+			--_sonic-ink: HighlightText;
+
+			&:disabled {
+				--_sonic-ink: ButtonFace;
+			}
+
+			& .sonic-key-cap > svg {
+				filter: none;
+			}
+		}
 	}
 }

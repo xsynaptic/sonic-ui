@@ -1,9 +1,9 @@
 @layer sonic {
 	.sonic-skin-slate {
-		--sonic-lit: #22d3ee;
-		--sonic-unlit: #1e293b;
-		--sonic-cap: #334155;
-		--sonic-cap-hover: #475569;
+		--sonic-lit: oklch(79.7% 0.134 212deg);
+		--sonic-unlit: oklch(27.9% 0.037 260deg);
+		--sonic-cap: oklch(37.2% 0.039 257deg);
+		--sonic-cap-hover: oklch(44.6% 0.037 257deg);
 		--sonic-dial-ring-ratio: 0.12;
 		--sonic-dial-gap-ratio: 0.07;
 	}

@@ -1,7 +1,7 @@
 import type { Taper } from '#lib/taper.ts';
 
+import { SonicFormElement } from '#elements/form-element.ts';
 import { RangeEntry } from '#elements/range-entry.ts';
-import { SonicElement } from '#elements/sonic-element.ts';
 import { requireChild } from '#lib/render.ts';
 import { clampUnit, linearTaper, logTaper, skewTaper } from '#lib/taper.ts';
 import { writeAttribute } from '#lib/write-attribute.ts';
@@ -33,7 +33,7 @@ const revealPx = 4;
 const canPopover = 'togglePopover' in HTMLElement.prototype;
 
 // A shared anchor name resolves to the last one on the page
-let anchorCount = 0;
+let instanceCount = 0;
 
 // A Mac keyboard's Delete sends Backspace
 const resetKeys = new Set(['Backspace', 'Delete']);
@@ -60,9 +60,9 @@ const sliderAttributes = [
 ];
 
 // As on `<input type="range">`, the property never writes the `value` attribute back
-export abstract class SonicRangeElement extends SonicElement {
+export abstract class SonicRangeElement extends SonicFormElement {
 	static override readonly observedAttributes = [
-		...SonicElement.observedAttributes,
+		...SonicFormElement.observedAttributes,
 		'max',
 		'midpoint',
 		'min',
@@ -74,6 +74,31 @@ export abstract class SonicRangeElement extends SonicElement {
 		'value',
 	];
 
+	get default(): number | undefined {
+		return this.optionalNumberAttribute('default');
+	}
+
+	set default(value: number | undefined) {
+		this.reflect('default', value);
+	}
+
+	get dimmed(): boolean {
+		return this.hasAttribute('dimmed');
+	}
+
+	set dimmed(isDimmed: boolean) {
+		this.reflect('dimmed', isDimmed);
+	}
+
+	// Named for the absent attribute, as `input.type` reads `text`
+	get doublePress(): 'reset' | 'type' {
+		return this.getAttribute('double-press') === 'reset' ? 'reset' : 'type';
+	}
+
+	set doublePress(gesture: 'reset' | 'type' | undefined) {
+		this.reflect('double-press', gesture);
+	}
+
 	get formatValue(): ((value: number) => string) | undefined {
 		return this.#formatValue;
 	}
@@ -83,12 +108,78 @@ export abstract class SonicRangeElement extends SonicElement {
 		this.render();
 	}
 
+	// Unclamped by `min`, so reading it back never pins the range
+	get max(): number {
+		return this.numberAttribute('max', 100);
+	}
+
+	set max(value: number | undefined) {
+		this.reflect('max', value);
+	}
+
+	get midpoint(): number | undefined {
+		return this.optionalNumberAttribute('midpoint');
+	}
+
+	set midpoint(value: number | undefined) {
+		this.reflect('midpoint', value);
+	}
+
+	get min(): number {
+		return this.numberAttribute('min', 0);
+	}
+
+	set min(value: number | undefined) {
+		this.reflect('min', value);
+	}
+
+	get notched(): boolean {
+		return this.hasAttribute('notched');
+	}
+
+	set notched(isNotched: boolean) {
+		this.reflect('notched', isNotched);
+	}
+
+	// `undefined` while unset, so reading it back never pins it to `min`
+	get origin(): number | undefined {
+		return this.optionalNumberAttribute('origin');
+	}
+
+	set origin(value: number | undefined) {
+		this.reflect('origin', value);
+	}
+
 	get parseValue(): ((text: string) => number) | undefined {
 		return this.#parseValue;
 	}
 
 	set parseValue(parse: ((text: string) => number) | undefined) {
 		this.#parseValue = parse;
+	}
+
+	get readout(): boolean {
+		return this.hasAttribute('readout');
+	}
+
+	set readout(isShown: boolean) {
+		this.reflect('readout', isShown);
+	}
+
+	get step(): number {
+		return this.numberAttribute('step', 1);
+	}
+
+	set step(value: number | undefined) {
+		this.reflect('step', value);
+	}
+
+	get taper(): 'linear' | 'log' {
+		return this.getAttribute('taper') === 'log' ? 'log' : 'linear';
+	}
+
+	set taper(curve: 'linear' | 'log' | undefined) {
+		this.reflect('taper', curve);
 	}
 
 	get value(): number {
@@ -102,13 +193,13 @@ export abstract class SonicRangeElement extends SonicElement {
 		this.#write(next);
 	}
 
-	readonly #anchor = `--sonic-readout-${String((anchorCount += 1))}`;
-
 	#drag: RangeDrag | undefined;
 
 	#entry: RangeEntry | undefined;
 
 	#formatValue: ((value: number) => string) | undefined;
+
+	readonly #instance = String((instanceCount += 1));
 
 	// Re-read from the attribute until the property is set, since `max` may arrive after `value`
 	#isDirty = false;
@@ -127,21 +218,35 @@ export abstract class SonicRangeElement extends SonicElement {
 
 			this.#isDirty = false;
 		}
-		if (name === 'disabled' && this.disabled) {
+		if (name === 'disabled' && this.isDisabled()) {
 			this.#entry?.close(false);
 			this.#endDrag();
 		}
 
 		this.#value = this.#clamp(
-			this.#isDirty ? this.#value : this.numberAttribute('value', this.min()),
+			this.#isDirty ? this.#value : this.numberAttribute('value', this.min),
 		);
 		this.render();
 	}
 
+	// The range before `value`, or a value set with its `max` before upgrade clamps to the old one
 	override connectedCallback(): void {
-		this.upgradeProperty('formatValue');
-		this.upgradeProperty('parseValue');
-		this.upgradeProperty('value');
+		this.upgradeProperties(
+			'default',
+			'dimmed',
+			'doublePress',
+			'max',
+			'midpoint',
+			'min',
+			'notched',
+			'origin',
+			'readout',
+			'step',
+			'taper',
+			'formatValue',
+			'parseValue',
+			'value',
+		);
 		super.connectedCallback();
 	}
 
@@ -155,8 +260,10 @@ export abstract class SonicRangeElement extends SonicElement {
 		control.addEventListener(
 			'pointerdown',
 			(event) => {
-				if (event.button !== 0 || this.disabled || entry.isOpen) return;
+				if (event.button !== 0 || this.isDisabled() || entry.isOpen) return;
 
+				// A click listener above makes WebKit send a tap's compatibility mousedown, which blurs the entry a double tap just opened
+				if (event.pointerType === 'touch') event.preventDefault();
 				control.focus();
 				if (event.metaKey || event.ctrlKey) {
 					this.#reset();
@@ -231,7 +338,7 @@ export abstract class SonicRangeElement extends SonicElement {
 				this.#endDrag();
 				if (!entry.press(event)) return;
 
-				if (this.getAttribute('double-press') === 'reset') this.#reset();
+				if (this.doublePress === 'reset') this.#reset();
 				else entry.open();
 			},
 			{ signal },
@@ -248,11 +355,11 @@ export abstract class SonicRangeElement extends SonicElement {
 	}
 
 	protected clampRange(next: number): number {
-		return Math.min(this.max(), Math.max(this.min(), next));
+		return Math.min(this.#max(), Math.max(this.min, next));
 	}
 
 	protected fraction(value: number): number {
-		return (this.#taper() ?? linearTaper(this.min(), this.max())).position(value);
+		return (this.#taper() ?? linearTaper(this.min, this.#max())).position(value);
 	}
 
 	protected input(next: number): boolean {
@@ -266,33 +373,25 @@ export abstract class SonicRangeElement extends SonicElement {
 		return true;
 	}
 
-	protected max(): number {
-		return Math.max(this.min(), this.numberAttribute('max', 100));
-	}
-
-	protected min(): number {
-		return this.numberAttribute('min', 0);
-	}
-
 	protected originFraction(): number {
-		return this.fraction(this.numberAttribute('origin', this.min()));
+		return this.fraction(this.origin ?? this.min);
 	}
 
 	protected positions(): number | undefined {
-		const positions = Math.round(this.range() / this.#step()) + 1;
+		const positions = Math.round(this.range() / this.step) + 1;
 
-		if (!this.hasAttribute('notched') || !Number.isFinite(positions) || positions < 2) return;
+		if (!this.notched || !Number.isFinite(positions) || positions < 2) return;
 
 		return positions;
 	}
 
 	protected range(): number {
-		return this.max() - this.min();
+		return this.#max() - this.min;
 	}
 
-	protected abstract render(): void;
-
+	// Per render rather than per write, so a range with no `value` attribute submits its minimum too
 	protected renderAria(control: HTMLElement, orientation?: 'horizontal' | 'vertical'): void {
+		this.writeFormValue(String(this.#value), String(this.#value));
 		if (this.#entry?.isOpen) {
 			for (const name of sliderAttributes) control.removeAttribute(name);
 			this.forwardNaming(control, false);
@@ -301,8 +400,8 @@ export abstract class SonicRangeElement extends SonicElement {
 		}
 
 		control.setAttribute('role', 'slider');
-		control.setAttribute('aria-valuemin', String(this.min()));
-		control.setAttribute('aria-valuemax', String(this.max()));
+		control.setAttribute('aria-valuemin', String(this.min));
+		control.setAttribute('aria-valuemax', String(this.#max()));
 		control.setAttribute('aria-valuenow', String(this.#value));
 		if (orientation) control.setAttribute('aria-orientation', orientation);
 		writeAttribute(control, 'aria-valuetext', this.#formatValue?.(this.#value));
@@ -311,17 +410,25 @@ export abstract class SonicRangeElement extends SonicElement {
 		this.#renderReadout();
 	}
 
+	protected restoreState(state: string): void {
+		this.value = Number(state);
+	}
+
 	protected valueAt(fraction: number): number {
-		return (this.#taper() ?? linearTaper(this.min(), this.max())).value(fraction);
+		return (this.#taper() ?? linearTaper(this.min, this.#max())).value(fraction);
 	}
 
 	#bindEntry(control: HTMLElement, signal: AbortSignal): RangeEntry {
 		const input = requireChild(control, 'input', HTMLInputElement);
 		const bubble = requireChild(control, '[popover]', HTMLElement);
 
+		const anchor = `--sonic-readout-${this.#instance}`;
+
+		// Chrome's issues panel flags a form field with no id or name; a `name` would submit it
+		input.id = `sonic-entry-${this.#instance}`;
 		this.#readout = { bubble, text: requireChild(bubble, 'span', HTMLElement) };
-		control.style.setProperty('anchor-name', this.#anchor);
-		bubble.style.setProperty('position-anchor', this.#anchor);
+		control.style.setProperty('anchor-name', anchor);
+		bubble.style.setProperty('position-anchor', anchor);
 
 		const entry = new RangeEntry(input, {
 			commit: (text) => {
@@ -347,7 +454,7 @@ export abstract class SonicRangeElement extends SonicElement {
 		control.addEventListener(
 			'keydown',
 			(event) => {
-				if (this.disabled || event.defaultPrevented || event.target !== control) return;
+				if (this.isDisabled() || event.defaultPrevented || event.target !== control) return;
 
 				if (event.key === 'Enter') {
 					event.preventDefault();
@@ -374,8 +481,8 @@ export abstract class SonicRangeElement extends SonicElement {
 	}
 
 	#clamp(next: number): number {
-		const min = this.min();
-		const step = this.#step();
+		const min = this.min;
+		const step = this.step;
 		const stepped = step > 0 ? min + Math.round((next - min) / step) * step : next;
 
 		// A step like 0.01 leaves float residue
@@ -408,18 +515,18 @@ export abstract class SonicRangeElement extends SonicElement {
 	#isValueShown(): boolean {
 		const isRevealed = this.#drag?.isRevealed === true || this.#keyRevealTimer !== undefined;
 
-		return isRevealed && this.hasAttribute('readout');
+		return isRevealed && this.readout;
 	}
 
 	#keyTarget(key: string): number | undefined {
-		if (key === 'Home') return this.min();
-		if (key === 'End') return this.max();
-		if (resetKeys.has(key)) return this.#resetValue();
+		if (key === 'Home') return this.min;
+		if (key === 'End') return this.#max();
+		if (resetKeys.has(key)) return this.default;
 
 		const steps = keySteps.get(key);
 		if (steps === undefined) return undefined;
 
-		const step = this.#step() > 0 ? this.#step() : this.range() / 100;
+		const step = this.step > 0 ? this.step : this.range() / 100;
 		const taper = this.#taper();
 		if (!taper) return this.#value + steps * step;
 
@@ -429,8 +536,12 @@ export abstract class SonicRangeElement extends SonicElement {
 		return next === this.#value ? this.#value + Math.sign(steps) * step : next;
 	}
 
+	#max(): number {
+		return Math.max(this.min, this.max);
+	}
+
 	#renderDisabled(control: HTMLElement): void {
-		if (this.disabled) {
+		if (this.isDisabled()) {
 			control.setAttribute('aria-disabled', 'true');
 			control.removeAttribute('tabindex');
 			return;
@@ -452,13 +563,7 @@ export abstract class SonicRangeElement extends SonicElement {
 	}
 
 	#reset(): void {
-		this.#commit(this.numberAttribute('default', NaN));
-	}
-
-	#resetValue(): number | undefined {
-		const value = this.numberAttribute('default', NaN);
-
-		return Number.isFinite(value) ? value : undefined;
+		this.#commit(this.default ?? NaN);
 	}
 
 	#reveal(drag: RangeDrag): void {
@@ -476,19 +581,15 @@ export abstract class SonicRangeElement extends SonicElement {
 		this.#renderReadout();
 	}
 
-	#step(): number {
-		return this.numberAttribute('step', 1);
-	}
-
 	// Notches are evenly spaced, so a notched control stays linear
 	#taper(): Taper | undefined {
-		if (this.hasAttribute('notched')) return undefined;
+		if (this.notched) return undefined;
 
-		const min = this.min();
-		const max = this.max();
-		const log = this.getAttribute('taper') === 'log' ? logTaper(min, max) : undefined;
+		const min = this.min;
+		const max = this.#max();
+		const log = this.taper === 'log' ? logTaper(min, max) : undefined;
 
-		return log ?? skewTaper(min, max, this.numberAttribute('midpoint', NaN));
+		return log ?? skewTaper(min, max, this.midpoint ?? NaN);
 	}
 
 	#valueText(): string {
@@ -499,7 +600,11 @@ export abstract class SonicRangeElement extends SonicElement {
 		if (!Number.isFinite(next)) return;
 
 		this.#isDirty = true;
-		this.#value = this.#clamp(next);
+
+		const clamped = this.#clamp(next);
+		if (clamped === this.#value) return;
+
+		this.#value = clamped;
 		this.render();
 	}
 }

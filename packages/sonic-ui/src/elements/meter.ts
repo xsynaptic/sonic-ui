@@ -51,6 +51,30 @@ export class SonicMeter extends SonicElement {
 		this.#schedule(now);
 	}
 
+	get max(): number {
+		return this.numberAttribute('max', 0);
+	}
+
+	set max(decibels: number | undefined) {
+		this.reflect('max', decibels);
+	}
+
+	get min(): number {
+		return this.numberAttribute('min', -60);
+	}
+
+	set min(decibels: number | undefined) {
+		this.reflect('min', decibels);
+	}
+
+	get orientation(): 'horizontal' | 'vertical' {
+		return this.getAttribute('orientation') === 'horizontal' ? 'horizontal' : 'vertical';
+	}
+
+	set orientation(direction: 'horizontal' | 'vertical' | undefined) {
+		this.reflect('orientation', direction);
+	}
+
 	#bar = -Infinity;
 
 	#clipAt = -Infinity;
@@ -79,7 +103,7 @@ export class SonicMeter extends SonicElement {
 	protected connect(signal: AbortSignal): void {
 		const now = performance.now();
 
-		this.upgradeProperty('level');
+		this.upgradeProperties('max', 'min', 'orientation', 'level');
 		this.appendOnce(this.#meter);
 		this.#render(now);
 		this.#schedule(now);
@@ -96,14 +120,14 @@ export class SonicMeter extends SonicElement {
 	}
 
 	#fraction(decibels: number): number {
-		const min = this.#min();
-		const range = this.#max() - min;
+		const min = this.min;
+		const range = this.max - min;
 
 		return range > 0 ? Math.min(1, Math.max(0, (decibels - min) / range)) : 0;
 	}
 
 	#isSettled(now: number): boolean {
-		const floor = this.#min();
+		const floor = this.min;
 
 		return (
 			this.#bar <= Math.max(this.#target, floor) &&
@@ -112,20 +136,11 @@ export class SonicMeter extends SonicElement {
 		);
 	}
 
-	#max(): number {
-		return this.numberAttribute('max', 0);
-	}
-
-	#min(): number {
-		return this.numberAttribute('min', -60);
-	}
-
 	#render(now: number): void {
 		const meter = this.#meter;
 
-		// The sheet places its colour zones on the scale
-		meter.style.setProperty('--_sonic-meter-min', String(this.#min()));
-		meter.style.setProperty('--_sonic-meter-max', String(this.#max()));
+		meter.style.setProperty('--_sonic-meter-min', String(this.min));
+		meter.style.setProperty('--_sonic-meter-max', String(this.max));
 
 		// Disabled puts the light out, as on the other controls; the ballistics keep running so it lights up mid-fall
 		if (this.disabled) {
@@ -153,7 +168,7 @@ export class SonicMeter extends SonicElement {
 
 		this.#frame = undefined;
 		this.#lastFrame = time;
-		this.#bar = Math.max(this.#target, this.#min(), this.#bar - fall);
+		this.#bar = Math.max(this.#target, this.min, this.#bar - fall);
 		if (time - this.#peakAt >= holdMs) this.#peak = Math.max(this.#bar, this.#peak - fall);
 		this.#render(time);
 		if (this.#isSettled(time)) {

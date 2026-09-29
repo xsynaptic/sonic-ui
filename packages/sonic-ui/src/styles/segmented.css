@@ -1,5 +1,4 @@
 @layer sonic {
-	/* On the host too, for the placeholder */
 	:is(sonic-segmented, .sonic-segmented) {
 		--_sonic-segmented-size: var(--sonic-segmented-size, 2rem);
 	}
@@ -8,7 +7,6 @@
 		display: contents;
 	}
 
-	/* Hides the options, which have no size before upgrade */
 	sonic-segmented:not(:defined, [hidden]) {
 		display: block;
 		visibility: hidden;
@@ -34,8 +32,6 @@
 			var(--_sonic-segmented-size) * var(--_sonic-segmented-depth-ratio)
 		);
 		--_sonic-segmented-gap: calc(var(--_sonic-segmented-size) * var(--_sonic-segmented-gap-ratio));
-
-		/* Concentric with the well's corner */
 		--_sonic-segmented-inner-corner: max(
 			0px,
 			var(--_sonic-segmented-corner) - var(--_sonic-segmented-gap)
@@ -47,6 +43,7 @@
 		gap: var(--_sonic-segmented-gap);
 		block-size: var(--_sonic-segmented-size);
 		padding: var(--_sonic-segmented-gap);
+		touch-action: pan-y;
 		user-select: none;
 		background: linear-gradient(
 			var(--_sonic-light-fall),
@@ -61,7 +58,7 @@
 		--_sonic-segmented-shift: calc(var(--_sonic-segmented-depth) / -2);
 		--_sonic-segmented-scale: 1;
 		--_sonic-segmented-drop: calc(1.5 * var(--_sonic-cast-x)) calc(1.5 * var(--_sonic-cast-y))
-			calc(2 * var(--_sonic-unit)) rgb(0 0 0 / 65%);
+			calc(2 * var(--_sonic-unit)) var(--_sonic-drop-shade);
 		--_sonic-segmented-glow: transparent;
 
 		display: grid;
@@ -77,12 +74,12 @@
 		border-radius: var(--_sonic-segmented-inner-corner);
 	}
 
-	.sonic-segmented-segment:active:where(:not(:disabled)),
+	.sonic-segmented-segment:where([data-sonic-pressed], :focus-visible:active):not(:disabled),
 	.sonic-segmented-segment[aria-checked='true'] {
 		--_sonic-segmented-shift: calc(var(--_sonic-segmented-depth) / 2);
 		--_sonic-segmented-scale: var(--_sonic-segmented-press-scale);
 		--_sonic-segmented-drop: calc(0.5 * var(--_sonic-cast-x)) calc(0.5 * var(--_sonic-cast-y))
-			var(--_sonic-unit) rgb(0 0 0 / 65%);
+			var(--_sonic-unit) var(--_sonic-drop-shade);
 	}
 
 	.sonic-segmented-segment[aria-checked='true'] {
@@ -143,5 +140,25 @@
 	.sonic-segmented-segment[aria-checked='true'] .sonic-segmented-cap > * {
 		filter: var(--_sonic-engraving)
 			drop-shadow(0 0 var(--_sonic-unit) color-mix(in oklab, var(--_sonic-lit) 35%, transparent));
+	}
+
+	@media (forced-colors: active) {
+		.sonic-segmented-cap > * {
+			filter: none;
+		}
+
+		.sonic-segmented-segment[aria-checked='true'] {
+			--_sonic-skirt: var(--_sonic-lit);
+			--_sonic-face: var(--_sonic-lit);
+			--_sonic-ink: HighlightText;
+
+			&:disabled {
+				--_sonic-ink: ButtonFace;
+			}
+
+			& .sonic-segmented-cap > * {
+				filter: none;
+			}
+		}
 	}
 }

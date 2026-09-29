@@ -1,0 +1,18 @@
+---
+import Document from '#components/document.astro';
+
+import '@xsynaptic/sonic-ui/dial.css';
+
+// The dial's sheet without the material, which should warn
+// The preview resolves the default tree, which leaves the warning out, so this imports the development tree by path
+---
+
+<Document title="sonic-ui fixtures, no material">
+	<main>
+		<h1>No material</h1>
+		<sonic-dial aria-label="Level" value="50"></sonic-dial>
+	</main>
+	<script>
+		import '../../../../packages/sonic-ui/dist/dev/define/dial.js';
+	</script>
+</Document>

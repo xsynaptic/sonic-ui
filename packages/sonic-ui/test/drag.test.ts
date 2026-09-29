@@ -1,43 +1,21 @@
 import { expect, test } from 'vitest';
 
-// @vitest-environment happy-dom
 import type { SonicDial } from '#elements/dial.ts';
 
 import '#define/dial.ts';
 
+import { mountDial, recordEvents } from './helpers.ts';
+
 // happy-dom computes no styles, so the dial falls back to 160px of travel: 16px moves a 0 to 100 dial by 10
 const pointer = { bubbles: true, button: 0, clientX: 10, pointerId: 1 };
-
-function mountDial(attributes: string): { control: HTMLElement; dial: SonicDial } {
-	document.body.innerHTML = `<sonic-dial ${attributes}></sonic-dial>`;
-
-	const dial = document.querySelector('sonic-dial');
-	const control = dial?.querySelector<HTMLElement>('.sonic-dial');
-	if (!dial || !control) throw new Error('The dial did not render');
-
-	return { control, dial };
-}
 
 function pointerAt(control: HTMLElement, type: string, clientY: number): void {
 	control.dispatchEvent(new PointerEvent(type, { ...pointer, clientY }));
 }
 
-function recordEvents(dial: SonicDial): Array<string> {
-	const events: Array<string> = [];
-
-	dial.addEventListener('input', () => {
-		events.push('input');
-	});
-	dial.addEventListener('change', () => {
-		events.push('change');
-	});
-
-	return events;
-}
-
 test('a drag moves the value with the pointer and reports change on release', () => {
 	const { control, dial } = mountDial('value="50"');
-	const events = recordEvents(dial);
+	const events = recordEvents(document.body);
 
 	pointerAt(control, 'pointerdown', 100);
 	pointerAt(control, 'pointermove', 84);
@@ -71,6 +49,15 @@ test.each([
 
 	pointerAt(control, 'pointermove', 76);
 	expect(dial.value).toBe(65);
+});
+
+test('a secondary button starts no drag', () => {
+	const { control, dial } = mountDial('value="50"');
+
+	control.dispatchEvent(new PointerEvent('pointerdown', { ...pointer, button: 2, clientY: 100 }));
+	pointerAt(control, 'pointermove', 84);
+
+	expect(dial.value).toBe(50);
 });
 
 test('writes after release apply', () => {

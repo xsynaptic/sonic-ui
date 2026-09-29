@@ -1,6 +1,5 @@
 /* The size is the thickness */
 @layer sonic {
-	/* On the host too, for the placeholder */
 	:is(sonic-meter, .sonic-meter) {
 		--_sonic-meter-size: var(--sonic-meter-size, 0.5rem);
 		--_sonic-meter-length: var(--sonic-meter-length, 8rem);
@@ -22,7 +21,6 @@
 		block-size: var(--_sonic-meter-size);
 	}
 
-	/* Laid on its side rather than rotated, as the slider is */
 	.sonic-meter {
 		/* Absolute, so a longer meter gains segments rather than stretching them */
 		--_sonic-meter-pitch: var(--sonic-meter-segment-pitch, 4px);
@@ -46,8 +44,6 @@
 		--_sonic-meter-segment-radius: calc(
 			var(--_sonic-meter-segment) * var(--_sonic-meter-segment-radius-ratio)
 		);
-
-		/* Whole segments only, so the last one ends flush */
 		--_sonic-meter-segments: round(
 			down,
 			var(--_sonic-meter-length) - 3 * var(--_sonic-meter-inset) - var(--_sonic-meter-lens) +
@@ -62,7 +58,6 @@
 		background: color-mix(in oklab, var(--_sonic-unlit) 55%, #000);
 		border-radius: calc(var(--_sonic-meter-size) * var(--_sonic-meter-radius-ratio));
 
-		/* Over the segments, so the lip shades them too */
 		&::after {
 			position: absolute;
 			inset: 0;
@@ -267,5 +262,30 @@
 		inset: var(--_sonic-meter-inset) var(--_sonic-meter-inset) var(--_sonic-meter-inset) auto;
 		inline-size: var(--_sonic-meter-lens);
 		block-size: auto;
+	}
+
+	/* Takes no focus, so the whole meter opts out */
+	@media (forced-colors: active) {
+		.sonic-meter {
+			forced-color-adjust: none;
+			background: Canvas;
+
+			&::after {
+				border: 1px solid CanvasText;
+				box-shadow: none;
+			}
+		}
+
+		:is(.sonic-meter-segments, .sonic-meter-clip) {
+			background: var(--_sonic-unlit);
+		}
+
+		.sonic-meter-level {
+			background: var(--_sonic-lit);
+		}
+
+		.sonic-meter-clip::after {
+			background: Mark;
+		}
 	}
 }

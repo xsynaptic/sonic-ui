@@ -34,6 +34,8 @@ export class RangeEntry {
 
 	#lastPress: Press | undefined;
 
+	#openedText = '';
+
 	readonly #options: RangeEntryOptions;
 
 	constructor(input: HTMLInputElement, options: RangeEntryOptions) {
@@ -89,7 +91,9 @@ export class RangeEntry {
 		this.#isOpen = false;
 		this.#input.hidden = true;
 		this.#options.toggle(false);
-		if (isCommitting) this.#options.commit(this.#input.value);
+		// A format that rounds would otherwise write its rounding back
+		if (isCommitting && this.#input.value !== this.#openedText)
+			this.#options.commit(this.#input.value);
 	}
 
 	forgetPress(): void {
@@ -100,7 +104,8 @@ export class RangeEntry {
 		const input = this.#input;
 
 		this.#isOpen = true;
-		input.value = this.#options.text();
+		this.#openedText = this.#options.text();
+		input.value = this.#openedText;
 		input.hidden = false;
 		this.#options.toggle(true);
 		input.focus();

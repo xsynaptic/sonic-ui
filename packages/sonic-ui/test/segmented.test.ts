@@ -1,19 +1,16 @@
 import { expect, test } from 'vitest';
 
-// @vitest-environment happy-dom
 import type { SonicSegmented } from '#elements/segmented.ts';
 
 import '#define/segmented.ts';
+
+import { nextTask, pressKey } from './helpers.ts';
 
 const options = /* HTML */ `
 	<span data-sonic-value="lp">LP</span>
 	<span data-sonic-value="bp">BP</span>
 	<span data-sonic-value="hp">HP</span>
 `;
-
-function nextTask(): Promise<unknown> {
-	return new Promise((resolve) => setTimeout(resolve, 0));
-}
 
 // happy-dom connects the element before parsing its children, so the options arrive through the observer
 async function mountSegmented(attributes: string): Promise<{
@@ -39,31 +36,24 @@ function valueOf(segment: Element): string | undefined {
 	return segment.querySelector<HTMLElement>('[data-sonic-value]')?.dataset.sonicValue;
 }
 
-function pressKey(target: HTMLElement, key: string): KeyboardEvent {
-	const event = new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key });
-
-	target.dispatchEvent(event);
-
-	return event;
-}
-
 function recordChanges(segmented: SonicSegmented): Array<string> {
 	const changes: Array<string> = [];
 
-	segmented.addEventListener('change', () => {
+	document.body.addEventListener('change', () => {
 		changes.push(segmented.value);
 	});
 
 	return changes;
 }
 
-test('each option lands in its own segment cap, one appended later too, and other children stay put', async () => {
+test('each option lands in its own segment cap, one appended later too, and other children render beside the group', async () => {
 	const { group, segmented } = await mountSegmented('');
 	const late = document.createElement('span');
 	const plain = document.createElement('span');
+	const status = document.createTextNode('Live');
 
 	late.dataset.sonicValue = 'notch';
-	segmented.append(late, plain);
+	segmented.append(late, plain, status);
 	await nextTask();
 
 	const caps = [
@@ -72,7 +62,11 @@ test('each option lands in its own segment cap, one appended later too, and othe
 
 	expect(caps.map((cap) => valueOf(cap))).toEqual(['lp', 'bp', 'hp', 'notch']);
 	expect(group.getAttribute('role')).toBe('radiogroup');
-	expect(plain.parentElement).toBe(segmented);
+
+	const rendered = segmented.shadowRoot?.querySelector('slot')?.assignedNodes() ?? [];
+
+	expect(rendered).not.toContain(late);
+	expect(rendered.slice(-3)).toEqual([plain, status, group]);
 });
 
 test('replacing the options rebuilds the group and latches the value among them', async () => {
@@ -132,6 +126,16 @@ test('the attribute sets the value and the property never writes it back', async
 
 	segmented.value = 'none of them';
 	expect(checked(segments)).toEqual(['false', 'false', 'false']);
+});
+
+test('naming the switch keeps a value set by the property', async () => {
+	const { segmented, segments } = await mountSegmented('value="lp"');
+
+	segmented.value = 'hp';
+	segmented.setAttribute('aria-label', 'Mode');
+
+	expect(segmented.value).toBe('hp');
+	expect(checked(segments)).toEqual(['false', 'false', 'true']);
 });
 
 test('a value set before the options arrive latches them once they do', async () => {
@@ -215,17 +219,166 @@ test('disabled disables every segment, so a click no longer latches', async () =
 	expect(segments.some((segment) => segment.disabled)).toBe(false);
 });
 
-test.each(['aria-describedby', 'aria-label', 'aria-labelledby'])(
-	'%s is forwarded to the radio group as it is added, changed and removed',
-	async (name) => {
-		const { group, segmented } = await mountSegmented(`${name}="first"`);
+test('aria-label is forwarded to the radio group as it is added, changed and removed', async () => {
+	const { group, segmented } = await mountSegmented('aria-label="first"');
 
-		expect(group.getAttribute(name)).toBe('first');
+	expect(group.getAttribute('aria-label')).toBe('first');
 
-		segmented.setAttribute(name, 'second');
-		expect(group.getAttribute(name)).toBe('second');
+	segmented.setAttribute('aria-label', 'second');
+	expect(group.getAttribute('aria-label')).toBe('second');
 
-		segmented.removeAttribute(name);
-		expect(group.hasAttribute(name)).toBe(false);
-	},
-);
+	segmented.removeAttribute('aria-label');
+	expect(group.hasAttribute('aria-label')).toBe(false);
+});
+
+test('writing the current value leaves the switch untouched', async () => {
+	const { segmented } = await mountSegmented('value="bp"');
+	const records: Array<MutationRecord> = [];
+	const observer = new MutationObserver((batch) => {
+		records.push(...batch);
+	});
+
+	observer.observe(segmented, {
+		attributes: true,
+		characterData: true,
+		childList: true,
+		subtree: true,
+	});
+	segmented.value = 'bp';
+
+	expect([...records, ...observer.takeRecords()]).toEqual([]);
+	observer.disconnect();
+});
+
+test('focus follows its option when the options are reordered', async () => {
+	const { segmented } = await mountSegmented('value="lp"');
+	const [lp] = segmented.querySelectorAll(':scope > [data-sonic-value]');
+
+	segmented.querySelector<HTMLButtonElement>('[aria-checked="true"]')?.focus();
+	if (lp) segmented.append(lp);
+	await nextTask();
+
+	const focused = document.activeElement;
+
+	expect(focused?.querySelector('[data-sonic-value]')?.textContent).toBe('LP');
+	expect(focused?.getAttribute('aria-checked')).toBe('true');
+});
+
+test('removing the focused option moves focus to the tab stop', async () => {
+	const { segmented } = await mountSegmented('value="bp"');
+
+	segmented.querySelectorAll<HTMLButtonElement>('.sonic-segmented-segment')[2]?.focus();
+	segmented.querySelector(':scope > [data-sonic-value="hp"]')?.remove();
+	await nextTask();
+
+	const focused = document.activeElement;
+
+	expect(focused?.getAttribute('aria-checked')).toBe('true');
+});
+
+test('a change inside a child that is not an option leaves the copies alone', async () => {
+	const { group, segmented } = await mountSegmented('');
+	const status = document.createElement('span');
+
+	segmented.append(status);
+	await nextTask();
+
+	const copy = group.querySelector('[data-sonic-value]');
+
+	status.textContent = 'Live';
+	await nextTask();
+
+	expect(group.querySelector('[data-sonic-value]')).toBe(copy);
+});
+
+test('an option that loses its value leaves the group', async () => {
+	const { group, segmented } = await mountSegmented('value="bp"');
+
+	segmented.querySelector(':scope > [data-sonic-value="bp"]')?.removeAttribute('data-sonic-value');
+	await nextTask();
+
+	expect([...group.querySelectorAll('button')].map((segment) => valueOf(segment))).toEqual([
+		'lp',
+		'hp',
+	]);
+});
+
+test('focus() reaches the tab stop, and leaves focus on another segment where it is', async () => {
+	const { segmented, segments } = await mountSegmented('value="bp"');
+
+	segmented.focus();
+	expect(document.activeElement).toBe(segments[1]);
+
+	segments[2]?.focus();
+	segmented.focus();
+	expect(document.activeElement).toBe(segments[2]);
+});
+
+function layOut(segments: Array<HTMLButtonElement>): void {
+	for (const [index, segment] of segments.entries()) {
+		segment.getBoundingClientRect = () => new DOMRect(index * 60, 0, 60, 20);
+	}
+}
+
+function pointerAt(target: Element, type: string, clientX: number): void {
+	target.dispatchEvent(
+		new PointerEvent(type, {
+			bubbles: true,
+			button: 0,
+			clientX,
+			clientY: 10,
+			pointerId: 1,
+			pointerType: 'mouse',
+		}),
+	);
+}
+
+function held(segments: Array<HTMLButtonElement>): Array<boolean> {
+	return segments.map((segment) => segment.dataset.sonicPressed !== undefined);
+}
+
+test('a press follows the pointer across segments and latches where it is released', async () => {
+	const { group, segmented, segments } = await mountSegmented('value="lp"');
+	const changes = recordChanges(segmented);
+
+	layOut(segments);
+	pointerAt(segments[0]?.firstElementChild ?? group, 'pointerdown', 30);
+	expect(held(segments)).toEqual([true, false, false]);
+
+	pointerAt(group, 'pointermove', 150);
+	expect(held(segments)).toEqual([false, false, true]);
+	expect(segmented.value).toBe('lp');
+
+	pointerAt(group, 'pointerup', 150);
+	pointerAt(segments[0] ?? group, 'click', 150);
+
+	expect(segmented.value).toBe('hp');
+	expect(changes).toEqual(['hp']);
+	expect(held(segments)).toEqual([false, false, false]);
+});
+
+test('a press released off the switch latches nothing', async () => {
+	const { group, segmented, segments } = await mountSegmented('value="lp"');
+	const changes = recordChanges(segmented);
+
+	layOut(segments);
+	pointerAt(segments[1] ?? group, 'pointerdown', 90);
+	pointerAt(group, 'pointermove', 400);
+	expect(held(segments)).toEqual([false, false, false]);
+
+	pointerAt(group, 'pointerup', 400);
+
+	expect(segmented.value).toBe('lp');
+	expect(changes).toEqual([]);
+});
+
+test('a disabled switch holds no press', async () => {
+	const { group, segmented, segments } = await mountSegmented('disabled value="lp"');
+
+	layOut(segments);
+	pointerAt(segments[1] ?? group, 'pointerdown', 90);
+	pointerAt(group, 'pointerup', 90);
+
+	expect(held(segments)).toEqual([false, false, false]);
+	expect(segmented.value).toBe('lp');
+});

@@ -1,4 +1,5 @@
-import { SonicElement } from '#elements/sonic-element.ts';
+import { SonicFormElement } from '#elements/form-element.ts';
+import { copyNode } from '#lib/copy-node.ts';
 import { template } from '#lib/render.ts';
 
 declare global {
@@ -29,12 +30,23 @@ const keySteps = new Map([
 	['ArrowUp', -1],
 ]);
 
+interface Press {
+	pointerId: number;
+	segment: HTMLButtonElement | undefined;
+}
+
+function isUnder(segment: Element, x: number, y: number): boolean {
+	const box = segment.getBoundingClientRect();
+
+	return x >= box.left && x < box.right && y >= box.top && y < box.bottom;
+}
+
 function segmentValue(segment: Element): string | undefined {
 	return segment.querySelector<HTMLElement | SVGElement>('[data-sonic-value]')?.dataset.sonicValue;
 }
 
-export class SonicSegmented extends SonicElement {
-	static override readonly observedAttributes = [...SonicElement.observedAttributes, 'value'];
+export class SonicSegmented extends SonicFormElement {
+	static override readonly observedAttributes = [...SonicFormElement.observedAttributes, 'value'];
 
 	// As on the range, the property never writes the `value` attribute back
 	get value(): string {
@@ -42,9 +54,13 @@ export class SonicSegmented extends SonicElement {
 	}
 
 	set value(next: string) {
+		if (next === this.#value) return;
+
 		this.#value = next;
-		this.#render();
+		this.render();
 	}
+
+	#press: Press | undefined;
 
 	readonly #segmented = renderSegmented();
 
@@ -52,39 +68,36 @@ export class SonicSegmented extends SonicElement {
 
 	attributeChangedCallback(name: string): void {
 		if (name === 'value') this.#value = this.getAttribute('value') ?? '';
-		this.#render();
+		this.render();
 	}
 
 	protected connect(signal: AbortSignal): void {
 		const segmented = this.#segmented;
 
-		this.upgradeProperty('value');
-		this.adoptChildren(() => {
-			const segments = [...this.querySelectorAll(':scope > [data-sonic-value]')];
-			const isReplaced = segmented.parentNode !== this;
-
-			// Arrivals after a replacement take the old options' place
-			if (isReplaced) segmented.replaceChildren();
-			for (const child of segments) {
-				const segment = renderSegment();
-
-				segment.firstElementChild?.append(child);
-				segmented.append(segment);
-			}
-			this.appendOnce(segmented);
-			if (isReplaced || segments.length > 0) this.#render();
-		}, signal);
-		this.#render();
+		this.upgradeProperties('value');
+		this.mirrorChildren(
+			{
+				control: segmented,
+				copy: (options) => {
+					this.#copyOptions(options);
+				},
+				isCopied: (child) => child instanceof Element && child.matches('[data-sonic-value]'),
+			},
+			signal,
+		);
 		this.checkStyles(segmented, 'segmented.css');
 
 		segmented.addEventListener(
 			'click',
 			(event) => {
+				if (event instanceof PointerEvent && event.pointerType !== '') return;
+
 				const segment = this.#segmentOf(event.target);
 				if (segment) this.#select(segment);
 			},
 			{ signal },
 		);
+		this.#bindPress(segmented, signal);
 		segmented.addEventListener(
 			'keydown',
 			(event) => {
@@ -102,6 +115,114 @@ export class SonicSegmented extends SonicElement {
 		);
 	}
 
+	protected override focusTarget(): HTMLElement | undefined {
+		return this.#segments().find((segment) => segment.tabIndex === 0);
+	}
+
+	// As a radio group, only a checked option submits
+	protected render(): void {
+		const segmented = this.#segmented;
+		const segments = this.#segments();
+		const checked = segments.find((segment) => segmentValue(segment) === this.#value);
+		const focusable = checked ?? segments[0];
+
+		for (const segment of segments) {
+			segment.disabled = this.isDisabled();
+			segment.setAttribute('aria-checked', String(segment === checked));
+			segment.tabIndex = segment === focusable ? 0 : -1;
+		}
+		this.forwardNaming(segmented, true);
+		// eslint-disable-next-line unicorn/no-null -- `null` submits nothing
+		this.writeFormValue(checked ? this.#value : null, this.#value);
+	}
+
+	protected restoreState(state: string): void {
+		this.value = state;
+	}
+
+	#bindPress(segmented: HTMLElement, signal: AbortSignal): void {
+		const isOwn = (event: PointerEvent): boolean => event.pointerId === this.#press?.pointerId;
+		const release = (event: PointerEvent): void => {
+			if (isOwn(event)) this.#hold(undefined);
+		};
+
+		segmented.addEventListener(
+			'pointerdown',
+			(event) => {
+				const segment = this.#segmentOf(event.target);
+				if (!segment || event.button !== 0 || this.isDisabled()) return;
+
+				segmented.setPointerCapture(event.pointerId);
+				this.#hold({ pointerId: event.pointerId, segment });
+			},
+			{ signal },
+		);
+		segmented.addEventListener(
+			'pointermove',
+			(event) => {
+				if (!isOwn(event)) return;
+
+				this.#hold({
+					pointerId: event.pointerId,
+					segment: this.#segments().find((segment) =>
+						isUnder(segment, event.clientX, event.clientY),
+					),
+				});
+			},
+			{ signal },
+		);
+		segmented.addEventListener(
+			'pointerup',
+			(event) => {
+				const segment = isOwn(event) ? this.#press?.segment : undefined;
+
+				release(event);
+				if (!segment || this.isDisabled()) return;
+
+				this.#select(segment);
+				if (segmented.matches(':focus-within')) segment.focus();
+			},
+			{ signal },
+		);
+		segmented.addEventListener('pointercancel', release, { signal });
+		segmented.addEventListener('lostpointercapture', release, { signal });
+		signal.addEventListener(
+			'abort',
+			() => {
+				this.#hold(undefined);
+			},
+			{ once: true },
+		);
+	}
+
+	// Segments are kept by position, so focus follows its option's value across a reorder
+	#copyOptions(options: Array<Node>): void {
+		const segmented = this.#segmented;
+		const segments = this.#segments();
+		const focused = this.#segmentOf(segmented.querySelector(':scope > :focus'));
+		const focusedValue = focused && segmentValue(focused);
+
+		for (const [index, option] of options.entries()) {
+			let segment = segments[index];
+			if (!segment) {
+				segment = renderSegment();
+				segmented.append(segment);
+			}
+
+			segment.firstElementChild?.replaceChildren(copyNode(option));
+		}
+		for (const segment of segments.slice(options.length)) segment.remove();
+		this.render();
+		if (focused) this.#refocus(focused, focusedValue);
+	}
+
+	#hold(press: Press | undefined): void {
+		this.#press = press;
+		for (const segment of this.#segments()) {
+			segment.toggleAttribute('data-sonic-pressed', segment === press?.segment);
+		}
+	}
+
 	#keyTarget(segment: HTMLButtonElement, key: string): HTMLButtonElement | undefined {
 		const segments = this.#segments();
 
@@ -116,18 +237,13 @@ export class SonicSegmented extends SonicElement {
 		return segments[(index + segments.length) % segments.length];
 	}
 
-	#render(): void {
-		const segmented = this.#segmented;
+	#refocus(focused: HTMLButtonElement, value: string | undefined): void {
 		const segments = this.#segments();
-		const checked = segments.find((segment) => segmentValue(segment) === this.#value);
-		const focusable = checked ?? segments[0];
+		const next =
+			segments.find((segment) => segmentValue(segment) === value) ??
+			segments.find((segment) => segment.tabIndex === 0);
 
-		for (const segment of segments) {
-			segment.disabled = this.disabled;
-			segment.setAttribute('aria-checked', String(segment === checked));
-			segment.tabIndex = segment === focusable ? 0 : -1;
-		}
-		this.forwardNaming(segmented, true);
+		if (next !== focused) next?.focus();
 	}
 
 	#segmentOf(target: EventTarget | null): HTMLButtonElement | undefined {

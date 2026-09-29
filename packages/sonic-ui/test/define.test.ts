@@ -1,16 +1,29 @@
-// @vitest-environment happy-dom
-import { expect, test } from 'vitest';
+import { expect, test, vi } from 'vitest';
 
 // Imports the built entries, since tsdown drops a side-effect import unless `sideEffects` lists its source
 test('the define entries register their tags', async () => {
-	await import('../dist/define/dial.js');
+	// @ts-expect-error -- declarations ship in the development tree only
+	await import('../dist/default/define/dial.js');
 
 	expect(customElements.get('sonic-dial')).toBeDefined();
 	expect(customElements.get('sonic-key')).toBeUndefined();
 
-	await import('../dist/define.js');
+	// @ts-expect-error -- declarations ship in the development tree only
+	await import('../dist/default/define.js');
 
 	for (const tag of ['sonic-dial', 'sonic-key', 'sonic-meter', 'sonic-segmented', 'sonic-slider']) {
 		expect(customElements.get(tag), tag).toBeDefined();
 	}
+});
+
+test('the default tree leaves out the missing-sheet warning', async () => {
+	const warn = vi.spyOn(console, 'warn').mockReturnValue();
+
+	// @ts-expect-error -- declarations ship in the development tree only
+	await import('../dist/default/define.js');
+	document.body.innerHTML = '<sonic-key></sonic-key>';
+	await new Promise((resolve) => requestAnimationFrame(resolve));
+
+	expect(warn).not.toHaveBeenCalled();
+	warn.mockRestore();
 });

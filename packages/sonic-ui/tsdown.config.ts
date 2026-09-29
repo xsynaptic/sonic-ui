@@ -1,16 +1,34 @@
+import type { UserConfig } from 'tsdown';
+
 import { defineConfig } from 'tsdown';
 
-export default defineConfig({
-	copy: [
-		{ from: 'src/styles/*.css', to: 'dist/styles' },
-		{ from: 'src/skins/*.css', to: 'dist/skins' },
-	],
-	dts: true,
+const shared = {
+	// Clean runs once for both trees, and clears a flat `dist` from before the split
+	clean: ['dist'],
 	entry: ['src/index.ts', 'src/define.ts', 'src/define/*.ts'],
 	format: 'esm',
 	minify: false,
 	platform: 'browser',
-	publint: true,
-	sourcemap: true,
 	unbundle: true,
-});
+} satisfies UserConfig;
+
+export default defineConfig([
+	{
+		...shared,
+		define: { __DEV__: 'true' },
+		dts: true,
+		outDir: 'dist/dev',
+		sourcemap: true,
+	},
+	{
+		...shared,
+		copy: [
+			{ from: 'src/styles/*.css', to: 'dist/styles' },
+			{ from: 'src/skins/*.css', to: 'dist/skins' },
+		],
+		define: { __DEV__: 'false' },
+		dts: false,
+		outDir: 'dist/default',
+		publint: true,
+	},
+]);

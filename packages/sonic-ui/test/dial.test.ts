@@ -1,27 +1,11 @@
 import { expect, test } from 'vitest';
 
-// @vitest-environment happy-dom
 import type { SonicDial } from '#elements/dial.ts';
 
 import '#define/dial.ts';
+import { formatPercent, parsePercent } from '#lib/percent.ts';
 
-function mountDial(attributes: string): { control: HTMLElement; dial: SonicDial } {
-	document.body.innerHTML = `<sonic-dial ${attributes}></sonic-dial>`;
-
-	const dial = document.querySelector('sonic-dial');
-	const control = dial?.querySelector<HTMLElement>('.sonic-dial');
-	if (!dial || !control) throw new Error('The dial did not render');
-
-	return { control, dial };
-}
-
-function pressKey(control: HTMLElement, key: string): KeyboardEvent {
-	const event = new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key });
-
-	control.dispatchEvent(event);
-
-	return event;
-}
+import { mountDial, pressKey, recordEvents } from './helpers.ts';
 
 test('a value parsed before its max is not clamped to the default max', () => {
 	const { control, dial } = mountDial('value="150" max="200"');
@@ -52,6 +36,13 @@ test('once the property sets the value, a range change clamps it rather than re-
 	expect(dial.value).toBe(40);
 });
 
+test('a dial without a value starts at min', () => {
+	const { control, dial } = mountDial('min="-10" max="10"');
+
+	expect(dial.value).toBe(-10);
+	expect(control.getAttribute('aria-valuenow')).toBe('-10');
+});
+
 test('a non-finite value is ignored', () => {
 	const { control, dial } = mountDial('value="30"');
 
@@ -78,6 +69,28 @@ test.each([
 	expect(dial.value).toBe(expected);
 });
 
+test.each([
+	['ArrowUp', 1.25],
+	['ArrowDown', 0.75],
+	['PageUp', 3.5],
+	['PageDown', -1.5],
+])('%s moves a dial at 1, stepping by 0.25 from -5, to %s', (key, expected) => {
+	const { control, dial } = mountDial('min="-5" max="5" step="0.25" value="1"');
+
+	pressKey(control, key);
+	expect(dial.value).toBe(expected);
+});
+
+test('steps count from min, as on a range input', () => {
+	const { control, dial } = mountDial('min="3" max="20" step="5" value="9"');
+
+	expect(dial.value).toBe(8);
+	expect(control.getAttribute('aria-valuemin')).toBe('3');
+
+	pressKey(control, 'ArrowUp');
+	expect(dial.value).toBe(13);
+});
+
 test('an unstepped range steps its keys by a hundredth of the range', () => {
 	const { control, dial } = mountDial('max="1" step="0" value="0.5"');
 
@@ -95,15 +108,8 @@ test('a key the control does not use keeps its default', () => {
 });
 
 test('a key fires input and change only when the value moves', () => {
-	const { control, dial } = mountDial('value="99"');
-	const events: Array<string> = [];
-
-	dial.addEventListener('input', () => {
-		events.push('input');
-	});
-	dial.addEventListener('change', () => {
-		events.push('change');
-	});
+	const { control } = mountDial('value="99"');
+	const events = recordEvents(document.body);
 
 	pressKey(control, 'End');
 	pressKey(control, 'End');
@@ -114,6 +120,7 @@ test('a key fires input and change only when the value moves', () => {
 test.each([
 	['notched max="7"', '8'],
 	['notched min="-3" max="3"', '7'],
+	['notched max="1" step="0.25"', '5'],
 	['notched step="0"', ''],
 	['notched max="0"', ''],
 	['max="7"', ''],
@@ -170,19 +177,6 @@ function press(control: HTMLElement, init: PointerEventInit = {}): void {
 
 	control.dispatchEvent(new PointerEvent('pointerdown', options));
 	control.dispatchEvent(new PointerEvent('pointerup', options));
-}
-
-function recordEvents(dial: SonicDial): Array<string> {
-	const events: Array<string> = [];
-
-	dial.addEventListener('input', () => {
-		events.push('input');
-	});
-	dial.addEventListener('change', () => {
-		events.push('change');
-	});
-
-	return events;
 }
 
 function typeKey(entry: HTMLInputElement, key: string): void {
@@ -366,6 +360,30 @@ test.each([
 	expect(control.getAttribute('role')).toBe('slider');
 });
 
+test('an arrow key in the entry moves the caret, not the value', () => {
+	const { control, dial } = mountDial('value="50"');
+	const entry = entryOf(control);
+
+	press(control);
+	press(control);
+
+	expect(pressKey(entry, 'ArrowUp').defaultPrevented).toBe(false);
+	expect(dial.value).toBe(50);
+	expect(entry.hidden).toBe(false);
+});
+
+test('naming the dial leaves an open entry open', () => {
+	const { control, dial } = mountDial('value="50"');
+	const entry = entryOf(control);
+
+	press(control);
+	press(control);
+	dial.setAttribute('aria-label', 'Level');
+
+	expect(entry.hidden).toBe(false);
+	expect(document.activeElement).toBe(entry);
+});
+
 test('leaving the entry commits it, clamped and stepped as any value is', () => {
 	const { control, dial } = mountDial('value="50"');
 	const entry = entryOf(control);
@@ -377,6 +395,21 @@ test('leaving the entry commits it, clamped and stepped as any value is', () => 
 
 	expect(dial.value).toBe(100);
 	expect(entry.hidden).toBe(true);
+});
+
+test('leaving the entry untouched keeps a value its format rounds', () => {
+	const { control, dial } = mountDial('max="1" step="0.005" value="0.505"');
+	const entry = entryOf(control);
+	const events = recordEvents(document.body);
+
+	dial.formatValue = formatPercent;
+	dial.parseValue = parsePercent;
+	press(control);
+	press(control);
+	entry.blur();
+
+	expect(dial.value).toBe(0.505);
+	expect(events).toEqual([]);
 });
 
 test('disabled drops the tab stop, ignores keys, presses and reset, and cancels an open entry', () => {
@@ -450,3 +483,114 @@ test.each(['ArrowUp', 'Delete', 'Enter'])(
 		expect(entryOf(control).hidden).toBe(true);
 	},
 );
+
+test('writing the current value leaves the control untouched but still counts as set', () => {
+	const { control, dial } = mountDial('value="150"');
+	const records: Array<MutationRecord> = [];
+	const observer = new MutationObserver((batch) => {
+		records.push(...batch);
+	});
+
+	observer.observe(dial, { attributes: true, characterData: true, childList: true, subtree: true });
+	dial.value = 100;
+
+	expect([...records, ...observer.takeRecords()]).toEqual([]);
+
+	dial.setAttribute('max', '200');
+	observer.disconnect();
+
+	expect(dial.value).toBe(100);
+	expect(control.getAttribute('aria-valuemax')).toBe('200');
+});
+
+test('a property write renders as its attribute would, and undefined removes the attribute', () => {
+	const { control, dial } = mountDial('value="80"');
+
+	dial.max = 200;
+	dial.value = 150;
+	expect(dial.getAttribute('max')).toBe('200');
+	expect(control.getAttribute('aria-valuemax')).toBe('200');
+
+	dial.max = undefined;
+	expect(dial.hasAttribute('max')).toBe(false);
+	expect(control.getAttribute('aria-valuemax')).toBe('100');
+	expect(dial.value).toBe(100);
+
+	dial.notched = true;
+	expect(control.style.getPropertyValue('--_sonic-dial-positions')).toBe('101');
+
+	dial.notched = false;
+	expect(dial.hasAttribute('notched')).toBe(false);
+});
+
+test('an unset origin reads undefined, so writing it back leaves it following min', () => {
+	const { control, dial } = mountDial('min="-50" max="50"');
+
+	const { origin } = dial;
+
+	dial.origin = origin;
+	expect(dial.hasAttribute('origin')).toBe(false);
+
+	dial.min = 0;
+	expect(control.style.getPropertyValue('--_sonic-dial-origin')).toBe('0');
+});
+
+test('double-press reads type while unset, and type is a valid value', () => {
+	const { control, dial } = mountDial('default="50" double-press="reset" value="80"');
+
+	dial.doublePress = dial.doublePress === 'reset' ? 'type' : 'reset';
+	expect(dial.getAttribute('double-press')).toBe('type');
+
+	press(control);
+	press(control);
+	expect(entryOf(control).hidden).toBe(false);
+	expect(dial.value).toBe(80);
+});
+
+test('a range set before the tag upgrades lands before the value it bounds', async () => {
+	document.body.innerHTML = '<sonic-late-range></sonic-late-range>';
+
+	const late = document.querySelector<SonicDial>('sonic-late-range');
+	if (!late) throw new Error('The element was not parsed');
+
+	late.value = 150;
+	late.max = 200;
+
+	const { SonicDial } = await import('#elements/dial.ts');
+
+	customElements.define('sonic-late-range', class extends SonicDial {});
+	expect(late.value).toBe(150);
+	expect(late.getAttribute('max')).toBe('200');
+});
+
+test('focus() and blur() reach the control', () => {
+	const { control, dial } = mountDial('value="50"');
+
+	dial.focus();
+	expect(document.activeElement).toBe(control);
+
+	dial.blur();
+	expect(document.activeElement).toBe(document.body);
+});
+
+test('focus() leaves an open entry focused, and blur() commits it', () => {
+	const { control, dial } = mountDial('value="50"');
+	const entry = entryOf(control);
+
+	press(control);
+	press(control);
+	entry.value = '66';
+	dial.focus();
+	expect(document.activeElement).toBe(entry);
+
+	dial.blur();
+	expect(entry.hidden).toBe(true);
+	expect(dial.value).toBe(66);
+});
+
+test('a disabled dial takes no focus', () => {
+	const { dial } = mountDial('disabled value="50"');
+
+	dial.focus();
+	expect(document.activeElement).toBe(document.body);
+});

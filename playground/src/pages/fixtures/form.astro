@@ -1,0 +1,45 @@
+---
+import Document from '#components/document.astro';
+import '#styles/playground.css';
+
+// Form association for `e2e/form.spec.ts`: labels, submission, reset, a disabled fieldset and restore
+// `#late` has no label until a test adds one
+---
+
+<Document bodyClass="bg-zinc-950 text-zinc-300" title="sonic-ui fixtures, form">
+	<main class="p-16">
+		<h1 class="sr-only">Form</h1>
+		<form class="flex flex-wrap items-center gap-16" id="patch">
+			<label for="cutoff">Cutoff</label>
+			<sonic-dial id="cutoff" name="cutoff" step="5" value="40"></sonic-dial>
+			<label class="grid justify-items-center gap-2">
+				<span>Send</span>
+				<sonic-slider id="send" name="send" value="30"></sonic-slider>
+			</label>
+			<label class="grid justify-items-center gap-2">
+				<span>Mute</span>
+				<sonic-key id="mute" name="mute" toggle>
+					<span aria-hidden="true">M</span>
+				</sonic-key>
+			</label>
+			<sonic-key aria-label="Solo" id="solo" name="solo" pressed toggle value="yes">
+				S
+			</sonic-key>
+			<sonic-key aria-label="Kick" id="pad" momentary name="pad"></sonic-key>
+			<label for="mode">Mode</label>
+			<sonic-segmented id="mode" name="mode" value="lp">
+				<span data-sonic-value="lp">LP</span>
+				<span data-sonic-value="hp">HP</span>
+			</sonic-segmented>
+			<sonic-dial aria-label="Held" disabled id="held" value="50"></sonic-dial>
+			<sonic-dial id="late" name="late" value="10"></sonic-dial>
+			<fieldset disabled id="rack">
+				<legend>Rack</legend>
+				<sonic-dial aria-label="Drive" id="drive" name="drive" value="50"></sonic-dial>
+			</fieldset>
+		</form>
+	</main>
+	<script>
+		import '@xsynaptic/sonic-ui/define';
+	</script>
+</Document>

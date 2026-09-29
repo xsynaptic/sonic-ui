@@ -31,7 +31,6 @@
 			var(--_sonic-glass);
 		border-radius: calc(var(--_sonic-screen-size) * var(--_sonic-screen-radius-ratio));
 
-		/* Over the content, so the lip shades the picture too */
 		&::after {
 			position: absolute;
 			inset: 0;
@@ -42,6 +41,13 @@
 			box-shadow:
 				var(--_sonic-well),
 				inset 0 0 calc(3 * var(--_sonic-unit)) rgb(0 0 0 / 45%);
+		}
+	}
+
+	/* The glass is forced to Canvas like the page, so only a border shows its edge */
+	@media (forced-colors: active) {
+		.sonic-screen {
+			border: 1px solid CanvasText;
 		}
 	}
 }

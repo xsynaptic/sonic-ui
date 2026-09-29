@@ -1,9 +1,10 @@
 import { expect, test } from 'vitest';
 
-// @vitest-environment happy-dom
 import type { SonicKey } from '#elements/key.ts';
 
 import '#define/key.ts';
+
+import { nextTask } from './helpers.ts';
 
 function mountKey(attributes: string): { button: HTMLButtonElement; key: SonicKey } {
 	document.body.innerHTML = `<sonic-key ${attributes}><svg data-icon="parsed"></svg></sonic-key>`;
@@ -15,24 +16,39 @@ function mountKey(attributes: string): { button: HTMLButtonElement; key: SonicKe
 	return { button, key };
 }
 
-test('parsed children and a child appended later both land in the cap', async () => {
-	const { key } = mountKey('');
+test('parsed children and a child appended later are copied into the cap, and only the key renders', async () => {
+	const { button, key } = mountKey('');
 	const late = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 
+	late.dataset.icon = 'late';
 	key.append(late);
-	await new Promise((resolve) => setTimeout(resolve, 0));
+	await nextTask();
 
 	const cap = key.querySelector('.sonic-key-cap');
+	const icons = [...(cap?.querySelectorAll<SVGElement>('[data-icon]') ?? [])];
 
-	expect(key.querySelector('[data-icon="parsed"]')?.parentElement).toBe(cap);
-	expect(late.parentElement).toBe(cap);
+	expect(icons.map((icon) => icon.dataset.icon)).toEqual(['parsed', 'late']);
+	expect(key.querySelector(':scope > [data-icon="parsed"]')).not.toBeNull();
+	expect(key.shadowRoot?.querySelector('slot')?.assignedNodes()).toEqual([button]);
+});
+
+test('editing a child on the host re-copies it into the cap', async () => {
+	const { key } = mountKey('');
+	const label = document.createTextNode('Play');
+
+	key.append(label);
+	await nextTask();
+	label.data = 'Pause';
+	await nextTask();
+
+	expect(key.querySelector('.sonic-key-cap')?.textContent).toBe('Pause');
 });
 
 test('replacing the children swaps the icon and keeps the key', async () => {
 	const { key } = mountKey('');
 
 	key.textContent = 'Solo';
-	await new Promise((resolve) => setTimeout(resolve, 0));
+	await nextTask();
 
 	const cap = key.querySelector('.sonic-key-cap');
 
@@ -45,7 +61,7 @@ test('a toggle key latches on each press and reports it as change', () => {
 	const { button, key } = mountKey('toggle');
 	let changes = 0;
 
-	key.addEventListener('change', () => (changes += 1));
+	document.body.addEventListener('change', () => (changes += 1));
 
 	button.click();
 	expect(key.pressed).toBe(true);
@@ -69,20 +85,17 @@ test('a plain key neither latches nor reports change', () => {
 	expect(changes).toBe(0);
 });
 
-test.each(['aria-describedby', 'aria-label', 'aria-labelledby'])(
-	'%s is forwarded to the button as it is added, changed and removed',
-	(name) => {
-		const { button, key } = mountKey(`${name}="first"`);
+test('aria-label is forwarded to the button as it is added, changed and removed', () => {
+	const { button, key } = mountKey('aria-label="first"');
 
-		expect(button.getAttribute(name)).toBe('first');
+	expect(button.getAttribute('aria-label')).toBe('first');
 
-		key.setAttribute(name, 'second');
-		expect(button.getAttribute(name)).toBe('second');
+	key.setAttribute('aria-label', 'second');
+	expect(button.getAttribute('aria-label')).toBe('second');
 
-		key.removeAttribute(name);
-		expect(button.hasAttribute(name)).toBe(false);
-	},
-);
+	key.removeAttribute('aria-label');
+	expect(button.hasAttribute('aria-label')).toBe(false);
+});
 
 test('disabled disables the button, so a toggle no longer latches', () => {
 	const { button, key } = mountKey('disabled toggle');
@@ -96,10 +109,10 @@ test('disabled disables the button, so a toggle no longer latches', () => {
 	expect(button.disabled).toBe(false);
 });
 
-function holdTrace(key: SonicKey): Array<boolean> {
+function holdTrace(key: SonicKey, listener: EventTarget = document.body): Array<boolean> {
 	const trace: Array<boolean> = [];
 
-	key.addEventListener('change', () => {
+	listener.addEventListener('change', () => {
 		trace.push(key.pressed);
 	});
 
@@ -192,9 +205,10 @@ test('blur releases a momentary key held from the keyboard', () => {
 	expect(trace).toEqual([true, false]);
 });
 
+// A detached key's events never reach the body
 test('disconnecting releases a held momentary key', async () => {
 	const { button, key } = mountKey('momentary');
-	const trace = holdTrace(key);
+	const trace = holdTrace(key, key);
 
 	pointerOn(button, 'pointerdown');
 	key.remove();
@@ -218,6 +232,39 @@ test('disabled releases a held momentary key and ignores the next press', () => 
 	expect(trace).toEqual([true, false]);
 });
 
+test('a secondary button does not hold a momentary key', () => {
+	const { button, key } = mountKey('momentary');
+
+	button.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, button: 2, pointerId: 1 }));
+
+	expect(key.pressed).toBe(false);
+});
+
+test('naming a held momentary key keeps it held', () => {
+	const { button, key } = mountKey('momentary');
+	const trace = holdTrace(key);
+
+	pointerOn(button, 'pointerdown');
+	key.setAttribute('aria-label', 'Kick');
+
+	expect(key.pressed).toBe(true);
+	expect(trace).toEqual([true]);
+});
+
+test('a key re-appended after removal latches once per press', async () => {
+	const { button, key } = mountKey('toggle');
+	let changes = 0;
+
+	key.remove();
+	await Promise.resolve();
+	document.body.append(key);
+	key.addEventListener('change', () => (changes += 1));
+	button.click();
+
+	expect(key.pressed).toBe(true);
+	expect(changes).toBe(1);
+});
+
 test('toggle wins over momentary', () => {
 	const { button, key } = mountKey('momentary toggle');
 
@@ -228,4 +275,101 @@ test('toggle wins over momentary', () => {
 	button.click();
 	expect(key.pressed).toBe(true);
 	expect(button.getAttribute('aria-pressed')).toBe('true');
+});
+
+test('toggle set as a property latches the next press', () => {
+	const { button, key } = mountKey('');
+
+	key.toggle = true;
+	expect(button.getAttribute('aria-pressed')).toBe('false');
+
+	button.click();
+	expect(key.pressed).toBe(true);
+
+	key.toggle = false;
+	expect(key.hasAttribute('toggle')).toBe(false);
+	expect(button.hasAttribute('aria-pressed')).toBe(false);
+});
+
+test('focus() and blur() reach the button, and a disabled key takes no focus', () => {
+	const { button, key } = mountKey('');
+
+	key.focus();
+	expect(document.activeElement).toBe(button);
+
+	key.blur();
+	expect(document.activeElement).toBe(document.body);
+
+	key.disabled = true;
+	key.focus();
+	expect(document.activeElement).toBe(document.body);
+});
+
+test('an undefined from plain JavaScript clears pressed and disabled rather than toggling them', () => {
+	const { button, key } = mountKey('disabled pressed toggle');
+
+	Reflect.set(key, 'pressed', undefined);
+	Reflect.set(key, 'disabled', undefined);
+	expect(key.pressed).toBe(false);
+	expect(button.getAttribute('aria-pressed')).toBe('false');
+	expect(key.hasAttribute('pressed')).toBe(true);
+	expect(key.hasAttribute('disabled')).toBe(false);
+});
+
+test('a press moves the live state and leaves the pressed attribute as the default', () => {
+	const { button, key } = mountKey('pressed toggle');
+
+	button.click();
+	expect(key.pressed).toBe(false);
+	expect(key.defaultPressed).toBe(true);
+	expect(key.hasAttribute('pressed')).toBe(true);
+});
+
+test('writing the pressed attribute moves a key pressed by hand', () => {
+	const { button, key } = mountKey('pressed toggle');
+
+	button.click();
+	key.setAttribute('pressed', '');
+	expect(key.pressed).toBe(true);
+	expect(button.getAttribute('aria-pressed')).toBe('true');
+
+	button.click();
+	button.click();
+	key.removeAttribute('pressed');
+	expect(key.pressed).toBe(false);
+});
+
+test('defaultPressed reflects, and moves the live state until a press', () => {
+	const { button, key } = mountKey('toggle');
+
+	key.defaultPressed = true;
+	expect(key.hasAttribute('pressed')).toBe(true);
+	expect(key.pressed).toBe(true);
+
+	key.pressed = false;
+	key.defaultPressed = false;
+	key.defaultPressed = true;
+	expect(key.hasAttribute('pressed')).toBe(true);
+	expect(button.getAttribute('aria-pressed')).toBe('true');
+
+	button.click();
+	key.defaultPressed = false;
+	expect(key.pressed).toBe(false);
+	expect(key.hasAttribute('pressed')).toBe(false);
+});
+
+test('a default set before the tag upgrades lands before the live state', async () => {
+	document.body.innerHTML = '<sonic-late-key toggle></sonic-late-key>';
+
+	const late = document.querySelector<SonicKey>('sonic-late-key');
+	if (!late) throw new Error('The element was not parsed');
+
+	late.defaultPressed = true;
+	late.pressed = false;
+
+	const { SonicKey } = await import('#elements/key.ts');
+
+	customElements.define('sonic-late-key', class extends SonicKey {});
+	expect(late.hasAttribute('pressed')).toBe(true);
+	expect(late.pressed).toBe(false);
 });

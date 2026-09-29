@@ -1,6 +1,5 @@
-import { expect, test } from 'vitest';
+import { expect, test, vi } from 'vitest';
 
-// @vitest-environment happy-dom
 import type { SonicSlider } from '#elements/slider.ts';
 
 import '#define/slider.ts';
@@ -13,6 +12,26 @@ function mountSlider(attributes: string): { control: HTMLElement; slider: SonicS
 	if (!slider || !control) throw new Error('The slider did not render');
 
 	return { control, slider };
+}
+
+function capOf(control: HTMLElement): HTMLElement {
+	const cap = control.querySelector<HTMLElement>('.sonic-slider-cap');
+	if (!cap) throw new Error('The slider has no cap');
+
+	return cap;
+}
+
+function layOut(control: HTMLElement, track: DOMRect, capBox: DOMRect): void {
+	vi.spyOn(control, 'getBoundingClientRect').mockReturnValue(track);
+	vi.spyOn(capOf(control), 'getBoundingClientRect').mockReturnValue(capBox);
+}
+
+function pointerAt(
+	target: HTMLElement,
+	type: string,
+	at: { clientX?: number; clientY?: number },
+): void {
+	target.dispatchEvent(new PointerEvent(type, { bubbles: true, button: 0, pointerId: 1, ...at }));
 }
 
 test('orientation follows the attribute', () => {
@@ -72,32 +91,58 @@ test('closing the entry restores the orientation with the slider role', () => {
 	expect(control.getAttribute('aria-orientation')).toBe('vertical');
 });
 
-// happy-dom lays nothing out, so the travel is 1px and any drag runs to the end
+// A 220px track at 100px with a 20px cap leaves 200px of travel, the cap's centre at 110px at the minimum
 test.each([
-	['', 100],
-	['groove-press="none"', 40],
-])('with %s, a drag from the groove leaves the value at %s', (attributes, expected) => {
-	const { control, slider } = mountSlider(`value="40" ${attributes}`);
-	const options = { bubbles: true, button: 0, clientX: 0, clientY: 0, pointerId: 1 };
+	['', 25, 50],
+	['groove-press="none"', 40, 40],
+])(
+	'with %s, a press a quarter along the groove leaves the value at %d, and dragging a quarter further at %d',
+	(attributes, pressed, dragged) => {
+		const { control, slider } = mountSlider(`value="40" ${attributes}`);
 
-	control.dispatchEvent(new PointerEvent('pointerdown', options));
-	control.dispatchEvent(new PointerEvent('pointermove', { ...options, clientX: 50 }));
-	control.dispatchEvent(new PointerEvent('pointerup', { ...options, clientX: 50 }));
+		layOut(control, new DOMRect(100, 0, 220, 40), new DOMRect(0, 0, 20, 40));
+		pointerAt(control, 'pointerdown', { clientX: 160 });
+		expect(slider.value).toBe(pressed);
 
-	expect(slider.value).toBe(expected);
-});
+		pointerAt(control, 'pointermove', { clientX: 210 });
+		pointerAt(control, 'pointerup', { clientX: 210 });
+		expect(slider.value).toBe(dragged);
+	},
+);
 
 test('with groove-press="none", the cap still drags', () => {
 	const { control, slider } = mountSlider('value="40" groove-press="none"');
-	const cap = control.querySelector('.sonic-slider-cap');
-	if (!cap) throw new Error('The slider has no cap');
+	const cap = capOf(control);
 
-	const options = { bubbles: true, button: 0, clientX: 0, clientY: 0, pointerId: 1 };
+	layOut(control, new DOMRect(100, 0, 220, 40), new DOMRect(180, 0, 20, 40));
+	pointerAt(cap, 'pointerdown', { clientX: 190 });
+	expect(slider.value).toBe(40);
 
-	cap.dispatchEvent(new PointerEvent('pointerdown', options));
-	cap.dispatchEvent(new PointerEvent('pointermove', { ...options, clientX: 0.1 }));
-
+	pointerAt(cap, 'pointermove', { clientX: 210 });
 	expect(slider.value).toBe(50);
+});
+
+// The track's bottom is 320px down, so the cap's centre sits at 310px at the minimum and travel runs upward
+test('a vertical slider jumps to a groove press a quarter up and drags upward', () => {
+	const { control, slider } = mountSlider('orientation="vertical" value="80"');
+
+	layOut(control, new DOMRect(0, 100, 40, 220), new DOMRect(0, 0, 40, 20));
+	pointerAt(control, 'pointerdown', { clientY: 260 });
+	expect(slider.value).toBe(25);
+
+	pointerAt(control, 'pointermove', { clientY: 210 });
+	expect(slider.value).toBe(50);
+});
+
+test('a vertical slider drags from its cap by the travel left beside the cap', () => {
+	const { control, slider } = mountSlider('orientation="vertical" value="40"');
+	const cap = capOf(control);
+
+	layOut(control, new DOMRect(0, 100, 40, 220), new DOMRect(0, 220, 40, 20));
+	pointerAt(cap, 'pointerdown', { clientY: 230 });
+	pointerAt(cap, 'pointermove', { clientY: 250 });
+
+	expect(slider.value).toBe(30);
 });
 
 test('with groove-press="none" and double-press="reset", a double press on the groove keeps the value', () => {
@@ -112,4 +157,33 @@ test('with groove-press="none" and double-press="reset", a double press on the g
 	}
 
 	expect(slider.value).toBe(40);
+});
+
+test('groove-press reads jump while unset, and jump is a valid value', () => {
+	const { control, slider } = mountSlider('value="40" groove-press="none"');
+
+	slider.groovePress = slider.groovePress === 'none' ? 'jump' : 'none';
+	expect(slider.getAttribute('groove-press')).toBe('jump');
+
+	layOut(control, new DOMRect(100, 0, 220, 40), new DOMRect(0, 0, 20, 40));
+	pointerAt(control, 'pointerdown', { clientX: 160 });
+	expect(slider.value).toBe(25);
+});
+
+test('orientation set as a property turns the slider', () => {
+	const { control, slider } = mountSlider('value="40"');
+
+	slider.orientation = 'vertical';
+	expect(control.getAttribute('aria-orientation')).toBe('vertical');
+
+	slider.orientation = undefined;
+	expect(slider.hasAttribute('orientation')).toBe(false);
+	expect(control.getAttribute('aria-orientation')).toBe('horizontal');
+});
+
+test('focus() reaches the control', () => {
+	const { control, slider } = mountSlider('value="40"');
+
+	slider.focus();
+	expect(document.activeElement).toBe(control);
 });

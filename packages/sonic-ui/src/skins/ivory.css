@@ -1,8 +1,8 @@
 /* Ink derived from a pale cap would vanish against it */
 @layer sonic {
 	.sonic-skin-ivory {
-		--sonic-cap: oklch(85.5% 0.0281 215deg);
-		--sonic-cap-hover: oklch(90.5% 0.024 215deg);
-		--sonic-mark: oklch(18.5% 0.0099 237deg);
+		--sonic-cap: oklch(85.5% 0.024 85deg);
+		--sonic-cap-hover: oklch(90.5% 0.02 85deg);
+		--sonic-mark: oklch(18.5% 0.012 60deg);
 	}
 }

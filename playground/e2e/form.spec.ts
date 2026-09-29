@@ -1,0 +1,268 @@
+import type { Locator, Page } from '@playwright/test';
+
+import { expect, test } from '@playwright/test';
+
+test.beforeEach(async ({ page }) => {
+	await page.goto('/fixtures/form/');
+});
+
+function readFormData(page: Page): Promise<Array<[string, string]>> {
+	return page.locator('#patch').evaluate((form) => {
+		if (!(form instanceof HTMLFormElement)) throw new Error('#patch is not a form');
+
+		return [...new FormData(form)].map(([name, value]) => [
+			name,
+			typeof value === 'string' ? value : value.name,
+		]);
+	});
+}
+
+// The labels the control is named by, as the host's `labels` lists them
+function readBridge(host: Locator, control: string): Promise<{ bridged: number; labels: number }> {
+	return host.evaluate((element, selector) => {
+		const labelled = element.querySelector(selector)?.ariaLabelledByElements ?? [];
+		const labels =
+			'labels' in element && element.labels instanceof NodeList ? [...element.labels] : [];
+
+		return {
+			bridged: labelled.filter((label) => labels.includes(label)).length,
+			labels: labels.length,
+		};
+	}, control);
+}
+
+// Playwright's own name computation reads only the `aria-labelledby` attribute, so this reads the browser's tree
+async function readNames(page: Page): Promise<Array<string>> {
+	const session = await page.context().newCDPSession(page);
+	const { nodes } = await session.send('Accessibility.getFullAXTree');
+
+	await session.detach();
+
+	return nodes
+		.filter(
+			(node) =>
+				!node.ignored &&
+				node.name?.value &&
+				!['InlineTextBox', 'StaticText'].includes(String(node.role?.value)),
+		)
+		.map((node) => `${String(node.role?.value)}: ${String(node.name?.value)}`);
+}
+
+function readCustomProperty(page: Page, selector: string, property: string): Promise<string> {
+	return page
+		.locator(selector)
+		.evaluate((element, name) => getComputedStyle(element).getPropertyValue(name).trim(), property);
+}
+
+test('a label for the host, or around it, reaches the inner control', async ({ page }) => {
+	const bridges = {
+		cutoff: await readBridge(page.locator('#cutoff'), '.sonic-dial'),
+		mode: await readBridge(page.locator('#mode'), '.sonic-segmented'),
+		mute: await readBridge(page.locator('#mute'), '.sonic-key'),
+		send: await readBridge(page.locator('#send'), '.sonic-slider'),
+	};
+
+	expect(bridges).toEqual({
+		cutoff: { bridged: 1, labels: 1 },
+		mode: { bridged: 1, labels: 1 },
+		mute: { bridged: 1, labels: 1 },
+		send: { bridged: 1, labels: 1 },
+	});
+});
+
+test('Chromium names each control from its label, and the host adds no node', async ({
+	browserName,
+	page,
+}) => {
+	test.skip(browserName !== 'chromium', 'Only Chromium exposes its accessibility tree');
+
+	const names = await readNames(page);
+	const labelled = names.filter((name) => /: (Cutoff|Send|Mute|Mode)$/.test(name));
+
+	expect(labelled.toSorted((first, second) => first.localeCompare(second))).toEqual([
+		'button: Mute',
+		'radiogroup: Mode',
+		'slider: Cutoff',
+		'slider: Send',
+	]);
+});
+
+test('a label added later names the control once it takes focus', async ({ browserName, page }) => {
+	const host = page.locator('#late');
+
+	await host.evaluate((element) => {
+		const label = document.createElement('label');
+
+		label.htmlFor = element.id;
+		label.textContent = 'Late';
+		element.before(label);
+	});
+	await host.locator('.sonic-dial').focus();
+
+	expect(await readBridge(host, '.sonic-dial')).toEqual({ bridged: 1, labels: 1 });
+	if (browserName === 'chromium') expect(await readNames(page)).toContain('slider: Late');
+});
+
+test('a label click focuses the range and the switch, and toggles the key once', async ({
+	page,
+}) => {
+	await page.locator('label[for="cutoff"]').click();
+	await expect(page.locator('#cutoff .sonic-dial')).toBeFocused();
+
+	await page.locator('label[for="mode"]').click();
+	await expect(page.locator('#mode [aria-checked="true"]')).toBeFocused();
+
+	const key = page.locator('#mute .sonic-key');
+
+	await page.getByText('Mute', { exact: true }).click();
+	await expect(key).toHaveAttribute('aria-pressed', 'true');
+
+	// Inside a wrapping label, Firefox follows a click on the control with one on the host
+	await key.click();
+	await expect(key).toHaveAttribute('aria-pressed', 'false');
+});
+
+test('the form submits each value, and a pressed toggle only', async ({ page }) => {
+	expect(await readFormData(page)).toEqual([
+		['cutoff', '40'],
+		['send', '30'],
+		['solo', 'yes'],
+		['mode', 'lp'],
+		['late', '10'],
+	]);
+
+	await page.locator('#cutoff .sonic-dial').press('ArrowUp');
+	await page.locator('#mute .sonic-key').click();
+	await page.locator('#solo .sonic-key').click();
+	await page.getByRole('radio', { name: 'HP' }).click();
+
+	expect(await readFormData(page)).toEqual([
+		['cutoff', '45'],
+		['send', '30'],
+		['mute', 'on'],
+		['mode', 'hp'],
+		['late', '10'],
+	]);
+});
+
+test('a reset returns the range and the switch to their value attributes, and keys to pressed', async ({
+	page,
+}) => {
+	const mute = page.locator('#mute .sonic-key');
+	const solo = page.locator('#solo .sonic-key');
+
+	await page.locator('#cutoff .sonic-dial').press('ArrowUp');
+	await page.getByRole('radio', { name: 'HP' }).click();
+	await mute.click();
+	await solo.click();
+	await expect(mute).toHaveAttribute('aria-pressed', 'true');
+	await expect(solo).toHaveAttribute('aria-pressed', 'false');
+	await page.locator('#patch').evaluate((form) => {
+		if (form instanceof HTMLFormElement) form.reset();
+	});
+
+	await expect(page.locator('#cutoff .sonic-dial')).toHaveAttribute('aria-valuenow', '40');
+	await expect(page.getByRole('radio', { name: 'LP' })).toHaveAttribute('aria-checked', 'true');
+	await expect(mute).toHaveAttribute('aria-pressed', 'false');
+	await expect(solo).toHaveAttribute('aria-pressed', 'true');
+});
+
+test('a disabled fieldset disables the dial inside it until re-enabled', async ({
+	isMobile,
+	page,
+}) => {
+	test.skip(isMobile, 'Touch has its own spec');
+
+	const host = page.locator('#drive');
+	const control = host.locator('.sonic-dial');
+	const box = await control.boundingBox();
+	if (!box) throw new Error('The dial has no box');
+
+	const dragUp = async (): Promise<void> => {
+		await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+		await page.mouse.down();
+		await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2 - 32, { steps: 4 });
+		await page.mouse.up();
+	};
+
+	await expect(control).not.toHaveAttribute('tabindex');
+	await expect(control).toHaveAttribute('aria-disabled', 'true');
+	await dragUp();
+	await host.evaluate((element: HTMLElement) => {
+		element.focus();
+	});
+	await page.keyboard.press('ArrowUp');
+	await expect(control).toHaveAttribute('aria-valuenow', '50');
+	await expect(control).not.toBeFocused();
+
+	await page.locator('#rack').evaluate((fieldset) => {
+		if (fieldset instanceof HTMLFieldSetElement) fieldset.disabled = false;
+	});
+
+	await expect(control).toHaveAttribute('tabindex', '0');
+	await expect(control).not.toHaveAttribute('aria-disabled');
+	await dragUp();
+	await expect(control).toHaveAttribute('aria-valuenow', '70');
+	expect(await readFormData(page)).toContainEqual(['drive', '70']);
+});
+
+test('a dial in a disabled fieldset takes the disabled skin, forced colours included', async ({
+	browserName,
+	page,
+}) => {
+	const lit = (selector: string): Promise<string> =>
+		readCustomProperty(page, `${selector} .sonic-dial`, '--_sonic-dial-lit');
+
+	expect(await lit('#drive')).toBe(await lit('#held'));
+	expect(await lit('#drive')).not.toBe(await lit('#cutoff'));
+
+	test.skip(browserName === 'webkit', 'WebKit has no forced-colours mode');
+
+	await page.emulateMedia({ forcedColors: 'active' });
+
+	expect(await readCustomProperty(page, '#drive .sonic-dial', '--_sonic-ink')).toBe('GrayText');
+	expect(await readCustomProperty(page, '#cutoff .sonic-dial', '--_sonic-ink')).not.toBe(
+		'GrayText',
+	);
+});
+
+// Firefox hands a state to the wrong control when tags upgrade out of document order, as this fixture's do
+test('back navigation restores what each control held, never what another held', async ({
+	browserName,
+	page,
+}) => {
+	const controls = ['cutoff', 'mode', 'mute', 'send', 'solo'] as const;
+	const original = { cutoff: '40', mode: 'lp', mute: 'false', send: '30', solo: 'true' };
+	const changed = { cutoff: '45', mode: 'hp', mute: 'true', send: '31', solo: 'false' };
+
+	await page.locator('#cutoff .sonic-dial').press('ArrowUp');
+	await page.locator('#send .sonic-slider').press('ArrowUp');
+	await page.locator('#mute .sonic-key').click();
+	await page.locator('#solo .sonic-key').click();
+	await page.getByRole('radio', { name: 'HP' }).click();
+	await page.goto('/fixtures/docked/');
+	await page.goBack();
+	await expect(page.locator('#send .sonic-slider')).toHaveAttribute('aria-valuenow');
+
+	const reads = {
+		cutoff: ['#cutoff .sonic-dial', 'aria-valuenow'],
+		mode: ['#mode [aria-checked="true"] [data-sonic-value]', 'data-sonic-value'],
+		mute: ['#mute .sonic-key', 'aria-pressed'],
+		send: ['#send .sonic-slider', 'aria-valuenow'],
+		solo: ['#solo .sonic-key', 'aria-pressed'],
+	} as const;
+	const held = Object.fromEntries(
+		await Promise.all(
+			controls.map(async (control) => {
+				const [selector, name] = reads[control];
+
+				return [control, await page.locator(selector).getAttribute(name)] as const;
+			}),
+		),
+	);
+
+	for (const control of controls) {
+		expect([original[control], changed[control]], control).toContain(held[control]);
+	}
+	if (browserName !== 'firefox') expect(held).toEqual(changed);
+});
