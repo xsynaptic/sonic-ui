@@ -112,7 +112,10 @@
 			var(--_sonic-glass);
 
 		/* Not the cap's ink, which a skin may darken */
-		--_sonic-glass-type: color-mix(in oklab, var(--_sonic-glass) 20%, #fff);
+		--_sonic-glass-text: var(
+			--sonic-glass-text,
+			color-mix(in oklab, var(--_sonic-glass) 20%, #fff)
+		);
 	}
 
 	/* A definite cell, so percentage-sized content fills the glass; a canvas sized to its own box would feed back */
@@ -123,7 +126,8 @@
 		flex-shrink: 0;
 		grid-template: minmax(0, 1fr) / minmax(0, 1fr);
 		place-items: center;
-		color: var(--_sonic-glass-type);
+		font-family: var(--sonic-glass-font);
+		color: var(--_sonic-glass-text);
 
 		/* A double click aimed at a neighbouring control would highlight it */
 		user-select: none;
@@ -209,10 +213,11 @@
 		position-try-fallbacks: flip-block;
 		overflow: visible;
 		font: inherit;
+		font-family: var(--sonic-glass-font);
 		font-size: calc(0.5 * var(--_sonic-readout-size));
 		font-variant-numeric: tabular-nums;
 		line-height: 1;
-		color: var(--_sonic-glass-type);
+		color: var(--_sonic-glass-text);
 		pointer-events: none;
 		cursor: default;
 		user-select: none;

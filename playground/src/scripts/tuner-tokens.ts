@@ -59,6 +59,7 @@ export const tokenGroups: Array<TokenGroup> = [
 				resolved: '--_sonic-dial-modulation',
 			}),
 			colour('glass', '--sonic-glass', { from: '.sonic-screen' }),
+			colour('glass text', '--sonic-glass-text', { from: '.sonic-screen' }),
 			colour('hot', '--sonic-hot', { from: '.sonic-meter' }),
 			colour('clip', '--sonic-clip', { from: '.sonic-meter' }),
 			range('light tilt', '--sonic-light-tilt', [-60, 60, 1, 'deg']),
