@@ -7,13 +7,22 @@ packages:
 linkWorkspacePackages: true
 saveWorkspaceProtocol: false
 
-# Intended to mitigate supply chain attacks
-minimumReleaseAge: 1440
+# Intended to mitigate supply chain attacks; a package must be 48h old to install
+minimumReleaseAge: 2880
 verifyDepsBeforeRun: error
 strictDepBuilds: true
 
 minimumReleaseAgeExclude:
   - '@xsynaptic/*'
+
+# TypeScript 7 native binaries for fallow's type-aware mode, which this project does not use
+overrides:
+  fallow-type-aware: '-'
+
+peerDependencyRules:
+  allowedVersions:
+    # eslint-plugin-jsx-a11y caps its eslint peer at ^9 but uses no APIs removed in ESLint 10
+    'eslint-plugin-jsx-a11y>eslint': '10'
 
 allowBuilds:
   esbuild: true

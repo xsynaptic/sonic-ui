@@ -41,6 +41,9 @@ check:
           # Health prints its report even at zero findings, so output shows only on failure
           - name: complexity
             run: out=$(fallow health --complexity --quiet 2>&1) || { printf '%s\n' "$out"; exit 1; }
+          # `fallow health --css` never exits non-zero; audit gates the css-* rules, scoped to changed files
+          - name: styling
+            run: fallow audit --gate all --quiet
           - name: architecture
             run: fallow dead-code --boundary-violations --circular-deps --quiet
           - name: test
@@ -53,10 +56,11 @@ fix:
       group:
         piped: true
         jobs:
-          - name: format
-            run: prettier --write . --cache --list-different
+          # Stylelint's fixes land before Prettier so they come out formatted
           - name: css
             run: stylelint "{packages/sonic-ui/src,playground/src}/**/*.{css,astro}" --fix --cache --cache-location node_modules/.cache/stylelint/
+          - name: format
+            run: prettier --write . --cache --list-different
           - name: lint
             run: eslint --fix --cache --cache-location node_modules/.cache/eslint/
     - name: report

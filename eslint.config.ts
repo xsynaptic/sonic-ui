@@ -8,7 +8,16 @@ import globals from 'globals';
 
 export default getConfig([
 	{
-		ignores: ['**/dist/**', '**/.astro/**', '**/.cache/**', '**/temp/**', '.claude/**'],
+		ignores: [
+			'**/dist/**',
+			'**/.astro/**',
+			'**/.cache/**',
+			'**/temp/**',
+			'.claude/**',
+			'**/blob-report/**',
+			'**/playwright-report/**',
+			'**/test-results/**',
+		],
 	},
 	{
 		rules: {
@@ -19,6 +28,8 @@ export default getConfig([
 			'max-params': ['warn', 3],
 			'max-statements': ['warn', 25],
 			'unicorn/logical-assignment-operators': 'off',
+			// The shared default of 5 makes room for schema chains, which this repo has none of
+			'unicorn/max-nested-calls': ['error', { max: 4 }],
 		},
 	},
 	// Everything shipped and everything the playground runs is browser code; only config files see Node

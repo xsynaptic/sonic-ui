@@ -8,5 +8,6 @@ export default defineConfig({
 		// Stryker's sandboxes and agent worktrees hold copies of the suite
 		exclude: [...configDefaults.exclude, '.cache/**', '.claude/worktrees/**'],
 		include: ['**/*.test.ts'],
+		silent: 'passed-only',
 	},
 });
