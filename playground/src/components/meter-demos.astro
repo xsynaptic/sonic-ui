@@ -18,6 +18,39 @@ import Panel from '#components/panel.astro';
 			<sonic-meter orientation="horizontal"></sonic-meter>
 		</div>
 	</Cell>
+	<Cell id="meter-ladder" label="Ladder">
+		<div
+			aria-labelledby="meter-ladder"
+			class="flex gap-1 [--sonic-meter-clip-from:-4] [--sonic-meter-hot-from:-10]"
+			role="group"
+		>
+			<sonic-meter lights="-30 -25 -20 -16 -13 -10 -7 -4 0"></sonic-meter>
+			<sonic-meter lights="-30 -25 -20 -16 -13 -10 -7 -4 0"></sonic-meter>
+		</div>
+	</Cell>
+	<Cell id="meter-reduction" label="Reduction">
+		<div aria-labelledby="meter-reduction" role="group">
+			<sonic-meter data-demo="reduction" max="0" min="-24" origin="0" scale="linear"></sonic-meter>
+		</div>
+	</Cell>
+	<Cell id="meter-short-ladder" isWide={true} label="Short ladder">
+		<div aria-labelledby="meter-short-ladder" class="grid gap-1" role="group">
+			<sonic-meter lights="-24 -12 -6 -3 0" orientation="horizontal"></sonic-meter>
+			<sonic-meter lights="-24 -12 -6 -3 0" orientation="horizontal"></sonic-meter>
+		</div>
+	</Cell>
+	<Cell id="meter-correlation" isWide={true} label="Correlation">
+		<div aria-labelledby="meter-correlation" role="group">
+			<sonic-meter
+				data-demo="correlation"
+				max="1"
+				min="-1"
+				orientation="horizontal"
+				origin="0"
+				scale="linear"
+			></sonic-meter>
+		</div>
+	</Cell>
 	<Cell id="meter-run" label="Run">
 		<sonic-key aria-labelledby="meter-run" data-run pressed toggle>
 			<Play aria-hidden="true" />
@@ -33,6 +66,16 @@ import Panel from '#components/panel.astro';
 		>
 			<sonic-meter></sonic-meter>
 			<sonic-meter></sonic-meter>
+		</div>
+	</Cell>
+	<Cell id="meter-large-ladder" label="Ladder, large">
+		<div
+			aria-labelledby="meter-large-ladder"
+			class="flex gap-2 [--sonic-meter-clip-from:-4] [--sonic-meter-hot-from:-10] [--sonic-meter-length:16rem] [--sonic-meter-size:1.5rem]"
+			role="group"
+		>
+			<sonic-meter lights="-30 -25 -20 -16 -13 -10 -7 -4 0"></sonic-meter>
+			<sonic-meter lights="-30 -25 -20 -16 -13 -10 -7 -4 0"></sonic-meter>
 		</div>
 	</Cell>
 </Panel>

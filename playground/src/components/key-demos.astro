@@ -1,5 +1,6 @@
 ---
 import Play from '@lucide/astro/icons/play';
+import SkipForward from '@lucide/astro/icons/skip-forward';
 
 import Cell from '#components/cell.astro';
 import MuteKey from '#components/mute-key.astro';
@@ -22,6 +23,16 @@ const pads = ['Kick', 'Snare', 'Hat', 'Clap'];
 			<sonic-key aria-labelledby={`key-pad-${pad.toLowerCase()}`} momentary />
 		</Cell>
 	))}
+	<Cell id="key-loading" label="Loading">
+		<sonic-key aria-labelledby="key-loading" busy>
+			<Play aria-hidden="true" />
+		</sonic-key>
+	</Cell>
+	<Cell id="key-next" label="Last">
+		<sonic-key aria-labelledby="key-next" soft-disabled>
+			<SkipForward aria-hidden="true" />
+		</sonic-key>
+	</Cell>
 	<Cell id="key-disabled" label="Disabled">
 		<sonic-key aria-labelledby="key-disabled" disabled>
 			<Play aria-hidden="true" />
@@ -38,6 +49,11 @@ const pads = ['Kick', 'Snare', 'Hat', 'Clap'];
 		<div class="[--sonic-key-size:6rem]">
 			<MuteKey isPressed={true} labelledby="key-large-mute" />
 		</div>
+	</Cell>
+	<Cell id="key-large-loading" label="Loading, large">
+		<sonic-key aria-labelledby="key-large-loading" busy class="[--sonic-key-size:6rem]">
+			<Play aria-hidden="true" />
+		</sonic-key>
 	</Cell>
 	<Cell id="key-large-pad" label="Pad, large">
 		<sonic-key aria-labelledby="key-large-pad" class="[--sonic-key-size:6rem]" momentary />

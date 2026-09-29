@@ -3,6 +3,10 @@ import Play from '@lucide/astro/icons/play';
 
 import Cell from '#components/cell.astro';
 import Panel from '#components/panel.astro';
+import { echoModes } from '#scripts/stop-names.ts';
+
+const levelTicks = [-40, -30, -20, -12, -6, 0, 5];
+const masterStops = Array.from({ length: 11 }, (_stop, index) => index);
 ---
 
 <Panel>
@@ -79,6 +83,81 @@ import Panel from '#components/panel.astro';
 			step="45"
 			value="135"
 		></sonic-dial>
+	</Cell>
+	<Cell id="dial-low" label="Low">
+		<sonic-dial
+			aria-labelledby="dial-low"
+			data-format="db"
+			default="0"
+			detent="0"
+			max="6"
+			min="-30"
+			origin="0"
+			readout
+			step="0.5"
+			value="-9"
+		></sonic-dial>
+	</Cell>
+	<Cell id="dial-loop" label="Loop">
+		<sonic-dial
+			aria-labelledby="dial-loop"
+			data-format="beats"
+			notched
+			readout
+			value="4"
+			values="0.03125 0.0625 0.125 0.25 0.5 1 2 4 8 16 32"
+		></sonic-dial>
+	</Cell>
+	<Cell id="dial-level" label="Level">
+		<sonic-dial
+			aria-labelledby="dial-level"
+			class="[--sonic-dial-size:3.5rem]"
+			data-format="db-kill"
+			default="0"
+			detent="0"
+			max="10"
+			midpoint="-12"
+			min="-60"
+			readout
+			step="0.5"
+			value="0"
+		>
+			<span data-sonic-value="-60">∞</span>
+			{levelTicks.map((tick) => (
+				<span data-sonic-value={tick}></span>
+			))}
+			<span data-sonic-value="10">+10</span>
+		</sonic-dial>
+	</Cell>
+	<Cell id="dial-master" label="Master">
+		<sonic-dial
+			aria-labelledby="dial-master"
+			class="[--sonic-dial-size:4rem] [--sonic-dial-scale-font-ratio:0.16]"
+			default="7"
+			max="10"
+			readout
+			step="0.5"
+			value="7"
+		>
+			{masterStops.map((stop) => (
+				<span data-sonic-value={stop}>{stop}</span>
+			))}
+		</sonic-dial>
+	</Cell>
+	<Cell id="dial-mode" label="Mode">
+		<sonic-dial
+			aria-labelledby="dial-mode"
+			class="[--sonic-dial-notch-ratio:0.05] [--sonic-dial-scale-font-ratio:0.085] [--sonic-dial-scale-ratio:0.34] [--sonic-dial-size:6rem] [--sonic-dial-sweep:180deg]"
+			data-format="echo-mode"
+			max="3"
+			notched
+			readout
+			value="1"
+		>
+			{echoModes.map((mode, index) => (
+				<span data-sonic-value={index}>{mode}</span>
+			))}
+		</sonic-dial>
 	</Cell>
 	<Cell id="dial-wobble" label="Wobble">
 		<sonic-dial aria-labelledby="dial-wobble" data-lfo="25" readout value="50"></sonic-dial>

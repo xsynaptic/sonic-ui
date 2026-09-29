@@ -1,0 +1,27 @@
+---
+import { meterLights } from '#components/club-mixer/meter-lights.ts';
+
+interface Props {
+	hasMeter: boolean;
+	value: number;
+}
+
+const { hasMeter, value } = Astro.props;
+---
+
+<div class="mt-auto flex items-end gap-2 pt-2">
+	{hasMeter ? <sonic-meter data-channel-meter lights={meterLights}></sonic-meter> : undefined}
+	<sonic-slider
+		aria-label="Fader"
+		data-channel-fader
+		data-format="db-kill"
+		default="0"
+		max="0"
+		midpoint="-12"
+		min="-60"
+		orientation="vertical"
+		readout
+		step="0.5"
+		value={value}
+	></sonic-slider>
+</div>

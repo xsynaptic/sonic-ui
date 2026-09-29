@@ -6,14 +6,7 @@ import type {
 	SonicSlider,
 } from '@xsynaptic/sonic-ui';
 
-// The gain wanders past full scale now and then, so the release, hold and clip all show
-function levelAt(time: number, channel: number, beatMs: number): number {
-	const beat = Math.floor(time / beatMs);
-	const decay = (1 - (time % beatMs) / beatMs) ** 3;
-	const gain = 0.3 + 0.78 * Math.abs(Math.sin(beat * 1.7 + channel * 0.6));
-
-	return gain * decay;
-}
+import { gainOf, levelAt } from '#scripts/demo-signal.ts';
 
 function stripGains(strip: Element): [number, number] {
 	const level = strip.querySelector<SonicSlider>('[data-strip-level]');
@@ -21,11 +14,17 @@ function stripGains(strip: Element): [number, number] {
 	const mute = strip.querySelector<SonicKey>('sonic-key[toggle]');
 	if (!level || !pan || mute?.pressed) return [0, 0];
 
-	const gain = level.value <= -60 ? 0 : 10 ** (level.value / 20);
+	const gain = gainOf(level.value);
 	const modulation = Number(pan.getAttribute('modulation') ?? 0);
 	const position = Math.min(50, Math.max(-50, pan.value + modulation)) / 100 + 0.5;
 
 	return [gain * Math.cos((position * Math.PI) / 2), gain * Math.sin((position * Math.PI) / 2)];
+}
+
+function pointLevel(meter: SonicMeter, time: number, beatMs: number): number {
+	if (meter.dataset.demo === 'reduction') return -18 * levelAt(time, 0, beatMs);
+
+	return 0.3 + 0.6 * Math.sin(time / 1100) * Math.cos(time / 2700);
 }
 
 function readSource(selector: string | undefined, fallback: number): number {
@@ -34,17 +33,26 @@ function readSource(selector: string | undefined, fallback: number): number {
 	return document.querySelector<SonicDial>(selector)?.value ?? fallback;
 }
 
-function tick(time: number): void {
-	const tempo = document.querySelector<SonicNumber>('[data-tempo]')?.value ?? 125;
-	const beatMs = 60_000 / tempo;
-
+function driveMeters(time: number, beatMs: number): void {
 	for (const meter of document.querySelectorAll<SonicMeter>('sonic-meter')) {
+		if (meter.scale === 'linear') {
+			meter.level = pointLevel(meter, time, beatMs);
+			continue;
+		}
+
 		const channel = meter.previousElementSibling?.localName === 'sonic-meter' ? 1 : 0;
 		const strip = meter.closest('[data-strip]');
 		const gain = strip ? stripGains(strip)[channel] : 1;
 
 		meter.level = levelAt(time, channel, beatMs) * gain;
 	}
+}
+
+function tick(time: number): void {
+	const tempo = document.querySelector<SonicNumber>('[data-tempo]')?.value ?? 125;
+	const beatMs = 60_000 / tempo;
+
+	driveMeters(time, beatMs);
 	for (const control of document.querySelectorAll<HTMLElement>('[data-lfo]')) {
 		const rate = readSource(control.dataset.lfoRate, 0.5);
 		const depth = readSource(control.dataset.lfoDepth, Number(control.dataset.lfo));

@@ -60,9 +60,15 @@ export const tokenGroups: Array<TokenGroup> = [
 			}),
 			colour('glass', '--sonic-glass', { from: '.sonic-screen' }),
 			colour('glass text', '--sonic-glass-text', { from: '.sonic-screen' }),
+			colour('lit alt', '--sonic-lit-alt', { from: '.sonic-led' }),
+			colour('buffered', '--sonic-buffered', {
+				from: '.sonic-slider',
+				resolved: '--_sonic-slider-buffered',
+			}),
 			colour('hot', '--sonic-hot', { from: '.sonic-meter' }),
 			colour('clip', '--sonic-clip', { from: '.sonic-meter' }),
 			range('light tilt', '--sonic-light-tilt', [-60, 60, 1, 'deg']),
+			range('detent zone', '--sonic-detent-zone', [0, 40, 1, 'px']),
 			{
 				...range('readout size', '--sonic-readout-size', [1, 3, 0.125, 'rem']),
 				from: '.sonic-dial-readout',
@@ -82,6 +88,8 @@ export const tokenGroups: Array<TokenGroup> = [
 			range('sweep', '--sonic-dial-sweep', [180, 360, 5, 'deg']),
 			range('segment', '--sonic-dial-segment', [5, 90, 1, 'deg']),
 			range('notch', '--sonic-dial-notch-ratio', [0, 0.2, 0.005]),
+			range('scale', '--sonic-dial-scale-ratio', [0, 0.4, 0.005]),
+			range('scale font', '--sonic-dial-scale-font-ratio', [0.05, 0.4, 0.005]),
 			range('ridge pitch', '--sonic-dial-ridge-pitch', [2, 12, 0.5, 'px']),
 			range('travel', '--sonic-dial-travel', [40, 400, 10, 'px']),
 		],
@@ -113,6 +121,8 @@ export const tokenGroups: Array<TokenGroup> = [
 			range('corner', '--sonic-slider-radius-ratio', [0, 0.5, 0.01]),
 			range('bevel', '--sonic-slider-bevel-ratio', [0, 0.25, 0.005]),
 			range('pointer', '--sonic-slider-pointer-ratio', [0.01, 0.15, 0.005]),
+			range('scale', '--sonic-slider-scale-ratio', [0, 1, 0.01]),
+			range('scale font', '--sonic-slider-scale-font-ratio', [0.1, 0.6, 0.01]),
 		],
 	},
 	{

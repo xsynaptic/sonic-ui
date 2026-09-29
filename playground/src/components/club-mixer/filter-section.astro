@@ -1,0 +1,127 @@
+---
+import Label from '#components/club-mixer/label.astro';
+import MixerKey from '#components/club-mixer/mixer-key.astro';
+import Pot from '#components/club-mixer/pot.astro';
+import { channelCurves } from '#scripts/stop-names.ts';
+
+interface Props {
+	filter: 1 | 2;
+}
+
+const { filter } = Astro.props;
+
+const section = `filter-${String(filter)}`;
+const curveGlyphs = ['M2 14 L14 2', 'M2 14 Q4 4 14 2', 'M2 14 Q2 2 14 2'];
+const passes = [
+	{ id: 'high-pass', label: 'HPF' },
+	{ id: 'band-pass', label: 'BPF' },
+	{ id: 'low-pass', label: 'LPF' },
+];
+---
+
+<div
+	aria-labelledby={`${section}-title`}
+	class="flex flex-col items-center gap-3 border-s border-zinc-800 px-3"
+	data-filter={filter}
+	role="group"
+>
+	<Pot
+		data={{ 'data-lfo-depth': '' }}
+		ends={['Min', 'Max']}
+		format="percent"
+		id={`${section}-lfo-depth`}
+		label="LFO"
+		max={100}
+		min={0}
+		size="medium"
+		value={40}
+	/>
+	<MixerKey
+		data={{ 'data-lfo-on': '' }}
+		id={`${section}-lfo-on`}
+		isPressed={filter === 1}
+		label="LFO on"
+	/>
+	<MixerKey data={{ 'data-double': '' }} id={`${section}-double`} label="×2" />
+	<MixerKey
+		data={{ 'data-tap': '' }}
+		id={`${section}-tap`}
+		isMomentary={true}
+		isRound={true}
+		label="Tap"
+		size="large"
+	/>
+	<Pot
+		ends={['Mild', 'Wild']}
+		format="percent"
+		id={`${section}-resonance`}
+		label="Res"
+		max={100}
+		min={0}
+		size="medium"
+		value={30}
+	/>
+	<span
+		class="font-mono text-xs font-bold tracking-widest text-zinc-200 uppercase"
+		id={`${section}-title`}
+	>
+		Filter {filter}
+	</span>
+	{filter === 2 ? <MixerKey id={`${section}-link`} label="Link" /> : undefined}
+	<MixerKey id={`${section}-crossfade`} label="To xfade" />
+	{passes.map((pass, index) => (
+		<MixerKey
+			id={`${section}-${pass.id}`}
+			isPressed={index === 2}
+			isRound={true}
+			label={pass.label}
+			size="large"
+		/>
+	))}
+	<Pot
+		data={{ 'data-frequency': '' }}
+		ends={['20', '20k']}
+		format="hertz"
+		id={`${section}-frequency`}
+		label="Freq"
+		max={20_000}
+		min={20}
+		size="large"
+		taper="log"
+		ticks={[100, 1000, 10_000]}
+		value={2000}
+	/>
+	<div class="mt-auto flex items-end gap-3 pt-2">
+		<MixerKey id={`${section}-on`} isRound={true} label="On" size="large" />
+		{filter === 1 ? (
+			<Pot format="percent" id={`${section}-curve`} label="X curve" max={100} min={0} value={50} />
+		) : (
+			<div class="grid justify-items-center gap-1 text-zinc-400">
+				<sonic-dial
+					aria-labelledby={`${section}-curve`}
+					class="[--sonic-dial-scale-ratio:0.24] [--sonic-dial-size:3rem] [--sonic-dial-sweep:180deg]"
+					data-format="channel-curve"
+					max={channelCurves.length - 1}
+					notched
+					readout
+					value="1"
+				>
+					{curveGlyphs.map((path, index) => (
+						<span data-sonic-value={index}>
+							<svg
+								fill="none"
+								stroke="currentColor"
+								stroke-linecap="round"
+								stroke-width="2"
+								viewBox="0 0 16 16"
+							>
+								<path d={path} />
+							</svg>
+						</span>
+					))}
+				</sonic-dial>
+				<Label id={`${section}-curve`} text="Ch curve" />
+			</div>
+		)}
+	</div>
+</div>

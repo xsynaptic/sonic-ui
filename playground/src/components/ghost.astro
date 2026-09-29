@@ -1,0 +1,40 @@
+---
+interface Props {
+	blockSize?: string;
+	hasCaption?: boolean;
+	inlineSize?: string;
+	isRound?: boolean;
+	name: string;
+}
+
+const { blockSize, hasCaption = false, inlineSize, isRound = false, name } = Astro.props;
+
+// A part the range lacks; with children it outlines an existing part that lacks an extension
+const hasPart = Astro.slots.has('default');
+---
+
+{hasPart ? (
+	<div
+		class:list={[
+			'inline-grid place-items-center border border-dashed border-zinc-600 p-[0.1875rem]',
+			isRound ? 'rounded-full' : 'rounded-sm',
+		]}
+		data-ghost={name}
+		title={name}
+	>
+		{hasCaption ? (
+			<span class="justify-self-start px-1 font-mono text-[0.5rem] text-zinc-400 uppercase">
+				{name}
+			</span>
+		) : undefined}
+		<slot />
+	</div>
+) : (
+	<div
+		class="grid shrink-0 place-items-center rounded-sm border border-dashed border-zinc-500 p-0.5 text-center font-mono text-[0.5rem] leading-tight text-zinc-400 uppercase"
+		data-ghost={name}
+		style={{ blockSize, inlineSize }}
+	>
+		{name}
+	</div>
+)}

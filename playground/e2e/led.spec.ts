@@ -18,3 +18,9 @@ test('a latched key lights the LED it holds, as data-sonic-lit does', async ({ p
 	await page.locator('#power .sonic-key').click();
 	expect(await lensOf(page, held)).toBe(lit);
 });
+
+test('a second-colour LED lights in its own colour', async ({ page }) => {
+	await page.goto('/fixtures/');
+
+	expect(await lensOf(page, '#led-alt')).not.toBe(await lensOf(page, '#led-lit'));
+});

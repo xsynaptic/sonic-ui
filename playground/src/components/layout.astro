@@ -2,22 +2,21 @@
 import Document from '#components/document.astro';
 import '#styles/playground.css';
 
+interface Section {
+	id: string;
+	label: string;
+}
+
 interface Props {
+	sections?: Array<Section>;
 	title: string;
 }
 
-const { title } = Astro.props;
+const { sections = [], title } = Astro.props;
 
-const sections = [
-	{ id: 'tuner', label: 'Tuner' },
-	{ id: 'dial', label: 'Dial' },
-	{ id: 'slider', label: 'Slider' },
-	{ id: 'key', label: 'Key' },
-	{ id: 'led', label: 'LED' },
-	{ id: 'switch', label: 'Switch' },
-	{ id: 'number', label: 'Number' },
-	{ id: 'meter', label: 'Meter' },
-	{ id: 'screen', label: 'Screen' },
+const pages = [
+	{ href: '/', label: 'Specimens' },
+	{ href: '/club-mixer/', label: 'Club mixer' },
 ];
 const skins = ['default', 'slate', 'lime', 'ivory'];
 ---
@@ -34,21 +33,36 @@ const skins = ['default', 'slate', 'lime', 'ivory'];
 	</script>
 	<nav class="sticky top-0 z-10 border-b border-zinc-800 bg-zinc-950/90 backdrop-blur">
 		<div class="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-2 sm:px-8">
-			<a class="font-mono text-sm font-bold text-zinc-100" href="#top">
+			<a class="font-mono text-sm font-bold text-zinc-100" href="/">
 				sonic-ui
 			</a>
-			<ul class="flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs">
-				{sections.map((section) => (
+			<ul aria-label="Pages" class="flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs">
+				{pages.map((page) => (
 					<li>
 						<a
-							class="inline-flex min-h-6 items-center text-zinc-400 hover:text-zinc-100"
-							href={`#${section.id}`}
+							aria-current={Astro.url.pathname === page.href ? 'page' : undefined}
+							class="inline-flex min-h-6 items-center text-zinc-400 underline-offset-4 hover:text-zinc-100 aria-[current=page]:text-zinc-100 aria-[current=page]:underline"
+							href={page.href}
 						>
-							{section.label}
+							{page.label}
 						</a>
 					</li>
 				))}
 			</ul>
+			{sections.length > 0 ? (
+				<ul aria-label="Sections" class="flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs">
+					{sections.map((section) => (
+						<li>
+							<a
+								class="inline-flex min-h-6 items-center text-zinc-400 hover:text-zinc-100"
+								href={`#${section.id}`}
+							>
+								{section.label}
+							</a>
+						</li>
+					))}
+				</ul>
+			) : undefined}
 			<div class="ms-auto font-mono [--sonic-segmented-size:1.75rem]">
 				<sonic-segmented aria-label="Skin" data-skin-switch value="default">
 					{skins.map((skin) => (
@@ -66,8 +80,6 @@ const skins = ['default', 'slate', 'lime', 'ivory'];
 
 		import '#scripts/skin.ts';
 		import '#scripts/formats.ts';
-		import '#scripts/motion.ts';
-		import '#scripts/screen-follow.ts';
-		import '#scripts/tuner.ts';
 	</script>
+	<slot name="scripts" />
 </Document>

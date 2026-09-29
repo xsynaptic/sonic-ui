@@ -1,0 +1,109 @@
+---
+import Label from '#components/club-mixer/label.astro';
+
+interface Props {
+	data?: Record<string, string>;
+	detent?: number;
+	ends?: [string, string];
+	format?: string;
+	id: string;
+	isNumbered?: boolean;
+	label: string;
+	max: number;
+	midpoint?: number;
+	min: number;
+	origin?: number;
+	size?: 'large' | 'medium' | 'small';
+	step?: number;
+	taper?: 'log';
+	// Even ticks assume a linear pot, so a tapered one names its own
+	ticks?: Array<number>;
+	value: number;
+}
+
+const {
+	data = {},
+	detent,
+	ends,
+	format,
+	id,
+	isNumbered = false,
+	label,
+	max,
+	midpoint,
+	min,
+	origin,
+	size = 'small',
+	step,
+	taper,
+	ticks,
+	value,
+} = Astro.props;
+
+const evenTicks = 11;
+const isLinear = midpoint === undefined && taper === undefined;
+
+function legendLabels(): Array<[number, string]> {
+	if (isNumbered) {
+		return Array.from({ length: max - min + 1 }, (_stop, index) => [
+			min + index,
+			String(min + index),
+		]);
+	}
+	if (!ends) return [];
+
+	return [
+		[min, ends[0]],
+		[max, ends[1]],
+	];
+}
+
+function evenTickValues(): Array<number> {
+	if (!isLinear) return [];
+
+	return Array.from(
+		{ length: evenTicks },
+		(_tick, index) => min + ((max - min) * index) / (evenTicks - 1),
+	);
+}
+
+const labels = legendLabels();
+const tickValues = ticks ?? evenTickValues();
+const marks = [
+	...labels,
+	...tickValues
+		.filter((tick) => labels.every(([labelled]) => labelled !== tick))
+		.map((tick): [number, string] => [tick, '']),
+];
+
+const sizeClass = {
+	large: '[--sonic-dial-size:3.5rem]',
+	medium: '[--sonic-dial-size:2.75rem]',
+	small: '[--sonic-dial-size:2.5rem]',
+}[size];
+---
+
+<div class:list={['grid justify-items-center gap-1 text-zinc-400', sizeClass]}>
+	<sonic-dial
+		aria-labelledby={id}
+		data-format={format}
+		default={origin ?? value}
+		detent={detent}
+		max={max}
+		midpoint={midpoint}
+		min={min}
+		origin={origin}
+		readout
+		step={step}
+		taper={taper}
+		value={value}
+		{...data}
+	>
+		{marks.map(([mark, text]) => (
+			<span class="font-mono uppercase" data-sonic-value={mark}>
+				{text}
+			</span>
+		))}
+	</sonic-dial>
+	<Label id={id} text={label} />
+</div>

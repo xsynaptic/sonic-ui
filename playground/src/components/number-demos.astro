@@ -39,6 +39,24 @@ import Panel from '#components/panel.astro';
 			value="-5"
 		></sonic-number>
 	</Cell>
+	<Cell id="number-loop" isWide={true} label="Loop">
+		<sonic-number
+			aria-labelledby="number-loop"
+			class="font-mono"
+			data-format="beats"
+			value="4"
+			values="0.03125 0.0625 0.125 0.25 0.5 1 2 4 8 16 32"
+		></sonic-number>
+	</Cell>
+	<Cell id="number-note" isWide={true} label="Note">
+		<sonic-number
+			aria-labelledby="number-note"
+			class="font-mono"
+			data-format="note"
+			value="48"
+			values="3 6 8 12 16 18 24 32 36 48 64 72 96 144 192"
+		></sonic-number>
+	</Cell>
 	<Cell id="number-disabled" isWide={true} label="Disabled">
 		<sonic-number
 			aria-labelledby="number-disabled"

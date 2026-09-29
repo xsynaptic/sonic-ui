@@ -1,0 +1,55 @@
+---
+import ChannelFader from '#components/club-mixer/channel-fader.astro';
+import MixerKey from '#components/club-mixer/mixer-key.astro';
+import Pot from '#components/club-mixer/pot.astro';
+import StripInput from '#components/club-mixer/strip-input.astro';
+import Ghost from '#components/ghost.astro';
+
+interface Props {
+	channel: number;
+	fader: number;
+	level: number;
+}
+
+const { channel, fader, level } = Astro.props;
+
+const strip = `channel-${String(channel)}`;
+const bands = [
+	{ id: 'high', label: 'High', low: '∞', min: -60 },
+	{ id: 'mid-high', label: 'Mid hi', low: '−30', min: -30 },
+	{ id: 'mid-low', label: 'Mid lo', low: '−30', min: -30 },
+	{ id: 'low', label: 'Low', low: '∞', min: -60 },
+];
+---
+
+<div
+	aria-label={`Channel ${String(channel)}`}
+	class="flex flex-col items-center gap-2.5 border-s border-zinc-800 px-2.5"
+	data-channel={channel}
+	role="group"
+>
+	<StripInput input="Line" level={level} levelData={{ 'data-channel-level': '' }} strip={strip} />
+	{bands.map((band) => (
+		<Pot
+			detent={0}
+			ends={[band.low, '+6']}
+			format="db-kill"
+			id={`${strip}-${band.id}`}
+			label={band.label}
+			max={6}
+			midpoint={0}
+			min={band.min}
+			origin={0}
+			size="medium"
+			ticks={[-24, -12, -6, 0, 3]}
+			value={0}
+		/>
+	))}
+	<Ghost blockSize="1.75rem" inlineSize="3.25rem" name="Lever switch" />
+	<Ghost blockSize="1.75rem" inlineSize="3.25rem" name="Lever switch" />
+	<MixerKey data={{ 'data-cue': '' }} id={`${strip}-cue`} isRound={true} label="Cue" size="large" />
+	<span aria-hidden="true" class="font-mono text-base font-bold text-zinc-300">
+		{channel}
+	</span>
+	<ChannelFader hasMeter={true} value={fader} />
+</div>

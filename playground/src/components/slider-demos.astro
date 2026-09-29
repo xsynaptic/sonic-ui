@@ -1,6 +1,18 @@
 ---
 import Cell from '#components/cell.astro';
 import Panel from '#components/panel.astro';
+
+const faderMarks = [
+	[10, '+10'],
+	[5, ''],
+	[0, '0'],
+	[-5, ''],
+	[-10, '−10'],
+	[-20, '−20'],
+	[-30, '−30'],
+	[-40, ''],
+	[-60, '∞'],
+] as const;
 ---
 
 <Panel>
@@ -23,6 +35,25 @@ import Panel from '#components/panel.astro';
 			origin="0"
 			value="-30"
 		></sonic-slider>
+	</Cell>
+	<Cell id="slider-blend" isWide={true} label="Blend">
+		<sonic-slider
+			aria-labelledby="slider-blend"
+			class="[--sonic-slider-size:3.25rem]"
+			data-format="signed-percent"
+			default="0"
+			max="50"
+			min="-50"
+			origin="0"
+			readout
+			value="-20"
+		>
+			<span data-sonic-value="-50">A</span>
+			<span data-sonic-value="-25"></span>
+			<span data-sonic-value="0"></span>
+			<span data-sonic-value="25"></span>
+			<span data-sonic-value="50">B</span>
+		</sonic-slider>
 	</Cell>
 	<Cell id="slider-modulated" isWide={true} label="Modulated">
 		<sonic-slider
@@ -47,6 +78,25 @@ import Panel from '#components/panel.astro';
 			value="0"
 		></sonic-slider>
 	</Cell>
+	<Cell id="slider-legend" label="Legend">
+		<sonic-slider
+			aria-labelledby="slider-legend"
+			class="[--sonic-slider-length:10rem] [--sonic-slider-size:3.25rem]"
+			data-format="db-kill"
+			default="0"
+			max="10"
+			midpoint="-12"
+			min="-60"
+			orientation="vertical"
+			readout
+			step="0.5"
+			value="0"
+		>
+			{faderMarks.map(([value, text]) => (
+				<span data-sonic-value={value}>{text}</span>
+			))}
+		</sonic-slider>
+	</Cell>
 	<Cell id="slider-steps" label="Steps">
 		<sonic-slider
 			aria-labelledby="slider-steps"
@@ -55,6 +105,43 @@ import Panel from '#components/panel.astro';
 			orientation="vertical"
 			readout
 			value="7"
+		></sonic-slider>
+	</Cell>
+	<Cell id="slider-progress" isWide={true} label="Progress">
+		<sonic-slider
+			aria-labelledby="slider-progress"
+			data-buffered="0 38 52 71"
+			data-format="percent"
+			readout
+			value="24"
+		></sonic-slider>
+	</Cell>
+	<Cell id="slider-bend" label="Bend">
+		<sonic-slider
+			aria-labelledby="slider-bend"
+			data-format="signed-percent"
+			max="100"
+			min="-100"
+			orientation="vertical"
+			origin="0"
+			readout
+			spring
+			value="0"
+		></sonic-slider>
+	</Cell>
+	<Cell id="slider-pitch" label="Pitch">
+		<sonic-slider
+			aria-labelledby="slider-pitch"
+			data-format="signed-percent"
+			default="0"
+			detent="0"
+			max="8"
+			min="-8"
+			orientation="vertical"
+			origin="0"
+			readout
+			step="0.05"
+			value="1.5"
 		></sonic-slider>
 	</Cell>
 	<Cell id="slider-disabled" label="Disabled">

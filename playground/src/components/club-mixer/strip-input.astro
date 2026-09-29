@@ -1,0 +1,31 @@
+---
+import AuxSend from '#components/club-mixer/aux-send.astro';
+import MixerKey from '#components/club-mixer/mixer-key.astro';
+import Pot from '#components/club-mixer/pot.astro';
+
+interface Props {
+	input: string;
+	level: number;
+	levelData?: Record<string, string>;
+	strip: string;
+}
+
+const { input, level, levelData = {}, strip } = Astro.props;
+---
+
+<AuxSend send={1} strip={strip} />
+<AuxSend send={2} strip={strip} />
+<MixerKey hasTwoColourLed={true} id={`${strip}-${input.toLowerCase()}`} label={input} />
+<Pot
+	data={levelData}
+	detent={0}
+	ends={['∞', '+10']}
+	format="db-kill"
+	id={`${strip}-level`}
+	label="Level"
+	max={10}
+	midpoint={0}
+	min={-60}
+	ticks={[-30, -20, -10, 0, 5]}
+	value={level}
+/>

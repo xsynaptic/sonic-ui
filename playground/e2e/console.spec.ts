@@ -24,6 +24,15 @@ test('the fixtures load with a clean console', async ({ page }) => {
 	expect(messages).toEqual([]);
 });
 
+test('the club mixer loads with a clean console', async ({ page }) => {
+	const messages = collectConsole(page);
+
+	await page.goto('/club-mixer/');
+	await expect(page.getByRole('slider', { name: 'Crossfader' })).toBeVisible();
+
+	expect(messages).toEqual([]);
+});
+
 test('a control without the material warns', async ({ page }) => {
 	const messages = collectConsole(page);
 

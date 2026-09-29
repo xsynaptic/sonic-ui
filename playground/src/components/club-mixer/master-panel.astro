@@ -1,0 +1,118 @@
+---
+import Label from '#components/club-mixer/label.astro';
+import { meterLights } from '#components/club-mixer/meter-lights.ts';
+import MixerKey from '#components/club-mixer/mixer-key.astro';
+import Pot from '#components/club-mixer/pot.astro';
+import Ghost from '#components/ghost.astro';
+
+const mixes = [
+	{ data: { 'data-master-mix': '' }, id: 'mix-1', label: 'Mix 1', value: 7 },
+	{ data: {}, id: 'mix-2', label: 'Mix 2', value: 5 },
+];
+const sources = [
+	{ id: 'post-eq', label: 'Post EQ' },
+	{ id: 'split', label: 'Split' },
+	{ id: 'aux-1', label: 'Aux 1' },
+	{ id: 'aux-2', label: 'Aux 2' },
+];
+const sides = ['left', 'right'];
+const plateClass = 'flex flex-col items-center gap-3 p-3';
+const titleClass = 'font-mono text-[0.625rem] font-bold tracking-widest text-zinc-300 uppercase';
+---
+
+<div class="flex flex-col items-center gap-4 border-s border-zinc-800 ps-3">
+	<div aria-label="Tempo" class="flex items-end gap-3" role="group">
+		<Pot
+			data={{ 'data-tempo': '' }}
+			detent={125}
+			format="bpm"
+			id="master-tempo"
+			label="Tempo"
+			max={160}
+			min={90}
+			origin={125}
+			size="medium"
+			step={0.5}
+			value={125}
+		/>
+		<MixerKey
+			data={{ 'data-start': '' }}
+			id="master-start"
+			isRound={true}
+			label="Start"
+			size="large"
+		/>
+	</div>
+	<Ghost hasCaption={true} name="Panel plate">
+		<div class={plateClass}>
+			<div aria-label="Master" class="flex flex-col items-center gap-3" role="group">
+				<div class="flex gap-1">
+					{sides.map(() => (
+						<sonic-meter data-master-meter lights={meterLights}></sonic-meter>
+					))}
+				</div>
+				<span class={titleClass}>Master</span>
+				{mixes.map((mix) => (
+					<Pot
+						data={mix.data}
+						id={`master-${mix.id}`}
+						isNumbered={true}
+						label={mix.label}
+						max={10}
+						min={0}
+						size="large"
+						step={0.5}
+						value={mix.value}
+					/>
+				))}
+			</div>
+			<div aria-label="Booth" class="flex flex-col items-center gap-3" role="group">
+				<span class={titleClass}>Booth</span>
+				<MixerKey hasLed={false} id="booth-mono" label="Mono" />
+				<Pot
+					id="booth-level"
+					isNumbered={true}
+					label="Level"
+					max={10}
+					min={0}
+					size="large"
+					step={0.5}
+					value={4}
+				/>
+				<MixerKey id="booth-mute" label="Mute" />
+			</div>
+			<div aria-label="Monitor" class="flex flex-col items-center gap-3" role="group">
+				<span class={titleClass}>Monitor</span>
+				<div class="grid justify-items-center gap-1">
+					<span class="sonic-led [--sonic-led-size:0.875rem]" data-cue-active></span>
+					<Label id="monitor-cue-active" text="Cue on" />
+				</div>
+				<div class="grid grid-cols-2 gap-x-2 gap-y-2.5">
+					{sources.map((source) => (
+						<MixerKey id={`monitor-${source.id}`} label={source.label} />
+					))}
+				</div>
+				<Pot
+					ends={['Cue', 'Mix']}
+					format="signed-percent"
+					id="monitor-blend"
+					label="Cue mix"
+					max={100}
+					min={-100}
+					origin={0}
+					value={0}
+				/>
+				<Pot
+					id="monitor-level"
+					isNumbered={true}
+					label="Phones"
+					max={10}
+					min={0}
+					size="large"
+					step={0.5}
+					value={5}
+				/>
+			</div>
+		</div>
+	</Ghost>
+</div>

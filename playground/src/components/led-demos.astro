@@ -16,6 +16,15 @@ import Panel from '#components/panel.astro';
 	<Cell id="led-green" label="Green">
 		<span class="sonic-led [--sonic-lit:#22c55e]" data-sonic-lit></span>
 	</Cell>
+	<Cell id="led-alt" label="Alt">
+		<span class="sonic-led" data-sonic-lit="alt"></span>
+	</Cell>
+	<Cell id="led-input" label="Phono or line">
+		<sonic-key aria-labelledby="led-input" class="font-mono text-[0.5rem]" data-two-colour toggle>
+			<span class="sonic-led" data-sonic-lit="alt"></span>
+			<span aria-hidden="true">PH</span>
+		</sonic-key>
+	</Cell>
 	<Cell id="led-power" label="Power">
 		<sonic-key aria-labelledby="led-power" pressed toggle>
 			<span class="sonic-led"></span>
@@ -40,6 +49,9 @@ import Panel from '#components/panel.astro';
 			<span class="sonic-led"></span>
 			<Power aria-hidden="true" />
 		</sonic-key>
+	</Cell>
+	<Cell id="led-large-alt" label="Alt, large">
+		<span class="sonic-led [--sonic-led-size:2rem]" data-sonic-lit="alt"></span>
 	</Cell>
 	<Cell id="led-large-on" label="On, large">
 		<span class="sonic-led [--sonic-led-size:2rem]" data-sonic-lit></span>

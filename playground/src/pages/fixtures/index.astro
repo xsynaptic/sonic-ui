@@ -2,6 +2,7 @@
 import Play from '@lucide/astro/icons/play';
 
 import Document from '#components/document.astro';
+import { echoModes } from '#scripts/stop-names.ts';
 import '#styles/playground.css';
 
 // One control of each kind at known ids for `e2e/`; spaced so a drag never lands on a neighbour
@@ -33,6 +34,15 @@ import '#styles/playground.css';
 		</div>
 		<sonic-dial aria-label="Phase" endless id="phase" max="360" step="5" value="350"></sonic-dial>
 		<sonic-dial
+			aria-label="Low"
+			detent="0"
+			id="eq"
+			max="6"
+			min="-30"
+			origin="0"
+			value="-3"
+		></sonic-dial>
+		<sonic-dial
 			aria-label="Locked"
 			disabled
 			id="locked"
@@ -41,7 +51,33 @@ import '#styles/playground.css';
 			step="10"
 			value="30"
 		></sonic-dial>
+		<sonic-dial
+			aria-label="Echo mode"
+			class="[--sonic-dial-scale-font-ratio:0.085] [--sonic-dial-scale-ratio:0.34] [--sonic-dial-size:6rem] [--sonic-dial-sweep:180deg]"
+			data-format="echo-mode"
+			id="selector"
+			max="3"
+			notched
+			value="1"
+		>
+			{echoModes.map((mode, index) => (
+				<span data-sonic-value={index}>{mode}</span>
+			))}
+		</sonic-dial>
 		<sonic-slider aria-label="Send" default="50" id="send" value="0"></sonic-slider>
+		<sonic-slider
+			aria-label="Trim"
+			class="[--sonic-slider-size:3.25rem]"
+			id="legend"
+			max="10"
+			min="-20"
+			orientation="vertical"
+			value="0"
+		>
+			<span data-sonic-value="10">+10</span>
+			<span data-sonic-value="0"></span>
+			<span data-sonic-value="-20">−20</span>
+		</sonic-slider>
 		<sonic-slider
 			aria-label="Crossfade"
 			default="50"
@@ -56,6 +92,21 @@ import '#styles/playground.css';
 			modulation="20"
 			orientation="vertical"
 			value="0"
+		></sonic-slider>
+		<sonic-slider
+			aria-label="Bend"
+			id="bend"
+			max="50"
+			min="-50"
+			origin="0"
+			spring
+			value="0"
+		></sonic-slider>
+		<sonic-slider
+			aria-label="Progress"
+			data-buffered="0 40 60 80"
+			id="progress"
+			value="20"
 		></sonic-slider>
 		<div class="grid justify-items-center gap-2">
 			<sonic-number
@@ -72,16 +123,32 @@ import '#styles/playground.css';
 			<Play aria-hidden="true" />
 		</sonic-key>
 		<sonic-key aria-label="Kick" id="pad" momentary></sonic-key>
+		<sonic-key aria-label="Play" busy id="loading">
+			<Play aria-hidden="true" />
+		</sonic-key>
+		<sonic-key aria-label="Next" id="next">
+			<Play aria-hidden="true" />
+		</sonic-key>
 		<sonic-key aria-label="Power" id="power" toggle>
 			<span class="sonic-led"></span>
 		</sonic-key>
 		<span class="sonic-led" id="led"></span>
 		<span class="sonic-led" data-sonic-lit id="led-lit"></span>
+		<span class="sonic-led" data-sonic-lit="alt" id="led-alt"></span>
 		<sonic-segmented aria-label="Mode" id="mode" value="lp">
 			<span data-sonic-value="lp">LP</span>
 			<span data-sonic-value="hp">HP</span>
 		</sonic-segmented>
 		<sonic-meter id="meter" max="0" min="-60"></sonic-meter>
+		<sonic-meter id="ladder" lights="-24 -12 -6 -3 0"></sonic-meter>
+		<sonic-meter
+			id="correlation"
+			max="1"
+			min="-1"
+			orientation="horizontal"
+			origin="0"
+			scale="linear"
+		></sonic-meter>
 		<div class="sonic-screen" id="screen">
 			440 Hz
 		</div>
@@ -90,5 +157,6 @@ import '#styles/playground.css';
 		import '@xsynaptic/sonic-ui/define';
 
 		import '#scripts/formats.ts';
+		import '#scripts/specimens.ts';
 	</script>
 </Document>

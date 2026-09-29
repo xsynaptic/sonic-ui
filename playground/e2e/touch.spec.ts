@@ -6,7 +6,12 @@ test.skip(({ hasTouch }) => !hasTouch, 'Needs a touchscreen');
 test('a double tap opens typed entry', async ({ page }) => {
 	await page.goto('/fixtures/');
 
-	const box = await page.locator('#cutoff .sonic-dial').boundingBox();
+	const target = page.locator('#cutoff .sonic-dial');
+
+	// A tap outside the viewport lands nowhere
+	await target.scrollIntoViewIfNeeded();
+
+	const box = await target.boundingBox();
 	if (!box) throw new Error('The dial has no box');
 
 	const x = box.x + box.width / 2;
@@ -21,7 +26,11 @@ test('a double tap opens typed entry', async ({ page }) => {
 test('a double tap on a number box types in place', async ({ page }) => {
 	await page.goto('/fixtures/');
 
-	const box = await page.locator('#tempo .sonic-number').boundingBox();
+	const target = page.locator('#tempo .sonic-number');
+
+	await target.scrollIntoViewIfNeeded();
+
+	const box = await target.boundingBox();
 	if (!box) throw new Error('The number box has no box');
 
 	const x = box.x + box.width / 2;

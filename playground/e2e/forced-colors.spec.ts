@@ -13,10 +13,13 @@ const drawnParts = [
 	'#fader .sonic-slider-modulation',
 	'.sonic-slider-cap',
 	'.sonic-key-cap',
+	'#loading .sonic-key::after',
 	'.sonic-segmented-cap',
 	'.sonic-meter-segments',
 	'.sonic-meter-level',
 	'.sonic-meter-clip',
+	'#ladder .sonic-meter-level',
+	'#legend .sonic-scale-tick',
 ];
 
 async function paintOf(
@@ -170,6 +173,19 @@ test('the number box edges its glass and inks its digits, grey when disabled', a
 	expect(await read()).toEqual({ border: canvasText, digits: grayText });
 });
 
+test('a legend prints in CanvasText and rules its ticks in ButtonText', async ({ page }) => {
+	const [buttonText, canvasText] = [
+		await systemColour(page, 'ButtonText'),
+		await systemColour(page, 'CanvasText'),
+	];
+	const legend = await page.locator('#legend .sonic-slider-scale').evaluate((scale) => ({
+		label: getComputedStyle(scale.querySelector('.sonic-scale-label') ?? scale).color,
+		tick: getComputedStyle(scale.querySelector('.sonic-scale-tick') ?? scale).backgroundColor,
+	}));
+
+	expect(legend).toEqual({ label: canvasText, tick: buttonText });
+});
+
 test('an endless dial lights its segment in Highlight', async ({ page }) => {
 	const highlight = await systemColour(page, 'Highlight');
 	const ring = await paintOf(page, '#phase .sonic-dial-ring');
@@ -178,11 +194,14 @@ test('an endless dial lights its segment in Highlight', async ({ page }) => {
 	expect(ring.image).toContain(highlight);
 });
 
-test('an LED lens is grey at rest and Highlight lit, ringed in CanvasText', async ({ page }) => {
-	const [canvasText, grayText, highlight] = [
+test('an LED lens is grey at rest, Highlight lit and Mark in its second colour, ringed in CanvasText', async ({
+	page,
+}) => {
+	const [canvasText, grayText, highlight, mark] = [
 		await systemColour(page, 'CanvasText'),
 		await systemColour(page, 'GrayText'),
 		await systemColour(page, 'Highlight'),
+		await systemColour(page, 'Mark'),
 	];
 	const lens = (selector: string): Promise<{ fill: string; rim: string }> =>
 		page.locator(selector).evaluate((led) => {
@@ -191,9 +210,10 @@ test('an LED lens is grey at rest and Highlight lit, ringed in CanvasText', asyn
 			return { fill: style.backgroundColor, rim: style.boxShadow };
 		});
 
-	const [unlit, lit] = [await lens('#led'), await lens('#led-lit')];
+	const [unlit, lit, alt] = [await lens('#led'), await lens('#led-lit'), await lens('#led-alt')];
 
 	expect(unlit.fill).toBe(grayText);
 	expect(lit.fill).toBe(highlight);
+	expect(alt.fill).toBe(mark);
 	expect(unlit.rim).toContain(canvasText);
 });

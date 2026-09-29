@@ -1,0 +1,24 @@
+---
+const channels = [1, 2, 3, 4];
+---
+
+<div aria-label="Crossfader" class="flex flex-col items-center gap-2 pt-4" role="group">
+	<div class="flex gap-3">
+		{channels.map(() => (
+			<span class="sonic-led [--sonic-led-size:0.375rem]" data-sonic-lit></span>
+		))}
+	</div>
+	<div class="flex items-center gap-3 font-mono text-sm font-bold text-zinc-300">
+		<span aria-hidden="true">X</span>
+		<sonic-slider
+			aria-label="Crossfader"
+			class="[--sonic-slider-length:9rem]"
+			data-crossfader
+			default="50"
+			double-press="reset"
+			groove-press="none"
+			value="50"
+		></sonic-slider>
+		<span aria-hidden="true">Y</span>
+	</div>
+</div>

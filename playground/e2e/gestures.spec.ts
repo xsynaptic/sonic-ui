@@ -233,3 +233,43 @@ test('a switch press dragged to another segment latches it, and dragged off latc
 	await drag(page, lowPass, offset);
 	await expect(highPass).toBeChecked();
 });
+
+// 36 units over 160px: the detent at 0 sits 13px up from -3 and holds for 8px past it
+test('a detent holds a drag that crosses it, then lets it go past the zone', async ({ page }) => {
+	const slider = page.getByRole('slider', { name: 'Low' });
+	const dial = page.locator('#eq .sonic-dial');
+
+	await drag(page, dial, { x: 0, y: -18 });
+	await expect(slider).toHaveAttribute('aria-valuenow', '0');
+
+	await page.locator('#eq').evaluate((host) => {
+		host.setAttribute('value', '-3');
+	});
+	await drag(page, dial, { x: 0, y: -30 });
+	await expect(slider).toHaveAttribute('aria-valuenow', '2');
+});
+
+test('a springing slider reports where it was let go, then its return to the origin', async ({
+	page,
+}) => {
+	const host = page.locator('#bend');
+	const slider = page.getByRole('slider', { name: 'Bend' });
+
+	await host.evaluate((element) => {
+		element.addEventListener('change', () => {
+			const now = element.querySelector('[role="slider"]')?.getAttribute('aria-valuenow') ?? '';
+
+			element.dataset.changed = `${element.dataset.changed ?? ''} ${now}`.trim();
+		});
+	});
+	await drag(page, page.locator('#bend .sonic-slider-cap'), { x: 30, y: 0 });
+
+	await expect(slider).toHaveAttribute('aria-valuenow', '0');
+
+	const [released, returned] = ((await host.getAttribute('data-changed')) ?? '')
+		.split(' ')
+		.map(Number);
+
+	expect(released).toBeGreaterThan(0);
+	expect(returned).toBe(0);
+});
