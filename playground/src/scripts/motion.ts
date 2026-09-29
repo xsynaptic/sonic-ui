@@ -1,9 +1,13 @@
-import type { SonicDial, SonicKey, SonicMeter, SonicSlider } from '@xsynaptic/sonic-ui';
-
-const beatMs = 480;
+import type {
+	SonicDial,
+	SonicKey,
+	SonicMeter,
+	SonicNumber,
+	SonicSlider,
+} from '@xsynaptic/sonic-ui';
 
 // The gain wanders past full scale now and then, so the release, hold and clip all show
-function levelAt(time: number, channel: number): number {
+function levelAt(time: number, channel: number, beatMs: number): number {
 	const beat = Math.floor(time / beatMs);
 	const decay = (1 - (time % beatMs) / beatMs) ** 3;
 	const gain = 0.3 + 0.78 * Math.abs(Math.sin(beat * 1.7 + channel * 0.6));
@@ -31,19 +35,22 @@ function readSource(selector: string | undefined, fallback: number): number {
 }
 
 function tick(time: number): void {
+	const tempo = document.querySelector<SonicNumber>('[data-tempo]')?.value ?? 125;
+	const beatMs = 60_000 / tempo;
+
 	for (const meter of document.querySelectorAll<SonicMeter>('sonic-meter')) {
 		const channel = meter.previousElementSibling?.localName === 'sonic-meter' ? 1 : 0;
 		const strip = meter.closest('[data-strip]');
 		const gain = strip ? stripGains(strip)[channel] : 1;
 
-		meter.level = levelAt(time, channel) * gain;
+		meter.level = levelAt(time, channel, beatMs) * gain;
 	}
-	for (const dial of document.querySelectorAll<SonicDial>('[data-lfo]')) {
-		const rate = readSource(dial.dataset.lfoRate, 0.5);
-		const depth = readSource(dial.dataset.lfoDepth, Number(dial.dataset.lfo));
+	for (const control of document.querySelectorAll<HTMLElement>('[data-lfo]')) {
+		const rate = readSource(control.dataset.lfoRate, 0.5);
+		const depth = readSource(control.dataset.lfoDepth, Number(control.dataset.lfo));
 		const phase = (time / 1000) * rate * 2 * Math.PI;
 
-		dial.setAttribute('modulation', String(Math.round(depth * Math.sin(phase))));
+		control.setAttribute('modulation', String(Math.round(depth * Math.sin(phase))));
 	}
 }
 
@@ -61,7 +68,8 @@ function bindRun(): void {
 		frame = isRunning ? requestAnimationFrame(loop) : undefined;
 		if (isRunning) return;
 
-		for (const dial of document.querySelectorAll('[data-lfo]')) dial.removeAttribute('modulation');
+		for (const control of document.querySelectorAll('[data-lfo]'))
+			control.removeAttribute('modulation');
 	};
 
 	for (const key of keys) {

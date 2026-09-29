@@ -19,6 +19,7 @@ const renderSlider = template(
 		<div class="sonic-slider" role="slider" tabindex="0">
 			<div class="sonic-slider-marks"></div>
 			<div class="sonic-slider-groove"></div>
+			<div class="sonic-slider-modulation"></div>
 			<div class="sonic-slider-cap"></div>
 			<div class="sonic-slider-readout" popover="manual">
 				<span></span>
@@ -39,6 +40,7 @@ const renderSlider = template(
 export class SonicSlider extends SonicRangeElement {
 	static override readonly observedAttributes = [
 		...SonicRangeElement.observedAttributes,
+		'modulation',
 		'orientation',
 	];
 
@@ -49,6 +51,14 @@ export class SonicSlider extends SonicRangeElement {
 
 	set groovePress(gesture: 'jump' | 'none' | undefined) {
 		this.reflect('groove-press', gesture);
+	}
+
+	get modulation(): number {
+		return this.numberAttribute('modulation', 0);
+	}
+
+	set modulation(amount: number | undefined) {
+		this.reflect('modulation', amount);
 	}
 
 	get orientation(): 'horizontal' | 'vertical' {
@@ -62,7 +72,7 @@ export class SonicSlider extends SonicRangeElement {
 	readonly #slider = renderSlider();
 
 	override connectedCallback(): void {
-		this.upgradeProperties('groovePress', 'orientation');
+		this.upgradeProperties('groovePress', 'modulation', 'orientation');
 		super.connectedCallback();
 	}
 
@@ -92,9 +102,12 @@ export class SonicSlider extends SonicRangeElement {
 	protected render(): void {
 		const slider = this.#slider;
 		const positions = this.positions();
+		const [modulationFrom, modulationTo] = this.modulationFractions(this.modulation);
 
 		slider.style.setProperty('--_sonic-slider-value', String(this.fraction(this.value)));
 		slider.style.setProperty('--_sonic-slider-origin', String(this.originFraction()));
+		slider.style.setProperty('--_sonic-slider-modulation-from', String(modulationFrom));
+		slider.style.setProperty('--_sonic-slider-modulation-to', String(modulationTo));
 		if (positions === undefined) slider.style.removeProperty('--_sonic-slider-positions');
 		else slider.style.setProperty('--_sonic-slider-positions', String(positions));
 		this.renderAria(slider, this.orientation);

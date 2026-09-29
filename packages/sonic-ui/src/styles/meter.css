@@ -257,9 +257,7 @@
 		position: absolute;
 		inset: var(--_sonic-meter-inset) var(--_sonic-meter-inset) auto;
 		block-size: var(--_sonic-meter-lens);
-		background:
-			linear-gradient(var(--_sonic-light-fall), rgb(255 255 255 / 10%), transparent 60%),
-			color-mix(in oklab, var(--_sonic-unlit) 60%, #000);
+		background: var(--_sonic-lens);
 		border-radius: 50%;
 
 		&::after {

@@ -1,4 +1,4 @@
-import type { SonicDial, SonicSlider } from '@xsynaptic/sonic-ui';
+import type { SonicDial, SonicNumber, SonicSlider } from '@xsynaptic/sonic-ui';
 
 interface Format {
 	format: (value: number) => string;
@@ -19,6 +19,7 @@ function parseScaled(text: string, unit: RegExp, scale: number): number {
 }
 
 const formats = new Map<string, Format>([
+	['bpm', { format: (value) => `${value.toFixed(1)} BPM`, parse: parseNumber }],
 	['db', { format: (value) => `${value.toFixed(1).replace('-', '−')} dB`, parse: parseNumber }],
 	['degrees', { format: (value) => `${String(value)}°`, parse: parseNumber }],
 	[
@@ -69,12 +70,21 @@ const formats = new Map<string, Format>([
 	],
 	['percent', { format: (value) => `${String(value)}%`, parse: parseNumber }],
 	[
+		'semitones',
+		{
+			format: (value) => `${value > 0 ? '+' : ''}${String(value).replace('-', '−')} st`,
+			parse: parseNumber,
+		},
+	],
+	[
 		'signed-percent',
 		{ format: (value) => `${value > 0 ? '+' : ''}${String(value)}%`, parse: parseNumber },
 	],
 ]);
 
-for (const control of document.querySelectorAll<SonicDial | SonicSlider>('[data-format]')) {
+for (const control of document.querySelectorAll<SonicDial | SonicNumber | SonicSlider>(
+	'[data-format]',
+)) {
 	const format = formats.get(control.dataset.format ?? '');
 
 	if (!format) {

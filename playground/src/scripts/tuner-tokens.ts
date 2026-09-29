@@ -79,6 +79,7 @@ export const tokenGroups: Array<TokenGroup> = [
 			range('pointer taper', '--sonic-dial-pointer-taper', [0, 1, 0.05]),
 			range('face drift', '--sonic-dial-face-drift', [0, 0.5, 0.01]),
 			range('sweep', '--sonic-dial-sweep', [180, 360, 5, 'deg']),
+			range('segment', '--sonic-dial-segment', [5, 90, 1, 'deg']),
 			range('notch', '--sonic-dial-notch-ratio', [0, 0.2, 0.005]),
 			range('ridge pitch', '--sonic-dial-ridge-pitch', [2, 12, 0.5, 'px']),
 			range('travel', '--sonic-dial-travel', [40, 400, 10, 'px']),
@@ -94,6 +95,8 @@ export const tokenGroups: Array<TokenGroup> = [
 			range('bevel', '--sonic-key-bevel-ratio', [0, 0.25, 0.005]),
 			range('face corner', '--sonic-key-face-radius-ratio', [0, 0.5, 0.01]),
 			range('icon', '--sonic-key-icon-ratio', [0.2, 0.8, 0.01]),
+			range('led', '--sonic-key-led-ratio', [0.1, 0.4, 0.01]),
+			range('icon with led', '--sonic-key-led-icon-ratio', [0.15, 0.6, 0.01]),
 			range('depth', '--sonic-key-depth-ratio', [0, 0.1, 0.005]),
 			range('press scale', '--sonic-key-press-scale', [0.85, 1, 0.005]),
 		],
@@ -123,6 +126,26 @@ export const tokenGroups: Array<TokenGroup> = [
 			range('press scale', '--sonic-segmented-press-scale', [0.85, 1, 0.005]),
 			range('font', '--sonic-segmented-font-ratio', [0.15, 0.6, 0.01]),
 			range('icon', '--sonic-segmented-icon-ratio', [0.2, 0.8, 0.01]),
+		],
+	},
+	{
+		from: '.sonic-led',
+		name: 'LED',
+		tokens: [
+			range('size', '--sonic-led-size', [0.25, 2, 0.0625, 'rem']),
+			range('lens', '--sonic-led-lens-ratio', [0.3, 1, 0.01]),
+		],
+	},
+	{
+		from: '.sonic-number',
+		name: 'Number',
+		tokens: [
+			range('size', '--sonic-number-size', [1, 4, 0.125, 'rem']),
+			range('aspect', '--sonic-number-aspect-ratio', [1, 5, 0.1]),
+			range('corner', '--sonic-number-radius-ratio', [0, 0.5, 0.01]),
+			range('inset', '--sonic-number-inset-ratio', [0, 0.5, 0.01]),
+			range('text', '--sonic-number-text-ratio', [0.2, 0.8, 0.01]),
+			range('travel', '--sonic-number-travel', [40, 400, 10, 'px']),
 		],
 	},
 	{

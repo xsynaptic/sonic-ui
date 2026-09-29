@@ -60,6 +60,7 @@ test('a label for the host, or around it, reaches the inner control', async ({ p
 		mode: await readBridge(page.locator('#mode'), '.sonic-segmented'),
 		mute: await readBridge(page.locator('#mute'), '.sonic-key'),
 		send: await readBridge(page.locator('#send'), '.sonic-slider'),
+		tempo: await readBridge(page.locator('#tempo'), '.sonic-number'),
 	};
 
 	expect(bridges).toEqual({
@@ -67,6 +68,7 @@ test('a label for the host, or around it, reaches the inner control', async ({ p
 		mode: { bridged: 1, labels: 1 },
 		mute: { bridged: 1, labels: 1 },
 		send: { bridged: 1, labels: 1 },
+		tempo: { bridged: 1, labels: 1 },
 	});
 });
 
@@ -77,13 +79,14 @@ test('Chromium names each control from its label, and the host adds no node', as
 	test.skip(browserName !== 'chromium', 'Only Chromium exposes its accessibility tree');
 
 	const names = await readNames(page);
-	const labelled = names.filter((name) => /: (Cutoff|Send|Mute|Mode)$/.test(name));
+	const labelled = names.filter((name) => /: (Cutoff|Send|Tempo|Mute|Mode)$/.test(name));
 
 	expect(labelled.toSorted((first, second) => first.localeCompare(second))).toEqual([
 		'button: Mute',
 		'radiogroup: Mode',
 		'slider: Cutoff',
 		'slider: Send',
+		'spinbutton: Tempo',
 	]);
 });
 
@@ -126,12 +129,14 @@ test('the form submits each value, and a pressed toggle only', async ({ page }) 
 	expect(await readFormData(page)).toEqual([
 		['cutoff', '40'],
 		['send', '30'],
+		['tempo', '120'],
 		['solo', 'yes'],
 		['mode', 'lp'],
 		['late', '10'],
 	]);
 
 	await page.locator('#cutoff .sonic-dial').press('ArrowUp');
+	await page.locator('#tempo .sonic-number').press('ArrowDown');
 	await page.locator('#mute .sonic-key').click();
 	await page.locator('#solo .sonic-key').click();
 	await page.getByRole('radio', { name: 'HP' }).click();
@@ -139,6 +144,7 @@ test('the form submits each value, and a pressed toggle only', async ({ page }) 
 	expect(await readFormData(page)).toEqual([
 		['cutoff', '45'],
 		['send', '30'],
+		['tempo', '119.5'],
 		['mute', 'on'],
 		['mode', 'hp'],
 		['late', '10'],

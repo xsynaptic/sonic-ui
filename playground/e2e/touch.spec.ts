@@ -17,3 +17,18 @@ test('a double tap opens typed entry', async ({ page }) => {
 
 	await expect(page.getByRole('textbox', { name: 'Cutoff' })).toBeFocused();
 });
+
+test('a double tap on a number box types in place', async ({ page }) => {
+	await page.goto('/fixtures/');
+
+	const box = await page.locator('#tempo .sonic-number').boundingBox();
+	if (!box) throw new Error('The number box has no box');
+
+	const x = box.x + box.width / 2;
+	const y = box.y + box.height / 2;
+
+	await page.touchscreen.tap(x, y);
+	await page.touchscreen.tap(x, y);
+
+	await expect(page.getByRole('textbox', { name: 'Tempo' })).toBeFocused();
+});

@@ -2,7 +2,9 @@
 import DialDemos from '#components/dial-demos.astro';
 import KeyDemos from '#components/key-demos.astro';
 import Layout from '#components/layout.astro';
+import LedDemos from '#components/led-demos.astro';
 import MeterDemos from '#components/meter-demos.astro';
+import NumberDemos from '#components/number-demos.astro';
 import ScreenDemos from '#components/screen-demos.astro';
 import Section from '#components/section.astro';
 import SliderDemos from '#components/slider-demos.astro';
@@ -13,8 +15,7 @@ import Tuner from '#components/tuner.astro';
 <Layout title="sonic-ui">
 	<header class="mb-8 max-w-2xl">
 		<p class="text-sm leading-relaxed text-zinc-400">
-			Native custom elements for audio interfaces: dials, sliders, keys, switches, meters and
-			screens, skinned with CSS custom properties.
+			Native custom elements for audio interfaces, skinned with CSS custom properties.
 		</p>
 		<pre class="mt-3 inline-block bg-zinc-900 px-3 py-2 font-mono text-[0.8125rem] text-zinc-300">pnpm add @xsynaptic/sonic-ui</pre>
 	</header>
@@ -30,8 +31,14 @@ import Tuner from '#components/tuner.astro';
 	<Section id="key" title="Key">
 		<KeyDemos />
 	</Section>
+	<Section id="led" title="LED">
+		<LedDemos />
+	</Section>
 	<Section id="switch" title="Switch">
 		<SwitchDemos />
+	</Section>
+	<Section id="number" title="Number">
+		<NumberDemos />
 	</Section>
 	<Section id="meter" title="Meter">
 		<MeterDemos />

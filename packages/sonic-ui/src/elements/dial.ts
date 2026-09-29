@@ -37,8 +37,17 @@ const fallbackTravelPx = 160;
 export class SonicDial extends SonicRangeElement {
 	static override readonly observedAttributes = [
 		...SonicRangeElement.observedAttributes,
+		'endless',
 		'modulation',
 	];
+
+	get endless(): boolean {
+		return this.hasAttribute('endless');
+	}
+
+	set endless(isEndless: boolean) {
+		this.reflect('endless', isEndless);
+	}
 
 	get modulation(): number {
 		return this.numberAttribute('modulation', 0);
@@ -51,7 +60,7 @@ export class SonicDial extends SonicRangeElement {
 	readonly #dial = renderDial();
 
 	override connectedCallback(): void {
-		this.upgradeProperties('modulation');
+		this.upgradeProperties('endless', 'modulation');
 		super.connectedCallback();
 	}
 
@@ -75,15 +84,20 @@ export class SonicDial extends SonicRangeElement {
 	protected render(): void {
 		const dial = this.#dial;
 		const positions = this.positions();
-		const modulated = this.fraction(this.value + this.modulation);
-		const value = this.fraction(this.value);
+		const [modulationFrom, modulationTo] = this.modulationFractions(
+			this.endless ? 0 : this.modulation,
+		);
 
-		dial.style.setProperty('--_sonic-dial-value', String(value));
+		dial.style.setProperty('--_sonic-dial-value', String(this.fraction(this.value)));
 		dial.style.setProperty('--_sonic-dial-origin', String(this.originFraction()));
-		dial.style.setProperty('--_sonic-dial-modulation-from', String(Math.min(value, modulated)));
-		dial.style.setProperty('--_sonic-dial-modulation-to', String(Math.max(value, modulated)));
+		dial.style.setProperty('--_sonic-dial-modulation-from', String(modulationFrom));
+		dial.style.setProperty('--_sonic-dial-modulation-to', String(modulationTo));
 		if (positions === undefined) dial.style.removeProperty('--_sonic-dial-positions');
 		else dial.style.setProperty('--_sonic-dial-positions', String(positions));
 		this.renderAria(dial);
+	}
+
+	protected override wraps(): boolean {
+		return this.endless;
 	}
 }

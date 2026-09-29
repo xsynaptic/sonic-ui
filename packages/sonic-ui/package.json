@@ -1,7 +1,7 @@
 {
 	"name": "@xsynaptic/sonic-ui",
 	"version": "0.2.0",
-	"description": "Native custom elements for audio interfaces: dials, sliders, keys, a segmented switch, a peak meter and a screen panel, skinned with CSS custom properties",
+	"description": "Native custom elements for audio interfaces, skinned with CSS custom properties",
 	"keywords": [
 		"custom-elements",
 		"web-components",
@@ -54,7 +54,9 @@
 		"./material.css": "./dist/styles/material.css",
 		"./dial.css": "./dist/styles/dial.css",
 		"./key.css": "./dist/styles/key.css",
+		"./led.css": "./dist/styles/led.css",
 		"./meter.css": "./dist/styles/meter.css",
+		"./number.css": "./dist/styles/number.css",
 		"./screen.css": "./dist/styles/screen.css",
 		"./segmented.css": "./dist/styles/segmented.css",
 		"./slider.css": "./dist/styles/slider.css",

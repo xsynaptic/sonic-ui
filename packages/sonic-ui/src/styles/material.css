@@ -10,7 +10,9 @@
 		.sonic-dial,
 		.sonic-dial-readout,
 		.sonic-key,
+		.sonic-led,
 		.sonic-meter,
+		.sonic-number,
 		.sonic-screen,
 		.sonic-segmented,
 		.sonic-slider,
@@ -25,8 +27,22 @@
 		--_sonic-cast-y: calc(cos(var(--_sonic-light-tilt)) * var(--_sonic-unit));
 	}
 
-	:is(.sonic-dial, .sonic-key, .sonic-meter, .sonic-segmented-segment, .sonic-slider) {
+	:is(
+		.sonic-dial,
+		.sonic-key,
+		.sonic-led,
+		.sonic-meter,
+		.sonic-number,
+		.sonic-segmented-segment,
+		.sonic-slider
+	) {
 		--_sonic-lit: var(--sonic-lit, oklch(76.9% 0.165 70deg));
+	}
+
+	:is(.sonic-led, .sonic-meter) {
+		--_sonic-lens:
+			linear-gradient(var(--_sonic-light-fall), rgb(255 255 255 / 10%), transparent 60%),
+			color-mix(in oklab, var(--_sonic-unlit) 60%, #000);
 	}
 
 	.sonic-meter {
@@ -34,12 +50,13 @@
 		--_sonic-clip: var(--sonic-clip, oklch(63.7% 0.208 25deg));
 	}
 
-	:is(.sonic-dial, .sonic-key, .sonic-segmented-segment, .sonic-slider) {
+	:is(.sonic-dial, .sonic-key, .sonic-number, .sonic-segmented-segment, .sonic-slider) {
 		--_sonic-cap: var(--sonic-cap, oklch(37% 0.012 286deg));
 		--_sonic-cap-hover: var(--sonic-cap-hover, oklch(44.2% 0.015 286deg));
 		--_sonic-focus: var(--sonic-focus, oklch(90% 0.23 128deg));
 		--_sonic-ink: var(--sonic-mark, color-mix(in oklab, var(--_sonic-cap) 30%, #fff));
 		--_sonic-etch: color-mix(in oklab, var(--_sonic-ink) 30%, transparent);
+		--_sonic-ink-lift: color-mix(in oklab, var(--_sonic-ink) 60%, #fff);
 		--_sonic-lit-disabled: color-mix(in oklab, var(--_sonic-ink) 25%, var(--_sonic-unlit));
 		--_sonic-skirt: linear-gradient(
 			var(--_sonic-light-fall),
@@ -85,11 +102,47 @@
 		);
 	}
 
-	:is(.sonic-dial-readout, .sonic-screen, .sonic-slider-readout) {
+	:is(.sonic-dial-readout, .sonic-number, .sonic-screen, .sonic-slider-readout) {
 		--_sonic-glass: var(--sonic-glass, color-mix(in oklab, var(--_sonic-unlit) 45%, #000));
+		--_sonic-glass-fill: radial-gradient(
+				closest-side,
+				color-mix(in oklab, var(--_sonic-glass) 88%, #fff),
+				var(--_sonic-glass)
+			)
+			var(--_sonic-glass);
+
+		/* Not the cap's ink, which a skin may darken */
+		--_sonic-glass-type: color-mix(in oklab, var(--_sonic-glass) 20%, #fff);
 	}
 
-	:is(.sonic-key, .sonic-screen, .sonic-segmented) {
+	/* A definite cell, so percentage-sized content fills the glass; a canvas sized to its own box would feed back */
+	:is(.sonic-number, .sonic-screen) {
+		position: relative;
+		box-sizing: border-box;
+		display: grid;
+		flex-shrink: 0;
+		grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+		place-items: center;
+		color: var(--_sonic-glass-type);
+
+		/* A double click aimed at a neighbouring control would highlight it */
+		user-select: none;
+		background: var(--_sonic-glass-fill);
+
+		&::after {
+			position: absolute;
+			inset: 0;
+			pointer-events: none;
+			content: '';
+			background: linear-gradient(var(--_sonic-light-fall), rgb(255 255 255 / 7%), transparent 45%);
+			border-radius: inherit;
+			box-shadow:
+				var(--_sonic-well),
+				inset 0 0 calc(3 * var(--_sonic-unit)) rgb(0 0 0 / 45%);
+		}
+	}
+
+	:is(.sonic-key, .sonic-number, .sonic-screen, .sonic-segmented) {
 		--_sonic-well:
 			inset var(--_sonic-cast-x) var(--_sonic-cast-y) calc(2 * var(--_sonic-unit)) rgb(0 0 0 / 60%),
 			calc(0.5 * var(--_sonic-cast-x)) calc(0.5 * var(--_sonic-cast-y)) 0 rgb(255 255 255 / 6%);
@@ -123,7 +176,13 @@
 		}
 	}
 
-	:is(.sonic-dial, .sonic-key, .sonic-segmented-segment, .sonic-slider):focus-visible {
+	:is(
+		.sonic-dial,
+		.sonic-key,
+		.sonic-number,
+		.sonic-segmented-segment,
+		.sonic-slider
+	):focus-visible {
 		--_sonic-cap: var(--_sonic-cap-hover);
 		--_sonic-focus-shadow: var(--_sonic-focus-glow);
 
@@ -132,7 +191,7 @@
 	}
 
 	/* Keeps the glow while focus is in the entry; its own rule, since an engine without `:state()` drops a whole selector list */
-	:state(editing) > :is(.sonic-dial, .sonic-slider) {
+	:state(editing) > :is(.sonic-dial, .sonic-number, .sonic-slider) {
 		--_sonic-cap: var(--_sonic-cap-hover);
 		--_sonic-focus-shadow: var(--_sonic-focus-glow);
 	}
@@ -153,16 +212,11 @@
 		font-size: calc(0.5 * var(--_sonic-readout-size));
 		font-variant-numeric: tabular-nums;
 		line-height: 1;
-		color: color-mix(in oklab, var(--_sonic-glass) 20%, #fff);
+		color: var(--_sonic-glass-type);
 		pointer-events: none;
 		cursor: default;
 		user-select: none;
-		background: radial-gradient(
-				closest-side,
-				color-mix(in oklab, var(--_sonic-glass) 88%, #fff),
-				var(--_sonic-glass)
-			)
-			var(--_sonic-glass);
+		background: var(--_sonic-glass-fill);
 		border: 0;
 		border-radius: calc(0.25 * var(--_sonic-readout-size));
 		box-shadow:
@@ -207,7 +261,7 @@
 		cursor: text;
 	}
 
-	:is(.sonic-dial-entry, .sonic-slider-entry) {
+	:is(.sonic-dial-entry, .sonic-number-entry, .sonic-slider-entry) {
 		inline-size: 6ch;
 		padding: 0;
 		font: inherit;
@@ -234,13 +288,21 @@
 	}
 
 	@media (forced-colors: active) {
-		:is(.sonic-dial, .sonic-key, .sonic-meter, .sonic-segmented-segment, .sonic-slider) {
+		:is(
+			.sonic-dial,
+			.sonic-key,
+			.sonic-led,
+			.sonic-meter,
+			.sonic-number,
+			.sonic-segmented-segment,
+			.sonic-slider
+		) {
 			--_sonic-lit: Highlight;
 			--_sonic-unlit: GrayText;
 		}
 
 		/* Tokens rather than properties, so a state rule that restates one still paints in system colours */
-		:is(.sonic-dial, .sonic-key, .sonic-segmented-segment, .sonic-slider) {
+		:is(.sonic-dial, .sonic-key, .sonic-number, .sonic-segmented-segment, .sonic-slider) {
 			--_sonic-ink: ButtonText;
 			--_sonic-etch: ButtonText;
 			--_sonic-lit-disabled: GrayText;
@@ -268,7 +330,13 @@
 		}
 
 		/* Stands in for the glow, which forced colours drop; inset, it merged with the cap's rim */
-		:is(.sonic-dial, .sonic-key, .sonic-segmented-segment, .sonic-slider):focus-visible {
+		:is(
+			.sonic-dial,
+			.sonic-key,
+			.sonic-number,
+			.sonic-segmented-segment,
+			.sonic-slider
+		):focus-visible {
 			outline-offset: 2px;
 		}
 
@@ -277,7 +345,8 @@
 			forced-color-adjust: none;
 		}
 
-		:is(.sonic-dial-readout, .sonic-slider-readout) {
+		/* Glass is forced to Canvas like the page, so only a border shows its edge */
+		:is(.sonic-dial-readout, .sonic-number, .sonic-screen, .sonic-slider-readout) {
 			border: 1px solid CanvasText;
 		}
 	}

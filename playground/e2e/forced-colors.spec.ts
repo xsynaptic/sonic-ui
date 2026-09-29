@@ -10,6 +10,7 @@ const drawnParts = [
 	'.sonic-dial-cap',
 	'.sonic-dial-pointer::before',
 	'.sonic-slider-groove',
+	'#fader .sonic-slider-modulation',
 	'.sonic-slider-cap',
 	'.sonic-key-cap',
 	'.sonic-segmented-cap',
@@ -48,7 +49,13 @@ async function systemColour(page: Page, keyword: string): Promise<string> {
 	}, keyword);
 }
 
-const focusable = ['.sonic-dial', '.sonic-slider', '.sonic-key', '.sonic-segmented-segment'];
+const focusable = [
+	'.sonic-dial',
+	'.sonic-slider',
+	'.sonic-number',
+	'.sonic-key',
+	'.sonic-segmented-segment',
+];
 
 test.skip(({ browserName }) => browserName === 'webkit', 'WebKit has no forced-colours mode');
 
@@ -142,4 +149,51 @@ test('a disabled latched cap inks in the colour its grey fill is drawn against',
 	);
 
 	expect(inks).toEqual([buttonFace, buttonFace]);
+});
+
+test('the number box edges its glass and inks its digits, grey when disabled', async ({ page }) => {
+	const [canvasText, grayText] = [
+		await systemColour(page, 'CanvasText'),
+		await systemColour(page, 'GrayText'),
+	];
+	const read = (): Promise<{ border: string; digits: string }> =>
+		page.locator('#tempo .sonic-number').evaluate((control) => ({
+			border: getComputedStyle(control).borderTopColor,
+			digits: getComputedStyle(control.querySelector('.sonic-number-value') ?? control).color,
+		}));
+
+	expect(await read()).toEqual({ border: canvasText, digits: canvasText });
+
+	await page.locator('#tempo').evaluate((host) => {
+		host.setAttribute('disabled', '');
+	});
+	expect(await read()).toEqual({ border: canvasText, digits: grayText });
+});
+
+test('an endless dial lights its segment in Highlight', async ({ page }) => {
+	const highlight = await systemColour(page, 'Highlight');
+	const ring = await paintOf(page, '#phase .sonic-dial-ring');
+
+	expect(ring.image).toContain('conic-gradient');
+	expect(ring.image).toContain(highlight);
+});
+
+test('an LED lens is grey at rest and Highlight lit, ringed in CanvasText', async ({ page }) => {
+	const [canvasText, grayText, highlight] = [
+		await systemColour(page, 'CanvasText'),
+		await systemColour(page, 'GrayText'),
+		await systemColour(page, 'Highlight'),
+	];
+	const lens = (selector: string): Promise<{ fill: string; rim: string }> =>
+		page.locator(selector).evaluate((led) => {
+			const style = getComputedStyle(led, '::after');
+
+			return { fill: style.backgroundColor, rim: style.boxShadow };
+		});
+
+	const [unlit, lit] = [await lens('#led'), await lens('#led-lit')];
+
+	expect(unlit.fill).toBe(grayText);
+	expect(lit.fill).toBe(highlight);
+	expect(unlit.rim).toContain(canvasText);
 });

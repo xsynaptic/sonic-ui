@@ -78,6 +78,7 @@
 		background: transparent;
 		border: 0;
 		border-radius: var(--_sonic-segmented-inner-corner);
+		transition: color 120ms ease-out;
 	}
 
 	.sonic-segmented-segment:where([data-sonic-pressed], :focus-visible:active):not(:disabled),
@@ -101,6 +102,20 @@
 
 		color: var(--_sonic-etch);
 		cursor: default;
+	}
+
+	.sonic-segmented-segment:not([aria-checked='true'], :disabled):is(
+			:focus-visible,
+			:active,
+			[data-sonic-pressed]
+		) {
+		color: var(--_sonic-ink-lift);
+	}
+
+	@media (hover: hover) {
+		.sonic-segmented-segment:not([aria-checked='true'], :disabled):hover {
+			color: var(--_sonic-ink-lift);
+		}
 	}
 
 	/* In flow, so a long label widens its segment rather than spilling over the next */

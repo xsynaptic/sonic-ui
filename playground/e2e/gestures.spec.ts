@@ -178,6 +178,46 @@ test('Enter opens typed entry from the keyboard, and Escape leaves the value', a
 	await expect(slider).toHaveAttribute('aria-valuenow', '50');
 });
 
+test('an endless dial dragged past its end wraps to the start', async ({ page }) => {
+	await drag(page, page.locator('#phase .sonic-dial'), { x: 0, y: -16 });
+
+	await expect(page.getByRole('slider', { name: 'Phase' })).toHaveAttribute('aria-valuenow', '25');
+});
+
+test('a number box drags up over its 160px travel', async ({ page }) => {
+	await drag(page, page.locator('#tempo .sonic-number'), { x: 0, y: -32 });
+
+	await expect(page.getByRole('spinbutton', { name: 'Tempo' })).toHaveAttribute(
+		'aria-valuenow',
+		'176',
+	);
+});
+
+test('a double press on a number box types in place, with no bubble', async ({ page }) => {
+	const control = page.locator('#tempo .sonic-number');
+	const before = await control.boundingBox();
+
+	await control.dblclick();
+
+	const entry = page.getByRole('textbox', { name: 'Tempo' });
+	const field = await entry.boundingBox();
+
+	await expect(entry).toBeFocused();
+	await expect(page.locator('#tempo [popover]')).toHaveCount(0);
+	expect(await control.boundingBox()).toEqual(before);
+	if (!before || !field) throw new Error('The number box has no box');
+	expect(field.x).toBeGreaterThanOrEqual(before.x);
+	expect(field.x + field.width).toBeLessThanOrEqual(before.x + before.width);
+
+	await entry.fill('98');
+	await entry.press('Enter');
+
+	const spinbutton = page.getByRole('spinbutton', { name: 'Tempo' });
+
+	await expect(spinbutton).toBeFocused();
+	await expect(spinbutton).toHaveAttribute('aria-valuenow', '98');
+});
+
 test('a switch press dragged to another segment latches it, and dragged off latches nothing', async ({
 	page,
 }) => {

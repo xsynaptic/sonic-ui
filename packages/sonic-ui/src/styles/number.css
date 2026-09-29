@@ -1,0 +1,81 @@
+@property --_sonic-number-size {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 28px;
+}
+
+@property --_sonic-number-travel {
+	syntax: '<length>';
+	inherits: false;
+	initial-value: 160px;
+}
+
+@layer sonic {
+	:is(sonic-number, .sonic-number) {
+		--_sonic-number-size: var(--sonic-number-size, 1.75rem);
+		--_sonic-number-aspect-ratio: var(--sonic-number-aspect-ratio, 3);
+	}
+
+	:has(> .sonic-number):not([hidden]) {
+		display: contents;
+	}
+
+	sonic-number:not(:defined, [hidden]) {
+		display: block;
+		flex-shrink: 0;
+		inline-size: calc(var(--_sonic-number-size) * var(--_sonic-number-aspect-ratio));
+		block-size: var(--_sonic-number-size);
+	}
+
+	.sonic-number {
+		--_sonic-number-radius-ratio: var(--sonic-number-radius-ratio, 0.15);
+		--_sonic-number-inset-ratio: var(--sonic-number-inset-ratio, 0.2);
+		--_sonic-number-text-ratio: var(--sonic-number-text-ratio, 0.45);
+		--_sonic-number-travel: var(--sonic-number-travel, 160px);
+		--_sonic-unit: calc(var(--_sonic-number-size) / 32);
+
+		inline-size: calc(var(--_sonic-number-size) * var(--_sonic-number-aspect-ratio));
+		block-size: var(--_sonic-number-size);
+		padding: 0 calc(var(--_sonic-number-size) * var(--_sonic-number-inset-ratio));
+		font-size: calc(var(--_sonic-number-size) * var(--_sonic-number-text-ratio));
+		font-variant-numeric: tabular-nums;
+		line-height: 1;
+		touch-action: none;
+		cursor: ns-resize;
+		border-radius: calc(var(--_sonic-number-size) * var(--_sonic-number-radius-ratio));
+		box-shadow: var(--_sonic-focus-shadow);
+	}
+
+	:disabled > .sonic-number {
+		color: var(--_sonic-etch);
+		cursor: default;
+	}
+
+	:is(.sonic-number-value, .sonic-number-entry) {
+		grid-area: 1 / 1;
+		max-inline-size: 100%;
+		overflow: hidden;
+		white-space: nowrap;
+	}
+
+	:state(editing) > .sonic-number > .sonic-number-value {
+		visibility: hidden;
+	}
+
+	.sonic-number-entry {
+		inline-size: 100%;
+		cursor: text;
+		field-sizing: fixed;
+	}
+
+	@media (forced-colors: active) {
+		.sonic-number-value {
+			color: CanvasText;
+			forced-color-adjust: none;
+		}
+
+		:disabled > .sonic-number > .sonic-number-value {
+			color: GrayText;
+		}
+	}
+}

@@ -1,0 +1,75 @@
+@property --_sonic-led-size {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 8px;
+}
+
+@layer sonic {
+	.sonic-led {
+		--_sonic-led-size: var(--sonic-led-size, 0.5rem);
+		--_sonic-led-lens-ratio: var(--sonic-led-lens-ratio, 0.625);
+		--_sonic-unit: calc(var(--_sonic-led-size) / 8);
+		--_sonic-led-bezel: color-mix(in oklab, var(--_sonic-unlit) 55%, #000);
+
+		position: relative;
+		display: inline-block;
+		flex-shrink: 0;
+		inline-size: var(--_sonic-led-size);
+		block-size: var(--_sonic-led-size);
+		background: var(--_sonic-led-bezel);
+		border-radius: 50%;
+
+		&::after {
+			position: absolute;
+			inset: calc(var(--_sonic-led-size) * (1 - var(--_sonic-led-lens-ratio)) / 2);
+			content: '';
+			background: var(--_sonic-lens);
+			border-radius: inherit;
+		}
+
+		@media (forced-colors: active) {
+			forced-color-adjust: none;
+			background: none;
+
+			&::after {
+				background: GrayText;
+				box-shadow: 0 0 0 1px CanvasText;
+			}
+		}
+	}
+
+	.sonic-led:is(
+		[data-sonic-lit],
+		:where(
+				.sonic-key[aria-pressed='true'],
+				[momentary]:state(pressed) > .sonic-key,
+				.sonic-segmented-segment[aria-checked='true']
+			)
+			*
+	) {
+		background:
+			radial-gradient(
+				closest-side,
+				color-mix(in oklab, var(--_sonic-lit) 60%, transparent)
+					calc(var(--_sonic-led-lens-ratio) * 100%),
+				transparent
+			),
+			var(--_sonic-led-bezel);
+
+		&::after {
+			background: radial-gradient(
+				closest-side,
+				color-mix(in oklab, var(--_sonic-lit) 55%, #fff),
+				var(--_sonic-lit)
+			);
+		}
+
+		@media (forced-colors: active) {
+			background: none;
+
+			&::after {
+				background: Highlight;
+			}
+		}
+	}
+}

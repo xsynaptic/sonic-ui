@@ -31,6 +31,7 @@ import '#styles/playground.css';
 			></sonic-dial>
 			<span id="cutoff-label">Cutoff</span>
 		</div>
+		<sonic-dial aria-label="Phase" endless id="phase" max="360" step="5" value="350"></sonic-dial>
 		<sonic-dial
 			aria-label="Locked"
 			disabled
@@ -49,11 +50,33 @@ import '#styles/playground.css';
 			id="crossfader"
 			value="20"
 		></sonic-slider>
-		<sonic-slider aria-label="Fader" id="fader" orientation="vertical" value="0"></sonic-slider>
+		<sonic-slider
+			aria-label="Fader"
+			id="fader"
+			modulation="20"
+			orientation="vertical"
+			value="0"
+		></sonic-slider>
+		<div class="grid justify-items-center gap-2">
+			<sonic-number
+				aria-labelledby="tempo-label"
+				id="tempo"
+				max="300"
+				min="20"
+				step="0.5"
+				value="120"
+			></sonic-number>
+			<span id="tempo-label">Tempo</span>
+		</div>
 		<sonic-key aria-label="Mute" id="mute" toggle>
 			<Play aria-hidden="true" />
 		</sonic-key>
 		<sonic-key aria-label="Kick" id="pad" momentary></sonic-key>
+		<sonic-key aria-label="Power" id="power" toggle>
+			<span class="sonic-led"></span>
+		</sonic-key>
+		<span class="sonic-led" id="led"></span>
+		<span class="sonic-led" data-sonic-lit id="led-lit"></span>
 		<sonic-segmented aria-label="Mode" id="mode" value="lp">
 			<span data-sonic-value="lp">LP</span>
 			<span data-sonic-value="hp">HP</span>

@@ -61,11 +61,23 @@ import Panel from '#components/panel.astro';
 	<Cell id="dial-phase" label="Phase">
 		<sonic-dial
 			aria-labelledby="dial-phase"
-			class="[--sonic-dial-sweep:360deg]"
 			data-format="degrees"
+			endless
 			max="360"
 			readout
 			value="90"
+		></sonic-dial>
+	</Cell>
+	<Cell id="dial-angle" label="Angle">
+		<sonic-dial
+			aria-labelledby="dial-angle"
+			data-format="degrees"
+			endless
+			max="360"
+			notched
+			readout
+			step="45"
+			value="135"
 		></sonic-dial>
 	</Cell>
 	<Cell id="dial-wobble" label="Wobble">
@@ -116,6 +128,17 @@ import Panel from '#components/panel.astro';
 			notched
 			readout
 			value="1"
+		></sonic-dial>
+	</Cell>
+	<Cell id="dial-large-phase" label="Phase, large">
+		<sonic-dial
+			aria-labelledby="dial-large-phase"
+			class="[--sonic-dial-size:8rem]"
+			data-format="degrees"
+			endless
+			max="360"
+			readout
+			value="90"
 		></sonic-dial>
 	</Cell>
 	<Cell id="dial-large-bypassed" label="Bypassed, large">

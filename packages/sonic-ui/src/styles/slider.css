@@ -152,6 +152,41 @@
 			calc(50% - var(--_sonic-slider-groove) / 2);
 	}
 
+	.sonic-slider-modulation {
+		--_sonic-slider-modulation: var(
+			--sonic-modulation,
+			color-mix(in oklab, var(--_sonic-slider-lit) 60%, #000)
+		);
+		--_sonic-slider-modulation-band: calc(var(--_sonic-slider-groove) * 0.45);
+		--_sonic-slider-modulation-start: calc(
+			var(--_sonic-slider-cap) / 2 + var(--_sonic-slider-modulation-from, 0) *
+				var(--_sonic-slider-travel)
+		);
+		--_sonic-slider-modulation-length: calc(
+			(var(--_sonic-slider-modulation-to, 0) - var(--_sonic-slider-modulation-from, 0)) *
+				var(--_sonic-slider-travel)
+		);
+
+		position: absolute;
+		inset: calc(50% - var(--_sonic-slider-modulation-band) / 2) auto auto
+			var(--_sonic-slider-modulation-start);
+		inline-size: var(--_sonic-slider-modulation-length);
+		block-size: var(--_sonic-slider-modulation-band);
+		background: var(--_sonic-slider-modulation);
+		border-radius: calc(var(--_sonic-slider-modulation-band) / 2);
+	}
+
+	[orientation='vertical'] > .sonic-slider > .sonic-slider-modulation {
+		inset: auto auto var(--_sonic-slider-modulation-start)
+			calc(50% - var(--_sonic-slider-modulation-band) / 2);
+		inline-size: var(--_sonic-slider-modulation-band);
+		block-size: var(--_sonic-slider-modulation-length);
+	}
+
+	:not([modulation]) > .sonic-slider > .sonic-slider-modulation {
+		display: none;
+	}
+
 	.sonic-slider-cap {
 		--_sonic-slider-pointer-width: calc(
 			var(--_sonic-slider-size) * var(--_sonic-slider-pointer-ratio)
@@ -214,8 +249,12 @@
 	}
 
 	@media (forced-colors: active) {
-		:is(.sonic-slider-marks, .sonic-slider-groove) {
+		:is(.sonic-slider-marks, .sonic-slider-groove, .sonic-slider-modulation) {
 			forced-color-adjust: none;
+		}
+
+		.sonic-slider-modulation {
+			--_sonic-slider-modulation: CanvasText;
 		}
 
 		.sonic-slider-groove {

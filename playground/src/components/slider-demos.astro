@@ -24,6 +24,15 @@ import Panel from '#components/panel.astro';
 			value="-30"
 		></sonic-slider>
 	</Cell>
+	<Cell id="slider-modulated" isWide={true} label="Modulated">
+		<sonic-slider
+			aria-labelledby="slider-modulated"
+			data-format="percent"
+			data-lfo="25"
+			readout
+			value="50"
+		></sonic-slider>
+	</Cell>
 	<Cell id="slider-fader" label="Fader">
 		<sonic-slider
 			aria-labelledby="slider-fader"
@@ -65,6 +74,17 @@ import Panel from '#components/panel.astro';
 			data-format="percent"
 			readout
 			value="40"
+		></sonic-slider>
+	</Cell>
+	<Cell id="slider-large-modulated" label="Modulated, large">
+		<sonic-slider
+			aria-labelledby="slider-large-modulated"
+			class="[--sonic-slider-length:16rem] [--sonic-slider-size:4rem]"
+			data-format="percent"
+			data-lfo="25"
+			orientation="vertical"
+			readout
+			value="50"
 		></sonic-slider>
 	</Cell>
 	<Cell id="slider-large-fader" label="Fader, large">

@@ -4,6 +4,8 @@ import type { SonicSlider } from '#elements/slider.ts';
 
 import '#define/slider.ts';
 
+import { recordEvents } from './helpers.ts';
+
 function mountSlider(attributes: string): { control: HTMLElement; slider: SonicSlider } {
 	document.body.innerHTML = `<sonic-slider ${attributes}></sonic-slider>`;
 
@@ -70,6 +72,42 @@ test.each([
 		expect(slider.value).toBe(20);
 	},
 );
+
+test.each([
+	['value="30" modulation="25"', '0.5', '0.75'],
+	['value="30" modulation="-35"', '0.15', '0.5'],
+	['value="70" modulation="40"', '0.9', '1'],
+	['value="-10" modulation="-30"', '0', '0.1'],
+])('%s lights the modulation from %s to %s', (attributes, from, to) => {
+	const { control } = mountSlider(`min="-20" max="80" step="5" ${attributes}`);
+
+	expect(control.style.getPropertyValue('--_sonic-slider-modulation-from')).toBe(from);
+	expect(control.style.getPropertyValue('--_sonic-slider-modulation-to')).toBe(to);
+});
+
+test('a tapered slider places the modulation along its taper', () => {
+	const { control } = mountSlider('min="20" max="20000" taper="log" value="200" modulation="1800"');
+
+	expect(Number(control.style.getPropertyValue('--_sonic-slider-modulation-from'))).toBeCloseTo(
+		1 / 3,
+	);
+	expect(Number(control.style.getPropertyValue('--_sonic-slider-modulation-to'))).toBeCloseTo(
+		2 / 3,
+	);
+});
+
+test('changing the modulation re-renders without touching the value', () => {
+	const { control, slider } = mountSlider('min="-20" max="80" step="5" value="30"');
+	const events = recordEvents(slider);
+
+	slider.modulation = -10;
+
+	expect(slider.getAttribute('modulation')).toBe('-10');
+	expect(control.style.getPropertyValue('--_sonic-slider-modulation-from')).toBe('0.4');
+	expect(control.style.getPropertyValue('--_sonic-slider-modulation-to')).toBe('0.5');
+	expect(slider.value).toBe(30);
+	expect(events).toEqual([]);
+});
 
 test('closing the entry restores the orientation with the slider role', () => {
 	const { control } = mountSlider('orientation="vertical" value="40"');

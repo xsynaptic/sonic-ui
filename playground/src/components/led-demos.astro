@@ -1,0 +1,47 @@
+---
+import Power from '@lucide/astro/icons/power';
+import Repeat from '@lucide/astro/icons/repeat';
+
+import Cell from '#components/cell.astro';
+import Panel from '#components/panel.astro';
+---
+
+<Panel>
+	<Cell id="led-off" label="Off">
+		<span class="sonic-led"></span>
+	</Cell>
+	<Cell id="led-on" label="On">
+		<span class="sonic-led" data-sonic-lit></span>
+	</Cell>
+	<Cell id="led-green" label="Green">
+		<span class="sonic-led [--sonic-lit:#22c55e]" data-sonic-lit></span>
+	</Cell>
+	<Cell id="led-power" label="Power">
+		<sonic-key aria-labelledby="led-power" pressed toggle>
+			<span class="sonic-led"></span>
+		</sonic-key>
+	</Cell>
+	<Cell id="led-loop" label="Loop">
+		<sonic-key aria-labelledby="led-loop" toggle>
+			<span class="sonic-led"></span>
+			<Repeat aria-hidden="true" />
+		</sonic-key>
+	</Cell>
+	<Cell id="led-sync" label="Sync">
+		<sonic-key aria-labelledby="led-sync" class="font-mono text-[0.5rem]" toggle>
+			<span class="sonic-led"></span>
+			<span aria-hidden="true">SYNC</span>
+		</sonic-key>
+	</Cell>
+</Panel>
+<Panel isLarge={true}>
+	<Cell id="led-large-power" label="Power, large">
+		<sonic-key aria-labelledby="led-large-power" class="[--sonic-key-size:6rem]" pressed toggle>
+			<span class="sonic-led"></span>
+			<Power aria-hidden="true" />
+		</sonic-key>
+	</Cell>
+	<Cell id="led-large-on" label="On, large">
+		<span class="sonic-led [--sonic-led-size:2rem]" data-sonic-lit></span>
+	</Cell>
+</Panel>

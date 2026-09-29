@@ -8,6 +8,10 @@ export function clampUnit(fraction: number): number {
 	return Math.min(1, Math.max(0, fraction));
 }
 
+export function wrapUnit(fraction: number): number {
+	return fraction - Math.floor(fraction);
+}
+
 export function linearTaper(min: number, max: number): Taper {
 	const range = max - min;
 

@@ -28,6 +28,8 @@
 		--_sonic-key-bevel-ratio: var(--sonic-key-bevel-ratio, 0.075);
 		--_sonic-key-face-radius-ratio: var(--sonic-key-face-radius-ratio, 0.15);
 		--_sonic-key-icon-ratio: var(--sonic-key-icon-ratio, 0.5);
+		--_sonic-key-led-ratio: var(--sonic-key-led-ratio, 0.2);
+		--_sonic-key-led-icon-ratio: var(--sonic-key-led-icon-ratio, 0.35);
 		--_sonic-key-depth-ratio: var(--sonic-key-depth-ratio, 0.03);
 		--_sonic-key-press-scale: var(--sonic-key-press-scale, 0.985);
 		--_sonic-unit: calc(var(--_sonic-key-size) / 32);
@@ -45,6 +47,7 @@
 		inline-size: var(--_sonic-key-size);
 		block-size: var(--_sonic-key-size);
 		padding: 0;
+		font: inherit;
 		color: var(--_sonic-ink);
 		cursor: pointer;
 		background: linear-gradient(
@@ -55,6 +58,7 @@
 		border: 0;
 		border-radius: var(--_sonic-key-corner);
 		box-shadow: var(--_sonic-well);
+		transition: color 120ms ease-out;
 	}
 
 	/* A drifting finger would turn a held pad into a pan */
@@ -90,10 +94,25 @@
 		cursor: default;
 	}
 
+	.sonic-key:not([aria-pressed='true'], :disabled, :where([momentary]:state(pressed)) > *):is(
+			:focus-visible,
+			:active
+		) {
+		color: var(--_sonic-ink-lift);
+	}
+
+	@media (hover: hover) {
+		.sonic-key:not([aria-pressed='true'], :disabled, :where([momentary]:state(pressed)) > *):hover {
+			color: var(--_sonic-ink-lift);
+		}
+	}
+
 	.sonic-key-cap {
 		position: absolute;
 		inset: var(--_sonic-key-gap);
 		display: grid;
+		gap: calc(var(--_sonic-key-size) * var(--_sonic-key-led-ratio) / 2);
+		place-content: center;
 		place-items: center;
 		background: var(--_sonic-skirt);
 		border-radius: max(0px, var(--_sonic-key-corner) - var(--_sonic-key-gap));
@@ -113,14 +132,29 @@
 			box-shadow: var(--_sonic-face-shadow);
 		}
 
-		& > svg {
+		& > * {
 			position: relative;
+		}
+
+		& > .sonic-led {
+			--_sonic-led-size: var(
+				--sonic-led-size,
+				calc(var(--_sonic-key-size) * var(--_sonic-key-led-ratio))
+			);
+		}
+
+		& > svg {
 			inline-size: calc(var(--_sonic-key-size) * var(--_sonic-key-icon-ratio));
 			block-size: calc(var(--_sonic-key-size) * var(--_sonic-key-icon-ratio));
 			filter: var(--_sonic-engraving);
 			mask-image: linear-gradient(var(--_sonic-light-fall), #000 15%, rgb(0 0 0 / 60%));
 			mask-repeat: no-repeat;
 		}
+	}
+
+	.sonic-key-cap:has(> .sonic-led) > svg {
+		inline-size: calc(var(--_sonic-key-size) * var(--_sonic-key-led-icon-ratio));
+		block-size: calc(var(--_sonic-key-size) * var(--_sonic-key-led-icon-ratio));
 	}
 
 	/* Engraving under the glow keeps a lit icon's edge */

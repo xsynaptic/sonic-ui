@@ -5,6 +5,8 @@ export { SonicKey } from '#elements/key.ts';
 /** @public */
 export { SonicMeter } from '#elements/meter.ts';
 /** @public */
+export { SonicNumber } from '#elements/number.ts';
+/** @public */
 export { SonicSegmented } from '#elements/segmented.ts';
 /** @public */
 export { SonicSlider } from '#elements/slider.ts';

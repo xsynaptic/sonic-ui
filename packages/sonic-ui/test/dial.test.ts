@@ -1,4 +1,4 @@
-import { expect, test } from 'vitest';
+import { describe, expect, test } from 'vitest';
 
 import type { SonicDial } from '#elements/dial.ts';
 
@@ -593,4 +593,74 @@ test('a disabled dial takes no focus', () => {
 
 	dial.focus();
 	expect(document.activeElement).toBe(document.body);
+});
+
+function dragBy(control: HTMLElement, pixels: number): void {
+	const init = { bubbles: true, button: 0, clientX: 10, pointerId: 1 };
+
+	control.dispatchEvent(new PointerEvent('pointerdown', { ...init, clientY: 100 }));
+	control.dispatchEvent(new PointerEvent('pointermove', { ...init, clientY: 100 - pixels }));
+	control.dispatchEvent(new PointerEvent('pointerup', { ...init, clientY: 100 - pixels }));
+}
+
+describe('an endless dial from 10 to 370 in steps of 7.5', () => {
+	const endless = 'endless min="10" max="370" step="7.5"';
+
+	test.each([
+		['362.5', 16, 40],
+		['17.5', -16, 340],
+	])('from %s, a drag of %ipx across the seam lands on %s', (value, pixels, expected) => {
+		const { control, dial } = mountDial(`${endless} value="${value}"`);
+
+		dragBy(control, pixels);
+
+		expect(dial.value).toBe(expected);
+	});
+
+	test.each([
+		['ArrowUp', '362.5', 10],
+		['ArrowDown', '10', 362.5],
+		['PageUp', '325', 40],
+		['End', '100', 362.5],
+		['Home', '100', 10],
+	])('%s from %s lands on %s', (key, value, expected) => {
+		const { control, dial } = mountDial(`${endless} value="${value}"`);
+
+		pressKey(control, key);
+
+		expect(dial.value).toBe(expected);
+	});
+
+	test.each([
+		['400', 40],
+		['368', 10],
+		['-5', 355],
+	])('a value of %s wraps to %s', (value, expected) => {
+		const { dial } = mountDial(`${endless} value="${value}"`);
+
+		expect(dial.value).toBe(expected);
+	});
+
+	test('the taper and the modulation are ignored', () => {
+		const { control } = mountDial(`${endless} taper="log" modulation="30" value="190"`);
+
+		expect(control.style.getPropertyValue('--_sonic-dial-value')).toBe('0.5');
+		expect(control.style.getPropertyValue('--_sonic-dial-modulation-from')).toBe('0.5');
+		expect(control.style.getPropertyValue('--_sonic-dial-modulation-to')).toBe('0.5');
+	});
+
+	test('notched, it etches one notch per step with none extra at max', () => {
+		const { control } = mountDial(`${endless} notched`);
+
+		expect(control.style.getPropertyValue('--_sonic-dial-positions')).toBe('48');
+	});
+
+	test('turning endless on wraps the value attribute rather than clamping it', () => {
+		const { dial } = mountDial('min="10" max="370" step="7.5" value="400"');
+
+		expect(dial.value).toBe(370);
+
+		dial.endless = true;
+		expect(dial.value).toBe(40);
+	});
 });

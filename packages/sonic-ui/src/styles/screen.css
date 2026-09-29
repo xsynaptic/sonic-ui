@@ -12,48 +12,9 @@
 		--_sonic-screen-inset-ratio: var(--sonic-screen-inset-ratio, 0.1);
 		--_sonic-unit: calc(var(--_sonic-screen-size) / 32);
 
-		position: relative;
-		box-sizing: border-box;
-		display: grid;
-		flex-shrink: 0;
-
-		/* A definite cell, so percentage-sized content fills the glass; a canvas sized to its own box would feed back */
-		grid-template: minmax(0, 1fr) / minmax(0, 1fr);
-		place-items: center;
 		inline-size: calc(var(--_sonic-screen-size) * var(--_sonic-screen-aspect-ratio));
 		block-size: var(--_sonic-screen-size);
 		padding: calc(var(--_sonic-screen-size) * var(--_sonic-screen-inset-ratio));
-
-		/* Not the cap's ink, which a skin may darken */
-		color: color-mix(in oklab, var(--_sonic-glass) 20%, #fff);
-
-		/* A double click aimed at a neighbouring control would highlight it */
-		user-select: none;
-		background: radial-gradient(
-				closest-side,
-				color-mix(in oklab, var(--_sonic-glass) 88%, #fff),
-				var(--_sonic-glass)
-			)
-			var(--_sonic-glass);
 		border-radius: calc(var(--_sonic-screen-size) * var(--_sonic-screen-radius-ratio));
-
-		&::after {
-			position: absolute;
-			inset: 0;
-			pointer-events: none;
-			content: '';
-			background: linear-gradient(var(--_sonic-light-fall), rgb(255 255 255 / 7%), transparent 45%);
-			border-radius: inherit;
-			box-shadow:
-				var(--_sonic-well),
-				inset 0 0 calc(3 * var(--_sonic-unit)) rgb(0 0 0 / 45%);
-		}
-	}
-
-	/* The glass is forced to Canvas like the page, so only a border shows its edge */
-	@media (forced-colors: active) {
-		.sonic-screen {
-			border: 1px solid CanvasText;
-		}
 	}
 }

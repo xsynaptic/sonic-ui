@@ -3,7 +3,7 @@ import type { Taper } from '#lib/taper.ts';
 import { SonicFormElement } from '#elements/form-element.ts';
 import { RangeEntry } from '#elements/range-entry.ts';
 import { requireChild } from '#lib/render.ts';
-import { clampUnit, linearTaper, logTaper, skewTaper } from '#lib/taper.ts';
+import { clampUnit, linearTaper, logTaper, skewTaper, wrapUnit } from '#lib/taper.ts';
 import { writeAttribute } from '#lib/write-attribute.ts';
 
 // `position` grows with the value
@@ -48,7 +48,7 @@ const keySteps = new Map([
 ]);
 
 // A slider's children are presentational, so these come off while the entry is open
-const sliderAttributes = [
+const roleAttributes = [
 	'aria-disabled',
 	'aria-orientation',
 	'aria-valuemax',
@@ -306,9 +306,10 @@ export abstract class SonicRangeElement extends SonicFormElement {
 				const scale = event.shiftKey ? fineScale : 1;
 
 				// Per move, so pressing Shift mid-drag changes pace without a jump
-				drag.rawFraction = clampUnit(
-					drag.rawFraction + ((position - drag.lastPosition) / drag.travelPx) * scale,
-				);
+				const fraction =
+					drag.rawFraction + ((position - drag.lastPosition) / drag.travelPx) * scale;
+
+				drag.rawFraction = this.wraps() ? wrapUnit(fraction) : clampUnit(fraction);
 				drag.lastPosition = position;
 				if (Math.abs(position - drag.startPosition) >= revealPx) this.#reveal(drag);
 				this.input(this.valueAt(drag.rawFraction));
@@ -355,7 +356,19 @@ export abstract class SonicRangeElement extends SonicFormElement {
 	}
 
 	protected clampRange(next: number): number {
-		return Math.min(this.#max(), Math.max(this.min, next));
+		const min = this.min;
+		if (!this.wraps()) return Math.min(this.#max(), Math.max(min, next));
+
+		const range = this.range();
+		if (range <= 0) return min;
+
+		const offset = Number(((((next - min) % range) + range) % range).toPrecision(12));
+
+		return offset >= range ? min : Number((min + offset).toPrecision(12));
+	}
+
+	protected controlRole(): 'slider' | 'spinbutton' {
+		return 'slider';
 	}
 
 	protected fraction(value: number): number {
@@ -373,12 +386,19 @@ export abstract class SonicRangeElement extends SonicFormElement {
 		return true;
 	}
 
+	protected modulationFractions(amount: number): [number, number] {
+		const value = this.fraction(this.#value);
+		const modulated = this.fraction(this.#value + amount);
+
+		return [Math.min(value, modulated), Math.max(value, modulated)];
+	}
+
 	protected originFraction(): number {
 		return this.fraction(this.origin ?? this.min);
 	}
 
 	protected positions(): number | undefined {
-		const positions = Math.round(this.range() / this.step) + 1;
+		const positions = Math.round(this.range() / this.step) + (this.wraps() ? 0 : 1);
 
 		if (!this.notched || !Number.isFinite(positions) || positions < 2) return;
 
@@ -393,13 +413,13 @@ export abstract class SonicRangeElement extends SonicFormElement {
 	protected renderAria(control: HTMLElement, orientation?: 'horizontal' | 'vertical'): void {
 		this.writeFormValue(String(this.#value), String(this.#value));
 		if (this.#entry?.isOpen) {
-			for (const name of sliderAttributes) control.removeAttribute(name);
+			for (const name of roleAttributes) control.removeAttribute(name);
 			this.forwardNaming(control, false);
 			this.#renderReadout();
 			return;
 		}
 
-		control.setAttribute('role', 'slider');
+		control.setAttribute('role', this.controlRole());
 		control.setAttribute('aria-valuemin', String(this.min));
 		control.setAttribute('aria-valuemax', String(this.#max()));
 		control.setAttribute('aria-valuenow', String(this.#value));
@@ -418,17 +438,27 @@ export abstract class SonicRangeElement extends SonicFormElement {
 		return (this.#taper() ?? linearTaper(this.min, this.#max())).value(fraction);
 	}
 
+	protected valueText(): string {
+		return this.#formatValue?.(this.#value) ?? String(this.#value);
+	}
+
+	protected wraps(): boolean {
+		return false;
+	}
+
 	#bindEntry(control: HTMLElement, signal: AbortSignal): RangeEntry {
 		const input = requireChild(control, 'input', HTMLInputElement);
-		const bubble = requireChild(control, '[popover]', HTMLElement);
-
-		const anchor = `--sonic-readout-${this.#instance}`;
+		const bubble = control.querySelector<HTMLElement>('[popover]');
 
 		// Chrome's issues panel flags a form field with no id or name; a `name` would submit it
 		input.id = `sonic-entry-${this.#instance}`;
-		this.#readout = { bubble, text: requireChild(bubble, 'span', HTMLElement) };
-		control.style.setProperty('anchor-name', anchor);
-		bubble.style.setProperty('position-anchor', anchor);
+		if (bubble) {
+			const anchor = `--sonic-readout-${this.#instance}`;
+
+			this.#readout = { bubble, text: requireChild(bubble, 'span', HTMLElement) };
+			control.style.setProperty('anchor-name', anchor);
+			bubble.style.setProperty('position-anchor', anchor);
+		}
 
 		const entry = new RangeEntry(input, {
 			commit: (text) => {
@@ -436,7 +466,7 @@ export abstract class SonicRangeElement extends SonicFormElement {
 				this.#commit((this.#parseValue ?? Number.parseFloat)(text));
 			},
 			// `Number.parseFloat` reads "5 kHz" as 5
-			text: () => (this.#parseValue ? this.#valueText() : String(this.#value)),
+			text: () => (this.#parseValue ? this.valueText() : String(this.#value)),
 			toggle: (isOpen) => {
 				if (isOpen) this.forwardNaming(input, true);
 				this.toggleState('editing', isOpen);
@@ -493,6 +523,12 @@ export abstract class SonicRangeElement extends SonicFormElement {
 		if (this.input(next)) this.dispatchEvent(new Event('change', { bubbles: true }));
 	}
 
+	#end(step: number): number {
+		if (!this.wraps()) return this.#max();
+
+		return this.min + (Math.ceil(this.range() / step) - 1) * step;
+	}
+
 	#endDrag(): void {
 		const drag = this.#drag;
 		if (!drag) return;
@@ -520,13 +556,14 @@ export abstract class SonicRangeElement extends SonicFormElement {
 
 	#keyTarget(key: string): number | undefined {
 		if (key === 'Home') return this.min;
-		if (key === 'End') return this.#max();
+		const step = this.step > 0 ? this.step : this.range() / 100;
+
+		if (key === 'End') return this.#end(step);
 		if (resetKeys.has(key)) return this.default;
 
 		const steps = keySteps.get(key);
 		if (steps === undefined) return undefined;
 
-		const step = this.step > 0 ? this.step : this.range() / 100;
 		const taper = this.#taper();
 		if (!taper) return this.#value + steps * step;
 
@@ -558,7 +595,7 @@ export abstract class SonicRangeElement extends SonicFormElement {
 		const isEditing = this.#entry?.isOpen === true;
 
 		readout.text.hidden = isEditing;
-		if (!isEditing) readout.text.textContent = this.#valueText();
+		if (!isEditing) readout.text.textContent = this.valueText();
 		readout.bubble.togglePopover(isEditing || this.#isValueShown());
 	}
 
@@ -583,17 +620,13 @@ export abstract class SonicRangeElement extends SonicFormElement {
 
 	// Notches are evenly spaced, so a notched control stays linear
 	#taper(): Taper | undefined {
-		if (this.notched) return undefined;
+		if (this.notched || this.wraps()) return undefined;
 
 		const min = this.min;
 		const max = this.#max();
 		const log = this.taper === 'log' ? logTaper(min, max) : undefined;
 
 		return log ?? skewTaper(min, max, this.midpoint ?? NaN);
-	}
-
-	#valueText(): string {
-		return this.#formatValue?.(this.#value) ?? String(this.#value);
 	}
 
 	#write(next: number): void {

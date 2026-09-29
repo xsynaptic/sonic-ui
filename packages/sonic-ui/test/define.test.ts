@@ -11,7 +11,14 @@ test('the define entries register their tags', async () => {
 	// @ts-expect-error -- declarations ship in the development tree only
 	await import('../dist/default/define.js');
 
-	for (const tag of ['sonic-dial', 'sonic-key', 'sonic-meter', 'sonic-segmented', 'sonic-slider']) {
+	for (const tag of [
+		'sonic-dial',
+		'sonic-key',
+		'sonic-meter',
+		'sonic-number',
+		'sonic-segmented',
+		'sonic-slider',
+	]) {
 		expect(customElements.get(tag), tag).toBeDefined();
 	}
 });
