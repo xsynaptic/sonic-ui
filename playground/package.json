@@ -10,7 +10,8 @@
 		"dev": "astro dev",
 		"build": "astro build",
 		"preview": "astro preview",
-		"check-types": "astro check"
+		"check-types": "astro check",
+		"test-e2e": "astro build && playwright test"
 	},
 	"dependencies": {
 		"@lucide/astro": "^1.48.0",
@@ -21,6 +22,8 @@
 	},
 	"devDependencies": {
 		"@astrojs/check": "^0.9.10",
+		"@axe-core/playwright": "^4.13.0",
+		"@playwright/test": "^1.63.0",
 		"typescript": "^6.0.3"
 	}
 }

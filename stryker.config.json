@@ -1,0 +1,29 @@
+{
+	"$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+	"packageManager": "pnpm",
+	"testRunner": "vitest",
+	"plugins": ["@stryker-mutator/vitest-runner"],
+	"coverageAnalysis": "perTest",
+	"disableBail": true,
+	"mutate": [
+		"packages/sonic-ui/src/**/*.ts",
+		"!packages/sonic-ui/src/define.ts",
+		"!packages/sonic-ui/src/define/**",
+		"!packages/sonic-ui/src/index.ts"
+	],
+	"ignorePatterns": [
+		"**",
+		"!package.json",
+		"!pnpm-workspace.yaml",
+		"!tsconfig.json",
+		"!tsconfig.base.json",
+		"!vitest.config.ts",
+		"!packages/sonic-ui/**",
+		"packages/sonic-ui/node_modules/**"
+	],
+	"tempDirName": ".cache/stryker-tmp",
+	"reporters": ["progress", "clear-text", "html", "json"],
+	"clearTextReporter": { "allowColor": false, "maxTestsToLog": 2 },
+	"htmlReporter": { "fileName": ".cache/stryker/mutation-report.html" },
+	"jsonReporter": { "fileName": ".cache/stryker/mutation-report.json" }
+}

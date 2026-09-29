@@ -13,6 +13,8 @@ pre-push:
   jobs:
     - name: gate
       run: pnpm check
+    - name: e2e
+      run: pnpm test-e2e
 
 check:
   piped: true

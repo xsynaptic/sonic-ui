@@ -28,24 +28,27 @@
 		"node": ">=24.0.0"
 	},
 	"sideEffects": [
-		"./dist/define.js",
-		"./dist/define/*.js",
+		"./dist/*/define.js",
+		"./dist/*/define/*.js",
 		"./src/define.ts",
 		"./src/define/*.ts",
 		"*.css"
 	],
 	"exports": {
 		".": {
-			"types": "./dist/index.d.ts",
-			"import": "./dist/index.js"
+			"types": "./dist/dev/index.d.ts",
+			"development": "./dist/dev/index.js",
+			"import": "./dist/default/index.js"
 		},
 		"./define": {
-			"types": "./dist/define.d.ts",
-			"import": "./dist/define.js"
+			"types": "./dist/dev/define.d.ts",
+			"development": "./dist/dev/define.js",
+			"import": "./dist/default/define.js"
 		},
 		"./define/*": {
-			"types": "./dist/define/*.d.ts",
-			"import": "./dist/define/*.js"
+			"types": "./dist/dev/define/*.d.ts",
+			"development": "./dist/dev/define/*.js",
+			"import": "./dist/default/define/*.js"
 		},
 		"./controls.css": "./dist/styles/controls.css",
 		"./material.css": "./dist/styles/material.css",
@@ -63,6 +66,9 @@
 	"files": [
 		"dist"
 	],
+	"publishConfig": {
+		"imports": {}
+	},
 	"scripts": {
 		"build": "tsdown",
 		"dev": "tsdown --watch",
