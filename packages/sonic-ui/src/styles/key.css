@@ -4,6 +4,18 @@
 	initial-value: 32px;
 }
 
+@property --_sonic-key-busy-angle {
+	syntax: '<angle>';
+	inherits: false;
+	initial-value: 0deg;
+}
+
+@keyframes sonic-key-busy {
+	to {
+		--_sonic-key-busy-angle: 1turn;
+	}
+}
+
 @layer sonic {
 	:is(sonic-key, .sonic-key) {
 		--_sonic-key-size: var(--sonic-key-size, 2rem);
@@ -50,11 +62,7 @@
 		font: inherit;
 		color: var(--_sonic-ink);
 		cursor: pointer;
-		background: linear-gradient(
-			var(--_sonic-light-fall),
-			color-mix(in oklab, var(--_sonic-unlit) 55%, #000),
-			color-mix(in oklab, var(--_sonic-unlit) 85%, #000)
-		);
+		background: var(--_sonic-well-floor);
 		border: 0;
 		border-radius: var(--_sonic-key-corner);
 		box-shadow: var(--_sonic-well);
@@ -66,12 +74,11 @@
 		touch-action: none;
 	}
 
-	.sonic-key:active:where(:not(:disabled)),
+	.sonic-key:active:where(:not(:disabled, [aria-disabled='true'])),
 	.sonic-key:is([aria-pressed='true'], :where([momentary]:state(pressed)) > *) {
 		--_sonic-key-shift: calc(var(--_sonic-key-depth) / 2);
 		--_sonic-key-scale: var(--_sonic-key-press-scale);
-		--_sonic-key-drop: calc(0.5 * var(--_sonic-cast-x)) calc(0.5 * var(--_sonic-cast-y))
-			var(--_sonic-unit) var(--_sonic-drop-shade);
+		--_sonic-key-drop: var(--_sonic-press-drop);
 	}
 
 	.sonic-key:is([aria-pressed='true'], :where([momentary]:state(pressed)) > *) {
@@ -87,23 +94,60 @@
 		);
 	}
 
-	.sonic-key:disabled {
+	.sonic-key:is(:disabled, [aria-disabled='true']) {
 		--_sonic-lit: var(--_sonic-lit-disabled);
 
 		color: var(--_sonic-etch);
 		cursor: default;
 	}
 
-	.sonic-key:not([aria-pressed='true'], :disabled, :where([momentary]:state(pressed)) > *):is(
-			:focus-visible,
-			:active
-		) {
+	.sonic-key:not(
+			[aria-pressed='true'],
+			:disabled,
+			[aria-disabled='true'],
+			:where([momentary]:state(pressed)) > *
+		):is(:focus-visible, :active) {
 		color: var(--_sonic-ink-lift);
 	}
 
 	@media (hover: hover) {
-		.sonic-key:not([aria-pressed='true'], :disabled, :where([momentary]:state(pressed)) > *):hover {
+		/* fallow-ignore-next-line code-duplication -- `:hover` sits under `(hover: hover)` and its `:focus-visible` partner outside it */
+		.sonic-key:not(
+				[aria-pressed='true'],
+				:disabled,
+				[aria-disabled='true'],
+				:where([momentary]:state(pressed)) > *
+			):hover {
 			color: var(--_sonic-ink-lift);
+		}
+	}
+
+	/* Turns with the arc, so evenly shaded */
+	[busy] > .sonic-key::after {
+		position: absolute;
+		inset: 0;
+		box-sizing: border-box;
+		padding: calc(var(--_sonic-key-size) * var(--_sonic-key-bevel-ratio));
+		pointer-events: none;
+		content: '';
+		background: conic-gradient(
+			from var(--_sonic-key-busy-angle),
+			transparent 0 55%,
+			var(--_sonic-lit)
+		);
+		border-radius: var(--_sonic-key-corner);
+		mask:
+			linear-gradient(#000 0 0) content-box exclude,
+			linear-gradient(#000 0 0);
+		animation: sonic-key-busy 1s linear infinite;
+
+		@media (prefers-reduced-motion: reduce) {
+			background: color-mix(in oklab, var(--_sonic-lit) 45%, transparent);
+			animation: none;
+		}
+
+		@media (forced-colors: active) {
+			forced-color-adjust: none;
 		}
 	}
 
@@ -165,6 +209,7 @@
 			drop-shadow(0 0 var(--_sonic-unit) color-mix(in oklab, var(--_sonic-lit) 35%, transparent));
 	}
 
+	/* fallow-ignore-next-line code-duplication -- one pressed state, restated for each part of the cap it reaches */
 	.sonic-key:is([aria-pressed='true'], :where([momentary]:state(pressed)) > *)
 		.sonic-key-cap
 		> [data-sonic-when='off'],
@@ -185,7 +230,7 @@
 			--_sonic-face: var(--_sonic-lit);
 			--_sonic-ink: HighlightText;
 
-			&:disabled {
+			&:is(:disabled, [aria-disabled='true']) {
 				--_sonic-ink: ButtonFace;
 			}
 

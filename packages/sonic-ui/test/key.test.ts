@@ -373,3 +373,53 @@ test('a default set before the tag upgrades lands before the live state', async 
 	expect(late.hasAttribute('pressed')).toBe(true);
 	expect(late.pressed).toBe(false);
 });
+
+test('busy marks the button busy and leaves the key pressable', () => {
+	const { button, key } = mountKey('busy toggle');
+
+	expect(button.getAttribute('aria-busy')).toBe('true');
+
+	button.click();
+	expect(key.pressed).toBe(true);
+
+	key.busy = false;
+	expect(button.hasAttribute('aria-busy')).toBe(false);
+});
+
+test('a soft-disabled key keeps its tab stop but swallows clicks and holds', () => {
+	const { button, key } = mountKey('soft-disabled toggle');
+	const heard: Array<string> = [];
+
+	for (const type of ['click', 'change']) {
+		key.addEventListener(type, () => {
+			heard.push(type);
+		});
+	}
+
+	expect(button.disabled).toBe(false);
+	expect(button.getAttribute('aria-disabled')).toBe('true');
+
+	button.click();
+	expect(key.pressed).toBe(false);
+	expect(heard).toEqual([]);
+
+	key.softDisabled = false;
+	button.click();
+	expect(key.pressed).toBe(true);
+	expect(heard).toEqual(['change', 'click']);
+});
+
+test('a soft-disabled momentary key does not hold', () => {
+	const { button, key } = mountKey('soft-disabled momentary');
+
+	button.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, button: 0, pointerId: 1 }));
+
+	expect(key.pressed).toBe(false);
+});
+
+test('disabled wins over soft-disabled', () => {
+	const { button } = mountKey('disabled soft-disabled');
+
+	expect(button.disabled).toBe(true);
+	expect(button.hasAttribute('aria-disabled')).toBe(false);
+});

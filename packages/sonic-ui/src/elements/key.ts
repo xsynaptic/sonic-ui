@@ -1,6 +1,7 @@
 import { SonicFormElement } from '#elements/form-element.ts';
 import { copyNode } from '#lib/copy-node.ts';
 import { requireChild, template } from '#lib/render.ts';
+import { writeAttribute } from '#lib/write-attribute.ts';
 
 declare global {
 	interface HTMLElementTagNameMap {
@@ -20,11 +21,21 @@ const holdKeys = new Set([' ', 'Enter']);
 export class SonicKey extends SonicFormElement {
 	static override readonly observedAttributes = [
 		...SonicFormElement.observedAttributes,
+		'busy',
 		'momentary',
 		'pressed',
+		'soft-disabled',
 		'toggle',
 		'value',
 	];
+
+	get busy(): boolean {
+		return this.hasAttribute('busy');
+	}
+
+	set busy(isBusy: boolean) {
+		this.reflect('busy', isBusy);
+	}
 
 	// The `pressed` attribute, as `defaultChecked` holds a checkbox's `checked` attribute
 	get defaultPressed(): boolean {
@@ -52,6 +63,14 @@ export class SonicKey extends SonicFormElement {
 		this.#isDirty = true;
 		this.#pressed = isPressed === true;
 		this.render();
+	}
+
+	get softDisabled(): boolean {
+		return this.hasAttribute('soft-disabled');
+	}
+
+	set softDisabled(isSoftDisabled: boolean) {
+		this.reflect('soft-disabled', isSoftDisabled);
 	}
 
 	get toggle(): boolean {
@@ -83,7 +102,7 @@ export class SonicKey extends SonicFormElement {
 
 	attributeChangedCallback(name: string): void {
 		if (name === 'pressed') this.#isDirty = false;
-		if (name === 'disabled' && this.isDisabled()) this.#release();
+		if (this.isDisabled() || this.#isSoftDisabled()) this.#release();
 		this.render();
 	}
 
@@ -101,7 +120,15 @@ export class SonicKey extends SonicFormElement {
 		const key = this.#key;
 		const cap = requireChild(key, '.sonic-key-cap', HTMLSpanElement);
 
-		this.upgradeProperties('defaultPressed', 'momentary', 'toggle', 'pressed', 'value');
+		this.upgradeProperties(
+			'busy',
+			'defaultPressed',
+			'momentary',
+			'softDisabled',
+			'toggle',
+			'pressed',
+			'value',
+		);
 		this.mirrorChildren(
 			{
 				control: key,
@@ -123,7 +150,13 @@ export class SonicKey extends SonicFormElement {
 
 		key.addEventListener(
 			'click',
-			() => {
+			(event) => {
+				// A native disabled button fires no click at all
+				if (this.#isSoftDisabled()) {
+					event.preventDefault();
+					event.stopImmediatePropagation();
+					return;
+				}
 				if (!this.toggle) return;
 
 				this.pressed = !this.pressed;
@@ -142,6 +175,8 @@ export class SonicKey extends SonicFormElement {
 		const key = this.#key;
 
 		key.disabled = this.isDisabled();
+		writeAttribute(key, 'aria-disabled', this.#isSoftDisabled() ? 'true' : undefined);
+		writeAttribute(key, 'aria-busy', this.busy ? 'true' : undefined);
 		key.removeAttribute('aria-pressed');
 		if (this.toggle) key.setAttribute('aria-pressed', String(this.pressed));
 		this.toggleState('pressed', this.pressed);
@@ -204,7 +239,7 @@ export class SonicKey extends SonicFormElement {
 	}
 
 	#hold(holder: number | string): void {
-		if (this.isDisabled() || this.#holder !== undefined) return;
+		if (this.isDisabled() || this.#isSoftDisabled() || this.#holder !== undefined) return;
 
 		this.#holder = holder;
 		this.pressed = true;
@@ -213,6 +248,10 @@ export class SonicKey extends SonicFormElement {
 
 	#isMomentary(): boolean {
 		return this.momentary && !this.toggle;
+	}
+
+	#isSoftDisabled(): boolean {
+		return this.softDisabled && !this.isDisabled();
 	}
 
 	#release(): void {

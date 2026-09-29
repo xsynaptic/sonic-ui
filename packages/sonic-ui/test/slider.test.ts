@@ -4,7 +4,7 @@ import type { SonicSlider } from '#elements/slider.ts';
 
 import '#define/slider.ts';
 
-import { recordEvents } from './helpers.ts';
+import { pressKey, recordEvents } from './helpers.ts';
 
 function mountSlider(attributes: string): { control: HTMLElement; slider: SonicSlider } {
 	document.body.innerHTML = `<sonic-slider ${attributes}></sonic-slider>`;
@@ -224,4 +224,102 @@ test('focus() reaches the control', () => {
 
 	slider.focus();
 	expect(document.activeElement).toBe(control);
+});
+
+// A 220px track at 100px with a 20px cap: 200px of travel, the centre of a -50 to 50 slider at 210px
+test.each([
+	['origin="0"', 0],
+	['', -50],
+])(
+	'with spring and %s, letting go reports the bent value, then the spring back to %d',
+	(attributes, rest) => {
+		const { control, slider } = mountSlider(
+			`spring min="-50" max="50" value="${String(rest)}" ${attributes}`,
+		);
+		const events = recordEvents(slider);
+		const values: Array<number> = [];
+
+		slider.addEventListener('change', () => {
+			values.push(slider.value);
+		});
+		layOut(control, new DOMRect(100, 0, 220, 40), new DOMRect(0, 0, 20, 40));
+		pointerAt(capOf(control), 'pointerdown', { clientX: 210 + rest * 2 });
+		pointerAt(capOf(control), 'pointermove', { clientX: 250 + rest * 2 });
+		pointerAt(capOf(control), 'pointerup', { clientX: 250 + rest * 2 });
+
+		expect(events).toEqual(['input', 'change', 'input', 'change']);
+		expect(values).toEqual([rest + 20, rest]);
+		expect(slider.value).toBe(rest);
+	},
+);
+
+test('with spring, an arrow bends while held and springs back on keyup, and Enter types nothing', () => {
+	const { control, slider } = mountSlider(
+		'spring min="-50" max="50" step="5" origin="0" value="0"',
+	);
+	const entry = control.querySelector('input');
+
+	pressKey(control, 'ArrowUp');
+	pressKey(control, 'ArrowUp');
+	expect(slider.value).toBe(10);
+
+	control.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true, key: 'ArrowUp' }));
+	expect(slider.value).toBe(0);
+
+	expect(pressKey(control, 'Enter').defaultPrevented).toBe(false);
+	expect(entry?.hidden).toBe(true);
+});
+
+test('with spring and a value list, the slider springs back to the first entry', () => {
+	const { control, slider } = mountSlider('spring values="-12 -6 0 6" value="-12"');
+
+	pressKey(control, 'ArrowUp');
+	expect(slider.value).toBe(-6);
+
+	control.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true, key: 'ArrowUp' }));
+	expect(slider.value).toBe(-12);
+});
+
+function bufferedStops(control: HTMLElement): Array<string> {
+	const ranges = control.style.getPropertyValue('--_sonic-slider-buffered-ranges');
+
+	// Each edge is written twice, closing one stop and opening the next
+	return [
+		...new Set(
+			[...ranges.matchAll(/(\d+%)|calc\(([\d.]+) \*/g)].map((match) => match[1] ?? match[2] ?? ''),
+		),
+	];
+}
+
+test('buffered pairs light the groove at their places along the travel, sorted', () => {
+	const { control, slider } = mountSlider('min="10" max="110" value="10"');
+
+	slider.buffered = [
+		[60, 85],
+		[10, 35],
+	];
+
+	expect(bufferedStops(control)).toEqual(['0%', '0.25', '0.5', '0.75']);
+	expect(slider.buffered).toEqual([
+		[10, 35],
+		[60, 85],
+	]);
+
+	slider.max = 210;
+	expect(bufferedStops(control)).toEqual(['0%', '0.125', '0.25', '0.375']);
+});
+
+test('buffered takes TimeRanges as a media element gives them, and undefined clears it', () => {
+	const { control, slider } = mountSlider('min="10" max="110" value="10"');
+	const ranges = [[35, 140]];
+
+	slider.buffered = {
+		end: (index: number) => ranges[index]?.[1] ?? NaN,
+		length: ranges.length,
+		start: (index: number) => ranges[index]?.[0] ?? NaN,
+	};
+	expect(bufferedStops(control)).toEqual(['0.25', '100%']);
+
+	slider.buffered = undefined;
+	expect(control.style.getPropertyValue('--_sonic-slider-buffered-ranges')).toBe('');
 });

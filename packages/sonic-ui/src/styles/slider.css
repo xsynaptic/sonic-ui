@@ -23,9 +23,11 @@
 
 	sonic-slider:not(:defined, [hidden]) {
 		display: block;
+		visibility: hidden;
 		flex-shrink: 0;
 		inline-size: var(--_sonic-slider-length);
 		block-size: var(--_sonic-slider-size);
+		overflow: hidden;
 	}
 
 	sonic-slider[orientation='vertical']:not(:defined, [hidden]) {
@@ -42,13 +44,23 @@
 		--_sonic-slider-radius-ratio: var(--sonic-slider-radius-ratio, 0.15);
 		--_sonic-slider-bevel-ratio: var(--sonic-slider-bevel-ratio, 0.075);
 		--_sonic-slider-pointer-ratio: var(--sonic-slider-pointer-ratio, 0.07);
-		--_sonic-unit: calc(var(--_sonic-slider-size) / 32);
+		--_sonic-slider-scale-ratio: var(--sonic-slider-scale-ratio, 0.4);
+		--_sonic-slider-scale-font-ratio: var(--sonic-slider-scale-font-ratio, 0.18);
+		--_sonic-slider-scale-band: 0px;
+
+		/* Across the travel beside the legend, so a legend widens the box without restyling the fader */
+		--_sonic-slider-track: calc(var(--_sonic-slider-size) - var(--_sonic-slider-scale-band));
+		--_sonic-unit: calc(var(--_sonic-slider-track) / 32);
 		--_sonic-slider-lit: var(--_sonic-lit);
+		--_sonic-slider-buffered: var(
+			--sonic-buffered,
+			color-mix(in oklab, var(--_sonic-ink) 18%, var(--_sonic-unlit))
+		);
 		--_sonic-slider-toward: to right;
 		--_sonic-slider-across: to bottom;
 		--_sonic-slider-cursor: ew-resize;
-		--_sonic-slider-groove: calc(var(--_sonic-slider-size) * var(--_sonic-slider-groove-ratio));
-		--_sonic-slider-cap: calc(var(--_sonic-slider-size) * var(--_sonic-slider-cap-ratio));
+		--_sonic-slider-groove: calc(var(--_sonic-slider-track) * var(--_sonic-slider-groove-ratio));
+		--_sonic-slider-cap: calc(var(--_sonic-slider-track) * var(--_sonic-slider-cap-ratio));
 		--_sonic-slider-travel: calc(var(--_sonic-slider-length) - var(--_sonic-slider-cap));
 		--_sonic-slider-offset: calc(var(--_sonic-slider-value, 0) * var(--_sonic-slider-travel));
 
@@ -83,6 +95,10 @@
 		--_sonic-slider-cursor: default;
 	}
 
+	:has(> [data-sonic-value]) > .sonic-slider {
+		--_sonic-slider-scale-band: calc(var(--_sonic-slider-size) * var(--_sonic-slider-scale-ratio));
+	}
+
 	[groove-press='none']:not(:state(dragging)) > .sonic-slider {
 		cursor: default;
 	}
@@ -92,11 +108,12 @@
 			var(--_sonic-slider-travel) / (var(--_sonic-slider-positions, 2) - 1)
 		);
 		--_sonic-slider-mark-lip: calc(
-			var(--_sonic-slider-groove) / 2 + var(--_sonic-slider-size) * 0.1
+			var(--_sonic-slider-groove) / 2 + var(--_sonic-slider-track) * 0.1
 		);
 
 		position: absolute;
-		inset: 0 calc((var(--_sonic-slider-cap) - var(--_sonic-unit)) / 2);
+		inset: var(--_sonic-slider-scale-band) calc((var(--_sonic-slider-cap) - var(--_sonic-unit)) / 2)
+			0;
 		background: repeating-linear-gradient(
 			var(--_sonic-slider-toward),
 			var(--_sonic-etch) 0 var(--_sonic-unit),
@@ -113,11 +130,43 @@
 	}
 
 	[orientation='vertical'] > .sonic-slider > .sonic-slider-marks {
-		inset: calc((var(--_sonic-slider-cap) - var(--_sonic-unit)) / 2) 0;
+		inset: calc((var(--_sonic-slider-cap) - var(--_sonic-unit)) / 2) 0
+			calc((var(--_sonic-slider-cap) - var(--_sonic-unit)) / 2) var(--_sonic-slider-scale-band);
 	}
 
 	:not([notched]) > .sonic-slider > .sonic-slider-marks {
 		display: none;
+	}
+
+	.sonic-slider-scale {
+		font-size: calc(var(--_sonic-slider-size) * var(--_sonic-slider-scale-font-ratio));
+
+		& > * {
+			--_sonic-slider-scale-along: calc(
+				var(--_sonic-slider-cap) / 2 + var(--_sonic-scale-at, 0) * var(--_sonic-slider-travel)
+			);
+			--_sonic-slider-scale-edge: calc(100% - var(--_sonic-slider-scale-band) + var(--_sonic-unit));
+
+			inset: auto auto var(--_sonic-slider-scale-edge) var(--_sonic-slider-scale-along);
+			translate: -50% 0;
+		}
+
+		& > .sonic-scale-tick {
+			inline-size: var(--_sonic-unit);
+			block-size: calc(var(--_sonic-slider-scale-band) * 0.4);
+		}
+	}
+
+	[orientation='vertical'] > .sonic-slider > .sonic-slider-scale {
+		& > * {
+			inset: auto var(--_sonic-slider-scale-edge) var(--_sonic-slider-scale-along) auto;
+			translate: 0 50%;
+		}
+
+		& > .sonic-scale-tick {
+			inline-size: calc(var(--_sonic-slider-scale-band) * 0.4);
+			block-size: var(--_sonic-unit);
+		}
 	}
 
 	.sonic-slider-groove {
@@ -125,31 +174,36 @@
 		--_sonic-slider-lit-high: max(var(--_sonic-slider-origin, 0), var(--_sonic-slider-value, 0));
 
 		position: absolute;
-		inset: calc(50% - var(--_sonic-slider-groove) / 2)
-			calc((var(--_sonic-slider-cap) - var(--_sonic-slider-groove)) / 2);
+		inset: calc(50% + var(--_sonic-slider-scale-band) / 2 - var(--_sonic-slider-groove) / 2)
+			calc((var(--_sonic-slider-cap) - var(--_sonic-slider-groove)) / 2)
+			calc(50% - var(--_sonic-slider-scale-band) / 2 - var(--_sonic-slider-groove) / 2);
 
 		/* At either end of the travel the light runs on to the groove's rounded end */
-		background: linear-gradient(
-			var(--_sonic-slider-toward),
-			var(--_sonic-unlit)
-				calc(
-					var(--_sonic-slider-lit-low) * var(--_sonic-slider-travel) + var(--_sonic-slider-groove) /
-						2 * sign(var(--_sonic-slider-lit-low))
-				),
-			var(--_sonic-slider-lit) 0
-				calc(
-					var(--_sonic-slider-lit-high) * var(--_sonic-slider-travel) +
-						var(--_sonic-slider-groove) / 2 * (2 - sign(1 - var(--_sonic-slider-lit-high)))
-				),
-			var(--_sonic-unlit) 0
-		);
+		background:
+			linear-gradient(
+				var(--_sonic-slider-toward),
+				transparent
+					calc(
+						var(--_sonic-slider-lit-low) * var(--_sonic-slider-travel) +
+							var(--_sonic-slider-groove) / 2 * sign(var(--_sonic-slider-lit-low))
+					),
+				var(--_sonic-slider-lit) 0
+					calc(
+						var(--_sonic-slider-lit-high) * var(--_sonic-slider-travel) +
+							var(--_sonic-slider-groove) / 2 * (2 - sign(1 - var(--_sonic-slider-lit-high)))
+					),
+				transparent 0
+			),
+			var(--_sonic-slider-buffered-ranges, none), var(--_sonic-unlit);
 		border-radius: calc(var(--_sonic-slider-groove) / 2);
 		box-shadow: var(--_sonic-groove);
 	}
 
 	[orientation='vertical'] > .sonic-slider > .sonic-slider-groove {
 		inset: calc((var(--_sonic-slider-cap) - var(--_sonic-slider-groove)) / 2)
-			calc(50% - var(--_sonic-slider-groove) / 2);
+			calc(50% - var(--_sonic-slider-scale-band) / 2 - var(--_sonic-slider-groove) / 2)
+			calc((var(--_sonic-slider-cap) - var(--_sonic-slider-groove)) / 2)
+			calc(50% + var(--_sonic-slider-scale-band) / 2 - var(--_sonic-slider-groove) / 2);
 	}
 
 	.sonic-slider-modulation {
@@ -168,8 +222,10 @@
 		);
 
 		position: absolute;
-		inset: calc(50% - var(--_sonic-slider-modulation-band) / 2) auto auto
-			var(--_sonic-slider-modulation-start);
+		inset: calc(
+				50% + var(--_sonic-slider-scale-band) / 2 - var(--_sonic-slider-modulation-band) / 2
+			)
+			auto auto var(--_sonic-slider-modulation-start);
 		inline-size: var(--_sonic-slider-modulation-length);
 		block-size: var(--_sonic-slider-modulation-band);
 		background: var(--_sonic-slider-modulation);
@@ -178,7 +234,7 @@
 
 	[orientation='vertical'] > .sonic-slider > .sonic-slider-modulation {
 		inset: auto auto var(--_sonic-slider-modulation-start)
-			calc(50% - var(--_sonic-slider-modulation-band) / 2);
+			calc(50% + var(--_sonic-slider-scale-band) / 2 - var(--_sonic-slider-modulation-band) / 2);
 		inline-size: var(--_sonic-slider-modulation-band);
 		block-size: var(--_sonic-slider-modulation-length);
 	}
@@ -189,14 +245,16 @@
 
 	.sonic-slider-cap {
 		--_sonic-slider-pointer-width: calc(
-			var(--_sonic-slider-size) * var(--_sonic-slider-pointer-ratio)
+			var(--_sonic-slider-track) * var(--_sonic-slider-pointer-ratio)
 		);
-		--_sonic-slider-bevel: calc(var(--_sonic-slider-size) * var(--_sonic-slider-bevel-ratio));
-		--_sonic-slider-corner: calc(var(--_sonic-slider-size) * var(--_sonic-slider-radius-ratio));
-		--_sonic-slider-index-inset: calc(var(--_sonic-slider-bevel) + var(--_sonic-slider-size) * 0.1);
+		--_sonic-slider-bevel: calc(var(--_sonic-slider-track) * var(--_sonic-slider-bevel-ratio));
+		--_sonic-slider-corner: calc(var(--_sonic-slider-track) * var(--_sonic-slider-radius-ratio));
+		--_sonic-slider-index-inset: calc(
+			var(--_sonic-slider-bevel) + var(--_sonic-slider-track) * 0.1
+		);
 
 		position: absolute;
-		inset: 0 auto 0 0;
+		inset: var(--_sonic-slider-scale-band) auto 0 0;
 		inline-size: var(--_sonic-slider-cap);
 		background: var(--_sonic-skirt);
 		border-radius: var(--_sonic-slider-corner);
@@ -230,7 +288,7 @@
 	}
 
 	[orientation='vertical'] > .sonic-slider > .sonic-slider-cap {
-		inset: auto 0 0;
+		inset: auto 0 0 var(--_sonic-slider-scale-band);
 		inline-size: auto;
 		block-size: var(--_sonic-slider-cap);
 		translate: 0 calc(-1 * var(--_sonic-slider-offset));
@@ -255,6 +313,10 @@
 
 		.sonic-slider-modulation {
 			--_sonic-slider-modulation: CanvasText;
+		}
+
+		.sonic-slider {
+			--_sonic-slider-buffered: color-mix(in srgb, CanvasText 50%, GrayText);
 		}
 
 		.sonic-slider-groove {

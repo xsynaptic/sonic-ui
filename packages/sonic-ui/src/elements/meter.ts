@@ -1,5 +1,7 @@
 import { SonicElement } from '#elements/sonic-element.ts';
+import { parseNumberList } from '#lib/number-list.ts';
 import { template } from '#lib/render.ts';
+import { linearTaper } from '#lib/taper.ts';
 
 declare global {
 	interface HTMLElementTagNameMap {
@@ -25,9 +27,25 @@ function toDecibels(amplitude: number): number {
 	return 20 * Math.log10(Math.abs(amplitude));
 }
 
-// `level` is a linear amplitude; `min` and `max` are dBFS
+// A `calc()` rather than a count, so the zone's token stays live
+function lightsBelow(lights: Array<number>, zone: 'clip' | 'hot'): string {
+	const terms = lights.map(
+		(threshold) => `sign(max(0, var(--_sonic-meter-${zone}-from) - (${String(threshold)})))`,
+	);
+
+	return `calc(${terms.join(' + ')})`;
+}
+
+// On the default `db` scale, `level` is a linear amplitude shown in dBFS; on `linear`, it is in the units of `min` and `max`
 export class SonicMeter extends SonicElement {
-	static override readonly observedAttributes = ['disabled', 'max', 'min'];
+	static override readonly observedAttributes = [
+		'disabled',
+		'lights',
+		'max',
+		'min',
+		'origin',
+		'scale',
+	];
 
 	get level(): number {
 		return this.#level;
@@ -36,10 +54,16 @@ export class SonicMeter extends SonicElement {
 	set level(amplitude: number) {
 		if (!Number.isFinite(amplitude)) return;
 
-		const decibels = toDecibels(amplitude);
 		const now = performance.now();
 
 		this.#level = amplitude;
+		if (this.scale === 'linear') {
+			this.#render(now);
+			return;
+		}
+
+		const decibels = toDecibels(amplitude);
+
 		this.#target = decibels;
 		this.#bar = Math.max(this.#bar, decibels);
 		if (decibels >= this.#peak) {
@@ -49,6 +73,14 @@ export class SonicMeter extends SonicElement {
 		if (decibels >= 0) this.#clipAt = now;
 		this.#render(now);
 		this.#schedule(now);
+	}
+
+	get lights(): Array<number> | undefined {
+		return parseNumberList(this.getAttribute('lights'));
+	}
+
+	set lights(thresholds: Array<number> | undefined) {
+		this.reflect('lights', thresholds?.join(' '));
 	}
 
 	get max(): number {
@@ -75,6 +107,23 @@ export class SonicMeter extends SonicElement {
 		this.reflect('orientation', direction);
 	}
 
+	// fallow-ignore-next-line code-duplication -- one accessor pair per reflected attribute, as on a native element
+	get origin(): number | undefined {
+		return this.optionalNumberAttribute('origin');
+	}
+
+	set origin(value: number | undefined) {
+		this.reflect('origin', value);
+	}
+
+	get scale(): 'db' | 'linear' {
+		return this.getAttribute('scale') === 'linear' ? 'linear' : 'db';
+	}
+
+	set scale(scale: 'db' | 'linear' | undefined) {
+		this.reflect('scale', scale);
+	}
+
 	#bar = -Infinity;
 
 	#clipAt = -Infinity;
@@ -84,6 +133,9 @@ export class SonicMeter extends SonicElement {
 	#lastFrame: number | undefined;
 
 	#level = 0;
+
+	// Parsed once per attribute change rather than per frame
+	#lights: Array<number> | undefined;
 
 	readonly #meter = renderMeter();
 
@@ -96,6 +148,7 @@ export class SonicMeter extends SonicElement {
 	attributeChangedCallback(): void {
 		const now = performance.now();
 
+		this.#renderLights();
 		this.#render(now);
 		this.#schedule(now);
 	}
@@ -103,8 +156,9 @@ export class SonicMeter extends SonicElement {
 	protected connect(signal: AbortSignal): void {
 		const now = performance.now();
 
-		this.upgradeProperties('max', 'min', 'orientation', 'level');
+		this.upgradeProperties('lights', 'max', 'min', 'orientation', 'origin', 'scale', 'level');
 		this.appendOnce(this.#meter);
+		this.#renderLights();
 		this.#render(now);
 		this.#schedule(now);
 		this.checkStyles(this.#meter, 'meter.css');
@@ -119,14 +173,16 @@ export class SonicMeter extends SonicElement {
 		);
 	}
 
-	#fraction(decibels: number): number {
-		const min = this.min;
-		const range = this.max - min;
+	#fraction(level: number): number {
+		const lights = this.#lights;
+		if (lights) return lights.filter((threshold) => threshold <= level).length / lights.length;
 
-		return range > 0 ? Math.min(1, Math.max(0, (decibels - min) / range)) : 0;
+		return linearTaper(this.min, this.max).position(level);
 	}
 
 	#isSettled(now: number): boolean {
+		if (this.scale === 'linear') return true;
+
 		const floor = this.min;
 
 		return (
@@ -139,12 +195,18 @@ export class SonicMeter extends SonicElement {
 	#render(now: number): void {
 		const meter = this.#meter;
 
+		const origin = this.origin === undefined ? 0 : this.#fraction(this.origin);
+
 		meter.style.setProperty('--_sonic-meter-min', String(this.min));
 		meter.style.setProperty('--_sonic-meter-max', String(this.max));
+		meter.style.setProperty('--_sonic-meter-origin', String(origin));
 
 		// Disabled puts the light out, as on the other controls; the ballistics keep running so it lights up mid-fall
-		if (this.disabled) {
-			meter.style.setProperty('--_sonic-meter-level', '0');
+		// The consumer smooths a linear level, so it has no fall, hold or clip
+		if (this.disabled || this.scale === 'linear') {
+			const level = this.disabled ? origin : this.#fraction(this.#level);
+
+			meter.style.setProperty('--_sonic-meter-level', String(level));
 			meter.style.setProperty('--_sonic-meter-peak', '0');
 			meter.style.setProperty('--_sonic-meter-clipped', '0');
 			return;
@@ -153,6 +215,24 @@ export class SonicMeter extends SonicElement {
 		meter.style.setProperty('--_sonic-meter-level', String(this.#fraction(this.#bar)));
 		meter.style.setProperty('--_sonic-meter-peak', String(this.#fraction(this.#peak)));
 		meter.style.setProperty('--_sonic-meter-clipped', now - this.#clipAt < holdMs ? '1' : '0');
+	}
+
+	#renderLights(): void {
+		const meter = this.#meter;
+		const lights = this.lights;
+
+		this.#lights = lights;
+		this.toggleState('ladder', lights !== undefined);
+		if (!lights) {
+			for (const name of ['count', 'hot-lights', 'clip-lights']) {
+				meter.style.removeProperty(`--_sonic-meter-${name}`);
+			}
+			return;
+		}
+
+		meter.style.setProperty('--_sonic-meter-count', String(lights.length));
+		meter.style.setProperty('--_sonic-meter-hot-lights', lightsBelow(lights, 'hot'));
+		meter.style.setProperty('--_sonic-meter-clip-lights', lightsBelow(lights, 'clip'));
 	}
 
 	#schedule(now: number): void {

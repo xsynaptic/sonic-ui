@@ -57,6 +57,7 @@
 		--_sonic-meter-toward: to top;
 		--_sonic-meter-inset: calc(var(--_sonic-meter-size) * 0.125);
 		--_sonic-meter-lens: calc(var(--_sonic-meter-size) - 2 * var(--_sonic-meter-inset));
+		--_sonic-meter-clip-space: calc(var(--_sonic-meter-inset) + var(--_sonic-meter-lens));
 		--_sonic-meter-gap: calc(var(--_sonic-meter-pitch) * var(--_sonic-meter-gap-ratio));
 		--_sonic-meter-segment: calc(var(--_sonic-meter-pitch) - var(--_sonic-meter-gap));
 		--_sonic-meter-segment-radius: calc(
@@ -64,7 +65,7 @@
 		);
 		--_sonic-meter-segments: round(
 			down,
-			var(--_sonic-meter-length) - 3 * var(--_sonic-meter-inset) - var(--_sonic-meter-lens) +
+			var(--_sonic-meter-length) - 2 * var(--_sonic-meter-inset) - var(--_sonic-meter-clip-space) +
 				var(--_sonic-meter-gap),
 			var(--_sonic-meter-pitch)
 		);
@@ -93,6 +94,26 @@
 		block-size: var(--_sonic-meter-size);
 	}
 
+	/* No clip on either, so the lights take the lens's room */
+	:is([scale='linear'], :state(ladder)) > .sonic-meter {
+		--_sonic-meter-clip-space: 0px;
+	}
+
+	:state(ladder) > .sonic-meter {
+		--_sonic-meter-pitch: calc(
+			(var(--_sonic-meter-length) - 2 * var(--_sonic-meter-inset)) / var(--_sonic-meter-count, 1)
+		);
+		--_sonic-meter-gap: 0px;
+		--_sonic-meter-segments: calc(var(--_sonic-meter-length) - 2 * var(--_sonic-meter-inset));
+		--_sonic-meter-light-radius: calc(
+			min(
+					var(--_sonic-meter-lens),
+					var(--_sonic-meter-pitch) * (1 - var(--_sonic-meter-gap-ratio))
+				) /
+				2
+		);
+	}
+
 	/* Snapped to whole lights, so none is split between two colours */
 	:is(.sonic-meter-segments, .sonic-meter-level) {
 		--_sonic-meter-span: calc(var(--_sonic-meter-max, 0) - var(--_sonic-meter-min, -60));
@@ -108,7 +129,9 @@
 		--_sonic-meter-clip-at: round(
 			clamp(
 					0,
-					(var(--_sonic-meter-clip-from) - var(--_sonic-meter-min, -60)) / var(--_sonic-meter-span),
+					/* fallow-ignore-next-line code-duplication -- each zone snaps its own threshold by the same rule */
+						(var(--_sonic-meter-clip-from) - var(--_sonic-meter-min, -60)) /
+						var(--_sonic-meter-span),
 					1
 				) *
 				var(--_sonic-meter-segments),
@@ -144,6 +167,7 @@
 				0 100% / 100% var(--_sonic-meter-pitch) no-repeat repeat,
 			radial-gradient(
 					circle var(--_sonic-meter-segment-radius) at left var(--_sonic-meter-segment-radius)
+						/* fallow-ignore-next-line code-duplication -- one gradient per segment corner is geometry, not copied logic */
 						bottom calc(var(--_sonic-meter-segment) - var(--_sonic-meter-segment-radius)),
 					#000 calc(100% - 0.5px),
 					transparent
@@ -162,6 +186,23 @@
 		block-size: calc(var(--_sonic-meter-segments) - var(--_sonic-meter-gap));
 		mask: var(--_sonic-meter-lights);
 		mask-composite: add;
+	}
+
+	:state(ladder) > .sonic-meter > :is(.sonic-meter-segments, .sonic-meter-level) {
+		--_sonic-meter-hot-at: calc(var(--_sonic-meter-hot-lights, 0) * var(--_sonic-meter-pitch));
+		--_sonic-meter-clip-at: calc(var(--_sonic-meter-clip-lights, 0) * var(--_sonic-meter-pitch));
+		--_sonic-meter-lights: radial-gradient(
+				circle var(--_sonic-meter-light-radius),
+				#000 calc(100% - 0.5px),
+				transparent
+			)
+			0 100% / 100% var(--_sonic-meter-pitch) no-repeat repeat;
+	}
+
+	/* The zones are dBFS, which a linear level is not */
+	[scale='linear'] > .sonic-meter > :is(.sonic-meter-segments, .sonic-meter-level) {
+		--_sonic-meter-hot-at: var(--_sonic-meter-segments);
+		--_sonic-meter-clip-at: var(--_sonic-meter-segments);
 	}
 
 	[orientation='horizontal'] > .sonic-meter > :is(.sonic-meter-segments, .sonic-meter-level) {
@@ -194,6 +235,7 @@
 			radial-gradient(
 					circle var(--_sonic-meter-segment-radius) at left
 						calc(var(--_sonic-meter-segment) - var(--_sonic-meter-segment-radius)) top
+						/* fallow-ignore-next-line code-duplication -- one gradient per segment corner is geometry, not copied logic */
 						var(--_sonic-meter-segment-radius),
 					#000 calc(100% - 0.5px),
 					transparent
@@ -213,6 +255,42 @@
 		block-size: auto;
 	}
 
+	[orientation='horizontal']:state(ladder)
+		> .sonic-meter
+		> :is(.sonic-meter-segments, .sonic-meter-level) {
+		--_sonic-meter-lights: radial-gradient(
+				circle var(--_sonic-meter-light-radius),
+				#000 calc(100% - 0.5px),
+				transparent
+			)
+			0 0 / var(--_sonic-meter-pitch) 100% repeat no-repeat;
+	}
+
+	:state(ladder) > .sonic-meter > :is(.sonic-meter-segments, .sonic-meter-level)::after {
+		position: absolute;
+		inset: 0;
+		content: '';
+		background: linear-gradient(var(--_sonic-light-fall), rgb(255 255 255 / 10%), transparent 60%) 0
+			100% / 100% var(--_sonic-meter-pitch) repeat-y;
+	}
+
+	:state(ladder) > .sonic-meter > .sonic-meter-level::after {
+		background: radial-gradient(
+				circle var(--_sonic-meter-light-radius),
+				rgb(255 255 255 / 45%),
+				transparent
+			)
+			0 100% / 100% var(--_sonic-meter-pitch) repeat-y;
+	}
+
+	[orientation='horizontal']:state(ladder)
+		> .sonic-meter
+		> :is(.sonic-meter-segments, .sonic-meter-level)::after {
+		background-repeat: repeat-x;
+		background-position: 0 0;
+		background-size: var(--_sonic-meter-pitch) 100%;
+	}
+
 	.sonic-meter-segments {
 		background: linear-gradient(
 			var(--_sonic-meter-toward),
@@ -223,15 +301,24 @@
 	}
 
 	/* One mask for the bar and peak, so a frame repaints without layout */
+
+	/* The hair of slack keeps an exact fraction from losing a light to float error */
 	.sonic-meter-level {
+		--_sonic-meter-lit-from: round(
+			up,
+			min(var(--_sonic-meter-origin, 0), var(--_sonic-meter-level, 0)) *
+				var(--_sonic-meter-segments) - 0.01px,
+			var(--_sonic-meter-pitch)
+		);
 		--_sonic-meter-lit: round(
 			down,
-			var(--_sonic-meter-level, 0) * var(--_sonic-meter-segments),
+			max(var(--_sonic-meter-origin, 0), var(--_sonic-meter-level, 0)) *
+				var(--_sonic-meter-segments) + 0.01px,
 			var(--_sonic-meter-pitch)
 		);
 		--_sonic-meter-held: round(
 			down,
-			var(--_sonic-meter-peak, 0) * var(--_sonic-meter-segments),
+			var(--_sonic-meter-peak, 0) * var(--_sonic-meter-segments) + 0.01px,
 			var(--_sonic-meter-pitch)
 		);
 
@@ -244,7 +331,8 @@
 		mask:
 			linear-gradient(
 				var(--_sonic-meter-toward),
-				#000 var(--_sonic-meter-lit),
+				transparent var(--_sonic-meter-lit-from),
+				#000 0 var(--_sonic-meter-lit),
 				transparent 0 calc(var(--_sonic-meter-held) - var(--_sonic-meter-pitch)),
 				#000 0 var(--_sonic-meter-held),
 				transparent 0
@@ -272,6 +360,10 @@
 			border-radius: inherit;
 			opacity: var(--_sonic-meter-clipped, 0);
 		}
+	}
+
+	:is([scale='linear'], :state(ladder)) > .sonic-meter > .sonic-meter-clip {
+		display: none;
 	}
 
 	[orientation='horizontal'] > .sonic-meter > .sonic-meter-clip {
@@ -302,6 +394,10 @@
 
 		.sonic-meter-clip::after {
 			background: Mark;
+		}
+
+		:state(ladder) > .sonic-meter > :is(.sonic-meter-segments, .sonic-meter-level)::after {
+			display: none;
 		}
 	}
 }

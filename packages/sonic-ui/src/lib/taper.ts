@@ -1,15 +1,9 @@
+import { clampUnit } from '#lib/math.ts';
+
 // Positions run 0 to 1 along the travel
 export interface Taper {
 	position: (value: number) => number;
 	value: (position: number) => number;
-}
-
-export function clampUnit(fraction: number): number {
-	return Math.min(1, Math.max(0, fraction));
-}
-
-export function wrapUnit(fraction: number): number {
-	return fraction - Math.floor(fraction);
 }
 
 export function linearTaper(min: number, max: number): Taper {
@@ -44,5 +38,24 @@ export function skewTaper(min: number, max: number, midpoint: number): Taper | u
 	return {
 		position: (value) => clampUnit((value - min) / range) ** skew,
 		value: (position) => min + range * clampUnit(position) ** (1 / skew),
+	};
+}
+
+// Entries sit evenly along the travel, however unevenly they are spaced
+export function listTaper(entries: Array<number>): Taper {
+	const last = entries.length - 1;
+
+	return {
+		position: (value) => {
+			const above = entries.findIndex((entry) => entry >= value);
+			if (above === -1) return 1;
+
+			const high = entries[above];
+			const low = entries[above - 1];
+			if (high === undefined || low === undefined) return 0;
+
+			return (above - 1 + (value - low) / (high - low)) / last;
+		},
+		value: (position) => entries[Math.round(clampUnit(position) * last)] ?? NaN,
 	};
 }

@@ -51,11 +51,7 @@
 		padding: var(--_sonic-segmented-gap);
 		touch-action: pan-y;
 		user-select: none;
-		background: linear-gradient(
-			var(--_sonic-light-fall),
-			color-mix(in oklab, var(--_sonic-unlit) 55%, #000),
-			color-mix(in oklab, var(--_sonic-unlit) 85%, #000)
-		);
+		background: var(--_sonic-well-floor);
 		border-radius: var(--_sonic-segmented-corner);
 		box-shadow: var(--_sonic-well);
 	}
@@ -85,8 +81,7 @@
 	.sonic-segmented-segment[aria-checked='true'] {
 		--_sonic-segmented-shift: calc(var(--_sonic-segmented-depth) / 2);
 		--_sonic-segmented-scale: var(--_sonic-segmented-press-scale);
-		--_sonic-segmented-drop: calc(0.5 * var(--_sonic-cast-x)) calc(0.5 * var(--_sonic-cast-y))
-			var(--_sonic-unit) var(--_sonic-drop-shade);
+		--_sonic-segmented-drop: var(--_sonic-press-drop);
 	}
 
 	.sonic-segmented-segment[aria-checked='true'] {

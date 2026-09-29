@@ -8,6 +8,7 @@
 	.sonic-led {
 		--_sonic-led-size: var(--sonic-led-size, 0.5rem);
 		--_sonic-led-lens-ratio: var(--sonic-led-lens-ratio, 0.625);
+		--_sonic-lit-alt: var(--sonic-lit-alt, oklch(79% 0.2 150deg));
 		--_sonic-unit: calc(var(--_sonic-led-size) / 8);
 		--_sonic-led-bezel: color-mix(in oklab, var(--_sonic-unlit) 55%, #000);
 
@@ -28,6 +29,8 @@
 		}
 
 		@media (forced-colors: active) {
+			--_sonic-lit-alt: Mark;
+
 			forced-color-adjust: none;
 			background: none;
 
@@ -36,6 +39,10 @@
 				box-shadow: 0 0 0 1px CanvasText;
 			}
 		}
+	}
+
+	.sonic-led[data-sonic-lit='alt'] {
+		--_sonic-lit: var(--_sonic-lit-alt);
 	}
 
 	.sonic-led:is(
@@ -68,7 +75,7 @@
 			background: none;
 
 			&::after {
-				background: Highlight;
+				background: var(--_sonic-lit);
 			}
 		}
 	}

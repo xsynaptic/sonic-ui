@@ -1,6 +1,6 @@
 import { SonicRangeElement } from '#elements/range-element.ts';
 import { readPxProperty } from '#lib/read-px-property.ts';
-import { template } from '#lib/render.ts';
+import { requireChild, template } from '#lib/render.ts';
 
 declare global {
 	interface HTMLElementTagNameMap {
@@ -11,6 +11,7 @@ declare global {
 const renderDial = template(
 	/* HTML */ `
 		<div class="sonic-dial" role="slider" tabindex="0">
+			<div class="sonic-dial-scale" aria-hidden="true"></div>
 			<div class="sonic-dial-notches"></div>
 			<div class="sonic-dial-ring"></div>
 			<div class="sonic-dial-modulation"></div>
@@ -49,6 +50,7 @@ export class SonicDial extends SonicRangeElement {
 		this.reflect('endless', isEndless);
 	}
 
+	// fallow-ignore-next-line code-duplication -- one accessor pair per reflected attribute, as on a native element
 	get modulation(): number {
 		return this.numberAttribute('modulation', 0);
 	}
@@ -67,7 +69,7 @@ export class SonicDial extends SonicRangeElement {
 	protected connect(signal: AbortSignal): void {
 		const dial = this.#dial;
 
-		this.appendOnce(dial);
+		this.bindScale(dial, requireChild(dial, '.sonic-dial-scale', HTMLDivElement), signal);
 		this.render();
 		this.checkStyles(dial, 'dial.css');
 		this.bindGestures(dial, signal, () => ({
@@ -94,6 +96,7 @@ export class SonicDial extends SonicRangeElement {
 		dial.style.setProperty('--_sonic-dial-modulation-to', String(modulationTo));
 		if (positions === undefined) dial.style.removeProperty('--_sonic-dial-positions');
 		else dial.style.setProperty('--_sonic-dial-positions', String(positions));
+		this.renderScale();
 		this.renderAria(dial);
 	}
 

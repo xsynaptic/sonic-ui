@@ -24,7 +24,7 @@ function mountMeter(attributes = ''): { control: HTMLElement; meter: SonicMeter 
 	return { control, meter };
 }
 
-function read(control: HTMLElement, name: 'clipped' | 'level' | 'peak'): number {
+function read(control: HTMLElement, name: 'clipped' | 'level' | 'origin' | 'peak'): number {
 	return Number(control.style.getPropertyValue(`--_sonic-meter-${name}`));
 }
 
@@ -156,4 +156,66 @@ test('a scale set as properties maps the level as its attributes would', () => {
 	meter.level = fromDecibels(-20);
 	expect(meter.getAttribute('min')).toBe('-40');
 	expect(read(control, 'level')).toBeCloseTo(2 / 3, 6);
+});
+
+test('a linear meter shows its level as given, with no fall, hold or clip', () => {
+	const { control, meter } = mountMeter('scale="linear" min="-1" max="1"');
+
+	meter.level = 0.5;
+	expect(read(control, 'level')).toBe(0.75);
+
+	meter.level = -1;
+	expect(read(control, 'level')).toBe(0);
+	expect(vi.getTimerCount()).toBe(0);
+
+	meter.level = 2;
+	expect(read(control, 'level')).toBe(1);
+	expect(read(control, 'peak')).toBe(0);
+	expect(read(control, 'clipped')).toBe(0);
+});
+
+test.each([
+	['scale="linear" min="-24" max="0" origin="0"', 1],
+	['scale="linear" min="-1" max="1" origin="0"', 0.5],
+	['origin="-30"', 0.5],
+	['origin="-90"', 0],
+	['', 0],
+])('%s puts the origin at %f of the scale', (attributes, expected) => {
+	const { control } = mountMeter(attributes);
+
+	expect(read(control, 'origin')).toBe(expected);
+});
+
+test('a disabled meter from a point lights nothing, its level resting on the origin', () => {
+	const { control, meter } = mountMeter('scale="linear" min="-24" max="0" origin="0" disabled');
+
+	meter.level = -12;
+
+	expect(read(control, 'level')).toBe(1);
+});
+
+test('a ladder lights by the thresholds reached, and the peak holds on its light', () => {
+	const { control, meter } = mountMeter('lights="-3 -30 -20 -12 -6 0"');
+
+	meter.level = fromDecibels(-10);
+	expect(read(control, 'level')).toBeCloseTo(3 / 6, 6);
+
+	meter.level = fromDecibels(-4);
+	meter.level = fromDecibels(-40);
+	expect(read(control, 'level')).toBeCloseTo(4 / 6, 6);
+
+	// A second's fall takes the bar to -24 dB, past two thresholds, while the peak holds
+	vi.advanceTimersByTime(1000);
+	expect(read(control, 'level')).toBeCloseTo(1 / 6, 6);
+	expect(read(control, 'peak')).toBeCloseTo(4 / 6, 6);
+});
+
+test('removing the lights returns the meter to its scale', () => {
+	const { control, meter } = mountMeter('lights="-30 -20 -12 -6 -3 0"');
+
+	meter.level = fromDecibels(-10);
+	meter.lights = undefined;
+
+	expect(read(control, 'level')).toBeCloseTo(50 / 60, 6);
+	expect(control.style.getPropertyValue('--_sonic-meter-count')).toBe('');
 });

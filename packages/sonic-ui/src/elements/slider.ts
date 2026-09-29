@@ -14,9 +14,31 @@ interface SliderAxis extends RangeAxis {
 	startPx: number;
 }
 
+export type BufferedRanges = Iterable<readonly [number, number]> | TimeRanges;
+
+function readRanges(ranges: BufferedRanges): Array<[number, number]> {
+	if ('start' in ranges) {
+		return Array.from({ length: ranges.length }, (_entry, index) => [
+			ranges.start(index),
+			ranges.end(index),
+		]);
+	}
+
+	return [...ranges].map(([start, end]) => [start, end]);
+}
+
+// Along the groove, which runs past the travel by half its width at each end
+function grooveStop(fraction: number): string {
+	if (fraction <= 0) return '0%';
+	if (fraction >= 1) return '100%';
+
+	return `calc(${String(fraction)} * var(--_sonic-slider-travel) + var(--_sonic-slider-groove) / 2)`;
+}
+
 const renderSlider = template(
 	/* HTML */ `
 		<div class="sonic-slider" role="slider" tabindex="0">
+			<div class="sonic-slider-scale" aria-hidden="true"></div>
 			<div class="sonic-slider-marks"></div>
 			<div class="sonic-slider-groove"></div>
 			<div class="sonic-slider-modulation"></div>
@@ -42,7 +64,19 @@ export class SonicSlider extends SonicRangeElement {
 		...SonicRangeElement.observedAttributes,
 		'modulation',
 		'orientation',
+		'spring',
 	];
+
+	get buffered(): Array<[number, number]> {
+		return this.#buffered.map(([start, end]) => [start, end]);
+	}
+
+	set buffered(ranges: BufferedRanges | undefined) {
+		this.#buffered = ranges
+			? readRanges(ranges).toSorted((first, second) => first[0] - second[0])
+			: [];
+		this.render();
+	}
 
 	// Named for the absent attribute, as `input.type` reads `text`
 	get groovePress(): 'jump' | 'none' {
@@ -69,10 +103,20 @@ export class SonicSlider extends SonicRangeElement {
 		this.reflect('orientation', direction);
 	}
 
+	get spring(): boolean {
+		return this.hasAttribute('spring');
+	}
+
+	set spring(isSpring: boolean) {
+		this.reflect('spring', isSpring);
+	}
+
+	#buffered: Array<[number, number]> = [];
+
 	readonly #slider = renderSlider();
 
 	override connectedCallback(): void {
-		this.upgradeProperties('groovePress', 'modulation', 'orientation');
+		this.upgradeProperties('buffered', 'groovePress', 'modulation', 'orientation', 'spring');
 		super.connectedCallback();
 	}
 
@@ -80,7 +124,7 @@ export class SonicSlider extends SonicRangeElement {
 		const slider = this.#slider;
 		const cap = requireChild(slider, '.sonic-slider-cap', HTMLDivElement);
 
-		this.appendOnce(slider);
+		this.bindScale(slider, requireChild(slider, '.sonic-slider-scale', HTMLDivElement), signal);
 		this.render();
 		this.checkStyles(slider, 'slider.css');
 		this.bindGestures(slider, signal, (event) => {
@@ -110,7 +154,13 @@ export class SonicSlider extends SonicRangeElement {
 		slider.style.setProperty('--_sonic-slider-modulation-to', String(modulationTo));
 		if (positions === undefined) slider.style.removeProperty('--_sonic-slider-positions');
 		else slider.style.setProperty('--_sonic-slider-positions', String(positions));
+		this.#renderBuffered(slider);
+		this.renderScale();
 		this.renderAria(slider, this.orientation);
+	}
+
+	protected override springTarget(): number | undefined {
+		return this.spring ? this.restValue() : undefined;
 	}
 
 	#axis(slider: HTMLElement, cap: HTMLElement): SliderAxis {
@@ -130,5 +180,29 @@ export class SonicSlider extends SonicRangeElement {
 			startPx: track.left + capBox.width / 2,
 			travelPx: Math.max(1, track.width - capBox.width),
 		};
+	}
+
+	// Hard stops in one gradient, so any number of ranges costs one layer
+	#renderBuffered(slider: HTMLElement): void {
+		if (this.#buffered.length === 0) {
+			slider.style.removeProperty('--_sonic-slider-buffered-ranges');
+			return;
+		}
+
+		const stops = this.#buffered.flatMap(([start, end]) => {
+			const from = grooveStop(this.fraction(Math.min(start, end)));
+			const to = grooveStop(this.fraction(Math.max(start, end)));
+
+			return [
+				`transparent ${from}`,
+				`var(--_sonic-slider-buffered) ${from} ${to}`,
+				`transparent ${to}`,
+			];
+		});
+
+		slider.style.setProperty(
+			'--_sonic-slider-buffered-ranges',
+			`linear-gradient(var(--_sonic-slider-toward), ${stops.join(', ')})`,
+		);
 	}
 }

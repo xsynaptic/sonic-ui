@@ -4,6 +4,12 @@
 	initial-value: 24px;
 }
 
+@property --_sonic-detent-zone {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 8px;
+}
+
 @layer sonic {
 	/* Resolved per control rather than on `:root`, so each follows its own cap and unit */
 	:is(
@@ -93,6 +99,11 @@
 			color-mix(in oklab, var(--_sonic-focus) 60%, transparent);
 	}
 
+	/* A gesture distance, absolute like the travel */
+	:is(.sonic-dial, .sonic-number, .sonic-slider) {
+		--_sonic-detent-zone: var(--sonic-detent-zone, 8px);
+	}
+
 	:is(.sonic-dial, .sonic-slider) {
 		/* On the control, since the readout's font size reads it */
 		--_sonic-readout-size: var(--sonic-readout-size, 1.5rem);
@@ -153,6 +164,11 @@
 	}
 
 	:is(.sonic-key, .sonic-segmented) {
+		--_sonic-well-floor: linear-gradient(
+			var(--_sonic-light-fall),
+			color-mix(in oklab, var(--_sonic-unlit) 55%, #000),
+			color-mix(in oklab, var(--_sonic-unlit) 85%, #000)
+		);
 		--_sonic-engraving: drop-shadow(
 				calc(-0.4 * var(--_sonic-cast-x)) calc(-0.4 * var(--_sonic-cast-y))
 					calc(0.4 * var(--_sonic-unit)) rgb(0 0 0 / 30%)
@@ -160,6 +176,12 @@
 			drop-shadow(
 				calc(0.3 * var(--_sonic-cast-x)) calc(0.3 * var(--_sonic-cast-y)) 0 rgb(255 255 255 / 7%)
 			);
+	}
+
+	/* On the segment rather than the strip, where forced colours clear the drop shade */
+	:is(.sonic-key, .sonic-segmented-segment) {
+		--_sonic-press-drop: calc(0.5 * var(--_sonic-cast-x)) calc(0.5 * var(--_sonic-cast-y))
+			var(--_sonic-unit) var(--_sonic-drop-shade);
 	}
 
 	/* The well's full blur would fill a slot this narrow */
@@ -292,7 +314,34 @@
 		}
 	}
 
+	/* Printed on the consumer's panel rather than the cap, so the text takes the page's colour and font */
+	:is(.sonic-dial-scale, .sonic-slider-scale) {
+		position: absolute;
+		inset: 0;
+		line-height: 1;
+		white-space: nowrap;
+		pointer-events: none;
+
+		& > * {
+			position: absolute;
+		}
+
+		& svg {
+			display: block;
+			inline-size: 1em;
+			block-size: 1em;
+		}
+
+		& > .sonic-scale-tick {
+			background: var(--_sonic-etch);
+		}
+	}
+
 	@media (forced-colors: active) {
+		.sonic-scale-tick {
+			forced-color-adjust: none;
+		}
+
 		:is(
 			.sonic-dial,
 			.sonic-key,
@@ -327,7 +376,7 @@
 
 		:is(
 			:disabled > :is(.sonic-dial, .sonic-slider),
-			.sonic-key:disabled,
+			.sonic-key:is(:disabled, [aria-disabled='true']),
 			.sonic-segmented-segment:disabled
 		) {
 			--_sonic-ink: GrayText;

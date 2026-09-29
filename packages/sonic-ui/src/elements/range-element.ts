@@ -1,9 +1,15 @@
+import type { DetentHold } from '#lib/detent.ts';
 import type { Taper } from '#lib/taper.ts';
 
 import { SonicFormElement } from '#elements/form-element.ts';
 import { RangeEntry } from '#elements/range-entry.ts';
+import { copyNode } from '#lib/copy-node.ts';
+import { passDetent } from '#lib/detent.ts';
+import { clamp, clampUnit, trimFloat, wrapUnit } from '#lib/math.ts';
+import { nearestEntry, parseNumberList } from '#lib/number-list.ts';
+import { readPxProperty } from '#lib/read-px-property.ts';
 import { requireChild } from '#lib/render.ts';
-import { clampUnit, linearTaper, logTaper, skewTaper, wrapUnit } from '#lib/taper.ts';
+import { linearTaper, listTaper, logTaper, skewTaper } from '#lib/taper.ts';
 import { writeAttribute } from '#lib/write-attribute.ts';
 
 // `position` grows with the value
@@ -13,6 +19,7 @@ export interface RangeAxis {
 }
 
 interface RangeDrag extends RangeAxis {
+	detent: DetentHold | undefined;
 	fromValue: number;
 	isRevealed: boolean;
 	lastPosition: number;
@@ -23,6 +30,7 @@ interface RangeDrag extends RangeAxis {
 	startPosition: number;
 }
 
+const detentZonePx = 8;
 const fineScale = 0.1;
 const keyRevealMs = 1000;
 const pageSteps = 10;
@@ -37,6 +45,8 @@ let instanceCount = 0;
 
 // A Mac keyboard's Delete sends Backspace
 const resetKeys = new Set(['Backspace', 'Delete']);
+
+const endKeys = new Set(['End', 'Home']);
 
 const keySteps = new Map([
 	['ArrowDown', -1],
@@ -59,10 +69,32 @@ const roleAttributes = [
 	'tabindex',
 ];
 
+type ScaleMark = HTMLElement | SVGElement;
+
+// Blank is not zero, and a mark with no value has no place
+function scaleValue(mark: ScaleMark): number {
+	const text = mark.dataset.sonicValue?.trim();
+
+	return text ? Number(text) : NaN;
+}
+
+function scaleMark(original: ChildNode): Array<ScaleMark> {
+	const mark = copyNode(original);
+	if (!(mark instanceof HTMLElement || mark instanceof SVGElement)) return [];
+	if (!Number.isFinite(scaleValue(mark))) return [];
+
+	const isTick = mark.childElementCount === 0 && mark.textContent.trim() === '';
+
+	mark.classList.add(isTick ? 'sonic-scale-tick' : 'sonic-scale-label');
+
+	return [mark];
+}
+
 // As on `<input type="range">`, the property never writes the `value` attribute back
 export abstract class SonicRangeElement extends SonicFormElement {
 	static override readonly observedAttributes = [
 		...SonicFormElement.observedAttributes,
+		'detent',
 		'max',
 		'midpoint',
 		'min',
@@ -72,6 +104,7 @@ export abstract class SonicRangeElement extends SonicFormElement {
 		'step',
 		'taper',
 		'value',
+		'values',
 	];
 
 	get default(): number | undefined {
@@ -80,6 +113,14 @@ export abstract class SonicRangeElement extends SonicFormElement {
 
 	set default(value: number | undefined) {
 		this.reflect('default', value);
+	}
+
+	get detent(): number | undefined {
+		return this.optionalNumberAttribute('detent');
+	}
+
+	set detent(value: number | undefined) {
+		this.reflect('detent', value);
 	}
 
 	get dimmed(): boolean {
@@ -193,7 +234,17 @@ export abstract class SonicRangeElement extends SonicFormElement {
 		this.#write(next);
 	}
 
+	get values(): Array<number> | undefined {
+		return parseNumberList(this.getAttribute('values'));
+	}
+
+	set values(entries: Array<number> | undefined) {
+		this.reflect('values', entries?.join(' '));
+	}
+
 	#drag: RangeDrag | undefined;
+
+	#entries: Array<number> | undefined;
 
 	#entry: RangeEntry | undefined;
 
@@ -210,9 +261,12 @@ export abstract class SonicRangeElement extends SonicFormElement {
 
 	#readout: undefined | { bubble: HTMLElement; text: HTMLElement };
 
+	#scale: HTMLElement | undefined;
+
 	#value = 0;
 
 	attributeChangedCallback(name: string): void {
+		this.#entries = parseNumberList(this.getAttribute('values'));
 		if (name === 'value') {
 			if (this.#drag) return;
 
@@ -243,6 +297,8 @@ export abstract class SonicRangeElement extends SonicFormElement {
 			'readout',
 			'step',
 			'taper',
+			'values',
+			'detent',
 			'formatValue',
 			'parseValue',
 			'value',
@@ -276,6 +332,7 @@ export abstract class SonicRangeElement extends SonicFormElement {
 
 				const startPosition = axis.position(event);
 				const drag: RangeDrag = {
+					detent: this.#detentHold(control, axis.travelPx),
 					fromValue,
 					isRevealed: false,
 					lastPosition: startPosition,
@@ -306,13 +363,11 @@ export abstract class SonicRangeElement extends SonicFormElement {
 				const scale = event.shiftKey ? fineScale : 1;
 
 				// Per move, so pressing Shift mid-drag changes pace without a jump
-				const fraction =
-					drag.rawFraction + ((position - drag.lastPosition) / drag.travelPx) * scale;
+				const next = this.#move(drag, ((position - drag.lastPosition) / drag.travelPx) * scale);
 
-				drag.rawFraction = this.wraps() ? wrapUnit(fraction) : clampUnit(fraction);
 				drag.lastPosition = position;
 				if (Math.abs(position - drag.startPosition) >= revealPx) this.#reveal(drag);
-				this.input(this.valueAt(drag.rawFraction));
+				this.input(next);
 			},
 			{ signal },
 		);
@@ -337,7 +392,7 @@ export abstract class SonicRangeElement extends SonicFormElement {
 				if (event.pointerId !== this.#drag?.pointerId) return;
 
 				this.#endDrag();
-				if (!entry.press(event)) return;
+				if (!entry.press(event) || this.springTarget() !== undefined) return;
 
 				if (this.doublePress === 'reset') this.#reset();
 				else entry.open();
@@ -355,16 +410,31 @@ export abstract class SonicRangeElement extends SonicFormElement {
 		);
 	}
 
+	protected bindScale(control: HTMLElement, scale: HTMLElement, signal: AbortSignal): void {
+		this.#scale = scale;
+		this.mirrorChildren(
+			{
+				control,
+				copy: (originals) => {
+					scale.replaceChildren(...originals.flatMap((original) => scaleMark(original)));
+					this.renderScale();
+				},
+				isCopied: (child) => child instanceof Element && child.matches('[data-sonic-value]'),
+			},
+			signal,
+		);
+	}
+
 	protected clampRange(next: number): number {
 		const min = this.min;
-		if (!this.wraps()) return Math.min(this.#max(), Math.max(min, next));
+		if (!this.wraps()) return clamp(next, min, this.#max());
 
 		const range = this.range();
 		if (range <= 0) return min;
 
-		const offset = Number(((((next - min) % range) + range) % range).toPrecision(12));
+		const offset = trimFloat((((next - min) % range) + range) % range);
 
-		return offset >= range ? min : Number((min + offset).toPrecision(12));
+		return offset >= range ? min : trimFloat(min + offset);
 	}
 
 	protected controlRole(): 'slider' | 'spinbutton' {
@@ -394,11 +464,12 @@ export abstract class SonicRangeElement extends SonicFormElement {
 	}
 
 	protected originFraction(): number {
-		return this.fraction(this.origin ?? this.min);
+		return this.fraction(this.restValue());
 	}
 
 	protected positions(): number | undefined {
-		const positions = Math.round(this.range() / this.step) + (this.wraps() ? 0 : 1);
+		const positions =
+			this.#entries?.length ?? Math.round(this.range() / this.step) + (this.wraps() ? 0 : 1);
 
 		if (!this.notched || !Number.isFinite(positions) || positions < 2) return;
 
@@ -419,9 +490,11 @@ export abstract class SonicRangeElement extends SonicFormElement {
 			return;
 		}
 
+		const [low, high] = this.#bounds();
+
 		control.setAttribute('role', this.controlRole());
-		control.setAttribute('aria-valuemin', String(this.min));
-		control.setAttribute('aria-valuemax', String(this.#max()));
+		control.setAttribute('aria-valuemin', String(low));
+		control.setAttribute('aria-valuemax', String(high));
 		control.setAttribute('aria-valuenow', String(this.#value));
 		if (orientation) control.setAttribute('aria-orientation', orientation);
 		writeAttribute(control, 'aria-valuetext', this.#formatValue?.(this.#value));
@@ -430,8 +503,31 @@ export abstract class SonicRangeElement extends SonicFormElement {
 		this.#renderReadout();
 	}
 
+	// Runs on every input, while the places move only with the range
+	protected renderScale(): void {
+		const marks = this.#scale?.children ?? [];
+
+		for (const mark of marks) {
+			if (!(mark instanceof HTMLElement || mark instanceof SVGElement)) continue;
+
+			const at = String(this.fraction(this.clampRange(scaleValue(mark))));
+
+			if (mark.style.getPropertyValue('--_sonic-scale-at') !== at) {
+				mark.style.setProperty('--_sonic-scale-at', at);
+			}
+		}
+	}
+
 	protected restoreState(state: string): void {
 		this.value = Number(state);
+	}
+
+	protected restValue(): number {
+		return this.origin ?? this.#bounds()[0];
+	}
+
+	protected springTarget(): number | undefined {
+		return undefined;
 	}
 
 	protected valueAt(fraction: number): number {
@@ -487,6 +583,8 @@ export abstract class SonicRangeElement extends SonicFormElement {
 				if (this.isDisabled() || event.defaultPrevented || event.target !== control) return;
 
 				if (event.key === 'Enter') {
+					if (this.springTarget() !== undefined) return;
+
 					event.preventDefault();
 					entry.open();
 					return;
@@ -502,29 +600,61 @@ export abstract class SonicRangeElement extends SonicFormElement {
 			{ signal },
 		);
 		control.addEventListener(
+			'keyup',
+			(event) => {
+				if (keySteps.has(event.key) || endKeys.has(event.key)) this.#springBack();
+			},
+			{ signal },
+		);
+		control.addEventListener(
 			'blur',
 			() => {
 				this.#hideForKeys();
+				this.#springBack();
 			},
 			{ signal },
 		);
 	}
 
+	#bounds(): [number, number] {
+		const entries = this.#entries;
+
+		return [entries?.[0] ?? this.min, entries?.at(-1) ?? this.#max()];
+	}
+
 	#clamp(next: number): number {
+		const entries = this.#entries;
+		if (entries) return nearestEntry(entries, next);
+
 		const min = this.min;
 		const step = this.step;
 		const stepped = step > 0 ? min + Math.round((next - min) / step) * step : next;
 
 		// A step like 0.01 leaves float residue
-		return this.clampRange(Number(stepped.toPrecision(12)));
+		return this.clampRange(trimFloat(stepped));
 	}
 
 	#commit(next: number): void {
 		if (this.input(next)) this.dispatchEvent(new Event('change', { bubbles: true }));
 	}
 
+	#detentHold(control: HTMLElement, travelPx: number): DetentHold | undefined {
+		const detent = this.detent;
+		if (detent === undefined) return undefined;
+
+		const value = this.#clamp(detent);
+		const zonePx = readPxProperty(getComputedStyle(control), '--_sonic-detent-zone', detentZonePx);
+
+		return {
+			place: this.fraction(value),
+			slack: value === this.#value ? 0 : undefined,
+			value,
+			zone: zonePx / travelPx,
+		};
+	}
+
 	#end(step: number): number {
-		if (!this.wraps()) return this.#max();
+		if (!this.wraps()) return this.#bounds()[1];
 
 		return this.min + (Math.ceil(this.range() / step) - 1) * step;
 	}
@@ -538,6 +668,7 @@ export abstract class SonicRangeElement extends SonicFormElement {
 		this.toggleState('dragging', false);
 		this.#renderReadout();
 		if (this.#value !== drag.fromValue) this.dispatchEvent(new Event('change', { bubbles: true }));
+		this.#springBack();
 	}
 
 	#hideForKeys(): void {
@@ -555,7 +686,7 @@ export abstract class SonicRangeElement extends SonicFormElement {
 	}
 
 	#keyTarget(key: string): number | undefined {
-		if (key === 'Home') return this.min;
+		if (key === 'Home') return this.#bounds()[0];
 		const step = this.step > 0 ? this.step : this.range() / 100;
 
 		if (key === 'End') return this.#end(step);
@@ -564,17 +695,28 @@ export abstract class SonicRangeElement extends SonicFormElement {
 		const steps = keySteps.get(key);
 		if (steps === undefined) return undefined;
 
-		const taper = this.#taper();
-		if (!taper) return this.#value + steps * step;
-
-		// By travel, since steps at the wide end would take forever; at least one step, or the snap holds it in place
-		const next = this.#clamp(taper.value(taper.position(this.#value) + steps / 100));
-
-		return next === this.#value ? this.#value + Math.sign(steps) * step : next;
+		return this.#stopAtDetent(this.#stepBy(steps, step));
 	}
 
 	#max(): number {
 		return Math.max(this.min, this.max);
+	}
+
+	#move(drag: RangeDrag, delta: number): number {
+		const { detent } = drag;
+		const to = drag.rawFraction + delta;
+		const next = detent ? passDetent(detent, drag.rawFraction, to) : to;
+
+		if (detent && next === undefined) {
+			drag.rawFraction = detent.place;
+			return detent.value;
+		}
+
+		const place = next ?? to;
+
+		drag.rawFraction = this.wraps() ? wrapUnit(place) : clampUnit(place);
+
+		return this.valueAt(drag.rawFraction);
 	}
 
 	#renderDisabled(control: HTMLElement): void {
@@ -618,8 +760,42 @@ export abstract class SonicRangeElement extends SonicFormElement {
 		this.#renderReadout();
 	}
 
+	#springBack(): void {
+		const target = this.springTarget();
+
+		if (target !== undefined) this.#commit(target);
+	}
+
+	#stepBy(steps: number, step: number): number {
+		const entries = this.#entries;
+		if (entries) {
+			const index = clamp(entries.indexOf(this.#value) + steps, 0, entries.length - 1);
+
+			return entries[index] ?? this.#value;
+		}
+
+		const taper = this.#taper();
+		if (!taper) return this.#value + steps * step;
+
+		// By travel, since steps at the wide end would take forever; at least one step, or the snap holds it in place
+		const next = this.#clamp(taper.value(taper.position(this.#value) + steps / 100));
+
+		return next === this.#value ? this.#value + Math.sign(steps) * step : next;
+	}
+
+	#stopAtDetent(next: number): number {
+		const detent = this.detent;
+		if (detent === undefined) return next;
+
+		const value = this.#clamp(detent);
+
+		return (this.#value - value) * (next - value) < 0 ? value : next;
+	}
+
 	// Notches are evenly spaced, so a notched control stays linear
 	#taper(): Taper | undefined {
+		const entries = this.#entries;
+		if (entries) return listTaper(entries);
 		if (this.notched || this.wraps()) return undefined;
 
 		const min = this.min;
