@@ -1,6 +1,6 @@
 # sonic-ui
 
-Native custom elements for audio interfaces on the web: dials, sliders, keys, a segmented switch, a peak meter and a screen panel. The controls render in the light DOM and are drawn entirely in CSS, and their look comes from custom properties, so a skin is just a set of `--sonic-*` values. They need no framework and have no runtime dependencies.
+Native custom elements for audio interfaces on the web. The controls render in the light DOM and are drawn entirely in CSS, and their look comes from custom properties, so a skin is just a set of `--sonic-*` values. They need no framework and have no runtime dependencies.
 
 The repository holds two packages:
 
