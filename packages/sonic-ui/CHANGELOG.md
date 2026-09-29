@@ -1,5 +1,11 @@
 # @xsynaptic/sonic-ui
 
+## 0.4.0
+
+### Minor Changes
+
+- Scale legends on the dial and slider, `values` and `detent` on the range controls, `spring` and `buffered` on the slider, `origin`, `scale="linear"` and `lights` on the meter, `busy` and `soft-disabled` on the key, and a second LED colour. The dial and slider now render through a shadow root with one slot.
+
 ## 0.3.0
 
 ### Minor Changes
