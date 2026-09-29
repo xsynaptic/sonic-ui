@@ -1,3 +1,9 @@
+@property --_sonic-screen-size {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 40px;
+}
+
 @layer sonic {
 	.sonic-screen {
 		--_sonic-screen-size: var(--sonic-screen-size, 2.5rem);

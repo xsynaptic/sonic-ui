@@ -1,3 +1,9 @@
+@property --_sonic-key-size {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 32px;
+}
+
 @layer sonic {
 	:is(sonic-key, .sonic-key) {
 		--_sonic-key-size: var(--sonic-key-size, 2rem);

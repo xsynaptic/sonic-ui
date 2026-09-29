@@ -1,3 +1,9 @@
+@property --_sonic-readout-size {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 24px;
+}
+
 @layer sonic {
 	/* Resolved per control rather than on `:root`, so each follows its own cap and unit */
 	:is(
@@ -71,6 +77,8 @@
 	}
 
 	:is(.sonic-dial, .sonic-slider) {
+		/* On the control, since the readout's font size reads it */
+		--_sonic-readout-size: var(--sonic-readout-size, 1.5rem);
 		--_sonic-lit-off: var(
 			--sonic-dimmed,
 			color-mix(in oklab, var(--_sonic-lit) 50%, var(--_sonic-unlit))
@@ -130,7 +138,6 @@
 	}
 
 	:is(.sonic-dial-readout, .sonic-slider-readout) {
-		--_sonic-readout-size: var(--sonic-readout-size, 1.5rem);
 		--_sonic-unit: calc(var(--_sonic-readout-size) / 32);
 
 		box-sizing: border-box;

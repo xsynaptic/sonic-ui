@@ -26,6 +26,22 @@ test('the readout opens above a dial in a filtered bar with room below it', asyn
 	expect(gap).toBeGreaterThanOrEqual(0);
 });
 
+test('a readout size in em follows the control, not the readout', async ({ page }) => {
+	await page.goto('/fixtures/');
+
+	const host = page.locator('#level');
+
+	await host.evaluate((element) => {
+		element.style.setProperty('font-size', '20px');
+		element.style.setProperty('--sonic-readout-size', '3em');
+	});
+
+	const readout = host.locator('.sonic-dial-readout');
+
+	await expect(readout).toHaveCSS('block-size', '60px');
+	await expect(readout).toHaveCSS('font-size', '30px');
+});
+
 test('a closed readout is not rendered', async ({ page }) => {
 	await page.goto('/fixtures/docked/');
 

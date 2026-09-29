@@ -1,4 +1,4 @@
-// Only px; another unit needs a probe element to convert
+// Registered `<length>` properties only; their computed value is always px
 export function readPxProperty(
 	styles: CSSStyleDeclaration,
 	property: string,

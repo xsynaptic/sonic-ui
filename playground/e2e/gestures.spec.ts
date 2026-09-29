@@ -49,6 +49,17 @@ test('a 32px drag moves a dial by a fifth of its 160px travel, dragging only whi
 	await expect(host.getByRole('slider')).toHaveAttribute('aria-valuenow', '70');
 });
 
+test('a dial travel in rem resolves to px', async ({ page }) => {
+	const host = page.locator('#level');
+
+	await host.evaluate((element) => {
+		element.style.setProperty('--sonic-dial-travel', '5rem');
+	});
+	await drag(page, host.locator('.sonic-dial'), { x: 0, y: -32 });
+
+	await expect(host.getByRole('slider')).toHaveAttribute('aria-valuenow', '90');
+});
+
 test('Shift drags at a tenth of the pace', async ({ page }) => {
 	await page.keyboard.down('Shift');
 	await drag(page, page.locator('#level .sonic-dial'), { x: 0, y: -32 });

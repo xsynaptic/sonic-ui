@@ -1,3 +1,21 @@
+@property --_sonic-dial-size {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 40px;
+}
+
+@property --_sonic-dial-ridge-pitch {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 4px;
+}
+
+@property --_sonic-dial-travel {
+	syntax: '<length>';
+	inherits: false;
+	initial-value: 160px;
+}
+
 @layer sonic {
 	:is(sonic-dial, .sonic-dial) {
 		--_sonic-dial-size: var(--sonic-dial-size, 2.5rem);
@@ -29,8 +47,6 @@
 		/* Centred on six o'clock */
 		--_sonic-dial-sweep: var(--sonic-dial-sweep, 300deg);
 		--_sonic-dial-ridge-pitch: var(--sonic-dial-ridge-pitch, 4px);
-
-		/* Read by the element as px */
 		--_sonic-dial-travel: var(--sonic-dial-travel, 160px);
 		--_sonic-unit: calc(var(--_sonic-dial-size) / 40);
 		--_sonic-dial-lit: var(--_sonic-lit);

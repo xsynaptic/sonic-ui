@@ -1,3 +1,21 @@
+@property --_sonic-meter-size {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 8px;
+}
+
+@property --_sonic-meter-length {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 128px;
+}
+
+@property --_sonic-meter-pitch {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 4px;
+}
+
 /* The size is the thickness */
 @layer sonic {
 	:is(sonic-meter, .sonic-meter) {
