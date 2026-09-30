@@ -10,6 +10,13 @@
 	initial-value: 128px;
 }
 
+/* Registered so the spring return can transition it */
+@property --_sonic-slider-value {
+	syntax: '<number>';
+	inherits: true;
+	initial-value: 0;
+}
+
 /* The size is the thickness across the travel */
 @layer sonic {
 	:is(sonic-slider, .sonic-slider) {
@@ -68,7 +75,7 @@
 		flex-shrink: 0;
 		inline-size: var(--_sonic-slider-length);
 		block-size: var(--_sonic-slider-size);
-		touch-action: none;
+		touch-action: pan-y;
 		cursor: var(--_sonic-slider-cursor);
 		user-select: none;
 	}
@@ -80,10 +87,63 @@
 
 		inline-size: var(--_sonic-slider-size);
 		block-size: var(--_sonic-slider-length);
+		touch-action: pan-x;
 	}
 
 	:state(dragging) > .sonic-slider {
 		--_sonic-cap: var(--_sonic-cap-hover);
+	}
+
+	:state(springing) > .sonic-slider {
+		/* A damped spring with 10% bounce, sampled into `linear()` */
+		transition: --_sonic-slider-value 200ms
+			linear(
+				0,
+				0.028,
+				0.097,
+				0.187,
+				0.287,
+				0.387,
+				0.482,
+				0.57,
+				0.647,
+				0.714,
+				0.772,
+				0.82,
+				0.86,
+				0.892,
+				0.918,
+				0.939,
+				0.955,
+				0.968,
+				0.977,
+				0.985,
+				0.99,
+				0.994,
+				0.997,
+				0.999,
+				1,
+				1.001,
+				1.001,
+				1.001,
+				1.002,
+				1.001,
+				1.001,
+				1.001,
+				1.001,
+				1.001,
+				1.001,
+				1.001,
+				1.001,
+				1,
+				1,
+				1,
+				1
+			);
+
+		@media (prefers-reduced-motion: reduce) {
+			transition: none;
+		}
 	}
 
 	[dimmed] > .sonic-slider {

@@ -3,6 +3,8 @@ export { SonicDial } from '#elements/dial.ts';
 /** @public */
 export { SonicKey } from '#elements/key.ts';
 /** @public */
+export { SonicLever } from '#elements/lever.ts';
+/** @public */
 export { SonicMeter } from '#elements/meter.ts';
 /** @public */
 export { SonicNumber } from '#elements/number.ts';

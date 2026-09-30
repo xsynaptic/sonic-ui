@@ -1,5 +1,6 @@
 import { SonicFormElement } from '#elements/form-element.ts';
 import { copyNode } from '#lib/copy-node.ts';
+import { bindHoldRelease } from '#lib/hold.ts';
 import { requireChild, template } from '#lib/render.ts';
 import { writeAttribute } from '#lib/write-attribute.ts';
 
@@ -195,10 +196,6 @@ export class SonicKey extends SonicFormElement {
 
 	// Not `click`, which lands a tap late by the finger's dwell
 	#bindMomentary(key: HTMLButtonElement, signal: AbortSignal): void {
-		const releasePointer = (event: PointerEvent): void => {
-			if (event.pointerId === this.#holder) this.#release();
-		};
-
 		key.addEventListener(
 			'pointerdown',
 			(event) => {
@@ -209,22 +206,22 @@ export class SonicKey extends SonicFormElement {
 			},
 			{ signal },
 		);
-		key.addEventListener('lostpointercapture', releasePointer, { signal });
-		key.addEventListener('pointercancel', releasePointer, { signal });
-		key.addEventListener('pointerup', releasePointer, { signal });
+		bindHoldRelease(
+			key,
+			{
+				holder: () => this.#holder,
+				release: () => {
+					this.#release();
+				},
+			},
+			signal,
+		);
 		key.addEventListener(
 			'keydown',
 			(event) => {
 				if (event.repeat || !holdKeys.has(event.key) || !this.#isMomentary()) return;
 
 				this.#hold(event.key);
-			},
-			{ signal },
-		);
-		key.addEventListener(
-			'keyup',
-			(event) => {
-				if (event.key === this.#holder) this.#release();
 			},
 			{ signal },
 		);

@@ -17,8 +17,10 @@
 		.sonic-dial-readout,
 		.sonic-key,
 		.sonic-led,
+		.sonic-lever,
 		.sonic-meter,
 		.sonic-number,
+		.sonic-plate,
 		.sonic-screen,
 		.sonic-segmented,
 		.sonic-slider,
@@ -56,7 +58,14 @@
 		--_sonic-clip: var(--sonic-clip, oklch(63.7% 0.208 25deg));
 	}
 
-	:is(.sonic-dial, .sonic-key, .sonic-number, .sonic-segmented-segment, .sonic-slider) {
+	:is(
+		.sonic-dial,
+		.sonic-key,
+		.sonic-lever,
+		.sonic-number,
+		.sonic-segmented-segment,
+		.sonic-slider
+	) {
 		--_sonic-cap: var(--sonic-cap, oklch(37% 0.012 286deg));
 		--_sonic-cap-hover: var(--sonic-cap-hover, oklch(44.2% 0.015 286deg));
 		--_sonic-focus: var(--sonic-focus, oklch(90% 0.23 128deg));

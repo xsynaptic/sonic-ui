@@ -1,0 +1,61 @@
+@property --_sonic-plate-depth {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 2px;
+}
+
+@property --_sonic-plate-radius {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 12px;
+}
+
+@layer sonic {
+	/* Lines take the page's colour, so a plate suits any background */
+	:is(.sonic-plate, .sonic-plate-title, .sonic-plate-rule) {
+		--_sonic-plate-line: color-mix(in oklab, currentcolor 20%, transparent);
+	}
+
+	/* A signed depth is the unit, so the cast flips for a tray and vanishes at 0 */
+	.sonic-plate {
+		--_sonic-plate-depth: var(--sonic-plate-depth, 0.125rem);
+		--_sonic-plate-radius: var(--sonic-plate-radius, 0.75rem);
+		--_sonic-unit: var(--_sonic-plate-depth);
+
+		background: var(--sonic-plate, rgb(255 255 255 / 3%));
+		border: 1px solid var(--_sonic-plate-line);
+		border-radius: var(--_sonic-plate-radius);
+		box-shadow:
+			inset var(--_sonic-cast-x) var(--_sonic-cast-y)
+				max(var(--_sonic-plate-depth), -1 * var(--_sonic-plate-depth)) rgb(255 255 255 / 7%),
+			inset calc(-1 * var(--_sonic-cast-x)) calc(-1 * var(--_sonic-cast-y))
+				max(var(--_sonic-plate-depth), -1 * var(--_sonic-plate-depth)) rgb(0 0 0 / 35%),
+			calc(2 * sin(var(--_sonic-light-tilt)) * max(0px, var(--_sonic-plate-depth)))
+				calc(2 * cos(var(--_sonic-light-tilt)) * max(0px, var(--_sonic-plate-depth)))
+				calc(3 * max(0px, var(--_sonic-plate-depth))) rgb(0 0 0 / 45%);
+	}
+
+	.sonic-plate-title {
+		display: flex;
+		gap: 0.75em;
+		align-items: center;
+		margin: 0;
+		white-space: nowrap;
+
+		&::before,
+		&::after {
+			flex: 1;
+			min-inline-size: 1em;
+			content: '';
+			border-block-start: 1px solid var(--_sonic-plate-line);
+		}
+	}
+
+	.sonic-plate-rule {
+		align-self: stretch;
+		block-size: 0;
+		margin: 0;
+		border: 0;
+		border-block-start: 1px solid var(--_sonic-plate-line);
+	}
+}

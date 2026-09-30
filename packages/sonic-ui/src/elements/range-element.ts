@@ -5,7 +5,7 @@ import { SonicFormElement } from '#elements/form-element.ts';
 import { RangeEntry } from '#elements/range-entry.ts';
 import { copyNode } from '#lib/copy-node.ts';
 import { passDetent } from '#lib/detent.ts';
-import { clamp, clampUnit, trimFloat, wrapUnit } from '#lib/math.ts';
+import { clamp, clampUnit, decimalPlaces, roundTo, trimFloat, wrapUnit } from '#lib/math.ts';
 import { nearestEntry, parseNumberList } from '#lib/number-list.ts';
 import { readPxProperty } from '#lib/read-px-property.ts';
 import { requireChild } from '#lib/render.ts';
@@ -21,6 +21,7 @@ export interface RangeAxis {
 interface RangeDrag extends RangeAxis {
 	detent: DetentHold | undefined;
 	fromValue: number;
+	isEngaged: boolean;
 	isRevealed: boolean;
 	lastPosition: number;
 	pointerId: number;
@@ -28,14 +29,20 @@ interface RangeDrag extends RangeAxis {
 	rawFraction: number;
 	revealTimer: ReturnType<typeof setTimeout> | undefined;
 	startPosition: number;
+	thresholdPx: number;
 }
 
 const detentZonePx = 8;
 const fineScale = 0.1;
 const keyRevealMs = 1000;
+const mouseDragThresholdPx = 3;
 const pageSteps = 10;
 const revealMs = 250;
-const revealPx = 4;
+const touchDragThresholdPx = 7;
+
+function dragThresholdPx(pointerType: string): number {
+	return pointerType === 'touch' ? touchDragThresholdPx : mouseDragThresholdPx;
+}
 
 // happy-dom has no popover API
 const canPopover = 'togglePopover' in HTMLElement.prototype;
@@ -318,6 +325,7 @@ export abstract class SonicRangeElement extends SonicFormElement {
 			(event) => {
 				if (event.button !== 0 || this.isDisabled() || entry.isOpen) return;
 
+				this.toggleState('springing', false);
 				// A click listener above makes WebKit send a tap's compatibility mousedown, which blurs the entry a double tap just opened
 				if (event.pointerType === 'touch') event.preventDefault();
 				control.focus();
@@ -334,6 +342,7 @@ export abstract class SonicRangeElement extends SonicFormElement {
 				const drag: RangeDrag = {
 					detent: this.#detentHold(control, axis.travelPx),
 					fromValue,
+					isEngaged: false,
 					isRevealed: false,
 					lastPosition: startPosition,
 					pointerId: event.pointerId,
@@ -341,6 +350,7 @@ export abstract class SonicRangeElement extends SonicFormElement {
 					rawFraction: this.fraction(this.#value),
 					revealTimer: undefined,
 					startPosition,
+					thresholdPx: dragThresholdPx(event.pointerType),
 					travelPx: axis.travelPx,
 				};
 
@@ -360,13 +370,20 @@ export abstract class SonicRangeElement extends SonicFormElement {
 				if (event.pointerId !== drag?.pointerId) return;
 
 				const position = drag.position(event);
+				// Under the threshold a press only focuses; past it the value catches up with the pointer
+				if (!drag.isEngaged) {
+					if (Math.abs(position - drag.startPosition) < drag.thresholdPx) return;
+
+					drag.isEngaged = true;
+					this.#reveal(drag);
+				}
+
 				const scale = event.shiftKey ? fineScale : 1;
 
 				// Per move, so pressing Shift mid-drag changes pace without a jump
 				const next = this.#move(drag, ((position - drag.lastPosition) / drag.travelPx) * scale);
 
 				drag.lastPosition = position;
-				if (Math.abs(position - drag.startPosition) >= revealPx) this.#reveal(drag);
 				this.input(next);
 			},
 			{ signal },
@@ -379,6 +396,10 @@ export abstract class SonicRangeElement extends SonicFormElement {
 		control.addEventListener(
 			'pointercancel',
 			(event) => {
+				const drag = this.#drag;
+
+				// The browser took the gesture to scroll
+				if (event.pointerId === drag?.pointerId) this.input(drag.fromValue);
 				endDrag(event);
 				entry.forgetPress();
 			},
@@ -432,9 +453,9 @@ export abstract class SonicRangeElement extends SonicFormElement {
 		const range = this.range();
 		if (range <= 0) return min;
 
-		const offset = trimFloat((((next - min) % range) + range) % range);
+		const offset = this.#round((((next - min) % range) + range) % range);
 
-		return offset >= range ? min : trimFloat(min + offset);
+		return offset >= range ? min : this.#round(min + offset);
 	}
 
 	protected controlRole(): 'slider' | 'spinbutton' {
@@ -582,6 +603,7 @@ export abstract class SonicRangeElement extends SonicFormElement {
 			(event) => {
 				if (this.isDisabled() || event.defaultPrevented || event.target !== control) return;
 
+				this.toggleState('springing', false);
 				if (event.key === 'Enter') {
 					if (this.springTarget() !== undefined) return;
 
@@ -630,8 +652,7 @@ export abstract class SonicRangeElement extends SonicFormElement {
 		const step = this.step;
 		const stepped = step > 0 ? min + Math.round((next - min) / step) * step : next;
 
-		// A step like 0.01 leaves float residue
-		return this.clampRange(trimFloat(stepped));
+		return this.clampRange(this.#round(stepped));
 	}
 
 	#commit(next: number): void {
@@ -760,10 +781,21 @@ export abstract class SonicRangeElement extends SonicFormElement {
 		this.#renderReadout();
 	}
 
+	// Decimal places, since significant digits keep the float residue beside 0
+	#round(value: number): number {
+		const step = this.step;
+		if (step <= 0) return trimFloat(value);
+
+		return roundTo(value, Math.max(decimalPlaces(step), decimalPlaces(this.min)));
+	}
+
 	#springBack(): void {
 		const target = this.springTarget();
+		if (target === undefined) return;
 
-		if (target !== undefined) this.#commit(target);
+		// Set before the commit so a `change` listener reading styles sees the glide
+		if (this.#clamp(target) !== this.#value) this.toggleState('springing', true);
+		this.#commit(target);
 	}
 
 	#stepBy(steps: number, step: number): number {

@@ -125,6 +125,14 @@ export class SonicSlider extends SonicRangeElement {
 		const cap = requireChild(slider, '.sonic-slider-cap', HTMLDivElement);
 
 		this.bindScale(slider, requireChild(slider, '.sonic-slider-scale', HTMLDivElement), signal);
+		// Cleared when the glide lands, or a later scripted value would glide too
+		slider.addEventListener(
+			'transitionend',
+			(event) => {
+				if (event.propertyName === '--_sonic-slider-value') this.toggleState('springing', false);
+			},
+			{ signal },
+		);
 		this.render();
 		this.checkStyles(slider, 'slider.css');
 		this.bindGestures(slider, signal, (event) => {

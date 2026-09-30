@@ -10,7 +10,11 @@ import { mountDial, recordEvents } from './helpers.ts';
 const pointer = { bubbles: true, button: 0, clientX: 10, pointerId: 1 };
 
 function pointerAt(control: HTMLElement, type: string, clientY: number): void {
-	control.dispatchEvent(new PointerEvent(type, { ...pointer, clientY }));
+	control.dispatchEvent(new PointerEvent(type, { ...pointer, clientY, pointerType: 'mouse' }));
+}
+
+function touchAt(control: HTMLElement, type: string, clientY: number): void {
+	control.dispatchEvent(new PointerEvent(type, { ...pointer, clientY, pointerType: 'touch' }));
 }
 
 test('a drag moves the value with the pointer and reports change on release', () => {
@@ -23,6 +27,48 @@ test('a drag moves the value with the pointer and reports change on release', ()
 
 	pointerAt(control, 'pointerup', 84);
 	expect(events).toEqual(['input', 'change']);
+});
+
+test.each([
+	['mouse', 2, pointerAt],
+	['touch', 6, touchAt],
+])(
+	'a %s press that wobbles %ipx leaves the value alone and reports nothing',
+	(_pointerType, pixels, press) => {
+		const { control, dial } = mountDial('max="127" value="64"');
+		const events = recordEvents(dial);
+
+		press(control, 'pointerdown', 100);
+		press(control, 'pointermove', 100 - pixels);
+		press(control, 'pointerup', 100 - pixels);
+
+		expect(dial.value).toBe(64);
+		expect(events).toEqual([]);
+	},
+);
+
+test('a touch drag past the threshold catches up to the pointer', () => {
+	const { control, dial } = mountDial('value="50"');
+
+	touchAt(control, 'pointerdown', 100);
+	touchAt(control, 'pointermove', 84);
+	expect(dial.value).toBe(60);
+
+	touchAt(control, 'pointermove', 100);
+	expect(dial.value).toBe(50);
+});
+
+test('a wobbling first press still opens the entry on the second, with the value unchanged', () => {
+	const { control, dial } = mountDial('max="127" value="64"');
+
+	pointerAt(control, 'pointerdown', 100);
+	pointerAt(control, 'pointermove', 102);
+	pointerAt(control, 'pointerup', 102);
+	pointerAt(control, 'pointerdown', 100);
+	pointerAt(control, 'pointerup', 100);
+
+	expect(control.querySelector('input')?.hidden).toBe(false);
+	expect(dial.value).toBe(64);
 });
 
 test.each([
@@ -89,24 +135,36 @@ test('disabled mid-drag ends the drag, reporting the value it reached', () => {
 	expect(events).toEqual(['input', 'change']);
 });
 
-test.each(['lostpointercapture', 'pointercancel'])(
-	'%s ends the drag, reporting the value it reached',
-	(type) => {
-		const { control, dial } = mountDial('value="50"');
-		const events = recordEvents(dial);
+test('lostpointercapture ends the drag, reporting the value it reached', () => {
+	const { control, dial } = mountDial('value="50"');
+	const events = recordEvents(dial);
 
-		pointerAt(control, 'pointerdown', 100);
-		pointerAt(control, 'pointermove', 84);
-		pointerAt(control, type, 84);
-		expect(events).toEqual(['input', 'change']);
+	pointerAt(control, 'pointerdown', 100);
+	pointerAt(control, 'pointermove', 84);
+	pointerAt(control, 'lostpointercapture', 84);
+	expect(events).toEqual(['input', 'change']);
 
-		pointerAt(control, 'pointermove', 68);
-		expect(dial.value).toBe(60);
+	pointerAt(control, 'pointermove', 68);
+	expect(dial.value).toBe(60);
 
-		dial.value = 10;
-		expect(dial.value).toBe(10);
-	},
-);
+	dial.value = 10;
+	expect(dial.value).toBe(10);
+});
+
+test('pointercancel ends the drag back where it started, reporting no change', () => {
+	const { control, dial } = mountDial('value="50"');
+	const events = recordEvents(dial);
+
+	touchAt(control, 'pointerdown', 100);
+	touchAt(control, 'pointermove', 84);
+	touchAt(control, 'pointercancel', 84);
+	touchAt(control, 'lostpointercapture', 84);
+	expect(dial.value).toBe(50);
+	expect(events).toEqual(['input', 'input']);
+
+	touchAt(control, 'pointermove', 68);
+	expect(dial.value).toBe(50);
+});
 
 test('the lostpointercapture after a release leaves the double press intact', () => {
 	const { control } = mountDial('value="50"');

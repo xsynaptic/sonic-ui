@@ -148,6 +148,19 @@ test.each([
 	},
 );
 
+test('a groove press the browser cancels to scroll returns to the value before the press', () => {
+	const { control, slider } = mountSlider('value="40"');
+	const events = recordEvents(slider);
+
+	layOut(control, new DOMRect(100, 0, 220, 40), new DOMRect(0, 0, 20, 40));
+	pointerAt(control, 'pointerdown', { clientX: 160 });
+	expect(slider.value).toBe(25);
+
+	pointerAt(control, 'pointercancel', { clientX: 160 });
+	expect(slider.value).toBe(40);
+	expect(events).toEqual(['input', 'input']);
+});
+
 test('with groove-press="none", the cap still drags', () => {
 	const { control, slider } = mountSlider('value="40" groove-press="none"');
 	const cap = capOf(control);

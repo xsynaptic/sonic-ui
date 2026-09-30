@@ -91,6 +91,33 @@ test('steps count from min, as on a range input', () => {
 	expect(dial.value).toBe(13);
 });
 
+test.each([
+	['-0.3', 3, 0],
+	['-1.2', 12, 0],
+	['-2.4', 23, -0.1],
+])('from min %s, %i arrow steps of 0.1 land exactly on %s', (min, presses, expected) => {
+	const { control, dial } = mountDial(`min="${min}" max="3" step="0.1"`);
+
+	for (let press = 0; press < presses; press += 1) pressKey(control, 'ArrowUp');
+
+	expect(dial.value).toBe(expected);
+	expect(control.getAttribute('aria-valuenow')).toBe(String(expected));
+});
+
+test('a drag from min -0.3 in steps of 0.1 lands exactly on 0', () => {
+	const { control, dial } = mountDial('min="-0.3" max="0.7" step="0.1" value="-0.3"');
+
+	dragBy(control, 48);
+
+	expect(dial.value).toBe(0);
+});
+
+test('an endless dial with a step far below its range still lands on the step', () => {
+	const { dial } = mountDial('endless min="-0.1" max="0.9" step="0.0000001" value="-0.0000005"');
+
+	expect(dial.value).toBe(-5e-7);
+});
+
 test('an unstepped range steps its keys by a hundredth of the range', () => {
 	const { control, dial } = mountDial('max="1" step="0" value="0.5"');
 

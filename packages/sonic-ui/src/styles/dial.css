@@ -85,7 +85,7 @@
 		flex-shrink: 0;
 		inline-size: var(--_sonic-dial-size);
 		block-size: var(--_sonic-dial-size);
-		touch-action: none;
+		touch-action: pan-x;
 		cursor: ns-resize;
 		user-select: none;
 		border-radius: 50%;
