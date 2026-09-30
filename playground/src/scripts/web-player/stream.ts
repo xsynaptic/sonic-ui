@@ -70,6 +70,10 @@ export function load(player: Player, index: number): void {
 	seek(player, 0);
 }
 
+function readAheadOf(player: Player): number {
+	return Math.min(player.positionSeconds + readAheadSeconds, trackOf(player).durationSeconds);
+}
+
 export function fill(player: Player, elapsedSeconds: number): void {
 	if (!player.isLoaded) return;
 	if (player.latencySeconds > 0) {
@@ -78,14 +82,20 @@ export function fill(player: Player, elapsedSeconds: number): void {
 	}
 
 	const range = rangeAt(player);
-	const target = Math.min(
-		player.positionSeconds + readAheadSeconds,
-		trackOf(player).durationSeconds,
-	);
+	const target = readAheadOf(player);
 	if (!range || range[1] >= target) return;
 
 	range[1] = Math.min(range[1] + fillSecondsPerSecond * elapsedSeconds, target);
 	player.buffered = merge(player.buffered);
+}
+
+export function isFilling(player: Player): boolean {
+	if (!player.isLoaded) return false;
+	if (player.latencySeconds > 0) return true;
+
+	const range = rangeAt(player);
+
+	return range !== undefined && range[1] < readAheadOf(player);
 }
 
 export function isWaiting(player: Player): boolean {

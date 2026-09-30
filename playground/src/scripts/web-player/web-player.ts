@@ -8,6 +8,7 @@ import { find } from '#scripts/find.ts';
 import {
 	advance,
 	fill,
+	isFilling,
 	isWaiting,
 	load,
 	restartSeconds,
@@ -151,9 +152,10 @@ function bindPlayer(root: Element): void {
 		positionSeconds: 0,
 	};
 	let zoom = 2;
-	let last = performance.now();
+	let frame: number | undefined;
+	let last: number | undefined;
 	const tick = (time: number): void => {
-		const elapsedSeconds = Math.min((time - last) / 1000, 0.1);
+		const elapsedSeconds = last === undefined ? 0 : Math.min((time - last) / 1000, 0.1);
 
 		last = time;
 		fill(player, elapsedSeconds);
@@ -162,7 +164,17 @@ function bindPlayer(root: Element): void {
 		renderText(player, bar);
 		renderAvailability(player, bar, zoom);
 		renderStrip(player, bar.strip);
-		requestAnimationFrame(tick);
+		if (player.isPlaying || isFilling(player)) {
+			frame = requestAnimationFrame(tick);
+			return;
+		}
+
+		frame = undefined;
+		last = undefined;
+	};
+	// Paused with the buffer full, nothing redraws until a control acts
+	const wake = (): void => {
+		frame = frame ?? requestAnimationFrame(tick);
 	};
 
 	bindControls(root, player, bar);
@@ -171,7 +183,9 @@ function bindPlayer(root: Element): void {
 			zoom += Number(key.dataset.zoom);
 		});
 	}
-	requestAnimationFrame(tick);
+	root.addEventListener('change', wake);
+	root.addEventListener('click', wake);
+	wake();
 }
 
 for (const root of document.querySelectorAll('[data-web-player]')) bindPlayer(root);
