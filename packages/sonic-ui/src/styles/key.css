@@ -19,6 +19,7 @@
 @layer sonic {
 	:is(sonic-key, .sonic-key) {
 		--_sonic-key-size: var(--sonic-key-size, 2rem);
+		--_sonic-key-aspect-ratio: var(--sonic-key-aspect-ratio, 1);
 	}
 
 	:has(> .sonic-key):not([hidden]) {
@@ -29,7 +30,7 @@
 		display: block;
 		visibility: hidden;
 		flex-shrink: 0;
-		inline-size: var(--_sonic-key-size);
+		inline-size: calc(var(--_sonic-key-size) * var(--_sonic-key-aspect-ratio));
 		block-size: var(--_sonic-key-size);
 		overflow: hidden;
 	}
@@ -56,7 +57,7 @@
 
 		position: relative;
 		flex-shrink: 0;
-		inline-size: var(--_sonic-key-size);
+		inline-size: calc(var(--_sonic-key-size) * var(--_sonic-key-aspect-ratio));
 		block-size: var(--_sonic-key-size);
 		padding: 0;
 		font: inherit;

@@ -33,7 +33,7 @@ The styles sit in `@layer sonic`, so list it after your resets. A skin (`slate`,
 
 - **Attributes and properties** reflect each other: `dial.max = 200` writes `max="200"`. `value`, the key's `pressed` and the lever's `checked` are the live state and never write their attribute, as on native inputs.
 - **Events:** `change` when a control settles, and `input` while a dial or slider moves; both bubble.
-- **Formatting:** `formatValue` sets the text the readout and assistive technology read, and `parseValue` reads typed entry back. `formatPercent` and `parsePercent` from the package root show 0 to 1 as a percentage.
+- **Formatting:** `formatValue` sets the text the readout and assistive technology read, `formatValueText` overrides what assistive technology reads, and `parseValue` reads typed entry back. `formatPercent` and `parsePercent` from the package root show 0 to 1 as a percentage.
 - **Forms:** controls that hold a value submit under their `name`, reset, take a `<label>`, and follow a disabled `<fieldset>`, as native inputs do.
 
 ## Browsers

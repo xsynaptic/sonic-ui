@@ -34,6 +34,11 @@ function toHex(colour: string, { context, probe }: Reader): string {
 	return `#${[red, green, blue].map((channel) => channel.toString(16).padStart(2, '0')).join('')}`;
 }
 
+function dropUnit(length: string): number {
+	// eslint-disable-next-line unicorn/prefer-number-coercion -- `Number` reads "32px" as `NaN`
+	return Number.parseFloat(length);
+}
+
 function readBaseline(row: Row, reader: Reader): string {
 	const { token } = row;
 	const part = reader.panel.querySelector(row.from);
@@ -43,8 +48,12 @@ function readBaseline(row: Row, reader: Reader): string {
 		.getPropertyValue(token.resolved ?? token.token.replace('--sonic-', '--_sonic-'))
 		.trim();
 
-	// eslint-disable-next-line unicorn/prefer-number-coercion -- a length such as "2.5rem" needs its unit dropped
-	return token.kind === 'colour' ? toHex(raw, reader) : String(Number.parseFloat(raw));
+	if (token.kind === 'colour') return toHex(raw, reader);
+
+	const value = dropUnit(raw);
+	if (token.unit !== 'rem') return String(value);
+
+	return String(value / dropUnit(getComputedStyle(document.documentElement).fontSize));
 }
 
 function valueOf(row: Row): string {

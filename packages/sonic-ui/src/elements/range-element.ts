@@ -156,6 +156,23 @@ export abstract class SonicRangeElement extends SonicFormElement {
 		this.render();
 	}
 
+	get formatValueText(): ((value: number) => string) | undefined {
+		return this.#formatValueText;
+	}
+
+	set formatValueText(format: ((value: number) => string) | undefined) {
+		this.#formatValueText = format;
+		this.render();
+	}
+
+	get keyStep(): number | undefined {
+		return this.optionalNumberAttribute('key-step');
+	}
+
+	set keyStep(value: number | undefined) {
+		this.reflect('key-step', value);
+	}
+
 	// Unclamped by `min`, so reading it back never pins the range
 	get max(): number {
 		return this.numberAttribute('max', 100);
@@ -257,6 +274,8 @@ export abstract class SonicRangeElement extends SonicFormElement {
 
 	#formatValue: ((value: number) => string) | undefined;
 
+	#formatValueText: ((value: number) => string) | undefined;
+
 	readonly #instance = String((instanceCount += 1));
 
 	// Re-read from the attribute until the property is set, since `max` may arrive after `value`
@@ -307,6 +326,8 @@ export abstract class SonicRangeElement extends SonicFormElement {
 			'values',
 			'detent',
 			'formatValue',
+			'formatValueText',
+			'keyStep',
 			'parseValue',
 			'value',
 		);
@@ -518,7 +539,11 @@ export abstract class SonicRangeElement extends SonicFormElement {
 		control.setAttribute('aria-valuemax', String(high));
 		control.setAttribute('aria-valuenow', String(this.#value));
 		if (orientation) control.setAttribute('aria-orientation', orientation);
-		writeAttribute(control, 'aria-valuetext', this.#formatValue?.(this.#value));
+		writeAttribute(
+			control,
+			'aria-valuetext',
+			(this.#formatValueText ?? this.#formatValue)?.(this.#value),
+		);
 		this.forwardNaming(control, true);
 		this.#renderDisabled(control);
 		this.#renderReadout();
@@ -716,7 +741,9 @@ export abstract class SonicRangeElement extends SonicFormElement {
 		const steps = keySteps.get(key);
 		if (steps === undefined) return undefined;
 
-		return this.#stopAtDetent(this.#stepBy(steps, step));
+		const keyStep = this.keyStep ?? 0;
+
+		return this.#stopAtDetent(this.#stepBy(steps, keyStep > 0 ? keyStep : step));
 	}
 
 	#max(): number {

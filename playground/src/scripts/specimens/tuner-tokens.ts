@@ -99,6 +99,7 @@ export const tokenGroups: Array<TokenGroup> = [
 		name: 'Key',
 		tokens: [
 			range('size', '--sonic-key-size', [1.25, 6, 0.25, 'rem']),
+			range('aspect', '--sonic-key-aspect-ratio', [1, 5, 0.1]),
 			range('gap', '--sonic-key-gap-ratio', [0, 0.15, 0.005]),
 			range('corner', '--sonic-key-radius-ratio', [0, 0.5, 0.01]),
 			range('bevel', '--sonic-key-bevel-ratio', [0, 0.25, 0.005]),

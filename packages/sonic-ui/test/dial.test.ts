@@ -92,6 +92,25 @@ test('steps count from min, as on a range input', () => {
 });
 
 test.each([
+	['ArrowUp', 105],
+	['ArrowDown', 95],
+	['PageUp', 150],
+	['PageDown', 50],
+])('with key-step="5" over a continuous value, %s moves 100 to %d', (key, expected) => {
+	const { control, dial } = mountDial('min="3" max="200" step="0" key-step="5" value="100"');
+
+	pressKey(control, key);
+	expect(dial.value).toBe(expected);
+});
+
+test('a key step still lands on a step counted from min', () => {
+	const { control, dial } = mountDial('min="1" max="20" step="2" key-step="5" value="3"');
+
+	pressKey(control, 'ArrowUp');
+	expect(dial.value).toBe(9);
+});
+
+test.each([
 	['-0.3', 3, 0],
 	['-1.2', 12, 0],
 	['-2.4', 23, -0.1],
@@ -245,6 +264,25 @@ test('formatValue writes the value text, and unsetting it clears it', () => {
 
 	dial.formatValue = undefined;
 	expect(control.hasAttribute('aria-valuetext')).toBe(false);
+});
+
+test('formatValueText speaks apart from formatValue, which the entry keeps, and falls back to it when unset', () => {
+	const { control, dial } = mountDial('max="300" step="0" value="65"');
+	const entry = entryOf(control);
+
+	dial.formatValue = (value) =>
+		`${String(Math.floor(value / 60))}:${String(value % 60).padStart(2, '0')}`;
+	dial.parseValue = Number;
+	dial.formatValueText = (value) => `${String(value)} seconds`;
+	expect(control.getAttribute('aria-valuetext')).toBe('65 seconds');
+
+	dial.formatValueText = undefined;
+	expect(control.getAttribute('aria-valuetext')).toBe('1:05');
+
+	dial.formatValueText = (value) => `${String(value)} seconds`;
+	press(control);
+	press(control);
+	expect(entry.value).toBe('1:05');
 });
 
 // happy-dom skips `attributeChangedCallback` for attributes present at upgrade, so the value goes in as a property too

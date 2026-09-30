@@ -108,6 +108,17 @@ import '#styles/playground.css';
 			id="progress"
 			value="20"
 		></sonic-slider>
+		<div class="w-72" id="strip-box">
+			<sonic-slider
+				aria-label="Seek"
+				class="[--sonic-slider-cap-ratio:0] [--sonic-slider-length:100%] [--sonic-slider-size:1rem]"
+				id="strip"
+				key-step="5"
+				max="300"
+				readout
+				step="0"
+			></sonic-slider>
+		</div>
 		<div class="grid justify-items-center gap-2">
 			<sonic-number
 				aria-labelledby="tempo-label"

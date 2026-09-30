@@ -49,9 +49,10 @@ import Layout from '#components/layout.astro';
 			</div>
 			<sonic-slider
 				aria-label="Seek"
-				class="[--sonic-slider-cap-ratio:0.25] [--sonic-slider-groove-ratio:0.35] [--sonic-slider-length:100cqi] [--sonic-slider-size:1rem]"
+				class="[--sonic-slider-cap-ratio:0] [--sonic-slider-groove-ratio:0.35] [--sonic-slider-length:100%] [--sonic-slider-size:1rem]"
 				data-seek
 				disabled
+				key-step="5"
 				max="1"
 				readout
 				step="0"
@@ -84,13 +85,17 @@ import Layout from '#components/layout.astro';
 					<p class="truncate text-sm text-zinc-100" data-title></p>
 					<div class="flex min-w-0 items-center gap-3">
 						<p class="truncate text-xs text-zinc-400" data-artist></p>
-						<Ghost name="Key aspect ratio">
-							<sonic-key aria-label="Remaining time" data-time disabled toggle>
-								<span class="sonic-screen font-mono text-xs [--sonic-screen-size:1.25rem]">
-									--:--
-								</span>
-							</sonic-key>
-						</Ghost>
+						<sonic-key
+							aria-label="Remaining time"
+							class="[--sonic-key-aspect-ratio:2.25]"
+							data-time
+							disabled
+							toggle
+						>
+							<span class="sonic-screen font-mono text-xs [--sonic-screen-size:1.25rem]">
+								--:--
+							</span>
+						</sonic-key>
 					</div>
 				</div>
 				<sonic-key aria-label="Waveform panel" data-panel-toggle disabled toggle>

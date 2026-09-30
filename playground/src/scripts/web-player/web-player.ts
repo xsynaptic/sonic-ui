@@ -33,6 +33,12 @@ interface Bar {
 
 const zoomLevels = 5;
 
+const spokenUnits = [
+	['hour', 3600],
+	['minute', 60],
+	['second', 1],
+] as const;
+
 function formatClock(seconds: number): string {
 	const total = Math.floor(Math.abs(seconds));
 	const hours = Math.floor(total / 3600);
@@ -43,6 +49,24 @@ function formatClock(seconds: number): string {
 	if (hours === 0) return `${sign}${String(minutes)}:${rest}`;
 
 	return `${sign}${String(hours)}:${String(minutes).padStart(2, '0')}:${rest}`;
+}
+
+function formatSpokenTime(seconds: number): string {
+	let rest = Math.floor(seconds);
+	const spoken: Array<string> = [];
+
+	for (const [unit, span] of spokenUnits) {
+		const amount = Math.floor(rest / span);
+
+		rest -= amount * span;
+		if (amount > 0) {
+			spoken.push(
+				new Intl.NumberFormat('en', { style: 'unit', unit, unitDisplay: 'long' }).format(amount),
+			);
+		}
+	}
+
+	return spoken.length > 0 ? spoken.join(' ') : '0 seconds';
 }
 
 function readBar(root: Element): Bar {
@@ -139,6 +163,7 @@ function bindControls(root: Element, player: Player, bar: Bar): void {
 	volume.formatValue = formatPercent;
 	volume.parseValue = parsePercent;
 	bar.strip.formatValue = formatClock;
+	bar.strip.formatValueText = formatSpokenTime;
 }
 
 function bindPlayer(root: Element): void {

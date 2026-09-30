@@ -5,7 +5,7 @@
 }
 
 @property --_sonic-slider-length {
-	syntax: '<length>';
+	syntax: '<length-percentage>';
 	inherits: true;
 	initial-value: 128px;
 }
@@ -68,13 +68,14 @@
 		--_sonic-slider-cursor: ew-resize;
 		--_sonic-slider-groove: calc(var(--_sonic-slider-track) * var(--_sonic-slider-groove-ratio));
 		--_sonic-slider-cap: calc(var(--_sonic-slider-track) * var(--_sonic-slider-cap-ratio));
-		--_sonic-slider-travel: calc(var(--_sonic-slider-length) - var(--_sonic-slider-cap));
+		--_sonic-slider-travel: calc(100cqi - var(--_sonic-slider-cap));
 		--_sonic-slider-offset: calc(var(--_sonic-slider-value, 0) * var(--_sonic-slider-travel));
 
 		position: relative;
 		flex-shrink: 0;
 		inline-size: var(--_sonic-slider-length);
 		block-size: var(--_sonic-slider-size);
+		container-type: size;
 		touch-action: pan-y;
 		cursor: var(--_sonic-slider-cursor);
 		user-select: none;
@@ -84,6 +85,7 @@
 		--_sonic-slider-toward: to top;
 		--_sonic-slider-across: to right;
 		--_sonic-slider-cursor: ns-resize;
+		--_sonic-slider-travel: calc(100cqb - var(--_sonic-slider-cap));
 
 		inline-size: var(--_sonic-slider-size);
 		block-size: var(--_sonic-slider-length);
@@ -256,7 +258,7 @@
 			),
 			var(--_sonic-slider-buffered-ranges, none), var(--_sonic-unlit);
 		border-radius: calc(var(--_sonic-slider-groove) / 2);
-		box-shadow: var(--_sonic-groove);
+		box-shadow: var(--_sonic-groove), var(--_sonic-focus-shadow);
 	}
 
 	[orientation='vertical'] > .sonic-slider > .sonic-slider-groove {
@@ -364,6 +366,15 @@
 
 	[groove-press='none'] > .sonic-slider > .sonic-slider-cap {
 		cursor: var(--_sonic-slider-cursor);
+	}
+
+	/* Bare `block-start` spans the viewport; `translate` belongs to the open transition */
+	:not([orientation='vertical']) > .sonic-slider > .sonic-slider-readout {
+		--_sonic-slider-readout-at: calc(var(--_sonic-slider-cap) / 2 + var(--_sonic-slider-offset));
+
+		inset-inline: var(--_sonic-slider-readout-at) calc(100cqi - var(--_sonic-slider-readout-at));
+		justify-self: center;
+		position-area: block-start center;
 	}
 
 	@media (forced-colors: active) {
