@@ -1,0 +1,55 @@
+---
+import type { Division } from '#scripts/tape-echo/divisions.ts';
+
+import Label from '#components/replica/label.astro';
+import { divisionOrder, divisions } from '#scripts/tape-echo/divisions.ts';
+
+interface Props {
+	division: Exclude<Division, 'time'>;
+	head: 1 | 2;
+	ticks: number;
+}
+
+const { division, head, ticks } = Astro.props;
+
+const id = `echo-head-${String(head)}`;
+const values = divisions[division].join(' ');
+---
+
+<div
+	aria-labelledby={id}
+	class="grid justify-items-center gap-2 [--sonic-dial-size:2.5rem]"
+	data-echo-head={head}
+	role="group"
+>
+	<Label id={id} text={`Echo ${String(head)}`} />
+	<sonic-dial
+		aria-labelledby={id}
+		data-echo-dial
+		data-format="note"
+		notched
+		readout
+		value={ticks}
+		values={values}
+	></sonic-dial>
+	<sonic-segmented
+		aria-label={`Echo ${String(head)} division`}
+		class="font-mono [--sonic-segmented-size:1.25rem]"
+		data-echo-division
+		value={division}
+	>
+		{divisionOrder.map((entry) => (
+			<span class="text-[0.5rem] uppercase" data-sonic-value={entry.value}>
+				{entry.label}
+			</span>
+		))}
+	</sonic-segmented>
+	<sonic-number
+		aria-label={`Echo ${String(head)} time`}
+		class="font-mono [--sonic-number-size:1.5rem]"
+		data-echo-number
+		data-format="note"
+		value={ticks}
+		values={values}
+	></sonic-number>
+</div>

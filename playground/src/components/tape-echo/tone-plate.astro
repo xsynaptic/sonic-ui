@@ -1,0 +1,70 @@
+---
+import Pot from '#components/replica/pot.astro';
+import { tapeStyles } from '#scripts/stop-names.ts';
+
+const stages = [
+	{ data: { 'data-echo-input': '' }, id: 'echo-input', label: 'Input', meter: 'input' },
+	{ data: { 'data-echo-output': '' }, id: 'echo-output', label: 'Output', meter: 'output' },
+];
+const ladder = '-24 -12 -6 -3 0';
+---
+
+<div
+	aria-label="Tone"
+	class="sonic-plate [--sonic-plate-radius:1.5rem] grid justify-items-center gap-5 p-4"
+	role="group"
+>
+	<Pot
+		data={{ 'data-echo-saturation': '' }}
+		ends={['Min', 'Max']}
+		format="percent"
+		id="echo-saturation"
+		label="Saturation"
+		max={100}
+		min={0}
+		size="large"
+		value={30}
+	/>
+	<div class="flex gap-6">
+		{stages.map((stage) => (
+			<div class="grid justify-items-center gap-2">
+				<Pot
+					data={stage.data}
+					detent={0}
+					ends={['−24', '+24']}
+					format="db"
+					id={stage.id}
+					label={stage.label}
+					max={24}
+					min={-24}
+					origin={0}
+					size="large"
+					step={0.5}
+					value={0}
+				/>
+				<sonic-meter
+					class="[--sonic-meter-length:3rem] [--sonic-meter-size:0.375rem]"
+					data-echo-meter={stage.meter}
+					lights={ladder}
+					orientation="horizontal"
+				></sonic-meter>
+			</div>
+		))}
+	</div>
+	<div class="grid justify-items-center gap-1 self-stretch">
+		<span
+			class="sonic-plate-title self-stretch font-mono text-[0.625rem] font-bold tracking-widest text-zinc-300 uppercase"
+			id="echo-style"
+		>
+			Style
+		</span>
+		<sonic-number
+			aria-labelledby="echo-style"
+			class="font-mono [--sonic-number-aspect-ratio:4.5] [--sonic-number-size:1.5rem]"
+			data-echo-style
+			data-format="tape-style"
+			value="1"
+			values={tapeStyles.map((_style, index) => index).join(' ')}
+		></sonic-number>
+	</div>
+</div>

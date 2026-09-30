@@ -9,7 +9,7 @@ interface Props {
 
 const { isPressed, labelledby } = Astro.props;
 
-// Astro writes `false` onto a custom element as the string, which still counts as present
+// Astro writes `false` as a string, which still sets a boolean attribute
 ---
 
 <sonic-key aria-labelledby={labelledby} pressed={isPressed ? '' : undefined} toggle>

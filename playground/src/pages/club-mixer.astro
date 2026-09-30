@@ -4,7 +4,6 @@ import FilterSection from '#components/club-mixer/filter-section.astro';
 import MasterPanel from '#components/club-mixer/master-panel.astro';
 import MicChannel from '#components/club-mixer/mic-channel.astro';
 import MusicChannel from '#components/club-mixer/music-channel.astro';
-import Ghost from '#components/ghost.astro';
 import Layout from '#components/layout.astro';
 
 const channels = [
@@ -18,28 +17,21 @@ const channels = [
 <Layout title="sonic-ui, club mixer">
 	<header class="mb-6 max-w-2xl">
 		<h1 class="font-mono text-xs font-bold tracking-[0.12em] text-zinc-200 uppercase">
-			A club mixer
+			Club mixer
 		</h1>
 		<p class="mt-3 text-sm leading-relaxed text-zinc-400">
-			A four-channel club mixer built from the library's parts. A dashed outline marks a part the
-			range does not have yet, at its size and under its wishlist name.
+			Four channels, two mics, two filters. Start runs a demo signal through the meters.
 		</p>
-		<ul
-			class="mt-3 flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs text-zinc-400 first:[&>li]:text-zinc-200"
-			data-ghost-tally
-		></ul>
 	</header>
 	<div class="-mx-4 overflow-x-auto px-4 pb-4 sm:mx-0 sm:px-0">
 		<div
 			class="inline-flex min-w-max items-stretch rounded-lg border border-zinc-800 bg-zinc-900 p-4 shadow-[inset_0_1px_0_rgb(255_255_255/4%)] [--sonic-meter-clip-from:-4] [--sonic-meter-hot-from:-10]"
 			data-club-mixer
 		>
-			<Ghost hasCaption={true} name="Panel plate">
-				<div class="flex h-full pb-2">
-					<MicChannel channel={1} fader={-6} />
-					<MicChannel channel={2} fader={-60} />
-				</div>
-			</Ghost>
+			<div class="sonic-plate flex p-1 pb-3 [--sonic-plate-depth:0px]">
+				<MicChannel channel={1} fader={-6} />
+				<MicChannel channel={2} fader={-60} />
+			</div>
 			<FilterSection filter={1} />
 			<div class="flex flex-col">
 				<div class="flex flex-1">
@@ -55,8 +47,7 @@ const channels = [
 	</div>
 	<Fragment slot="scripts">
 		<script>
-			import '#scripts/ghost-tally.ts';
-			import '#scripts/club-mixer.ts';
+			import '#scripts/club-mixer/club-mixer.ts';
 			import '#scripts/two-colour.ts';
 		</script>
 	</Fragment>

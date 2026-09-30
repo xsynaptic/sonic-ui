@@ -1,0 +1,34 @@
+---
+const plates = [
+	{ depth: undefined, id: 'plate-raised', title: 'Raised' },
+	{ depth: '0rem', id: 'plate-printed', title: 'Printed' },
+	{ depth: '-0.125rem', id: 'plate-tray', title: 'Tray' },
+];
+---
+
+<div class="grid grid-cols-[repeat(auto-fill,minmax(13rem,1fr))] gap-4 rounded-lg border border-zinc-800 bg-zinc-900 p-5 text-zinc-400">
+	{plates.map((plate) => (
+		<section
+			aria-labelledby={plate.id}
+			class="sonic-plate grid gap-3 p-4"
+			style={{ '--sonic-plate-depth': plate.depth }}
+		>
+			<h3
+				class="sonic-plate-title font-mono text-[0.625rem] tracking-[0.14em] uppercase"
+				id={plate.id}
+			>
+				{plate.title}
+			</h3>
+			<div class="flex items-center justify-center gap-4">
+				<sonic-dial aria-label={`${plate.title} level`} value="60"></sonic-dial>
+				<sonic-key aria-label={`${plate.title} on`} toggle>
+					<span class="sonic-led"></span>
+				</sonic-key>
+			</div>
+			<hr class="sonic-plate-rule" />
+			<div class="flex justify-center">
+				<sonic-lever aria-label={`${plate.title} sync`}></sonic-lever>
+			</div>
+		</section>
+	))}
+</div>

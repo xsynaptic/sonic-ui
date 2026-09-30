@@ -1,7 +1,7 @@
 ---
-import Label from '#components/club-mixer/label.astro';
-import MixerKey from '#components/club-mixer/mixer-key.astro';
-import Pot from '#components/club-mixer/pot.astro';
+import Label from '#components/replica/label.astro';
+import PanelKey from '#components/replica/panel-key.astro';
+import Pot from '#components/replica/pot.astro';
 import { channelCurves } from '#scripts/stop-names.ts';
 
 interface Props {
@@ -36,14 +36,14 @@ const passes = [
 		size="medium"
 		value={40}
 	/>
-	<MixerKey
+	<PanelKey
 		data={{ 'data-lfo-on': '' }}
 		id={`${section}-lfo-on`}
 		isPressed={filter === 1}
 		label="LFO on"
 	/>
-	<MixerKey data={{ 'data-double': '' }} id={`${section}-double`} label="×2" />
-	<MixerKey
+	<PanelKey data={{ 'data-double': '' }} id={`${section}-double`} label="×2" />
+	<PanelKey
 		data={{ 'data-tap': '' }}
 		id={`${section}-tap`}
 		isMomentary={true}
@@ -67,10 +67,10 @@ const passes = [
 	>
 		Filter {filter}
 	</span>
-	{filter === 2 ? <MixerKey id={`${section}-link`} label="Link" /> : undefined}
-	<MixerKey id={`${section}-crossfade`} label="To xfade" />
+	{filter === 2 ? <PanelKey id={`${section}-link`} label="Link" /> : undefined}
+	<PanelKey id={`${section}-crossfade`} label="To xfade" />
 	{passes.map((pass, index) => (
-		<MixerKey
+		<PanelKey
 			id={`${section}-${pass.id}`}
 			isPressed={index === 2}
 			isRound={true}
@@ -92,7 +92,7 @@ const passes = [
 		value={2000}
 	/>
 	<div class="mt-auto flex items-end gap-3 pt-2">
-		<MixerKey id={`${section}-on`} isRound={true} label="On" size="large" />
+		<PanelKey id={`${section}-on`} isRound={true} label="On" size="large" />
 		{filter === 1 ? (
 			<Pot format="percent" id={`${section}-curve`} label="X curve" max={100} min={0} value={50} />
 		) : (

@@ -1,8 +1,11 @@
 ---
 import Play from '@lucide/astro/icons/play';
 
-import Cell from '#components/cell.astro';
-import Panel from '#components/panel.astro';
+import Cell from '#components/specimens/cell.astro';
+import Panel from '#components/specimens/panel.astro';
+
+const ladder = '-30 -25 -20 -16 -13 -10 -7 -4 0';
+const shortLadder = '-24 -12 -6 -3 0';
 ---
 
 <Panel>
@@ -24,8 +27,8 @@ import Panel from '#components/panel.astro';
 			class="flex gap-1 [--sonic-meter-clip-from:-4] [--sonic-meter-hot-from:-10]"
 			role="group"
 		>
-			<sonic-meter lights="-30 -25 -20 -16 -13 -10 -7 -4 0"></sonic-meter>
-			<sonic-meter lights="-30 -25 -20 -16 -13 -10 -7 -4 0"></sonic-meter>
+			<sonic-meter lights={ladder}></sonic-meter>
+			<sonic-meter lights={ladder}></sonic-meter>
 		</div>
 	</Cell>
 	<Cell id="meter-reduction" label="Reduction">
@@ -35,8 +38,8 @@ import Panel from '#components/panel.astro';
 	</Cell>
 	<Cell id="meter-short-ladder" isWide={true} label="Short ladder">
 		<div aria-labelledby="meter-short-ladder" class="grid gap-1" role="group">
-			<sonic-meter lights="-24 -12 -6 -3 0" orientation="horizontal"></sonic-meter>
-			<sonic-meter lights="-24 -12 -6 -3 0" orientation="horizontal"></sonic-meter>
+			<sonic-meter lights={shortLadder} orientation="horizontal"></sonic-meter>
+			<sonic-meter lights={shortLadder} orientation="horizontal"></sonic-meter>
 		</div>
 	</Cell>
 	<Cell id="meter-correlation" isWide={true} label="Correlation">
@@ -74,8 +77,8 @@ import Panel from '#components/panel.astro';
 			class="flex gap-2 [--sonic-meter-clip-from:-4] [--sonic-meter-hot-from:-10] [--sonic-meter-length:16rem] [--sonic-meter-size:1.5rem]"
 			role="group"
 		>
-			<sonic-meter lights="-30 -25 -20 -16 -13 -10 -7 -4 0"></sonic-meter>
-			<sonic-meter lights="-30 -25 -20 -16 -13 -10 -7 -4 0"></sonic-meter>
+			<sonic-meter lights={ladder}></sonic-meter>
+			<sonic-meter lights={ladder}></sonic-meter>
 		</div>
 	</Cell>
 </Panel>

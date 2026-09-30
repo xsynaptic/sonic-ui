@@ -1,0 +1,74 @@
+---
+import Cell from '#components/specimens/cell.astro';
+import Panel from '#components/specimens/panel.astro';
+
+const legend = 'font-mono text-zinc-300 uppercase';
+---
+
+<Panel>
+	<Cell id="lever-sync" label="Sync">
+		<sonic-lever aria-labelledby="lever-sync"></sonic-lever>
+	</Cell>
+	<Cell id="lever-sync-horizontal" label="Sync, horizontal">
+		<sonic-lever
+			aria-labelledby="lever-sync-horizontal"
+			checked
+			orientation="horizontal"
+		></sonic-lever>
+	</Cell>
+	<Cell id="lever-loop" label="Loop">
+		<sonic-lever aria-labelledby="lever-loop" class={legend} value="pre">
+			<span data-sonic-value="pre">Pre</span>
+			<span data-sonic-value="post">Post</span>
+		</sonic-lever>
+	</Cell>
+	<Cell id="lever-assign" isWide={true} label="Assign">
+		<sonic-lever aria-labelledby="lever-assign" class={legend} orientation="horizontal" value="off">
+			<span data-sonic-value="1">1</span>
+			<span data-sonic-value="off">Off</span>
+			<span data-sonic-value="2">2</span>
+		</sonic-lever>
+	</Cell>
+	<Cell id="lever-duck" label="Momentary">
+		<sonic-lever aria-labelledby="lever-duck" class={legend} value="off">
+			<span data-sonic-momentary data-sonic-value="duck">
+				Duck
+			</span>
+			<span data-sonic-value="off">Off</span>
+			<span data-sonic-value="on">On</span>
+		</sonic-lever>
+	</Cell>
+	<Cell id="lever-disabled" label="Disabled">
+		<sonic-lever aria-labelledby="lever-disabled" class={legend} disabled value="post">
+			<span data-sonic-value="pre">Pre</span>
+			<span data-sonic-value="post">Post</span>
+		</sonic-lever>
+	</Cell>
+</Panel>
+<Panel isLarge={true}>
+	<Cell id="lever-large-assign" isWide={true} label="Assign, large">
+		<sonic-lever
+			aria-labelledby="lever-large-assign"
+			class:list={[legend, '[--sonic-lever-size:4rem]']}
+			orientation="horizontal"
+			value="x"
+		>
+			<span data-sonic-value="x">X</span>
+			<span data-sonic-value="off">Off</span>
+			<span data-sonic-value="y">Y</span>
+		</sonic-lever>
+	</Cell>
+	<Cell id="lever-large-duck" isWide={true} label="Momentary, large">
+		<sonic-lever
+			aria-labelledby="lever-large-duck"
+			class:list={[legend, '[--sonic-lever-size:4rem]']}
+			value="on"
+		>
+			<span data-sonic-momentary data-sonic-value="duck">
+				Duck
+			</span>
+			<span data-sonic-value="off">Off</span>
+			<span data-sonic-value="on">On</span>
+		</sonic-lever>
+	</Cell>
+</Panel>

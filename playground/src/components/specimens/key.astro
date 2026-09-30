@@ -2,9 +2,9 @@
 import Play from '@lucide/astro/icons/play';
 import SkipForward from '@lucide/astro/icons/skip-forward';
 
-import Cell from '#components/cell.astro';
-import MuteKey from '#components/mute-key.astro';
-import Panel from '#components/panel.astro';
+import Cell from '#components/specimens/cell.astro';
+import MuteKey from '#components/specimens/mute-key.astro';
+import Panel from '#components/specimens/panel.astro';
 
 const pads = ['Kick', 'Snare', 'Hat', 'Clap'];
 ---
@@ -28,7 +28,7 @@ const pads = ['Kick', 'Snare', 'Hat', 'Clap'];
 			<Play aria-hidden="true" />
 		</sonic-key>
 	</Cell>
-	<Cell id="key-next" label="Last">
+	<Cell id="key-next" label="Soft-disabled">
 		<sonic-key aria-labelledby="key-next" soft-disabled>
 			<SkipForward aria-hidden="true" />
 		</sonic-key>

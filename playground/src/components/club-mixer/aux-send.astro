@@ -1,6 +1,6 @@
 ---
-import MixerKey from '#components/club-mixer/mixer-key.astro';
-import Pot from '#components/club-mixer/pot.astro';
+import PanelKey from '#components/replica/panel-key.astro';
+import Pot from '#components/replica/pot.astro';
 
 interface Props {
 	send: 1 | 2;
@@ -24,5 +24,5 @@ const id = `${strip}-aux-${String(send)}`;
 		ticks={[-30, -20, -12, -6, 0]}
 		value={-60}
 	/>
-	<MixerKey hasLed={false} id={`${id}-pre`} label="Pre" labelledby={`${id} ${id}-pre`} />
+	<PanelKey hasLed={false} id={`${id}-pre`} label="Pre" labelledby={`${id} ${id}-pre`} />
 </div>

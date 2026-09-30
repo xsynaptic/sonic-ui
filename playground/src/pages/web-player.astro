@@ -1,0 +1,125 @@
+---
+import AudioWaveform from '@lucide/astro/icons/audio-waveform';
+import Pause from '@lucide/astro/icons/pause';
+import Play from '@lucide/astro/icons/play';
+import RotateCcw from '@lucide/astro/icons/rotate-ccw';
+import RotateCw from '@lucide/astro/icons/rotate-cw';
+import SkipBack from '@lucide/astro/icons/skip-back';
+import SkipForward from '@lucide/astro/icons/skip-forward';
+import Volume2 from '@lucide/astro/icons/volume-2';
+import VolumeX from '@lucide/astro/icons/volume-x';
+import ZoomIn from '@lucide/astro/icons/zoom-in';
+import ZoomOut from '@lucide/astro/icons/zoom-out';
+
+import Ghost from '#components/ghost.astro';
+import Layout from '#components/layout.astro';
+---
+
+<Layout title="sonic-ui, web player">
+	<header class="mb-6 max-w-2xl">
+		<h1 class="font-mono text-xs font-bold tracking-[0.12em] text-zinc-200 uppercase">
+			Web player
+		</h1>
+		<p class="mt-3 text-sm leading-relaxed text-zinc-400">
+			A docked player bar on a simulated stream. Seek past the loaded range to see it buffer. Dashed
+			outlines mark parts the library doesn't have yet.
+		</p>
+		<ul
+			class="mt-3 flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs text-zinc-400 first:[&>li]:text-zinc-200"
+			data-ghost-tally
+		></ul>
+	</header>
+	<div class="flex min-h-80 flex-col overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900">
+		<div class="flex-1"></div>
+		<section
+			aria-label="Player"
+			class="@container relative border-t border-black bg-zinc-950 [--sonic-dial-size:2rem] [--sonic-key-size:2rem]"
+			data-web-player
+		>
+			<div class="relative border-b border-zinc-800 p-2" data-panel hidden>
+				<Ghost blockSize="7.5rem" inlineSize="100%" name="Waveform panel" />
+				<div class="absolute top-4 right-4 flex gap-1 [--sonic-key-size:1.5rem]">
+					<sonic-key aria-label="Zoom out" data-zoom="-1">
+						<ZoomOut aria-hidden="true" />
+					</sonic-key>
+					<sonic-key aria-label="Zoom in" data-zoom="1">
+						<ZoomIn aria-hidden="true" />
+					</sonic-key>
+				</div>
+			</div>
+			<sonic-slider
+				aria-label="Seek"
+				class="[--sonic-slider-cap-ratio:0.25] [--sonic-slider-groove-ratio:0.35] [--sonic-slider-length:100cqi] [--sonic-slider-size:1rem]"
+				data-seek
+				disabled
+				max="1"
+				readout
+				step="0"
+			></sonic-slider>
+			<div class="flex flex-wrap items-center gap-x-4 gap-y-3 px-4 py-3">
+				<div class="flex items-center gap-1">
+					<sonic-key aria-label="Previous" data-previous soft-disabled>
+						<SkipBack aria-hidden="true" />
+					</sonic-key>
+					<sonic-key aria-label="Back 10 seconds" data-seek-by="-10" disabled>
+						<RotateCcw aria-hidden="true" />
+					</sonic-key>
+					<sonic-key
+						aria-label="Play"
+						class="[--sonic-key-face-radius-ratio:0.5] [--sonic-key-radius-ratio:0.5] [--sonic-key-size:2.5rem]"
+						data-play
+						toggle
+					>
+						<Play aria-hidden="true" data-sonic-when="off" />
+						<Pause aria-hidden="true" data-sonic-when="on" />
+					</sonic-key>
+					<sonic-key aria-label="Forward 10 seconds" data-seek-by="10" disabled>
+						<RotateCw aria-hidden="true" />
+					</sonic-key>
+					<sonic-key aria-label="Next" data-next soft-disabled>
+						<SkipForward aria-hidden="true" />
+					</sonic-key>
+				</div>
+				<div class="grid min-w-40 flex-1 gap-1">
+					<p class="truncate text-sm text-zinc-100" data-title></p>
+					<div class="flex min-w-0 items-center gap-3">
+						<p class="truncate text-xs text-zinc-400" data-artist></p>
+						<Ghost name="Key aspect ratio">
+							<sonic-key aria-label="Remaining time" data-time disabled toggle>
+								<span class="sonic-screen font-mono text-xs [--sonic-screen-size:1.25rem]">
+									--:--
+								</span>
+							</sonic-key>
+						</Ghost>
+					</div>
+				</div>
+				<sonic-key aria-label="Waveform panel" data-panel-toggle disabled toggle>
+					<AudioWaveform aria-hidden="true" />
+				</sonic-key>
+				<div class="flex items-center gap-2">
+					<sonic-key aria-label="Mute" data-mute toggle>
+						<Volume2 aria-hidden="true" data-sonic-when="off" />
+						<VolumeX aria-hidden="true" data-sonic-when="on" />
+					</sonic-key>
+					<sonic-dial
+						aria-label="Volume"
+						data-volume
+						max="1"
+						readout
+						step="0.01"
+						value="0.8"
+					></sonic-dial>
+				</div>
+				<div class="basis-full">
+					<Ghost blockSize="3.5rem" inlineSize="100%" name="Waveform" />
+				</div>
+			</div>
+		</section>
+	</div>
+	<Fragment slot="scripts">
+		<script>
+			import '#scripts/ghost-tally.ts';
+			import '#scripts/web-player/web-player.ts';
+		</script>
+	</Fragment>
+</Layout>

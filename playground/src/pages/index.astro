@@ -1,15 +1,17 @@
 ---
-import DialDemos from '#components/dial-demos.astro';
-import KeyDemos from '#components/key-demos.astro';
 import Layout from '#components/layout.astro';
-import LedDemos from '#components/led-demos.astro';
-import MeterDemos from '#components/meter-demos.astro';
-import NumberDemos from '#components/number-demos.astro';
-import ScreenDemos from '#components/screen-demos.astro';
-import Section from '#components/section.astro';
-import SliderDemos from '#components/slider-demos.astro';
-import SwitchDemos from '#components/switch-demos.astro';
-import Tuner from '#components/tuner.astro';
+import DialSpecimens from '#components/specimens/dial.astro';
+import KeySpecimens from '#components/specimens/key.astro';
+import LedSpecimens from '#components/specimens/led.astro';
+import LeverSpecimens from '#components/specimens/lever.astro';
+import MeterSpecimens from '#components/specimens/meter.astro';
+import NumberSpecimens from '#components/specimens/number.astro';
+import PlateSpecimens from '#components/specimens/plate.astro';
+import ScreenSpecimens from '#components/specimens/screen.astro';
+import Section from '#components/specimens/section.astro';
+import SliderSpecimens from '#components/specimens/slider.astro';
+import SwitchSpecimens from '#components/specimens/switch.astro';
+import Tuner from '#components/specimens/tuner.astro';
 
 const sections = [
 	{ id: 'tuner', label: 'Tuner' },
@@ -18,9 +20,11 @@ const sections = [
 	{ id: 'key', label: 'Key' },
 	{ id: 'led', label: 'LED' },
 	{ id: 'switch', label: 'Switch' },
+	{ id: 'lever', label: 'Lever' },
 	{ id: 'number', label: 'Number' },
 	{ id: 'meter', label: 'Meter' },
 	{ id: 'screen', label: 'Screen' },
+	{ id: 'plate', label: 'Plate' },
 ];
 ---
 
@@ -35,35 +39,41 @@ const sections = [
 		<Tuner />
 	</Section>
 	<Section id="dial" title="Dial">
-		<DialDemos />
+		<DialSpecimens />
 	</Section>
 	<Section id="slider" title="Slider">
-		<SliderDemos />
+		<SliderSpecimens />
 	</Section>
 	<Section id="key" title="Key">
-		<KeyDemos />
+		<KeySpecimens />
 	</Section>
 	<Section id="led" title="LED">
-		<LedDemos />
+		<LedSpecimens />
 	</Section>
 	<Section id="switch" title="Switch">
-		<SwitchDemos />
+		<SwitchSpecimens />
+	</Section>
+	<Section id="lever" title="Lever">
+		<LeverSpecimens />
 	</Section>
 	<Section id="number" title="Number">
-		<NumberDemos />
+		<NumberSpecimens />
 	</Section>
 	<Section id="meter" title="Meter">
-		<MeterDemos />
+		<MeterSpecimens />
 	</Section>
 	<Section id="screen" title="Screen">
-		<ScreenDemos />
+		<ScreenSpecimens />
+	</Section>
+	<Section id="plate" title="Plate">
+		<PlateSpecimens />
 	</Section>
 	<Fragment slot="scripts">
 		<script>
-			import '#scripts/motion.ts';
-			import '#scripts/screen-follow.ts';
-			import '#scripts/specimens.ts';
-			import '#scripts/tuner.ts';
+			import '#scripts/specimens/motion.ts';
+			import '#scripts/specimens/screen-follow.ts';
+			import '#scripts/buffered.ts';
+			import '#scripts/specimens/tuner.ts';
 			import '#scripts/two-colour.ts';
 		</script>
 	</Fragment>

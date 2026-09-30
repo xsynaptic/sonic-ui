@@ -1,5 +1,5 @@
 ---
-import Label from '#components/club-mixer/label.astro';
+import Label from '#components/replica/label.astro';
 
 interface Props {
 	data?: Record<string, string>;
@@ -33,7 +33,7 @@ const sizeClass = {
 	small: '[--sonic-key-size:1.25rem]',
 }[size];
 
-// Astro writes `false` onto a custom element as the string, which still counts as present
+// Astro writes `false` as a string, which still sets a boolean attribute
 const mode = isMomentary ? { momentary: '' } : { toggle: '' };
 ---
 

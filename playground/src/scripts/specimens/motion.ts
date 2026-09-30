@@ -7,6 +7,7 @@ import type {
 } from '@xsynaptic/sonic-ui';
 
 import { gainOf, levelAt } from '#scripts/demo-signal.ts';
+import { frameLoop, isMotionAllowed } from '#scripts/frame-loop.ts';
 
 function stripGains(strip: Element): [number, number] {
 	const level = strip.querySelector<SonicSlider>('[data-strip-level]');
@@ -64,20 +65,19 @@ function tick(time: number): void {
 
 function bindRun(): void {
 	const keys = [...document.querySelectorAll<SonicKey>('[data-run]')];
-	let frame: number | undefined;
+	const loop = frameLoop(tick);
 
-	const loop = (time: number): void => {
-		tick(time);
-		frame = requestAnimationFrame(loop);
-	};
 	const run = (isRunning: boolean): void => {
 		for (const key of keys) key.pressed = isRunning;
-		if (frame !== undefined) cancelAnimationFrame(frame);
-		frame = isRunning ? requestAnimationFrame(loop) : undefined;
-		if (isRunning) return;
+		if (isRunning) {
+			loop.start();
+			return;
+		}
 
-		for (const control of document.querySelectorAll('[data-lfo]'))
+		loop.stop();
+		for (const control of document.querySelectorAll('[data-lfo]')) {
 			control.removeAttribute('modulation');
+		}
 	};
 
 	for (const key of keys) {
@@ -90,7 +90,7 @@ function bindRun(): void {
 			run(false);
 		});
 	}
-	run(!matchMedia('(prefers-reduced-motion: reduce)').matches);
+	run(isMotionAllowed());
 }
 
 bindRun();

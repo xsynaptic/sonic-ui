@@ -2,12 +2,13 @@
 import Play from '@lucide/astro/icons/play';
 import Square from '@lucide/astro/icons/square';
 
-import Cell from '#components/cell.astro';
-import FilterModes from '#components/filter-modes.astro';
-import MuteKey from '#components/mute-key.astro';
+import Cell from '#components/specimens/cell.astro';
+import FilterModes from '#components/specimens/filter-modes.astro';
+import MuteKey from '#components/specimens/mute-key.astro';
 
-const groupClass = 'flex flex-col gap-4 rounded-md border border-zinc-800/80 p-4';
-const titleClass = 'font-mono text-[0.625rem] tracking-[0.16em] text-zinc-400 uppercase';
+const groupClass = 'sonic-plate flex flex-col gap-4 p-4';
+const titleClass =
+	'sonic-plate-title font-mono text-[0.625rem] tracking-[0.16em] text-zinc-400 uppercase';
 ---
 
 <div
@@ -178,6 +179,9 @@ const titleClass = 'font-mono text-[0.625rem] tracking-[0.16em] text-zinc-400 up
 				<sonic-key aria-labelledby="panel-stop" data-stop>
 					<Square aria-hidden="true" />
 				</sonic-key>
+			</Cell>
+			<Cell id="panel-sync" label="Sync">
+				<sonic-lever aria-labelledby="panel-sync"></sonic-lever>
 			</Cell>
 			<Cell id="panel-screen" label="Display">
 				<div class="sonic-screen font-mono text-xs" data-screen-follow>

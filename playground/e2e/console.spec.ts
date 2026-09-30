@@ -33,6 +33,43 @@ test('the club mixer loads with a clean console', async ({ page }) => {
 	expect(messages).toEqual([]);
 });
 
+test('the tape echo loads with a clean console', async ({ page }) => {
+	const messages = collectConsole(page);
+
+	await page.goto('/tape-echo/');
+	await expect(page.getByRole('slider', { name: 'Mode' })).toBeVisible();
+
+	expect(messages).toEqual([]);
+});
+
+test('the tape echo plays through every mode with a clean console', async ({ page }) => {
+	const messages = collectConsole(page);
+
+	await page.goto('/tape-echo/');
+	await page.getByRole('button', { name: 'Play' }).click();
+
+	const mode = page.getByRole('slider', { name: 'Mode' });
+
+	for (const name of ['Dual', 'Ping-pong', 'Rhythm']) {
+		await mode.press('ArrowUp');
+		await expect(mode).toHaveAttribute('aria-valuetext', name);
+	}
+	await page.getByRole('radio', { name: 'Time' }).first().click();
+	await page.getByRole('button', { name: 'Play' }).click();
+
+	expect(messages).toEqual([]);
+});
+
+test('the web player plays with a clean console', async ({ page }) => {
+	const messages = collectConsole(page);
+
+	await page.goto('/web-player/');
+	await page.getByRole('button', { name: 'Play' }).click();
+	await expect(page.getByRole('slider', { name: 'Seek' })).toBeEnabled();
+
+	expect(messages).toEqual([]);
+});
+
 test('a control without the material warns', async ({ page }) => {
 	const messages = collectConsole(page);
 

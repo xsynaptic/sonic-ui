@@ -17,7 +17,6 @@ function readFormData(page: Page): Promise<Array<[string, string]>> {
 	});
 }
 
-// The labels the control is named by, as the host's `labels` lists them
 function readBridge(host: Locator, control: string): Promise<{ bridged: number; labels: number }> {
 	return host.evaluate((element, selector) => {
 		const labelled = element.querySelector(selector)?.ariaLabelledByElements ?? [];
@@ -60,6 +59,7 @@ test('a label for the host, or around it, reaches the inner control', async ({ p
 		mode: await readBridge(page.locator('#mode'), '.sonic-segmented'),
 		mute: await readBridge(page.locator('#mute'), '.sonic-key'),
 		send: await readBridge(page.locator('#send'), '.sonic-slider'),
+		sync: await readBridge(page.locator('#sync'), '[role="switch"]'),
 		tempo: await readBridge(page.locator('#tempo'), '.sonic-number'),
 	};
 
@@ -68,6 +68,7 @@ test('a label for the host, or around it, reaches the inner control', async ({ p
 		mode: { bridged: 1, labels: 1 },
 		mute: { bridged: 1, labels: 1 },
 		send: { bridged: 1, labels: 1 },
+		sync: { bridged: 1, labels: 1 },
 		tempo: { bridged: 1, labels: 1 },
 	});
 });
@@ -79,7 +80,7 @@ test('Chromium names each control from its label, and the host adds no node', as
 	test.skip(browserName !== 'chromium', 'Only Chromium exposes its accessibility tree');
 
 	const names = await readNames(page);
-	const labelled = names.filter((name) => /: (Cutoff|Send|Tempo|Mute|Mode)$/.test(name));
+	const labelled = names.filter((name) => /: (Cutoff|Send|Sync|Tempo|Mute|Mode)$/.test(name));
 
 	expect(labelled.toSorted((first, second) => first.localeCompare(second))).toEqual([
 		'button: Mute',
@@ -87,6 +88,7 @@ test('Chromium names each control from its label, and the host adds no node', as
 		'slider: Cutoff',
 		'slider: Send',
 		'spinbutton: Tempo',
+		'switch: Sync',
 	]);
 });
 
@@ -132,6 +134,7 @@ test('the form submits each value, and a pressed toggle only', async ({ page }) 
 		['tempo', '120'],
 		['solo', 'yes'],
 		['mode', 'lp'],
+		['assign', 'x'],
 		['late', '10'],
 	]);
 
@@ -140,6 +143,8 @@ test('the form submits each value, and a pressed toggle only', async ({ page }) 
 	await page.locator('#mute .sonic-key').click();
 	await page.locator('#solo .sonic-key').click();
 	await page.getByRole('radio', { name: 'HP' }).click();
+	await page.locator('#sync [role="switch"]').click();
+	await page.getByRole('radio', { name: 'Y' }).click();
 
 	expect(await readFormData(page)).toEqual([
 		['cutoff', '45'],
@@ -147,6 +152,8 @@ test('the form submits each value, and a pressed toggle only', async ({ page }) 
 		['tempo', '119.5'],
 		['mute', 'on'],
 		['mode', 'hp'],
+		['sync', 'on'],
+		['assign', 'y'],
 		['late', '10'],
 	]);
 });
@@ -171,6 +178,23 @@ test('a reset returns the range and the switch to their value attributes, and ke
 	await expect(page.getByRole('radio', { name: 'LP' })).toHaveAttribute('aria-checked', 'true');
 	await expect(mute).toHaveAttribute('aria-pressed', 'false');
 	await expect(solo).toHaveAttribute('aria-pressed', 'true');
+});
+
+test('a label click flips a bare lever, and a reset returns both levers to their attributes', async ({
+	page,
+}) => {
+	const sync = page.locator('#sync [role="switch"]');
+
+	await page.locator('label[for="sync"]').click();
+	await expect(sync).toHaveAttribute('aria-checked', 'true');
+
+	await page.getByRole('radio', { name: 'Off' }).click();
+	await page.locator('#patch').evaluate((form) => {
+		if (form instanceof HTMLFormElement) form.reset();
+	});
+
+	await expect(sync).toHaveAttribute('aria-checked', 'false');
+	await expect(page.getByRole('radio', { name: 'X' })).toHaveAttribute('aria-checked', 'true');
 });
 
 test('a disabled fieldset disables the dial inside it until re-enabled', async ({

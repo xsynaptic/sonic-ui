@@ -1,5 +1,5 @@
 ---
-import Label from '#components/club-mixer/label.astro';
+import Label from '#components/replica/label.astro';
 
 interface Props {
 	data?: Record<string, string>;
@@ -16,7 +16,7 @@ interface Props {
 	size?: 'large' | 'medium' | 'small';
 	step?: number;
 	taper?: 'log';
-	// Even ticks assume a linear pot, so a tapered one names its own
+	// Even ticks assume a linear taper, so a tapered pot passes its own
 	ticks?: Array<number>;
 	value: number;
 }

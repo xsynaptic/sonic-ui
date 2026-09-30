@@ -20,6 +20,9 @@ const drawnParts = [
 	'.sonic-meter-clip',
 	'#ladder .sonic-meter-level',
 	'#legend .sonic-scale-tick',
+	'#talk .sonic-lever-bushing',
+	'#talk .sonic-lever-bat::before',
+	'#talk .sonic-lever-bat::after',
 ];
 
 async function paintOf(
@@ -58,6 +61,7 @@ const focusable = [
 	'.sonic-number',
 	'.sonic-key',
 	'.sonic-segmented-segment',
+	'.sonic-lever-position',
 ];
 
 test.skip(({ browserName }) => browserName === 'webkit', 'WebKit has no forced-colours mode');
@@ -216,4 +220,17 @@ test('an LED lens is grey at rest, Highlight lit and Mark in its second colour, 
 	expect(lit.fill).toBe(highlight);
 	expect(alt.fill).toBe(mark);
 	expect(unlit.rim).toContain(canvasText);
+});
+
+test('a lever draws its bat in CanvasText and a plate keeps its edge', async ({ page }) => {
+	const canvasText = await systemColour(page, 'CanvasText');
+	const ball = await page
+		.locator('#talk .sonic-lever-bat')
+		.evaluate((element) => getComputedStyle(element, '::after').backgroundImage);
+	const plate = await page
+		.locator('#plate')
+		.evaluate((element) => getComputedStyle(element).borderTopColor);
+
+	expect(ball).toContain(canvasText);
+	expect(plate).toBe(canvasText);
 });

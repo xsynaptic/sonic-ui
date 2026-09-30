@@ -140,6 +140,17 @@ export const tokenGroups: Array<TokenGroup> = [
 		],
 	},
 	{
+		from: '.sonic-lever',
+		name: 'Lever',
+		tokens: [
+			range('size', '--sonic-lever-size', [1, 6, 0.25, 'rem']),
+			range('reach', '--sonic-lever-reach-ratio', [0, 0.5, 0.01]),
+			range('bat', '--sonic-lever-bat-ratio', [0.1, 0.6, 0.01]),
+			range('bushing', '--sonic-lever-bushing-ratio', [0.2, 1, 0.01]),
+			range('font', '--sonic-lever-font-ratio', [0.15, 0.8, 0.01]),
+		],
+	},
+	{
 		from: '.sonic-led',
 		name: 'LED',
 		tokens: [
@@ -184,6 +195,14 @@ export const tokenGroups: Array<TokenGroup> = [
 			range('aspect', '--sonic-screen-aspect-ratio', [1, 6, 0.25]),
 			range('corner', '--sonic-screen-radius-ratio', [0, 0.5, 0.01]),
 			range('inset', '--sonic-screen-inset-ratio', [0, 0.3, 0.01]),
+		],
+	},
+	{
+		from: '.sonic-plate',
+		name: 'Plate',
+		tokens: [
+			range('depth', '--sonic-plate-depth', [-0.25, 0.25, 0.0125, 'rem']),
+			range('corner', '--sonic-plate-radius', [0, 2, 0.0625, 'rem']),
 		],
 	},
 ];

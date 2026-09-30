@@ -17,6 +17,8 @@ const { sections = [], title } = Astro.props;
 const pages = [
 	{ href: '/', label: 'Specimens' },
 	{ href: '/club-mixer/', label: 'Club mixer' },
+	{ href: '/tape-echo/', label: 'Tape echo' },
+	{ href: '/web-player/', label: 'Web player' },
 ];
 const skins = ['default', 'slate', 'lime', 'ivory'];
 ---
@@ -28,7 +30,7 @@ const skins = ['default', 'slate', 'lime', 'ivory'];
 
 			if (skin && skin !== 'default') document.documentElement.classList.add(`sonic-skin-${skin}`);
 		} catch {
-			// Storage refused, as in some private windows; the default skin shows
+			// Private windows can refuse storage
 		}
 	</script>
 	<nav class="sticky top-0 z-10 border-b border-zinc-800 bg-zinc-950/90 backdrop-blur">

@@ -1,9 +1,9 @@
 ---
 import ChannelFader from '#components/club-mixer/channel-fader.astro';
-import MixerKey from '#components/club-mixer/mixer-key.astro';
-import Pot from '#components/club-mixer/pot.astro';
 import StripInput from '#components/club-mixer/strip-input.astro';
-import Ghost from '#components/ghost.astro';
+import PanelKey from '#components/replica/panel-key.astro';
+import PanelLever from '#components/replica/panel-lever.astro';
+import Pot from '#components/replica/pot.astro';
 
 interface Props {
 	channel: number;
@@ -13,7 +13,19 @@ interface Props {
 
 const { channel, fader, level } = Astro.props;
 
+const side = channel < 3 ? 'x' : 'y';
+
 const strip = `channel-${String(channel)}`;
+const filterAssign = [
+	{ text: '1', value: '1' },
+	{ text: 'Off', value: 'off' },
+	{ text: '2', value: '2' },
+];
+const crossfadeAssign = [
+	{ text: 'X', value: 'x' },
+	{ text: 'Off', value: 'off' },
+	{ text: 'Y', value: 'y' },
+];
 const bands = [
 	{ id: 'high', label: 'High', low: '∞', min: -60 },
 	{ id: 'mid-high', label: 'Mid hi', low: '−30', min: -30 },
@@ -45,9 +57,22 @@ const bands = [
 			value={0}
 		/>
 	))}
-	<Ghost blockSize="1.75rem" inlineSize="3.25rem" name="Lever switch" />
-	<Ghost blockSize="1.75rem" inlineSize="3.25rem" name="Lever switch" />
-	<MixerKey data={{ 'data-cue': '' }} id={`${strip}-cue`} isRound={true} label="Cue" size="large" />
+	<PanelLever
+		id={`${strip}-filter`}
+		isHorizontal={true}
+		label="Filter"
+		positions={filterAssign}
+		value="off"
+	/>
+	<PanelLever
+		data={{ 'data-crossfade-assign': '' }}
+		id={`${strip}-crossfade`}
+		isHorizontal={true}
+		label="X fade"
+		positions={crossfadeAssign}
+		value={side}
+	/>
+	<PanelKey data={{ 'data-cue': '' }} id={`${strip}-cue`} isRound={true} label="Cue" size="large" />
 	<span aria-hidden="true" class="font-mono text-base font-bold text-zinc-300">
 		{channel}
 	</span>

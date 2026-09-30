@@ -1,0 +1,85 @@
+---
+import Label from '#components/replica/label.astro';
+import PanelKey from '#components/replica/panel-key.astro';
+import PanelLever from '#components/replica/panel-lever.astro';
+import Pot from '#components/replica/pot.astro';
+import { echoModes } from '#scripts/stop-names.ts';
+
+const feels = [
+	{ data: { 'data-echo-groove': '' }, ends: ['Short', 'Long'], id: 'echo-groove', label: 'Groove' },
+	{ data: { 'data-echo-feel': '' }, ends: ['Early', 'Late'], id: 'echo-feel', label: 'Feel' },
+] as const;
+---
+
+<div
+	aria-labelledby="echo-tempo-title"
+	class="sonic-plate [--sonic-plate-radius:1.5rem] grid justify-items-center gap-5 p-4"
+	role="group"
+>
+	<span
+		class="sonic-plate-title self-stretch font-mono text-[0.625rem] font-bold tracking-widest text-zinc-300 uppercase"
+		id="echo-tempo-title"
+	>
+		Tap tempo
+	</span>
+	<div class="flex items-end gap-3">
+		<PanelKey
+			data={{ 'data-echo-tap': '' }}
+			id="echo-tap"
+			isMomentary={true}
+			label="Tap"
+			size="large"
+		/>
+		<div class="grid justify-items-center gap-1">
+			<sonic-number
+				aria-labelledby="echo-bpm"
+				class="font-mono [--sonic-number-size:1.75rem]"
+				data-echo-bpm
+				data-format="bpm"
+				default="96"
+				max="250"
+				min="40"
+				step="0.1"
+				value="96"
+			></sonic-number>
+			<Label id="echo-bpm" text="Tempo" />
+		</div>
+		<PanelLever id="echo-sync" label="Sync" />
+	</div>
+	<div class="flex gap-8">
+		{feels.map((feel) => (
+			<Pot
+				data={feel.data}
+				detent={0}
+				ends={[feel.ends[0], feel.ends[1]]}
+				format="signed-percent"
+				id={feel.id}
+				label={feel.label}
+				max={50}
+				min={-50}
+				origin={0}
+				size="large"
+				value={0}
+			/>
+		))}
+	</div>
+	<div class="grid justify-items-center gap-1">
+		<sonic-dial
+			aria-labelledby="echo-mode"
+			class="[--sonic-dial-notch-ratio:0.05] [--sonic-dial-scale-font-ratio:0.085] [--sonic-dial-scale-ratio:0.34] [--sonic-dial-size:6rem] [--sonic-dial-sweep:180deg]"
+			data-echo-mode
+			data-format="echo-mode"
+			max="3"
+			notched
+			readout
+			value="0"
+		>
+			{echoModes.map((mode, index) => (
+				<span class="font-mono uppercase" data-sonic-value={index}>
+					{mode}
+				</span>
+			))}
+		</sonic-dial>
+		<Label id="echo-mode" text="Mode" />
+	</div>
+</div>

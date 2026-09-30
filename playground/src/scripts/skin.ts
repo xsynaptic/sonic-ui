@@ -1,6 +1,6 @@
 import type { SonicSegmented } from '@xsynaptic/sonic-ui';
 
-// The layout's inline script applies the stored skin before first paint
+// Shared with the layout's inline script, which applies the skin before first paint
 const skinStorageKey = 'sonic-playground-skin';
 
 function readSkin(): string {
@@ -21,7 +21,7 @@ function applySkin(skin: string): void {
 	try {
 		localStorage.setItem(skinStorageKey, skin);
 	} catch {
-		// Private windows may refuse storage; the skin still applies for this visit
+		// Private windows can refuse storage
 	}
 	document.dispatchEvent(new Event('playground-skin'));
 }

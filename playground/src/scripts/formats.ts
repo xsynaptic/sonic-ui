@@ -1,6 +1,6 @@
 import type { SonicDial, SonicNumber, SonicSlider } from '@xsynaptic/sonic-ui';
 
-import { channelCurves, echoModes } from '#scripts/stop-names.ts';
+import { channelCurves, echoModes, tapeStyles } from '#scripts/stop-names.ts';
 
 interface Format {
 	format: (value: number) => string;
@@ -27,7 +27,6 @@ function parseBeats(text: string): number {
 	return numerator / denominator;
 }
 
-// Straight, dotted and triplet, each scaling the note's length by a ratio kept whole so the division stays exact
 const noteKinds = [
 	['', 1, 1],
 	['D', 3, 2],
@@ -120,9 +119,10 @@ const formats = new Map<string, Format>([
 				return value < 0 ? `L${String(-value)}` : `R${String(value)}`;
 			},
 			parse: (text) => {
-				const value = parseNumber(text.replace(/^[lr]/i, ''));
+				const trimmed = text.trim();
+				const value = parseNumber(trimmed.replace(/^[lr]/i, ''));
 
-				return /^l/i.test(text.trim()) ? -value : value;
+				return /^l/i.test(trimmed) ? -value : value;
 			},
 		},
 	],
@@ -138,17 +138,20 @@ const formats = new Map<string, Format>([
 		'signed-percent',
 		{ format: (value) => `${value > 0 ? '+' : ''}${String(value)}%`, parse: parseNumber },
 	],
+	['tape-style', namedStops(tapeStyles)],
 ]);
 
-for (const control of document.querySelectorAll<SonicDial | SonicNumber | SonicSlider>(
-	'[data-format]',
-)) {
-	const format = formats.get(control.dataset.format ?? '');
+type FormattedControl = SonicDial | SonicNumber | SonicSlider;
 
-	if (!format) {
-		continue;
-	}
+export function applyFormat(control: FormattedControl, name: string): void {
+	const format = formats.get(name);
+	if (!format) return;
 
+	control.dataset.format = name;
 	control.formatValue = format.format;
 	control.parseValue = format.parse;
+}
+
+for (const control of document.querySelectorAll<FormattedControl>('[data-format]')) {
+	applyFormat(control, control.dataset.format ?? '');
 }

@@ -273,3 +273,46 @@ test('a springing slider reports where it was let go, then its return to the ori
 	expect(released).toBeGreaterThan(0);
 	expect(returned).toBe(0);
 });
+
+function readSpring(host: Locator): Promise<{ drawn: number; isSpringing: boolean }> {
+	return host.evaluate((element) => {
+		const control = element.querySelector('.sonic-slider');
+		const drawn = control
+			? getComputedStyle(control).getPropertyValue('--_sonic-slider-value')
+			: '';
+
+		return { drawn: Number(drawn), isSpringing: element.matches(':state(springing)') };
+	});
+}
+
+test('a springing slider lands its value at once while the cap glides back, then stops springing', async ({
+	page,
+}) => {
+	const host = page.locator('#bend');
+
+	// Slowed so the glide is still under way when the test reads it
+	await page.addStyleTag({
+		content: '#bend:state(springing) > .sonic-slider { transition-duration: 2s; }',
+	});
+	await drag(page, page.locator('#bend .sonic-slider-cap'), { x: 30, y: 0 });
+
+	const gliding = await readSpring(host);
+
+	await expect(page.getByRole('slider', { name: 'Bend' })).toHaveAttribute('aria-valuenow', '0');
+	expect(gliding.isSpringing).toBe(true);
+	expect(gliding.drawn).toBeGreaterThan(0.5);
+
+	await expect.poll(() => readSpring(host)).toEqual({ drawn: 0.5, isSpringing: false });
+});
+
+test('under reduced motion, a springing slider draws its return at once', async ({ page }) => {
+	await page.emulateMedia({ reducedMotion: 'reduce' });
+
+	const host = page.locator('#bend');
+
+	await drag(page, page.locator('#bend .sonic-slider-cap'), { x: 30, y: 0 });
+
+	const { drawn } = await readSpring(host);
+
+	expect(drawn).toBe(0.5);
+});

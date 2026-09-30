@@ -1,9 +1,8 @@
-import type { TunerToken } from '#scripts/tuner-tokens.ts';
+import type { TunerToken } from '#scripts/specimens/tuner-tokens.ts';
 
-import { tokenGroups } from '#scripts/tuner-tokens.ts';
+import { tokenGroups } from '#scripts/specimens/tuner-tokens.ts';
 
 interface Row {
-	// The input's value with nothing tuned
 	baseline: string;
 	from: string;
 	input: HTMLInputElement;
@@ -23,7 +22,7 @@ const tokens = new Map(
 	),
 );
 
-// A colour input takes only sRGB hex, so each resolved colour is painted to one pixel and read back
+// A colour input takes only sRGB hex, so each colour round-trips through a canvas pixel
 function toHex(colour: string, { context, probe }: Reader): string {
 	probe.style.color = colour;
 	context.clearRect(0, 0, 1, 1);
@@ -65,7 +64,6 @@ function collectRows(root: HTMLElement): Array<Row> {
 	return rows;
 }
 
-// Only tuned tokens go on the page, so an untouched one leaves the skin's value alone
 function render(rows: Array<Row>, count: HTMLElement, output: HTMLElement): void {
 	const changed = rows.filter((row) => row.input.value !== row.baseline);
 
@@ -79,7 +77,6 @@ function render(rows: Array<Row>, count: HTMLElement, output: HTMLElement): void
 	count.textContent = changed.length === 0 ? 'Nothing tuned' : `${String(changed.length)} tuned`;
 }
 
-// Read with nothing tuned, so a skin's own values become the baseline
 function rebase(rows: Array<Row>, reader: Reader): void {
 	for (const row of rows) document.body.style.removeProperty(row.token.token);
 	for (const row of rows) {
