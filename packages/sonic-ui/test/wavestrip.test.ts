@@ -258,3 +258,65 @@ test('a kind names its token, and a kind that is not a plain name draws in the d
 	expect(hostile?.style.getPropertyValue('--_sonic-marker')).toBe('');
 	expect(hostile?.style.cssText).not.toContain('red');
 });
+
+test('Escape dismisses a hovered readout without focus, until the pointer leaves and returns', () => {
+	installCanvasFakes();
+
+	const { control, wavestrip } = mountWavestrip('readout min="30" max="330" step="0" value="30"');
+	wavestrip.formatValue = (seconds) => `${String(seconds)} s`;
+	midPointerAt(control, 'pointermove', { clientX: 75, pointerType: 'mouse' });
+	expect(readoutText(control)).toBe('105 s');
+
+	document.body.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'Escape' }));
+	expect(readoutText(control)).toBe('30 s');
+
+	midPointerAt(control, 'pointermove', { clientX: 90, pointerType: 'mouse' });
+	expect(readoutText(control)).toBe('30 s');
+
+	midPointerAt(control, 'pointerleave', { pointerType: 'mouse' });
+	midPointerAt(control, 'pointermove', { clientX: 75, pointerType: 'mouse' });
+	expect(readoutText(control)).toBe('105 s');
+});
+
+function scrubKey(target: HTMLElement, type: string, key: string): void {
+	target.dispatchEvent(
+		new KeyboardEvent(type, { bubbles: true, cancelable: true, key, repeat: type === 'keydown' }),
+	);
+}
+
+test('disabling mid-scrub changes once and ends the hold', () => {
+	installCanvasFakes();
+
+	const { control, wavestrip } = mountWavestrip('max="300" key-step="5" value="60"');
+	const events = recordEvents(document.body);
+
+	scrubKey(control, 'keydown', 'ArrowRight');
+	wavestrip.disabled = true;
+	expect(events).toEqual(['input', 'change']);
+
+	scrubKey(control, 'keyup', 'ArrowRight');
+	wavestrip.value = 10;
+	expect(events).toEqual(['input', 'change']);
+	expect(wavestrip.value).toBe(10);
+});
+
+test('switching key mid-scrub changes for the first key, then scrubs from there with the second', () => {
+	installCanvasFakes();
+
+	const { control, wavestrip } = mountWavestrip('max="300" key-step="5" value="60"');
+	const events = recordEvents(document.body);
+
+	scrubKey(control, 'keydown', 'ArrowRight');
+	scrubKey(control, 'keydown', 'ArrowRight');
+	scrubKey(control, 'keydown', 'ArrowLeft');
+	expect(events).toEqual(['input', 'input', 'change', 'input']);
+
+	scrubKey(control, 'keyup', 'ArrowRight');
+	expect(events).toHaveLength(4);
+
+	scrubKey(control, 'keydown', 'ArrowLeft');
+	scrubKey(control, 'keydown', 'ArrowLeft');
+	scrubKey(control, 'keyup', 'ArrowLeft');
+	expect(wavestrip.value).toBe(55);
+	expect(events.slice(4)).toEqual(['input', 'input', 'change']);
+});

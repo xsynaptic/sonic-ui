@@ -115,3 +115,9 @@ test('the last pair of an 8-bit mono file ends on the last byte', () => {
 test('a version 2 header cut short of its channels is refused', () => {
 	expect(() => readDatHeader(bytes(...stereoHeader).slice(0, 23))).toThrow('24 bytes');
 });
+
+test('a 16-bit body cut at an odd byte reads the whole samples before it', () => {
+	const header = readDatHeader(bytes(...stereoHeader));
+
+	expect([...readDatSamples(header, bytes('d4feb004', 'fe'))]).toEqual([-300, 1200]);
+});

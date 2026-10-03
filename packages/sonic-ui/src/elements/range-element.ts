@@ -82,7 +82,7 @@ function scaleMark(original: ChildNode): Array<ScaleMark> {
 }
 
 export interface RangeLink {
-	input: (next: number) => boolean;
+	input: (next: number, isMover?: boolean) => boolean;
 	isDisabled: () => boolean;
 	isHeld: () => boolean;
 	limit: (bounds: [number, number] | undefined) => void;
@@ -116,7 +116,7 @@ export abstract class SonicRangeElement extends SonicFormElement {
 
 	static {
 		link = (element) => ({
-			input: (next) => !element.#isHeld() && element.input(next),
+			input: (next, isMover = false) => (isMover || !element.#isHeld()) && element.input(next),
 			isDisabled: () => element.isDisabled(),
 			isHeld: () => element.#isHeld(),
 			limit: (bounds) => {
@@ -311,6 +311,8 @@ export abstract class SonicRangeElement extends SonicFormElement {
 	#entries: Array<number> | undefined;
 
 	#entry: RangeEntry | undefined;
+
+	#escapeWatch: AbortController | undefined;
 
 	#formatValue: ((value: number) => string) | undefined;
 
@@ -534,6 +536,7 @@ export abstract class SonicRangeElement extends SonicFormElement {
 	protected hoverReadout(value: number | undefined): void {
 		this.#claim.hover(value);
 		this.#renderReadout();
+		this.#watchEscape(value !== undefined);
 	}
 
 	protected input(next: number): boolean {
@@ -938,6 +941,27 @@ export abstract class SonicRangeElement extends SonicFormElement {
 
 	#textFor(value: number): string {
 		return this.#formatValue?.(value) ?? String(value);
+	}
+
+	// A hover holds no focus, so the key is heard on the document (WCAG 1.4.13)
+	#watchEscape(isHovered: boolean): void {
+		if (!isHovered) {
+			this.#escapeWatch?.abort();
+			this.#escapeWatch = undefined;
+			return;
+		}
+		if (this.#escapeWatch) return;
+
+		const watch = new AbortController();
+
+		this.#escapeWatch = watch;
+		this.ownerDocument.addEventListener(
+			'keydown',
+			(event) => {
+				if (event.key === 'Escape' && this.#claim.dismiss()) this.#renderHold();
+			},
+			{ signal: watch.signal },
+		);
 	}
 
 	#write(next: number): void {

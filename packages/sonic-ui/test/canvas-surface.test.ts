@@ -268,3 +268,39 @@ test('a ratio change arms a query for the new ratio, drops the old one and resca
 	expect(resolutions()).toEqual(['(resolution: 1dppx)', '(resolution: 2dppx)']);
 	expect(canvas.width).toBe(200);
 });
+
+test('resize hears each new size once, and lengths read their registered properties as numbers', () => {
+	const { flushFrames } = installCanvasFakes();
+	const canvas = document.createElement('canvas');
+	const sizes: Array<[number, number, number]> = [];
+	const looks: Array<Record<'pitch' | 'unset', number>> = [];
+
+	vi.stubGlobal('devicePixelRatio', 2);
+	document.body.replaceChildren(canvas);
+	canvas.style.setProperty('--_sonic-test-pitch', '4.5px');
+	bindSurface({
+		canvas,
+		colours: {},
+		lengths: { pitch: '--_sonic-test-pitch', unset: '--_sonic-test-unset' },
+		paint: (_context, frame) => {
+			looks.push(frame.look.lengths);
+		},
+		resize: (size) => {
+			sizes.push([size.width, size.height, size.dpr]);
+		},
+		signal: new AbortController().signal,
+	});
+
+	const resize = FakeResizeObserver.instances.at(-1);
+
+	resize?.report([100, 20], [200, 40]);
+	resize?.report([100, 20], [200, 40]);
+	resize?.report([120, 20], [240, 40]);
+	flushFrames();
+
+	expect(sizes).toEqual([
+		[200, 40, 2],
+		[240, 40, 2],
+	]);
+	expect(looks.at(-1)).toEqual({ pitch: 4.5, unset: 0 });
+});

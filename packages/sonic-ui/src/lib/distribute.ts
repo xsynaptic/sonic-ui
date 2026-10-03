@@ -112,40 +112,89 @@ function poolOrder(members: ReadonlyArray<SumMember>, index: number): Array<numb
 	);
 }
 
-function stepToward(member: SumMember, from: number, owed: number): [number, number] {
+function stepWithin(member: SumMember, from: number, owed: number): number | undefined {
+	const next = member.stepFrom(from, owed > 0 ? 1 : -1);
+	const change = trimFloat(next - from);
+	const isInside = next >= member.min && next <= member.max;
+
+	return change !== 0 && isInside && Math.abs(change) <= Math.abs(owed) + epsilon
+		? next
+		: undefined;
+}
+
+function stepToward(member: SumMember, from: number, owed: number): number {
 	let value = from;
 	let remainder = owed;
 
 	while (Math.abs(remainder) > epsilon) {
-		const next = member.stepFrom(value, remainder > 0 ? 1 : -1);
-		const change = trimFloat(next - value);
-		const isInside = next >= member.min && next <= member.max;
+		const next = stepWithin(member, value, remainder);
+		if (next === undefined) break;
 
-		if (change === 0 || !isInside || Math.abs(change) > Math.abs(remainder) + epsilon) break;
-
+		remainder = trimFloat(remainder - (next - value));
 		value = next;
-		remainder = trimFloat(remainder - change);
 	}
 
-	return [value, remainder];
+	return value;
+}
+
+interface Settling {
+	exact: ReadonlyMap<number, number>;
+	order: ReadonlyArray<number>;
+	total: number;
+}
+
+// Furthest from its exact share first; a tie goes to the last in pool order
+function byShortfall(
+	values: ReadonlyArray<number>,
+	{ exact, order }: Settling,
+	direction: number,
+): Array<number> {
+	const shortfall = (index: number): number => {
+		const value = values[index] ?? NaN;
+
+		return trimFloat(direction * ((exact.get(index) ?? value) - value));
+	};
+
+	return order.toReversed().sort((first, second) => shortfall(second) - shortfall(first));
+}
+
+function stepEach(
+	members: ReadonlyArray<SumMember>,
+	values: Array<number>,
+	pass: { neediest: ReadonlyArray<number>; owed: number },
+): number {
+	let remainder = pass.owed;
+
+	for (const index of pass.neediest) {
+		const member = members[index];
+		const value = values[index];
+		const next = member && value !== undefined ? stepWithin(member, value, remainder) : undefined;
+		if (value === undefined || next === undefined) continue;
+
+		values[index] = next;
+		remainder = trimFloat(remainder - (next - value));
+	}
+
+	return remainder;
 }
 
 function settle(
 	members: ReadonlyArray<SumMember>,
 	values: Array<number>,
-	rule: SumRule & { order: ReadonlyArray<number> },
-): void {
-	let remainder = trimFloat(rule.total - sumOf(values));
+	settling: Settling,
+): number {
+	let remainder = trimFloat(settling.total - sumOf(values));
+	let before = NaN;
 
-	for (const index of rule.order.toReversed()) {
-		const member = members[index];
-		if (!member) continue;
-
-		const [value, left] = stepToward(member, values[index] ?? member.value, remainder);
-
-		values[index] = value;
-		remainder = left;
+	while (remainder !== before && Math.abs(remainder) > epsilon) {
+		before = remainder;
+		remainder = stepEach(members, values, {
+			neediest: byShortfall(values, settling, Math.sign(remainder)),
+			owed: remainder,
+		});
 	}
+
+	return remainder;
 }
 
 function pooled(
@@ -181,13 +230,31 @@ function landMover(
 ): number | undefined {
 	const { index, target, total } = move;
 	const mover = members[index];
-	if (!mover?.isFree) return undefined;
+	if (!mover?.isFree || !Number.isFinite(target)) return undefined;
 
 	const next = mover.snap(clamp(target, ...sumLimits(members, index, total)));
 
 	values[index] = next;
 
 	return mover.value - next;
+}
+
+function landShares(
+	members: ReadonlyArray<SumMember>,
+	values: Array<number>,
+	spread: ReadonlyMap<number, number>,
+): Map<number, number> {
+	const exact = new Map<number, number>();
+
+	for (const [at, share] of spread) {
+		const member = members[at];
+		if (!member) continue;
+
+		exact.set(at, member.value + share);
+		values[at] = clamp(member.snap(member.value + share), member.min, member.max);
+	}
+
+	return exact;
 }
 
 export function distribute(
@@ -201,15 +268,13 @@ export function distribute(
 		: rule.total - sumOf(values);
 	if (owed === undefined) return values;
 
-	const order = poolOrder(members, move?.index ?? -1);
-	const spread = shares(pooled(members, order, owed), owed, rule.mode);
+	const index = move?.index ?? -1;
+	const order = poolOrder(members, index);
+	const exact = landShares(members, values, shares(pooled(members, order, owed), owed, rule.mode));
+	const left = settle(members, values, { exact, order, total: rule.total });
+	const mover = members[index];
 
-	for (const [at, share] of spread) {
-		const member = members[at];
-
-		if (member) values[at] = clamp(member.snap(member.value + share), member.min, member.max);
-	}
-	settle(members, values, { ...rule, order });
+	if (mover) values[index] = stepToward(mover, values[index] ?? mover.value, left);
 
 	return values;
 }

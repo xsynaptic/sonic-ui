@@ -4,6 +4,7 @@ import type { SonicNumber } from '#elements/number.ts';
 
 import '#define/dial.ts';
 import '#define/number.ts';
+import { nearestEntry, parseNumberList } from '#lib/number-list.ts';
 
 import { mountDial, pressKey } from './helpers.ts';
 
@@ -41,4 +42,15 @@ test('a number box steps through its entries and a typed value snaps to the near
 	entry.value = '3.1';
 	entry.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'Enter' }));
 	expect(number.value).toBe(4);
+});
+
+test('a list drops its repeats, and one left with a single entry is no list', () => {
+	expect(parseNumberList('3 1 3 2 1')).toEqual([1, 2, 3]);
+	expect(parseNumberList('5 5, 5')).toBeUndefined();
+});
+
+// A step tie rounds up; whether a list tie should follow it is undecided
+test('a value midway between two entries takes the lower', () => {
+	expect(nearestEntry([0.25, 0.5, 1, 2, 4], 1.5)).toBe(1);
+	expect(nearestEntry([0.25, 0.5, 1, 2, 4], 1.51)).toBe(2);
 });

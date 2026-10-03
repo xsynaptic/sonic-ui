@@ -109,3 +109,21 @@ test('a drag moves by entries evenly along the travel', () => {
 		1, 2,
 	]);
 });
+
+test('the threshold itself engages, and a hair under it does not', () => {
+	expect(drag({ from: 64, moves: [2.99], spec: { max: 127 } })).toEqual([undefined]);
+	expect(drag({ from: 64, moves: [3], spec: { max: 127 } })).toEqual([66]);
+});
+
+test('a drag held at the detent that turns back has to push the zone the other way to leave', () => {
+	expect(drag({ detent: 0, from: -3, moves: [20, 14, 6, 4], spec: detented })).toEqual([
+		0, 0, 0, -0.5,
+	]);
+});
+
+// The downward crossing only; a drag up across the seam is not held, a known gap
+test('on an endless scale a drag down onto a detent at the seam is held there', () => {
+	const endless = { isWrapping: true, max: 360 };
+
+	expect(drag({ detent: 0, from: 10, moves: [-6, -10], spec: endless })).toEqual([0, 0]);
+});

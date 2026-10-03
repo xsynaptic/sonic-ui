@@ -1,5 +1,7 @@
 import type { SurfaceSize } from '#lib/canvas-surface.ts';
 
+import { trimFloat } from '#lib/math.ts';
+
 export interface View {
 	dpr: number;
 	height: number;
@@ -43,7 +45,8 @@ function windowStart(input: TimelineInput, seconds: number, windowSeconds: numbe
 	if (!input.isPaged) return seconds - windowSeconds / 2;
 	if (input.held) return input.held.grabbed.startSeconds + seconds - input.held.grabbed.seconds;
 
-	return Math.floor(seconds / windowSeconds) * windowSeconds;
+	// 0.3 / 0.1 is 2.9999999999999996, a page short
+	return Math.floor(trimFloat(seconds / windowSeconds)) * windowSeconds;
 }
 
 function overlap(

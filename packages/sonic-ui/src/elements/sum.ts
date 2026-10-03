@@ -95,6 +95,8 @@ export class SonicSum extends SonicElement {
 
 	#isTotalKept = false;
 
+	#isWarned = false;
+
 	#isWriting = false;
 
 	#members: Array<Member> = [];
@@ -313,13 +315,14 @@ export class SonicSum extends SonicElement {
 
 	#warnReach(): void {
 		if (!__DEV__) return;
-		if (this.#members.length === 0) return;
+		if (this.#isWarned || this.#members.length === 0) return;
 
 		const models = this.#model(this.#members.map(({ seen }) => seen));
 		const low = models.reduce((total, { min }) => total + min, 0);
 		const high = models.reduce((total, { max }) => total + max, 0);
 		if (this.#total >= low && this.#total <= high) return;
 
+		this.#isWarned = true;
 		console.warn(
 			`<sonic-sum> cannot reach its total of ${String(this.#total)}; its members span ${String(low)} to ${String(high)}`,
 		);
@@ -331,10 +334,9 @@ export class SonicSum extends SonicElement {
 			for (const [index, member] of this.#members.entries()) {
 				const value = values[index];
 				if (value === undefined || value === member.link.value()) continue;
-				if (member === mover && mover.link.isHeld()) continue;
 
 				member.link.limit(undefined);
-				member.link.input(value);
+				member.link.input(value, member === mover);
 			}
 		} finally {
 			this.#isWriting = false;

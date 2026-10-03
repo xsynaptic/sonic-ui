@@ -93,3 +93,15 @@ test('a playing timeline keeps moving, and a paused one at rest does not', () =>
 	expect(frameTimeline({ ...base, isPlaying: true }).isMoving).toBe(true);
 	expect(frameTimeline(base).isMoving).toBe(false);
 });
+
+test('paged, a playhead exactly on a page boundary opens that page', () => {
+	const timeline = frameTimeline({
+		...base,
+		clockSeconds: 0.3,
+		isPaged: true,
+		size: { dpr: 1, height: 96, width: 7 },
+	});
+
+	expect(timeline.view.startSeconds).toBeCloseTo(0.3, 9);
+	expect(timeline.playheadAt).toBeCloseTo(0, 9);
+});

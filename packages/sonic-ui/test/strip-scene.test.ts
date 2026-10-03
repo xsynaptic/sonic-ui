@@ -80,3 +80,29 @@ test('a gap ratio of 1 still leaves each bar a device pixel', () => {
 
 	expect(bar?.width).toBe(1);
 });
+
+test('a peak that is not a number draws a silent bar and leaves the rest standing', () => {
+	const bars = stripBars([0.5, NaN, 0.5], { dpr: 1, height: 48, width: 9 }, grid);
+
+	expect(bars.map(({ height, y }) => [height, y])).toEqual([
+		[24, 12],
+		[1, 24],
+		[24, 12],
+	]);
+});
+
+test('no peaks, or no room for a bar, draws nothing', () => {
+	expect(stripBars([], { dpr: 1, height: 48, width: 300 }, grid)).toEqual([]);
+	expect(stripBars(level, { dpr: 1, height: 48, width: 0 }, grid)).toEqual([]);
+});
+
+test('a played or scrub place that is not a number counts as the start', () => {
+	expect(stripSpans({ buffered: [], played: NaN }, 100).spans).toEqual([]);
+	expect(stripSpans({ buffered: [], played: NaN, scrub: 0.2 }, 100).spans).toEqual([
+		{ from: 0, kind: 'scrub', to: 20 },
+	]);
+	expect(stripSpans({ buffered: [], played: 0.3, scrub: NaN }, 100).spans).toEqual([
+		{ from: 0, kind: 'played', to: 30 },
+		{ from: 0, kind: 'scrub', to: 30 },
+	]);
+});

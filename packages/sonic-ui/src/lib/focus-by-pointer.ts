@@ -1,6 +1,6 @@
 const modifierKeys = new Set(['Alt', 'Control', 'Meta', 'Shift']);
 
-// A script focus during a mouse press still matches `:focus-visible` in Chromium and WebKit
+// A script focus during a mouse press still matches `:focus-visible`
 export function focusByPointer(target: HTMLElement): void {
 	const isMarked = 'sonicPointerFocus' in target.dataset;
 
@@ -14,11 +14,20 @@ export function focusByPointer(target: HTMLElement): void {
 		marking.abort();
 	};
 
-	target.addEventListener('blur', clear, { signal: marking.signal });
+	target.addEventListener(
+		'blur',
+		() => {
+			// A window or tab switch blurs the target and leaves it the active element
+			if (target.ownerDocument.activeElement !== target) clear();
+		},
+		{ signal: marking.signal },
+	);
 	target.addEventListener(
 		'keydown',
 		(event) => {
-			if (!modifierKeys.has(event.key)) clear();
+			if (event.metaKey || event.ctrlKey || event.altKey || modifierKeys.has(event.key)) return;
+
+			clear();
 		},
 		{ signal: marking.signal },
 	);

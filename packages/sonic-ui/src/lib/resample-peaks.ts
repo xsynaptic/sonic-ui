@@ -44,9 +44,11 @@ function upsample(peaks: ArrayLike<number>, count: number): Array<number> {
 
 export function resamplePeaks(peaks: ArrayLike<number>, count: number): Array<number> {
 	if (count <= 0 || peaks.length === 0) return [];
-	// eslint-disable-next-line unicorn/prefer-spread -- an `ArrayLike` has no iterator to spread
-	if (count === peaks.length) return Array.from(peaks);
-	if (count > peaks.length) return upsample(peaks, count);
 
-	return renormalize(downsample(peaks, count));
+	const finite = Array.from(peaks, (peak) => (Number.isFinite(peak) ? peak : 0));
+
+	if (count === finite.length) return finite;
+	if (count > finite.length) return upsample(finite, count);
+
+	return renormalize(downsample(finite, count));
 }

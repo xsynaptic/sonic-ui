@@ -85,3 +85,20 @@ test('opening the entry drops a hover, so closing it shows the value again', () 
 
 	expect(claim.shown(30, true)).toEqual({ isOpen: false, value: 30 });
 });
+
+test('a dismissed hover stays away until the pointer leaves and comes back', () => {
+	const claim = new ReadoutClaim(vi.fn());
+
+	expect(claim.dismiss()).toBe(false);
+
+	claim.hover(12);
+	expect(claim.dismiss()).toBe(true);
+	expect(claim.shown(30, true)).toEqual({ isOpen: false, value: 30 });
+
+	claim.hover(13);
+	expect(claim.shown(30, true)).toEqual({ isOpen: false, value: 30 });
+
+	claim.hover();
+	claim.hover(14);
+	expect(claim.shown(30, true)).toEqual({ isOpen: true, value: 14 });
+});

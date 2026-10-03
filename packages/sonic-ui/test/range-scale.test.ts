@@ -246,3 +246,7 @@ test.each([10, 0])('an endless scale from 10 to %d holds min', (max) => {
 	expect(collapsed.keyTarget('End', 5)).toBe(10);
 	expect(collapsed.keyTarget('ArrowUp', 10)).toBe(10);
 });
+
+test('an endless scale wraps a value a float short of max to min', () => {
+	expect(scaleOf({ isWrapping: true, max: 370, min: 10, step: 0 }).snap(370 - 1e-13)).toBe(10);
+});

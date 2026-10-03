@@ -7,6 +7,8 @@ export class ReadoutClaim {
 
 	#hover: number | undefined;
 
+	#isDismissed = false;
+
 	#isDragging = false;
 
 	#isEditing = false;
@@ -37,13 +39,24 @@ export class ReadoutClaim {
 		return wasTimed;
 	}
 
+	// Stays dismissed until the hover ends, or the next pointer move would bring it straight back
+	dismiss(): boolean {
+		const wasHovered = this.#hover !== undefined;
+
+		this.#hover = undefined;
+		this.#isDismissed = wasHovered || this.#isDismissed;
+
+		return wasHovered;
+	}
+
 	edit(isOpen: boolean): void {
 		this.#isEditing = isOpen;
 		if (isOpen) this.#hover = undefined;
 	}
 
 	hover(value?: number): void {
-		if (this.#isEditing || this.isRevealed) return;
+		if (value === undefined) this.#isDismissed = false;
+		if (this.#isDismissed || this.#isEditing || this.isRevealed) return;
 
 		this.#hover = value;
 	}

@@ -29,3 +29,13 @@ test('nothing to draw gives no bars', () => {
 	expect(resamplePeaks([], 10)).toEqual([]);
 	expect(resamplePeaks([0.5], 0)).toEqual([]);
 });
+
+test.each([NaN, Infinity, -Infinity])('a peak of %d draws as silence at every ratio', (bad) => {
+	expect(rounded(resamplePeaks([0.2, bad, 0.6, 0.4], 2))).toEqual([0.2, 1]);
+	expect(resamplePeaks([0.2, bad, 0.6], 3)).toEqual([0.2, 0, 0.6]);
+	expect(rounded(resamplePeaks([0.2, bad, 0.6], 5))).toEqual([0.2, 0.1, 0, 0.3, 0.6]);
+});
+
+test('one value spreads flat across every bar', () => {
+	expect(resamplePeaks([0.4], 3)).toEqual([0.4, 0.4, 0.4]);
+});

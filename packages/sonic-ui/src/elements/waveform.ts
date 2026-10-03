@@ -163,6 +163,7 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 	static override readonly observedAttributes = [
 		...SonicWaveElement.observedAttributes,
 		'playing',
+		'rate',
 		'zoom',
 	];
 
@@ -191,6 +192,16 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 
 	set playing(isPlaying: boolean) {
 		this.reflect('playing', isPlaying);
+	}
+
+	get rate(): number {
+		const rate = this.numberAttribute('rate', 1);
+
+		return rate > 0 ? rate : 1;
+	}
+
+	set rate(value: number | undefined) {
+		this.reflect('rate', value);
 	}
 
 	get readTime(): (() => number | undefined) | undefined {
@@ -261,7 +272,7 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 	});
 
 	override connectedCallback(): void {
-		this.upgradeProperties('data', 'pending', 'playing', 'readTime', 'requestSpan', 'zoom');
+		this.upgradeProperties('data', 'pending', 'playing', 'rate', 'readTime', 'requestSpan', 'zoom');
 		super.connectedCallback();
 	}
 
@@ -291,7 +302,11 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 	): void {
 		const held = this.#held();
 		const timeline = frameTimeline({
-			clockSeconds: this.#clock.read(frameMs, this.#sourceSeconds(), this.playing),
+			clockSeconds: this.#clock.read(frameMs, {
+				isPlaying: this.playing,
+				rate: this.rate,
+				seconds: this.#sourceSeconds(),
+			}),
 			frameMs,
 			...(held ? { held } : {}),
 			isPaged: look.isReducedMotion,

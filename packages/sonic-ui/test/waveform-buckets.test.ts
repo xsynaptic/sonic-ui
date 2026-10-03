@@ -80,3 +80,43 @@ test('the buckets cover the window from before its start to just past its end', 
 	expect(buckets.at(-1)?.x).toBeGreaterThanOrEqual(width);
 	expect(buckets.at(-1)?.x).toBeLessThan(width + 3 * 1.2);
 });
+
+function bucketAt(
+	samples: Int8Array,
+	fromPair: number,
+	pairsPerPixel = 1,
+): undefined | { high: number; low: number } {
+	return waveformBuckets(
+		{ fullScale: 128, pairsPerSecond, samples },
+		{ pixelsPerSecond: pairsPerSecond / pairsPerPixel, startSeconds: 0, width: 8 },
+	).find((bucket) => bucket.fromPair === fromPair);
+}
+
+// Deliberate: a bar always touches the centreline, so a DC offset never floats it
+test('a bucket wholly above zero still reaches the centreline, and one wholly below does too', () => {
+	expect(bucketAt(new Int8Array([16, 64, 32, 96]), 1)).toMatchObject({ high: 0.75, low: 0 });
+	expect(bucketAt(new Int8Array([-64, -16, -96, -32]), 1)).toMatchObject({ high: 0, low: -0.75 });
+});
+
+test('a bucket across the end of the data folds only the pairs that exist', () => {
+	const samples = new Int8Array([-8, 8, -16, 16, -32, 32, -64, 64, -4, 4]);
+
+	expect(bucketAt(samples, 4, 2)).toMatchObject({ high: 0.03125, low: -0.03125 });
+	expect(bucketAt(samples, 6, 2)).toMatchObject({ high: 0, low: 0 });
+	expect(bucketAt(samples, -2, 2)).toMatchObject({ high: 0, low: 0 });
+});
+
+test('at one and a half pairs a pixel every bucket holds two whole pairs, a pixel and a third apart', () => {
+	const buckets = waveformBuckets(silence(4000), {
+		pixelsPerSecond: pairsPerSecond / 1.5,
+		startSeconds: 100 / pairsPerSecond,
+		width: 40,
+	});
+
+	for (const [index, bucket] of buckets.entries()) {
+		expect(bucket.toPair - bucket.fromPair).toBe(2);
+		expect(bucket.fromPair % 2).toBe(0);
+		expect(bucket.x).toBeCloseTo((buckets[0]?.x ?? NaN) + (index * 4) / 3, 9);
+	}
+	expect(buckets.find(({ fromPair }) => fromPair === 100)?.x).toBeCloseTo(0, 9);
+});

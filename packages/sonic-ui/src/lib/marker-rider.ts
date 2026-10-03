@@ -65,7 +65,13 @@ function parkedPlacement(
 	};
 }
 
+function isDrawable(length: number): boolean {
+	return Number.isFinite(length) && length > 0;
+}
+
 export function layoutRider(labels: ReadonlyArray<RiderLabel>, view: RiderView): RiderLayout {
+	if (!isDrawable(view.windowSeconds) || !isDrawable(view.widthPx)) return {};
+
 	const parkedIndex = labels.findLastIndex((label) => label.value <= view.playheadSeconds);
 	const next = labels[parkedIndex + 1];
 	const arrivingX = next ? lineX(next.value, view) + view.insetPx : Infinity;
@@ -172,7 +178,9 @@ export function createLabelRider(
 			);
 
 			insetPx = readPxProperty(getComputedStyle(control), insetProperty, 0);
-			measured = labels.map((label, index) => ({ ...label, widthPx: widths[index] ?? 0 }));
+			measured = labels
+				.map((label, index) => ({ ...label, widthPx: widths[index] ?? 0 }))
+				.toSorted((first, second) => first.value - second.value);
 		},
 		place: (window) => {
 			const layout = layoutRider(measured, { ...window, insetPx });

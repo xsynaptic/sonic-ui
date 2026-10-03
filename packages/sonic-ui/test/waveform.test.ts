@@ -126,3 +126,24 @@ test('under reduced motion the playhead pages', () => {
 	flushFrames();
 	expect(playheadAt(control)).toBeCloseTo((6.9 / 7) * 100, 6);
 });
+
+test('rate scales how far a frame carries the playhead past a stale source', () => {
+	const { flushFrames } = installCanvasFakes({ isReducedMotion: true });
+	const { control, waveform } = mountWaveform('max="300" playing rate="2" step="0" value="7"');
+
+	waveform.readTime = () => 7;
+	flushFrames(1000);
+	flushFrames(1100);
+
+	expect(playheadAt(control)).toBeCloseTo(((0.2 - 0.2 * (1 - 0.94 ** 6)) / 7) * 100, 6);
+});
+
+test.each(['0', '-2', 'fast', 'Infinity'])('a rate of %s falls back to 1', (rate) => {
+	const { waveform } = mountWaveform(`rate="${rate}"`);
+
+	expect(waveform.rate).toBe(1);
+
+	waveform.rate = 1.5;
+	expect(waveform.rate).toBe(1.5);
+	expect(waveform.getAttribute('rate')).toBe('1.5');
+});

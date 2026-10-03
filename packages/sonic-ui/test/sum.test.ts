@@ -241,3 +241,42 @@ test('a nested sum keeps its own members', async () => {
 		60, 40, 40, 60,
 	]);
 });
+
+test('a fine mover among coarse siblings is held to what they can absorb, mid-drag too', async () => {
+	const coarse = '<sonic-slider step="5" value="25"></sonic-slider>';
+	const { members } = await mountSum('', sliders(50, coarse, coarse));
+	const [first] = members;
+	if (!first) throw new Error('No member');
+
+	const cap = capOf(first);
+
+	pointerAt(cap, 'pointerdown', { clientX: xAt(50) });
+	pointerAt(cap, 'pointermove', { clientX: xAt(53) });
+	await Promise.resolve();
+	expect(valuesOf(members)).toEqual([50, 25, 25]);
+
+	pointerAt(cap, 'pointermove', { clientX: xAt(55) });
+	await Promise.resolve();
+	expect(valuesOf(members)).toEqual([55, 25, 20]);
+
+	pointerAt(cap, 'pointermove', { clientX: xAt(56) });
+	await Promise.resolve();
+	expect(valuesOf(members).reduce((total, value) => total + value, 0)).toBe(100);
+
+	pointerAt(cap, 'pointerup', { clientX: xAt(56) });
+	await Promise.resolve();
+	expect(valuesOf(members).reduce((total, value) => total + value, 0)).toBe(100);
+});
+
+test('a total the members cannot reach saturates and warns once', async () => {
+	const warn = vi.spyOn(console, 'warn').mockReturnValue();
+	const capped = '<sonic-slider max="20" value="10"></sonic-slider>';
+	const { members, sum } = await mountSum('mode="equal" total="100"', sliders(capped, capped));
+
+	expect(valuesOf(members)).toEqual([20, 20]);
+
+	sum.mode = 'cascade';
+	sum.mode = 'equal';
+
+	expect(warn).toHaveBeenCalledTimes(1);
+});

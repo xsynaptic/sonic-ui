@@ -66,8 +66,11 @@ export function datByteRange(
 }
 
 // Typed arrays read the platform's byte order; every browser platform is little-endian, as the format is
+// A range response can end mid-sample; the odd byte is dropped
 export function readDatSamples(header: DatHeader, body: ArrayBuffer): Int8Array | Int16Array {
-	return header.bits === 8 ? new Int8Array(body) : new Int16Array(body);
+	return header.bits === 8
+		? new Int8Array(body)
+		: new Int16Array(body, 0, Math.floor(body.byteLength / 2));
 }
 
 export function readDatWaveformData(header: DatHeader, body: ArrayBuffer): WaveformData {

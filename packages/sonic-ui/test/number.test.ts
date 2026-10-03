@@ -158,3 +158,31 @@ test('without press, a tap leaves the value', () => {
 
 	expect(number.value).toBe(4);
 });
+
+test('Enter that confirms a composition leaves the entry open, and the next Enter commits', () => {
+	const { control, number } = mountNumber('value="40"');
+	const { entry } = partsOf(control);
+
+	pressKey(control, 'Enter');
+	entry.value = '75';
+	entry.dispatchEvent(
+		new KeyboardEvent('keydown', { bubbles: true, isComposing: true, key: 'Enter' }),
+	);
+	expect(entry.hidden).toBe(false);
+	expect(number.value).toBe(40);
+
+	typeKey(entry, 'Enter');
+	expect(number.value).toBe(75);
+});
+
+test("the inner field's own input and change never leave the control", () => {
+	const { control } = mountNumber('value="40"');
+	const { entry } = partsOf(control);
+	const events = recordEvents(document.body);
+
+	pressKey(control, 'Enter');
+	entry.dispatchEvent(new Event('input', { bubbles: true }));
+	entry.dispatchEvent(new Event('change', { bubbles: true }));
+
+	expect(events).toEqual([]);
+});

@@ -2,59 +2,89 @@ import { expect, test } from 'vitest';
 
 import { createTrackingClock } from '#lib/tracking-clock.ts';
 
-test('a seek over half a second snaps rather than sliding through the span between', () => {
+function playing(seconds: number, rate = 1): { isPlaying: boolean; rate: number; seconds: number } {
+	return { isPlaying: true, rate, seconds };
+}
+
+function errorAfter(wallMs: number, frameMs: number): number {
+	const clock = createTrackingClock();
+	let position = clock.read(0, playing(10));
+
+	for (let frame = 1; frame <= Math.round(wallMs / frameMs); frame += 1) {
+		position = clock.read(frame * frameMs, playing(10.2 + (frame * frameMs) / 1000));
+	}
+
+	return 10.2 + wallMs / 1000 - position;
+}
+
+test('a seek over half a second snaps, and one under it eases', () => {
 	const clock = createTrackingClock();
 
-	clock.read(0, 10, true);
+	clock.read(0, playing(10));
+	expect(clock.read(0, playing(10.6))).toBe(10.6);
 
-	expect(clock.read(16, 100, true)).toBe(100);
+	const eased = clock.read(20, playing(11.02));
+
+	expect(eased).toBeGreaterThan(10.62);
+	expect(eased).toBeLessThan(10.7);
 });
 
-test('below the snap it closes 6% of the error each frame', () => {
-	const clock = createTrackingClock();
+test('the same error closes alike at 30, 60 and 120 Hz', () => {
+	const left = 0.2 * 0.94 ** 30;
 
-	clock.read(0, 10, true);
-
-	expect(clock.read(0, 10.2, true)).toBeCloseTo(10.012, 9);
+	expect(errorAfter(500, 1000 / 30)).toBeCloseTo(left, 9);
+	expect(errorAfter(500, 1000 / 60)).toBeCloseTo(left, 9);
+	expect(errorAfter(500, 1000 / 120)).toBeCloseTo(left, 9);
 });
 
 test('between source reports, frame time runs the position', () => {
 	const clock = createTrackingClock();
 
-	clock.read(5000, 10, true);
+	clock.read(5000, playing(10));
 
-	expect(clock.read(5100, 10, true)).toBeCloseTo(10.1 - 0.1 * 0.06, 9);
+	expect(clock.read(5100, playing(10))).toBeCloseTo(10.1 - 0.1 * (1 - 0.94 ** 6), 9);
+});
+
+test.each([0.5, 2, 3])('a source at rate %d is tracked without lag', (rate) => {
+	const clock = createTrackingClock();
+	let position = clock.read(0, playing(10, rate));
+
+	for (let frame = 1; frame <= 120; frame += 1) {
+		position = clock.read(frame * 25, playing(10 + frame * 0.025 * rate, rate));
+	}
+
+	expect(position).toBeCloseTo(10 + 3 * rate, 9);
 });
 
 test('the gap across a pause is not time played', () => {
 	const clock = createTrackingClock();
 
-	clock.read(0, 10, true);
-	clock.read(16, 10, false);
+	clock.read(0, playing(10));
+	clock.read(16, { isPlaying: false, rate: 1, seconds: 10 });
 
-	expect(clock.read(416, 10, true)).toBe(10);
+	expect(clock.read(416, playing(10))).toBe(10);
 });
 
 test('a late frame counts its own elapsed time before judging a seek', () => {
 	const clock = createTrackingClock();
 
-	clock.read(5000, 10, true);
+	clock.read(5000, playing(10));
 
-	expect(clock.read(5300, 10.6, true)).toBeCloseTo(10.3 + 0.3 * 0.06, 9);
+	expect(clock.read(5300, playing(10.6))).toBeCloseTo(10.3 + 0.3 * (1 - 0.94 ** 18), 9);
 });
 
 test('a seek back over half a second snaps too', () => {
 	const clock = createTrackingClock();
 
-	clock.read(0, 100, true);
+	clock.read(0, playing(100));
 
-	expect(clock.read(16, 10, true)).toBe(10);
+	expect(clock.read(16, playing(10))).toBe(10);
 });
 
 test('a pause lands on the source, however small the error', () => {
 	const clock = createTrackingClock();
 
-	clock.read(0, 10, true);
+	clock.read(0, playing(10));
 
-	expect(clock.read(16, 10.2, false)).toBe(10.2);
+	expect(clock.read(16, { isPlaying: false, rate: 1, seconds: 10.2 })).toBe(10.2);
 });

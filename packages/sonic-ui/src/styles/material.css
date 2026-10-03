@@ -282,10 +282,7 @@
 					.sonic-waveform,
 					.sonic-wavestrip,
 					.sonic-xy
-				):is(:focus-visible, :focus-within)::before {
-				animation: sonic-glass-breathe 3s ease-in-out infinite alternate;
-			}
-
+				):is(:focus-visible, :focus-within)::before,
 			:state(dragging)
 				> :is(
 					.sonic-envelope,

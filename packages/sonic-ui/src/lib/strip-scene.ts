@@ -53,7 +53,7 @@ export function stripBars(
 }
 
 export function stripSpans(state: SpanState, widthPx: number): StripSpans {
-	const px = (place: number): number => Math.round(place * widthPx);
+	const px = (place: number): number => Math.round((Number.isFinite(place) ? place : 0) * widthPx);
 	const buffered = state.buffered
 		.map(([start, end]): [number, number] => [px(start), px(end)])
 		.filter(([start, end]) => end > start);

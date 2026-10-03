@@ -133,3 +133,50 @@ test('placing the same window twice writes nothing the second time', () => {
 	expect(control.firstElementChild?.getAttribute('style')).toContain('clip-path');
 	expect(records).toEqual([]);
 });
+
+test.each([
+	{ windowSeconds: 0 },
+	{ windowSeconds: -40 },
+	{ windowSeconds: NaN },
+	{ widthPx: 0 },
+	{ widthPx: -400 },
+	{ widthPx: Infinity },
+])('a window of %o lays out nothing', (bad) => {
+	expect(layoutRider(labels([5, 40], [30, 40]), { ...view, ...bad })).toEqual({});
+});
+
+test('labels measured out of order park and arrive in order of time', () => {
+	const { arriving, control, parked, rider } = mountRider();
+
+	rider.measure([
+		{ isDimmed: true, text: 'Drop', value: 10.9 },
+		{ isDimmed: false, text: 'Intro', value: 1 },
+	]);
+	rider.place(early);
+
+	expect([parked.textContent, arriving.textContent]).toEqual(['Intro', 'Drop']);
+	expect(control.querySelectorAll('.sonic-test-label')).toHaveLength(2);
+});
+
+test('a parked label fades by the written opacity, and clears it once whole again', () => {
+	const { parked, rider } = mountRider();
+
+	rider.place(early);
+	expect(parked.style.opacity).toBe('0.590');
+
+	rider.place({ ...early, playheadSeconds: 1.9 });
+	expect(parked.style.opacity).toBe('0.900');
+
+	rider.measure([{ isDimmed: false, text: 'Intro', value: 1 }]);
+	rider.place(early);
+	expect(parked.style.opacity).toBe('');
+});
+
+test('a label with no room left in the window is hidden, not drawn at no width', () => {
+	const { arriving, parked, rider } = mountRider();
+
+	rider.place({ ...early, startSeconds: -50 });
+
+	expect(parked.hidden).toBe(true);
+	expect(arriving.hidden).toBe(true);
+});
