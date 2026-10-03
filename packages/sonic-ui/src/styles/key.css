@@ -42,12 +42,7 @@
 		--_sonic-unit: calc(var(--_sonic-key-size) / 32);
 		--_sonic-key-corner: calc(var(--_sonic-key-size) * var(--_sonic-key-radius-ratio));
 		--_sonic-key-gap: calc(var(--_sonic-key-size) * var(--_sonic-key-gap-ratio));
-		--_sonic-key-depth: calc(var(--_sonic-key-size) * var(--_sonic-key-depth-ratio));
-		--_sonic-key-shift: calc(var(--_sonic-key-depth) / -2);
-		--_sonic-key-scale: 1;
-		--_sonic-key-drop: calc(1.5 * var(--_sonic-cast-x)) calc(1.5 * var(--_sonic-cast-y))
-			calc(2 * var(--_sonic-unit)) var(--_sonic-drop-shade);
-		--_sonic-key-glow: transparent;
+		--_sonic-keycap-depth: calc(var(--_sonic-key-size) * var(--_sonic-key-depth-ratio));
 
 		position: relative;
 		flex-shrink: 0;
@@ -70,12 +65,12 @@
 
 	/* Before the latched rule, which must win unchanged */
 	:where([armed]) > .sonic-key:not(:disabled, [aria-disabled='true']) {
-		--_sonic-key-glow: color-mix(in oklab, var(--_sonic-lit) 8%, transparent);
+		--_sonic-keycap-glow: color-mix(in oklab, var(--_sonic-lit) 8%, transparent);
 
 		color: color-mix(in oklab, var(--_sonic-lit) 55%, var(--_sonic-ink));
 
 		@media (forced-colors: active) {
-			--_sonic-key-glow: transparent;
+			--_sonic-keycap-glow: transparent;
 		}
 	}
 
@@ -86,13 +81,13 @@
 
 	.sonic-key:active:where(:not(:disabled, [aria-disabled='true'])),
 	.sonic-key:is([aria-pressed='true'], :where([momentary]:state(pressed)) > *) {
-		--_sonic-key-shift: calc(var(--_sonic-key-depth) / 2);
-		--_sonic-key-scale: var(--_sonic-key-press-scale);
-		--_sonic-key-drop: var(--_sonic-press-drop);
+		--_sonic-keycap-shift: calc(var(--_sonic-keycap-depth) / 2);
+		--_sonic-keycap-scale: var(--_sonic-key-press-scale);
+		--_sonic-keycap-drop: var(--_sonic-press-drop);
 	}
 
 	.sonic-key:is([aria-pressed='true'], :where([momentary]:state(pressed)) > *) {
-		--_sonic-key-glow: color-mix(in oklab, var(--_sonic-lit) 22%, transparent);
+		--_sonic-keycap-glow: color-mix(in oklab, var(--_sonic-lit) 22%, transparent);
 
 		color: var(--_sonic-lit);
 		background: linear-gradient(
@@ -133,33 +128,14 @@
 	}
 
 	.sonic-key-cap {
+		--_sonic-keycap-corner: max(0px, var(--_sonic-key-corner) - var(--_sonic-key-gap));
+		--_sonic-keycap-bevel: calc(var(--_sonic-key-size) * var(--_sonic-key-bevel-ratio));
+		--_sonic-keycap-face-corner: calc(var(--_sonic-key-size) * var(--_sonic-key-face-radius-ratio));
+
 		position: absolute;
 		inset: var(--_sonic-key-gap);
-		display: grid;
 		gap: calc(var(--_sonic-key-size) * var(--_sonic-key-led-ratio) / 2);
 		place-content: center;
-		place-items: center;
-		background: var(--_sonic-skirt);
-		border-radius: max(0px, var(--_sonic-key-corner) - var(--_sonic-key-gap));
-		box-shadow: var(--_sonic-key-drop), var(--_sonic-rim), var(--_sonic-focus-shadow);
-		scale: var(--_sonic-key-scale);
-		translate: 0 var(--_sonic-key-shift);
-		transition: var(--_sonic-press-transition);
-
-		&::before {
-			position: absolute;
-			inset: calc(var(--_sonic-key-size) * var(--_sonic-key-bevel-ratio));
-			content: '';
-			background:
-				radial-gradient(closest-side, var(--_sonic-key-glow), transparent), var(--_sonic-sheen),
-				var(--_sonic-face);
-			border-radius: calc(var(--_sonic-key-size) * var(--_sonic-key-face-radius-ratio));
-			box-shadow: var(--_sonic-face-shadow);
-		}
-
-		& > * {
-			position: relative;
-		}
 
 		& > .sonic-led {
 			--_sonic-led-size: var(

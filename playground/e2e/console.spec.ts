@@ -1,19 +1,6 @@
-import type { Page } from '@playwright/test';
-
 import { expect, test } from '@playwright/test';
 
-function collectConsole(page: Page): Array<string> {
-	const messages: Array<string> = [];
-
-	page.on('console', (message) => {
-		if (message.type() === 'error' || message.type() === 'warning') messages.push(message.text());
-	});
-	page.on('pageerror', (error) => {
-		messages.push(error.message);
-	});
-
-	return messages;
-}
+import { collectConsole } from './console-messages.ts';
 
 test('the fixtures load with a clean console', async ({ page }) => {
 	const messages = collectConsole(page);

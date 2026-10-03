@@ -8,7 +8,13 @@ declare const __DEV__: boolean;
 
 const namingAttributes = ['aria-describedby', 'aria-label', 'aria-labelledby'];
 
-const checkedClasses = new WeakSet<object>();
+const checkedSheets = new WeakMap<object, Set<string>>();
+
+interface StyleProbe {
+	selector?: string;
+	sheet: string;
+	token: string;
+}
 
 function writeLabelledBy(target: Element, labels: Array<Element>): void {
 	const current = target.ariaLabelledByElements;
@@ -110,24 +116,34 @@ export abstract class SonicElement extends HTMLElement {
 		if (!__DEV__) return;
 
 		const elementClass = this.constructor;
-		if (checkedClasses.has(elementClass)) return;
+		const checked = checkedSheets.get(elementClass) ?? new Set<string>();
+		const part = ({ selector }: StyleProbe): Element | undefined =>
+			selector === undefined ? control : (this.querySelector(selector) ?? undefined);
+		// An LED inherits `--_sonic-unit` from its control, so a token of its own probes it
+		const probes: Array<StyleProbe> = [
+			{ sheet: 'material.css', token: '--_sonic-unlit' },
+			{ sheet, token: '--_sonic-unit' },
+			{ selector: '.sonic-led', sheet: 'led.css', token: '--_sonic-led-lens-ratio' },
+		].filter((probe) => !checked.has(probe.sheet) && part(probe) !== undefined);
+		if (probes.length === 0) return;
 
-		checkedClasses.add(elementClass);
+		checkedSheets.set(elementClass, checked);
+		for (const probe of probes) checked.add(probe.sheet);
 		requestAnimationFrame(() => {
-			if (!control.isConnected) {
-				checkedClasses.delete(elementClass);
-				return;
-			}
+			const missing: Array<string> = [];
 
-			const styles = getComputedStyle(control);
-			const missing = [
-				styles.getPropertyValue('--_sonic-unlit') === '' ? 'material.css' : '',
-				styles.getPropertyValue('--_sonic-unit') === '' ? sheet : '',
-			].filter(Boolean);
+			for (const probe of probes) {
+				const drawn = control.isConnected ? part(probe) : undefined;
+
+				if (!drawn) checked.delete(probe.sheet);
+				else if (getComputedStyle(drawn).getPropertyValue(probe.token) === '') {
+					missing.push(`@xsynaptic/sonic-ui/${probe.sheet}`);
+				}
+			}
 			if (missing.length === 0) return;
 
 			console.warn(
-				`<${this.localName}> draws blank without ${missing.map((file) => `@xsynaptic/sonic-ui/${file}`).join(' and ')} (or controls.css)`,
+				`<${this.localName}> draws blank without ${missing.join(' and ')} (or controls.css)`,
 			);
 		});
 	}

@@ -236,31 +236,39 @@
 				var(--_sonic-well),
 				inset 0 0 calc(3 * var(--_sonic-glass-depth) * var(--_sonic-unit)) rgb(0 0 0 / 45%);
 		}
+
+		@media (forced-colors: none) {
+			/* No var() beside the tile, which would parse the url() again on every style recalculation */
+			&::before {
+				position: absolute;
+				inset: 0;
+				color: color-mix(in oklab, var(--_sonic-glass-text) 7.5%, transparent);
+				pointer-events: none;
+				content: '';
+				background:
+					radial-gradient(closest-side, currentcolor, transparent) no-repeat,
+					url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='128'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.056 -0.01925'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")
+						0 0 / 128px 128px repeat;
+				border-radius: inherit;
+				opacity: min(1, var(--_sonic-glass-texture));
+			}
+
+			@media (prefers-reduced-motion: no-preference) {
+				&:is(:focus-visible, :focus-within)::before,
+				:state(dragging) > &::before {
+					animation: sonic-glass-breathe 3s ease-in-out infinite alternate;
+				}
+
+				@media (hover: hover) {
+					&:hover::before {
+						animation: sonic-glass-breathe 3s ease-in-out infinite alternate;
+					}
+				}
+			}
+		}
 	}
 
 	@media (forced-colors: none) {
-		/* No var() beside the tile, which would parse the url() again on every style recalculation */
-		:is(
-			.sonic-envelope,
-			.sonic-number,
-			.sonic-screen,
-			.sonic-waveform,
-			.sonic-wavestrip,
-			.sonic-xy
-		)::before {
-			position: absolute;
-			inset: 0;
-			color: color-mix(in oklab, var(--_sonic-glass-text) 7.5%, transparent);
-			pointer-events: none;
-			content: '';
-			background:
-				radial-gradient(closest-side, currentcolor, transparent) no-repeat,
-				url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='128'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.056 -0.01925'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")
-					0 0 / 128px 128px repeat;
-			border-radius: inherit;
-			opacity: min(1, var(--_sonic-glass-texture));
-		}
-
 		:is(.sonic-number, .sonic-screen),
 		:is(.sonic-envelope, .sonic-waveform, .sonic-wavestrip, .sonic-xy)::after {
 			filter: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='w' x='-0.3' y='-0.3' width='1.6' height='1.6' primitiveUnits='objectBoundingBox' color-interpolation-filters='sRGB'%3E%3CfeFlood x='0' y='0' width='1' height='1' flood-color='%23000'/%3E%3CfeFlood x='.5' y='0' width='.5' height='1' flood-color='%23f00' result='r'/%3E%3CfeFlood x='0' y='.5' width='1' height='.5' flood-color='%230f0' result='g'/%3E%3CfeFlood x='0' y='0' width='1' height='1' flood-color='%23000' result='k'/%3E%3CfeComposite in='r' in2='g' operator='arithmetic' k2='1' k3='1' result='h'/%3E%3CfeMerge x='0' y='0' width='1' height='1'%3E%3CfeMergeNode in='k'/%3E%3CfeMergeNode in='h'/%3E%3C/feMerge%3E%3CfeGaussianBlur x='0' y='0' width='1' height='1' stdDeviation='0.25'/%3E%3CfeColorMatrix values='1 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 1'/%3E%3CfeComponentTransfer result='a'%3E%3CfeFuncR type='table' tableValues='0 0.052 0.172 0.25 0.312 0.364 0.412 0.457 0.5 0.543 0.588 0.636 0.688 0.75 0.828 0.948 1'/%3E%3CfeFuncG type='table' tableValues='0 0.052 0.172 0.25 0.312 0.364 0.412 0.457 0.5 0.543 0.588 0.636 0.688 0.75 0.828 0.948 1'/%3E%3C/feComponentTransfer%3E%3CfeComponentTransfer%3E%3CfeFuncR type='table' tableValues='1 0.563 0.25 0.063 0 0.063 0.25 0.563 1'/%3E%3CfeFuncG type='table' tableValues='1 0.563 0.25 0.063 0 0.063 0.25 0.563 1'/%3E%3C/feComponentTransfer%3E%3CfeColorMatrix values='.5 .5 0 0 0 .5 .5 0 0 0 0 0 0 0 0 0 0 0 0 1'/%3E%3CfeComponentTransfer result='f'%3E%3CfeFuncR type='gamma' amplitude='0.333' exponent='2'/%3E%3CfeFuncG type='gamma' exponent='2'/%3E%3C/feComponentTransfer%3E%3CfeComposite in='a' in2='f' operator='arithmetic' k1='1' k3='-.5' k4='.5' result='m'/%3E%3CfeFlood flood-color='%23808080'/%3E%3CfeMerge result='n'%3E%3CfeMergeNode/%3E%3CfeMergeNode in='m'/%3E%3C/feMerge%3E%3CfeDisplacementMap in='SourceGraphic' in2='n' scale='0.04' xChannelSelector='R' yChannelSelector='G'/%3E%3C/filter%3E%3C/svg%3E#w");
@@ -271,40 +279,6 @@
 			:is(.sonic-number, .sonic-screen),
 			:is(.sonic-envelope, .sonic-waveform, .sonic-wavestrip, .sonic-xy)::after {
 				filter: none;
-			}
-		}
-
-		@media (prefers-reduced-motion: no-preference) {
-			:is(
-					.sonic-envelope,
-					.sonic-number,
-					.sonic-screen,
-					.sonic-waveform,
-					.sonic-wavestrip,
-					.sonic-xy
-				):is(:focus-visible, :focus-within)::before,
-			:state(dragging)
-				> :is(
-					.sonic-envelope,
-					.sonic-number,
-					.sonic-waveform,
-					.sonic-wavestrip,
-					.sonic-xy
-				)::before {
-				animation: sonic-glass-breathe 3s ease-in-out infinite alternate;
-			}
-
-			@media (hover: hover) {
-				:is(
-						.sonic-envelope,
-						.sonic-number,
-						.sonic-screen,
-						.sonic-waveform,
-						.sonic-wavestrip,
-						.sonic-xy
-					):hover::before {
-					animation: sonic-glass-breathe 3s ease-in-out infinite alternate;
-				}
 			}
 		}
 	}
@@ -347,6 +321,38 @@
 	:is(.sonic-key, .sonic-segmented-segment) {
 		--_sonic-press-drop: calc(0.5 * var(--_sonic-cast-x)) calc(0.5 * var(--_sonic-cast-y))
 			var(--_sonic-unit) var(--_sonic-drop-shade);
+		--_sonic-keycap-shift: calc(var(--_sonic-keycap-depth) / -2);
+		--_sonic-keycap-scale: 1;
+		--_sonic-keycap-drop: calc(1.5 * var(--_sonic-cast-x)) calc(1.5 * var(--_sonic-cast-y))
+			calc(2 * var(--_sonic-unit)) var(--_sonic-drop-shade);
+		--_sonic-keycap-glow: transparent;
+	}
+
+	/* Each sheet maps its own depth, corner, bevel and face corner onto the `keycap` tokens */
+	:is(.sonic-key-cap, .sonic-segmented-cap) {
+		display: grid;
+		place-items: center;
+		background: var(--_sonic-skirt);
+		border-radius: var(--_sonic-keycap-corner);
+		box-shadow: var(--_sonic-keycap-drop), var(--_sonic-rim), var(--_sonic-focus-shadow);
+		scale: var(--_sonic-keycap-scale);
+		translate: 0 var(--_sonic-keycap-shift);
+		transition: var(--_sonic-press-transition);
+
+		&::before {
+			position: absolute;
+			inset: var(--_sonic-keycap-bevel);
+			content: '';
+			background:
+				radial-gradient(closest-side, var(--_sonic-keycap-glow), transparent), var(--_sonic-sheen),
+				var(--_sonic-face);
+			border-radius: var(--_sonic-keycap-face-corner);
+			box-shadow: var(--_sonic-face-shadow);
+		}
+
+		& > * {
+			position: relative;
+		}
 	}
 
 	:is(.sonic-meter, .sonic-slider) {
@@ -453,18 +459,11 @@
 				}
 			}
 		}
-	}
 
-	:state(editing)
-		> :is(.sonic-dial, .sonic-slider, .sonic-waveform, .sonic-wavestrip)
-		> :is(
-			.sonic-dial-readout,
-			.sonic-slider-readout,
-			.sonic-waveform-readout,
-			.sonic-wavestrip-readout
-		) {
-		pointer-events: auto;
-		cursor: text;
+		:state(editing) > :is(.sonic-dial, .sonic-slider, .sonic-waveform, .sonic-wavestrip) > & {
+			pointer-events: auto;
+			cursor: text;
+		}
 	}
 
 	:is(

@@ -1,0 +1,33 @@
+---
+import Document from '#components/document.astro';
+import { solos } from '#scripts/solos.ts';
+
+const styles = import.meta.glob<string>('../../../../../packages/sonic-ui/dist/styles/*.css', {
+	eager: true,
+	import: 'default',
+	query: '?raw',
+});
+
+export function getStaticPaths() {
+	return Object.keys(solos).map((solo) => ({ params: { solo } }));
+}
+
+const { solo } = Astro.params;
+const { markup, sheets } = solos[solo]!;
+const css = ['material', ...sheets]
+	.map((sheet) => styles[`../../../../../packages/sonic-ui/dist/styles/${sheet}.css`])
+	.join('\n');
+
+// The preview resolves the default tree, which has no warning, so this imports the development tree by path
+---
+
+<Document title={`sonic-ui fixtures, ${solo} alone`}>
+	<Fragment set:html={`<style>${css}</style>`} slot="head" />
+	<main>
+		<h1>{solo} alone</h1>
+		<div id="solo" set:html={markup} />
+	</main>
+	<script>
+		import '../../../../../packages/sonic-ui/dist/dev/define.js';
+	</script>
+</Document>
