@@ -4,16 +4,13 @@ import type { SonicKey } from '#elements/key.ts';
 
 import '#define/key.ts';
 
-import { nextTask } from './helpers.ts';
+import { mountControl, nextTask } from './helpers.ts';
 
 function mountKey(attributes: string): { button: HTMLButtonElement; key: SonicKey } {
-	document.body.innerHTML = `<sonic-key ${attributes}><svg data-icon="parsed"></svg></sonic-key>`;
+	const { control, host } = mountControl('sonic-key', attributes, '<svg data-icon="parsed"></svg>');
+	if (!(control instanceof HTMLButtonElement)) throw new Error('The key has no button');
 
-	const key = document.querySelector('sonic-key');
-	const button = key?.querySelector('button');
-	if (!key || !button) throw new Error('The key did not render');
-
-	return { button, key };
+	return { button: control, key: host };
 }
 
 test('parsed children and a child appended later are copied into the cap, and only the key renders', async () => {
@@ -193,6 +190,18 @@ test('two momentary keys hold at once, and focus moving to the second keeps the 
 	expect(second.pressed).toBe(true);
 });
 
+test('focus moving to another control releases a momentary key held from the keyboard', () => {
+	const { button, key } = mountKey('momentary');
+	const next = document.createElement('button');
+
+	document.body.append(next);
+	button.focus();
+	keyOn(button, 'keydown', { key: ' ' });
+	button.dispatchEvent(new FocusEvent('blur', { relatedTarget: next }));
+
+	expect(key.pressed).toBe(false);
+});
+
 test('blur releases a momentary key held from the keyboard', () => {
 	const { button, key } = mountKey('momentary');
 	const trace = holdTrace(key);
@@ -205,7 +214,6 @@ test('blur releases a momentary key held from the keyboard', () => {
 	expect(trace).toEqual([true, false]);
 });
 
-// A detached key's events never reach the body
 test('disconnecting releases a held momentary key', async () => {
 	const { button, key } = mountKey('momentary');
 	const trace = holdTrace(key, key);
@@ -422,4 +430,20 @@ test('disabled wins over soft-disabled', () => {
 
 	expect(button.disabled).toBe(true);
 	expect(button.hasAttribute('aria-disabled')).toBe(false);
+});
+
+test('armed reflects both ways and is no state of the toggle', () => {
+	const { button, key } = mountKey('toggle armed');
+
+	expect(key.armed).toBe(true);
+	expect(button.getAttribute('aria-pressed')).toBe('false');
+	expect(key.pressed).toBe(false);
+
+	key.armed = false;
+	expect(key.hasAttribute('armed')).toBe(false);
+
+	button.click();
+	key.armed = true;
+	expect(key.hasAttribute('armed')).toBe(true);
+	expect(button.getAttribute('aria-pressed')).toBe('true');
 });

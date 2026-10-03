@@ -14,7 +14,7 @@ interface Press {
 	pointerId: number;
 }
 
-function isUnder(option: Element, x: number, y: number): boolean {
+export function isUnder(option: Element, x: number, y: number): boolean {
 	const box = option.getBoundingClientRect();
 
 	return x >= box.left && x < box.right && y >= box.top && y < box.bottom;
@@ -27,7 +27,6 @@ export function optionValue(option: Element): string | undefined {
 export abstract class SonicRadioGroupElement extends SonicFormElement {
 	static override readonly observedAttributes = [...SonicFormElement.observedAttributes, 'value'];
 
-	// As on the range, the property never writes the `value` attribute back
 	get value(): string {
 		return this.#value;
 	}
@@ -109,6 +108,10 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 		return this.options().find((option) => option.tabIndex === 0);
 	}
 
+	protected isWrapping(): boolean {
+		return true;
+	}
+
 	protected optionOf(target: EventTarget | null): HTMLButtonElement | undefined {
 		if (!(target instanceof Element)) return undefined;
 
@@ -130,7 +133,6 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 		return option;
 	}
 
-	// As a radio group, only a checked option submits
 	protected render(): void {
 		const options = this.options();
 		const checked = options.find((option) => optionValue(option) === this.#value);
@@ -158,10 +160,6 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 
 		this.value = next;
 		this.dispatchEvent(new Event('change', { bubbles: true }));
-	}
-
-	protected wraps(): boolean {
-		return true;
 	}
 
 	#bindPress(group: HTMLElement, signal: AbortSignal): void {
@@ -221,7 +219,6 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 		);
 	}
 
-	// Options are kept by position, so focus follows its option's value across a reorder
 	#copyOptions(originals: Array<Node>): void {
 		const group = this.group;
 		const options = this.options();
@@ -259,7 +256,7 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 		if (step === undefined) return undefined;
 
 		const index = options.indexOf(option) + step;
-		if (this.wraps()) return options[(index + options.length) % options.length];
+		if (this.isWrapping()) return options[(index + options.length) % options.length];
 
 		return options[Math.min(Math.max(index, 0), options.length - 1)];
 	}

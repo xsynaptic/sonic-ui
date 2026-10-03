@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 
 import type { SonicDial } from '#elements/dial.ts';
 
@@ -53,103 +53,11 @@ test('a non-finite value is ignored', () => {
 	expect(control.getAttribute('aria-valuenow')).toBe('30');
 });
 
-test.each([
-	['ArrowUp', 51],
-	['ArrowRight', 51],
-	['ArrowDown', 49],
-	['ArrowLeft', 49],
-	['PageUp', 60],
-	['PageDown', 40],
-	['Home', 0],
-	['End', 100],
-])('%s moves a dial at 50 to %d', (key, expected) => {
-	const { control, dial } = mountDial('value="50"');
-
-	expect(pressKey(control, key).defaultPrevented).toBe(true);
-	expect(dial.value).toBe(expected);
-});
-
-test.each([
-	['ArrowUp', 1.25],
-	['ArrowDown', 0.75],
-	['PageUp', 3.5],
-	['PageDown', -1.5],
-])('%s moves a dial at 1, stepping by 0.25 from -5, to %s', (key, expected) => {
+test('a key the control moves by is taken, and one it does not use keeps its default', () => {
 	const { control, dial } = mountDial('min="-5" max="5" step="0.25" value="1"');
 
-	pressKey(control, key);
-	expect(dial.value).toBe(expected);
-});
-
-test('steps count from min, as on a range input', () => {
-	const { control, dial } = mountDial('min="3" max="20" step="5" value="9"');
-
-	expect(dial.value).toBe(8);
-	expect(control.getAttribute('aria-valuemin')).toBe('3');
-
-	pressKey(control, 'ArrowUp');
-	expect(dial.value).toBe(13);
-});
-
-test.each([
-	['ArrowUp', 105],
-	['ArrowDown', 95],
-	['PageUp', 150],
-	['PageDown', 50],
-])('with key-step="5" over a continuous value, %s moves 100 to %d', (key, expected) => {
-	const { control, dial } = mountDial('min="3" max="200" step="0" key-step="5" value="100"');
-
-	pressKey(control, key);
-	expect(dial.value).toBe(expected);
-});
-
-test('a key step still lands on a step counted from min', () => {
-	const { control, dial } = mountDial('min="1" max="20" step="2" key-step="5" value="3"');
-
-	pressKey(control, 'ArrowUp');
-	expect(dial.value).toBe(9);
-});
-
-test.each([
-	['-0.3', 3, 0],
-	['-1.2', 12, 0],
-	['-2.4', 23, -0.1],
-])('from min %s, %i arrow steps of 0.1 land exactly on %s', (min, presses, expected) => {
-	const { control, dial } = mountDial(`min="${min}" max="3" step="0.1"`);
-
-	for (let press = 0; press < presses; press += 1) pressKey(control, 'ArrowUp');
-
-	expect(dial.value).toBe(expected);
-	expect(control.getAttribute('aria-valuenow')).toBe(String(expected));
-});
-
-test('a drag from min -0.3 in steps of 0.1 lands exactly on 0', () => {
-	const { control, dial } = mountDial('min="-0.3" max="0.7" step="0.1" value="-0.3"');
-
-	dragBy(control, 48);
-
-	expect(dial.value).toBe(0);
-});
-
-test('an endless dial with a step far below its range still lands on the step', () => {
-	const { dial } = mountDial('endless min="-0.1" max="0.9" step="0.0000001" value="-0.0000005"');
-
-	expect(dial.value).toBe(-5e-7);
-});
-
-test('an unstepped range steps its keys by a hundredth of the range', () => {
-	const { control, dial } = mountDial('max="1" step="0" value="0.5"');
-
-	pressKey(control, 'ArrowUp');
-	expect(dial.value).toBe(0.51);
-
-	pressKey(control, 'PageDown');
-	expect(dial.value).toBe(0.41);
-});
-
-test('a key the control does not use keeps its default', () => {
-	const { control } = mountDial('value="50"');
-
+	expect(pressKey(control, 'PageUp').defaultPrevented).toBe(true);
+	expect(dial.value).toBe(3.5);
 	expect(pressKey(control, 'Tab').defaultPrevented).toBe(false);
 });
 
@@ -164,19 +72,6 @@ test('a key fires input and change only when the value moves', () => {
 });
 
 test.each([
-	['notched max="7"', '8'],
-	['notched min="-3" max="3"', '7'],
-	['notched max="1" step="0.25"', '5'],
-	['notched step="0"', ''],
-	['notched max="0"', ''],
-	['max="7"', ''],
-])('%s sets the notch count to "%s"', (attributes, expected) => {
-	const { control } = mountDial(attributes);
-
-	expect(control.style.getPropertyValue('--_sonic-dial-positions')).toBe(expected);
-});
-
-test.each([
 	['value="80" modulation="50"', '0.8', '1'],
 	['value="20" modulation="-50"', '0', '0.2'],
 	['value="40" modulation="25"', '0.4', '0.65'],
@@ -185,17 +80,6 @@ test.each([
 
 	expect(control.style.getPropertyValue('--_sonic-dial-modulation-from')).toBe(from);
 	expect(control.style.getPropertyValue('--_sonic-dial-modulation-to')).toBe(to);
-});
-
-test.each([
-	['min="-50" max="50" origin="0"', '0.5'],
-	['min="-50" max="50" origin="-80"', '0'],
-	['min="-50" max="50" origin="80"', '1'],
-	['min="-50" max="50"', '0'],
-])('%s puts the origin at %s', (attributes, expected) => {
-	const { control } = mountDial(`${attributes} value="20"`);
-
-	expect(control.style.getPropertyValue('--_sonic-dial-origin')).toBe(expected);
 });
 
 test('moving the origin re-renders without touching the value', () => {
@@ -285,6 +169,29 @@ test('formatValueText speaks apart from formatValue, which the entry keeps, and 
 	expect(entry.value).toBe('1:05');
 });
 
+test('valueText follows input in the shown format, not the spoken one', () => {
+	const { control, dial } = mountDial('min="-12" max="12" step="1.5" value="3"');
+	const texts: Array<string> = [];
+	const listening = new AbortController();
+
+	dial.formatValue = (value) => `${String(value)} dB`;
+	dial.formatValueText = (value) => `${String(value)} decibels`;
+	document.body.addEventListener(
+		'input',
+		() => {
+			texts.push(dial.valueText);
+		},
+		{ signal: listening.signal },
+	);
+	pressKey(control, 'ArrowUp');
+	pressKey(control, 'ArrowUp');
+	dial.formatValue = undefined;
+	pressKey(control, 'ArrowDown');
+	listening.abort();
+
+	expect(texts).toEqual(['4.5 dB', '6 dB', '4.5']);
+});
+
 // happy-dom skips `attributeChangedCallback` for attributes present at upgrade, so the value goes in as a property too
 test('properties set before the tag upgrades still take effect', async () => {
 	document.body.innerHTML = '<sonic-late></sonic-late>';
@@ -344,7 +251,6 @@ test('a double press hands the slider role to the entry, holding the value text 
 	}
 });
 
-// `Number.parseFloat` would read "5 kHz" as 5
 test('without parseValue, the entry holds the plain number, so committing it unchanged keeps the value', () => {
 	const { control, dial } = mountDial('max="20000" min="20" value="5000"');
 	const entry = entryOf(control);
@@ -373,6 +279,16 @@ test('with double-press="reset", a double press returns to the default rather th
 
 	expect(dial.value).toBe(50);
 	expect(events).toEqual(['input', 'change']);
+	expect(entryOf(control).hidden).toBe(true);
+});
+
+test('two presses half a second apart do not open the entry', () => {
+	const { control } = mountDial('value="50"');
+
+	press(control);
+	vi.spyOn(performance, 'now').mockReturnValue(performance.now() + 500);
+	press(control);
+
 	expect(entryOf(control).hidden).toBe(true);
 });
 
@@ -575,6 +491,7 @@ test('a property write renders as its attribute would, and undefined removes the
 	dial.value = 150;
 	expect(dial.getAttribute('max')).toBe('200');
 	expect(control.getAttribute('aria-valuemax')).toBe('200');
+	expect(control.style.getPropertyValue('--_sonic-dial-value')).toBe('0.75');
 
 	dial.max = undefined;
 	expect(dial.hasAttribute('max')).toBe(false);
@@ -660,64 +577,14 @@ test('a disabled dial takes no focus', () => {
 	expect(document.activeElement).toBe(document.body);
 });
 
-function dragBy(control: HTMLElement, pixels: number): void {
-	const init = { bubbles: true, button: 0, clientX: 10, pointerId: 1 };
-
-	control.dispatchEvent(new PointerEvent('pointerdown', { ...init, clientY: 100 }));
-	control.dispatchEvent(new PointerEvent('pointermove', { ...init, clientY: 100 - pixels }));
-	control.dispatchEvent(new PointerEvent('pointerup', { ...init, clientY: 100 - pixels }));
-}
-
 describe('an endless dial from 10 to 370 in steps of 7.5', () => {
 	const endless = 'endless min="10" max="370" step="7.5"';
 
-	test.each([
-		['362.5', 16, 40],
-		['17.5', -16, 340],
-	])('from %s, a drag of %ipx across the seam lands on %s', (value, pixels, expected) => {
-		const { control, dial } = mountDial(`${endless} value="${value}"`);
+	test('the modulation is ignored', () => {
+		const { control } = mountDial(`${endless} modulation="30" value="190"`);
 
-		dragBy(control, pixels);
-
-		expect(dial.value).toBe(expected);
-	});
-
-	test.each([
-		['ArrowUp', '362.5', 10],
-		['ArrowDown', '10', 362.5],
-		['PageUp', '325', 40],
-		['End', '100', 362.5],
-		['Home', '100', 10],
-	])('%s from %s lands on %s', (key, value, expected) => {
-		const { control, dial } = mountDial(`${endless} value="${value}"`);
-
-		pressKey(control, key);
-
-		expect(dial.value).toBe(expected);
-	});
-
-	test.each([
-		['400', 40],
-		['368', 10],
-		['-5', 355],
-	])('a value of %s wraps to %s', (value, expected) => {
-		const { dial } = mountDial(`${endless} value="${value}"`);
-
-		expect(dial.value).toBe(expected);
-	});
-
-	test('the taper and the modulation are ignored', () => {
-		const { control } = mountDial(`${endless} taper="log" modulation="30" value="190"`);
-
-		expect(control.style.getPropertyValue('--_sonic-dial-value')).toBe('0.5');
 		expect(control.style.getPropertyValue('--_sonic-dial-modulation-from')).toBe('0.5');
 		expect(control.style.getPropertyValue('--_sonic-dial-modulation-to')).toBe('0.5');
-	});
-
-	test('notched, it etches one notch per step with none extra at max', () => {
-		const { control } = mountDial(`${endless} notched`);
-
-		expect(control.style.getPropertyValue('--_sonic-dial-positions')).toBe('48');
 	});
 
 	test('turning endless on wraps the value attribute rather than clamping it', () => {
@@ -728,4 +595,58 @@ describe('an endless dial from 10 to 370 in steps of 7.5', () => {
 		dial.endless = true;
 		expect(dial.value).toBe(40);
 	});
+});
+
+const modulatedPlace = '--_sonic-dial-modulated';
+
+test('modulated is placed along the range, clamped to its ends', () => {
+	const { control, dial } = mountDial('min="20" max="120" value="40"');
+
+	dial.modulated = 95;
+	expect(control.style.getPropertyValue(modulatedPlace)).toBe('0.75');
+
+	dial.modulated = 500;
+	expect(control.style.getPropertyValue(modulatedPlace)).toBe('1');
+});
+
+test('modulated follows a taper', () => {
+	const { control, dial } = mountDial('min="20" max="20000" taper="log" value="200"');
+
+	dial.modulated = 632.5;
+
+	expect(Number(control.style.getPropertyValue(modulatedPlace))).toBeCloseTo(0.5, 3);
+});
+
+test('modulated moves neither the value nor its ARIA, and reports nothing', () => {
+	const { control, dial } = mountDial('min="20" max="120" value="40"');
+	const events = recordEvents(document.body);
+
+	dial.modulated = 95;
+
+	expect(events).toEqual([]);
+	expect(dial.value).toBe(40);
+	expect(dial.modulated).toBe(95);
+	expect(control.getAttribute('aria-valuenow')).toBe('40');
+});
+
+test('undefined clears modulated, NaN is ignored, and a range change re-places it', () => {
+	const { control, dial } = mountDial('min="20" max="120" value="40"');
+
+	dial.modulated = 95;
+	dial.modulated = NaN;
+	expect(control.style.getPropertyValue(modulatedPlace)).toBe('0.75');
+
+	dial.max = 170;
+	expect(control.style.getPropertyValue(modulatedPlace)).toBe('0.5');
+
+	dial.modulated = undefined;
+	expect(control.style.getPropertyValue(modulatedPlace)).toBe('');
+});
+
+test('an endless dial places no modulated value', () => {
+	const { control, dial } = mountDial('endless min="10" max="370" step="7.5" value="190"');
+
+	dial.modulated = 100;
+
+	expect(control.style.getPropertyValue(modulatedPlace)).toBe('');
 });

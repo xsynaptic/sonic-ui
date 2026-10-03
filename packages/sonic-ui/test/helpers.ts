@@ -1,17 +1,34 @@
 import type { SonicDial } from '#elements/dial.ts';
+import type { RangeScale, RangeSpec } from '#lib/range-scale.ts';
+
+import { rangeScale } from '#lib/range-scale.ts';
+
+export function mountControl<Tag extends keyof HTMLElementTagNameMap>(
+	tag: Tag,
+	attributes: string,
+	children = '',
+): { control: HTMLElement; host: HTMLElementTagNameMap[Tag] } {
+	document.body.innerHTML = `<${tag} ${attributes}>${children}</${tag}>`;
+
+	const host = document.querySelector(tag);
+	const control = host?.querySelector<HTMLElement>(`.${tag}`);
+	if (!host || !control) throw new Error(`The ${tag} did not render`);
+
+	return { control, host };
+}
 
 export function mountDial(attributes: string): { control: HTMLElement; dial: SonicDial } {
-	document.body.innerHTML = `<sonic-dial ${attributes}></sonic-dial>`;
+	const { control, host } = mountControl('sonic-dial', attributes);
 
-	const dial = document.querySelector('sonic-dial');
-	const control = dial?.querySelector<HTMLElement>('.sonic-dial');
-	if (!dial || !control) throw new Error('The dial did not render');
-
-	return { control, dial };
+	return { control, dial: host };
 }
 
 export function nextTask(): Promise<unknown> {
 	return new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+export function pointerAt(target: EventTarget, type: string, init: PointerEventInit = {}): void {
+	target.dispatchEvent(new PointerEvent(type, { bubbles: true, button: 0, pointerId: 1, ...init }));
 }
 
 export function pressKey(target: HTMLElement, key: string): KeyboardEvent {
@@ -32,4 +49,16 @@ export function recordEvents(target: EventTarget): Array<string> {
 	}
 
 	return events;
+}
+
+export function scaleOf(spec: Partial<RangeSpec> = {}): RangeScale {
+	return rangeScale({
+		isNotched: false,
+		isWrapping: false,
+		max: 100,
+		min: 0,
+		step: 1,
+		taper: 'linear',
+		...spec,
+	});
 }

@@ -4,16 +4,12 @@ import type { SonicSlider } from '#elements/slider.ts';
 
 import '#define/slider.ts';
 
-import { pressKey, recordEvents } from './helpers.ts';
+import { mountControl, pointerAt, pressKey, recordEvents } from './helpers.ts';
 
 function mountSlider(attributes: string): { control: HTMLElement; slider: SonicSlider } {
-	document.body.innerHTML = `<sonic-slider ${attributes}></sonic-slider>`;
+	const { control, host } = mountControl('sonic-slider', attributes);
 
-	const slider = document.querySelector('sonic-slider');
-	const control = slider?.querySelector<HTMLElement>('.sonic-slider');
-	if (!slider || !control) throw new Error('The slider did not render');
-
-	return { control, slider };
+	return { control, slider: host };
 }
 
 function capOf(control: HTMLElement): HTMLElement {
@@ -28,14 +24,6 @@ function layOut(control: HTMLElement, track: DOMRect, capBox: DOMRect): void {
 	vi.spyOn(capOf(control), 'getBoundingClientRect').mockReturnValue(capBox);
 }
 
-function pointerAt(
-	target: HTMLElement,
-	type: string,
-	at: { clientX?: number; clientY?: number },
-): void {
-	target.dispatchEvent(new PointerEvent(type, { bubbles: true, button: 0, pointerId: 1, ...at }));
-}
-
 test('orientation follows the attribute', () => {
 	const { control, slider } = mountSlider('value="40"');
 
@@ -45,33 +33,19 @@ test('orientation follows the attribute', () => {
 	expect(control.getAttribute('aria-orientation')).toBe('vertical');
 });
 
-test.each([
-	['notched max="10"', '11'],
-	['notched step="0"', ''],
-	['max="10"', ''],
-])('%s sets the mark count to "%s"', (attributes, expected) => {
-	const { control } = mountSlider(attributes);
+test('the slider writes its place, origin and notch count, and moving the origin keeps the value', () => {
+	const { control, slider } = mountSlider(
+		'min="-50" max="50" step="10" notched origin="0" value="20"',
+	);
+	const style = (name: string): string => control.style.getPropertyValue(`--_sonic-slider-${name}`);
 
-	expect(control.style.getPropertyValue('--_sonic-slider-positions')).toBe(expected);
+	expect([style('value'), style('origin'), style('positions')]).toEqual(['0.7', '0.5', '11']);
+
+	slider.setAttribute('origin', '25');
+	slider.notched = false;
+	expect([style('origin'), style('positions')]).toEqual(['0.75', '']);
+	expect(slider.value).toBe(20);
 });
-
-test.each([
-	['origin="0"', '0.5'],
-	['origin="-80"', '0'],
-	['origin="80"', '1'],
-	['', '0'],
-])(
-	'%s on a -50 to 50 slider puts the origin at %s, and moving it keeps the value',
-	(attributes, expected) => {
-		const { control, slider } = mountSlider(`min="-50" max="50" value="20" ${attributes}`);
-
-		expect(control.style.getPropertyValue('--_sonic-slider-origin')).toBe(expected);
-
-		slider.setAttribute('origin', '25');
-		expect(control.style.getPropertyValue('--_sonic-slider-origin')).toBe('0.75');
-		expect(slider.value).toBe(20);
-	},
-);
 
 test.each([
 	['value="30" modulation="25"', '0.5', '0.75'],
@@ -294,9 +268,8 @@ test('with spring and a value list, the slider springs back to the first entry',
 });
 
 function bufferedStops(control: HTMLElement): Array<string> {
-	const ranges = control.style.getPropertyValue('--_sonic-slider-buffered-ranges');
+	const ranges = control.style.getPropertyValue('--_sonic-slider-buffered-spans');
 
-	// Each edge is written twice, closing one stop and opening the next
 	return [
 		...new Set(
 			[...ranges.matchAll(/(\d+%)|calc\(([\d.]+) \*/g)].map((match) => match[1] ?? match[2] ?? ''),
@@ -334,5 +307,29 @@ test('buffered takes TimeRanges as a media element gives them, and undefined cle
 	expect(bufferedStops(control)).toEqual(['0.25', '100%']);
 
 	slider.buffered = undefined;
-	expect(control.style.getPropertyValue('--_sonic-slider-buffered-ranges')).toBe('');
+	expect(control.style.getPropertyValue('--_sonic-slider-buffered-spans')).toBe('');
+});
+
+test('modulated places the slider part, and undefined clears it', () => {
+	const { control, slider } = mountSlider('min="20" max="220" value="200"');
+
+	slider.modulated = 70;
+	expect(control.style.getPropertyValue('--_sonic-slider-modulated')).toBe('0.25');
+
+	slider.modulated = undefined;
+	expect(control.style.getPropertyValue('--_sonic-slider-modulated')).toBe('');
+});
+
+test('a key repeat changes on every repeat', () => {
+	const { control, slider } = mountSlider('min="10" max="310" key-step="5" value="60"');
+	const events = recordEvents(document.body);
+
+	for (let index = 0; index < 2; index += 1) {
+		control.dispatchEvent(
+			new KeyboardEvent('keydown', { bubbles: true, key: 'ArrowRight', repeat: true }),
+		);
+	}
+
+	expect(slider.value).toBe(70);
+	expect(events).toEqual(['input', 'change', 'input', 'change']);
 });

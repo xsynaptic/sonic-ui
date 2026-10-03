@@ -1,4 +1,4 @@
-// Registered `<length>` properties only; their computed value is always px
+// Registered properties only; a registered `<length>` always computes to px
 export function readPxProperty(
 	styles: CSSStyleDeclaration,
 	property: string,

@@ -1,0 +1,260 @@
+import { afterEach, expect, test, vi } from 'vitest';
+
+import type { SonicWavestrip } from '#elements/wavestrip.ts';
+
+import '#define/wavestrip.ts';
+
+import { FakeResizeObserver, installCanvasFakes } from './canvas-fakes.ts';
+import { mountControl, pointerAt, recordEvents } from './helpers.ts';
+
+afterEach(() => {
+	document.body.replaceChildren();
+});
+
+function mountWavestrip(attributes: string): {
+	control: HTMLElement;
+	wavestrip: SonicWavestrip;
+} {
+	const { control, host: wavestrip } = mountControl('sonic-wavestrip', attributes);
+	const canvas = control.querySelector('canvas');
+	if (!canvas) throw new Error('The wavestrip has no canvas');
+
+	const box = new DOMRect(0, 0, 300, 48);
+
+	vi.spyOn(control, 'getBoundingClientRect').mockReturnValue(box);
+	vi.spyOn(canvas, 'getBoundingClientRect').mockReturnValue(box);
+	FakeResizeObserver.instances.at(-1)?.report([300, 48], [300, 48]);
+
+	return { control, wavestrip };
+}
+
+function midPointerAt(control: HTMLElement, type: string, init: PointerEventInit): void {
+	pointerAt(control, type, { clientY: 24, ...init });
+}
+
+function keyAt(target: HTMLElement, type: string, isRepeat: boolean): void {
+	target.dispatchEvent(
+		new KeyboardEvent(type, {
+			bubbles: true,
+			cancelable: true,
+			key: 'ArrowRight',
+			repeat: isRepeat,
+		}),
+	);
+}
+
+function readoutText(control: HTMLElement): string {
+	return control.querySelector(':scope > .sonic-wavestrip-readout > span')?.textContent ?? '';
+}
+
+test('a repeating key scrubs and holds writes, then changes once on keyup', () => {
+	installCanvasFakes();
+
+	const { control, wavestrip } = mountWavestrip('max="300" key-step="5" value="60"');
+	const events = recordEvents(document.body);
+
+	keyAt(control, 'keydown', true);
+	wavestrip.value = 10;
+	keyAt(control, 'keydown', true);
+	keyAt(control, 'keydown', true);
+	expect(events).toEqual(['input', 'input', 'input']);
+	expect(wavestrip.value).toBe(75);
+
+	keyAt(control, 'keyup', false);
+	expect(events).toEqual(['input', 'input', 'input', 'change']);
+});
+
+test('a key scrub that loses focus changes once, and its keyup adds nothing', () => {
+	installCanvasFakes();
+
+	const { control } = mountWavestrip('max="300" key-step="5" value="60"');
+	const events = recordEvents(document.body);
+
+	keyAt(control, 'keydown', true);
+	keyAt(control, 'keydown', true);
+	control.dispatchEvent(new FocusEvent('blur'));
+	keyAt(control, 'keyup', false);
+
+	expect(events).toEqual(['input', 'input', 'change']);
+});
+
+test('a single key press changes at once', () => {
+	installCanvasFakes();
+
+	const { control } = mountWavestrip('max="300" key-step="5" value="60"');
+	const events = recordEvents(document.body);
+
+	keyAt(control, 'keydown', false);
+
+	expect(events).toEqual(['input', 'change']);
+});
+
+test('with cancellable, a drag far off the strip returns to its start and resumes on return', () => {
+	installCanvasFakes();
+
+	const { control, wavestrip } = mountWavestrip(
+		'cancellable min="30" max="330" step="0" value="50"',
+	);
+	const events = recordEvents(document.body);
+	const values: Array<number> = [];
+
+	midPointerAt(control, 'pointerdown', { clientX: 150 });
+	for (const [clientX, clientY] of [
+		[150, 108],
+		[100, 24],
+		[100, -60],
+	] as const) {
+		midPointerAt(control, 'pointermove', { clientX, clientY });
+		values.push(wavestrip.value);
+	}
+	midPointerAt(control, 'pointerup', { clientX: 100, clientY: -60 });
+
+	expect(values).toEqual([50, 130, 50]);
+	expect(events).not.toContain('change');
+});
+
+test('without cancellable, the same drag keeps scrubbing and changes on release', () => {
+	installCanvasFakes();
+
+	const { control, wavestrip } = mountWavestrip('min="30" max="330" step="0" value="50"');
+	const events = recordEvents(document.body);
+
+	midPointerAt(control, 'pointerdown', { clientX: 150 });
+	midPointerAt(control, 'pointermove', { clientX: 150, clientY: 108 });
+	midPointerAt(control, 'pointerup', { clientX: 150, clientY: 108 });
+
+	expect(wavestrip.value).toBe(180);
+	expect(events).toEqual(['input', 'change']);
+});
+
+test('a mouse over the strip reads out the time under it, or a marker within reach', () => {
+	installCanvasFakes();
+
+	const { control, wavestrip } = mountWavestrip('readout min="30" max="330" step="0" value="30"');
+
+	wavestrip.formatValue = (seconds) => `${String(seconds)} s`;
+	midPointerAt(control, 'pointermove', { clientX: 75, pointerType: 'touch' });
+	expect(readoutText(control)).toBe('30 s');
+
+	midPointerAt(control, 'pointermove', { clientX: 75, pointerType: 'mouse' });
+	expect(readoutText(control)).toBe('105 s');
+
+	wavestrip.markers = [{ value: 200 }];
+	midPointerAt(control, 'pointermove', { clientX: 172, pointerType: 'mouse' });
+	expect(readoutText(control)).toBe('200 s');
+});
+
+test("a drag's reveal takes the readout from the hover", () => {
+	installCanvasFakes();
+
+	const { control, wavestrip } = mountWavestrip('readout min="30" max="330" step="0" value="30"');
+
+	wavestrip.formatValue = (seconds) => `${String(seconds)} s`;
+	midPointerAt(control, 'pointermove', { clientX: 75, pointerType: 'mouse' });
+	midPointerAt(control, 'pointerdown', { clientX: 150, pointerType: 'mouse' });
+	midPointerAt(control, 'pointermove', { clientX: 200, pointerType: 'mouse' });
+
+	expect(readoutText(control)).toBe('230 s');
+});
+
+test('a max written during a drag keeps the dragged value', () => {
+	installCanvasFakes();
+
+	const { control, wavestrip } = mountWavestrip('min="30" max="230" step="0" value="50"');
+	const changed: Array<number> = [];
+
+	wavestrip.addEventListener('change', () => {
+		changed.push(wavestrip.value);
+	});
+	midPointerAt(control, 'pointerdown', { clientX: 150 });
+	wavestrip.max = 230.5;
+	midPointerAt(control, 'pointerup', { clientX: 150 });
+
+	expect(changed).toEqual([130]);
+});
+
+function markerDots(control: HTMLElement): Array<HTMLElement> {
+	return [
+		...control.querySelectorAll<HTMLElement>(':is(.sonic-wavestrip-marker, .sonic-wavestrip-span)'),
+	];
+}
+
+// The reach is 4px, since happy-dom computes no dot size
+test.each([
+	[172, 200],
+	[176, 206],
+])('a press at %ipx beside a cue at 170px lands at %d', (clientX, expected) => {
+	installCanvasFakes();
+
+	const { control, wavestrip } = mountWavestrip('min="30" max="330" step="0" value="50"');
+
+	wavestrip.markers = [{ value: 200 }];
+	midPointerAt(control, 'pointerdown', { clientX });
+
+	expect(wavestrip.value).toBe(expected);
+});
+
+test('a drag from a cue scrubs from the press, and crossing the cue never snaps to it', () => {
+	installCanvasFakes();
+
+	const { control, wavestrip } = mountWavestrip('min="30" max="330" step="0" value="50"');
+	const values: Array<number> = [];
+
+	wavestrip.markers = [{ value: 200 }];
+	midPointerAt(control, 'pointerdown', { clientX: 172 });
+	for (const clientX of [176, 168]) {
+		midPointerAt(control, 'pointermove', { clientX });
+		values.push(wavestrip.value);
+	}
+
+	expect(values).toEqual([206, 198]);
+});
+
+test('a marker sits at its place between the bounds', () => {
+	installCanvasFakes();
+
+	const { control, wavestrip } = mountWavestrip('min="30" max="330"');
+
+	wavestrip.markers = [{ end: 255, value: 105 }];
+
+	const [dot] = markerDots(control);
+
+	expect(dot?.style.getPropertyValue('--_sonic-marker-from')).toBe('0.25');
+	expect(dot?.style.getPropertyValue('--_sonic-marker-to')).toBe('0.75');
+});
+
+test('a value write leaves the marker dots as they were built', () => {
+	installCanvasFakes();
+
+	const { control, wavestrip } = mountWavestrip('max="300" value="10"');
+
+	wavestrip.markers = [{ value: 60 }, { end: 120, kind: 'loop', value: 90 }];
+
+	const built = markerDots(control);
+	const styles = built.map((dot) => dot.style.cssText);
+
+	wavestrip.value = 200;
+
+	const after = markerDots(control);
+
+	// `toEqual` compares nodes by markup, which a rebuild matches
+	expect(after.map((dot, index) => dot === built[index])).toEqual([true, true]);
+	expect(built.map((dot) => dot.style.cssText)).toEqual(styles);
+});
+
+test('a kind names its token, and a kind that is not a plain name draws in the default colour', () => {
+	installCanvasFakes();
+
+	const { control, wavestrip } = mountWavestrip('');
+
+	wavestrip.markers = [
+		{ kind: 'loop', value: 20 },
+		{ kind: 'x);background:red', value: 40 },
+	];
+
+	const [loop, hostile] = markerDots(control);
+
+	expect(loop?.style.getPropertyValue('--_sonic-marker')).toContain('--sonic-cue-loop');
+	expect(hostile?.style.getPropertyValue('--_sonic-marker')).toBe('');
+	expect(hostile?.style.cssText).not.toContain('red');
+});

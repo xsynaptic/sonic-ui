@@ -1,17 +1,16 @@
 import { clampUnit } from '#lib/math.ts';
 
-// Positions run 0 to 1 along the travel
 export interface Taper {
-	position: (value: number) => number;
-	value: (position: number) => number;
+	place: (value: number) => number;
+	valueAt: (place: number) => number;
 }
 
 export function linearTaper(min: number, max: number): Taper {
 	const range = max - min;
 
 	return {
-		position: (value) => (range > 0 ? clampUnit((value - min) / range) : 0),
-		value: (position) => min + clampUnit(position) * range,
+		place: (value) => (range > 0 ? clampUnit((value - min) / range) : 0),
+		valueAt: (place) => min + clampUnit(place) * range,
 	};
 }
 
@@ -21,8 +20,8 @@ export function logTaper(min: number, max: number): Taper | undefined {
 	const span = Math.log(max / min);
 
 	return {
-		position: (value) => clampUnit(Math.log(Math.max(min, value) / min) / span),
-		value: (position) => min * Math.exp(clampUnit(position) * span),
+		place: (value) => clampUnit(Math.log(Math.max(min, value) / min) / span),
+		valueAt: (place) => min * Math.exp(clampUnit(place) * span),
 	};
 }
 
@@ -36,17 +35,16 @@ export function skewTaper(min: number, max: number, midpoint: number): Taper | u
 	const skew = Math.log(0.5) / Math.log(proportion);
 
 	return {
-		position: (value) => clampUnit((value - min) / range) ** skew,
-		value: (position) => min + range * clampUnit(position) ** (1 / skew),
+		place: (value) => clampUnit((value - min) / range) ** skew,
+		valueAt: (place) => min + range * clampUnit(place) ** (1 / skew),
 	};
 }
 
-// Entries sit evenly along the travel, however unevenly they are spaced
-export function listTaper(entries: Array<number>): Taper {
+export function listTaper(entries: ReadonlyArray<number>): Taper {
 	const last = entries.length - 1;
 
 	return {
-		position: (value) => {
+		place: (value) => {
 			const above = entries.findIndex((entry) => entry >= value);
 			if (above === -1) return 1;
 
@@ -56,6 +54,6 @@ export function listTaper(entries: Array<number>): Taper {
 
 			return (above - 1 + (value - low) / (high - low)) / last;
 		},
-		value: (position) => entries[Math.round(clampUnit(position) * last)] ?? NaN,
+		valueAt: (place) => entries[Math.round(clampUnit(place) * last)] ?? NaN,
 	};
 }

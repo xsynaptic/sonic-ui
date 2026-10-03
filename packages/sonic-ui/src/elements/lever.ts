@@ -1,6 +1,9 @@
-import { optionValue, SonicRadioGroupElement } from '#elements/radio-group.ts';
-import { bindHoldRelease } from '#lib/hold.ts';
-import { template } from '#lib/render.ts';
+import type { Hold } from '#lib/hold.ts';
+
+import { isUnder, optionValue, SonicRadioGroupElement } from '#elements/radio-group.ts';
+import { bindHold } from '#lib/hold.ts';
+import { clamp } from '#lib/math.ts';
+import { requireChild, template } from '#lib/render.ts';
 import { writeAttribute } from '#lib/write-attribute.ts';
 
 declare global {
@@ -33,6 +36,23 @@ const renderSwitch = template(
 	HTMLButtonElement,
 );
 
+interface BatPress {
+	hasMoved: boolean;
+	last: number;
+	pointerId: number;
+}
+
+const pressCentreZone = 0.08;
+
+function pressedIndex(index: number, count: number, offset: number): number {
+	if (count === 2) return index === 0 ? 1 : 0;
+
+	const side = Math.abs(offset) < pressCentreZone ? 1 : Math.sign(offset);
+	const next = index + side;
+
+	return next < 0 || next >= count ? index - side : next;
+}
+
 export class SonicLever extends SonicRadioGroupElement {
 	static override readonly observedAttributes = [
 		...SonicRadioGroupElement.observedAttributes,
@@ -58,7 +78,7 @@ export class SonicLever extends SonicRadioGroupElement {
 		this.reflect('checked', isChecked);
 	}
 
-	// fallow-ignore-next-line code-duplication -- one accessor pair per reflected attribute, as on a native element
+	// fallow-ignore-next-line code-duplication -- one accessor pair per reflected attribute
 	get orientation(): 'horizontal' | 'vertical' {
 		return this.getAttribute('orientation') === 'horizontal' ? 'horizontal' : 'vertical';
 	}
@@ -67,7 +87,6 @@ export class SonicLever extends SonicRadioGroupElement {
 		this.reflect('orientation', direction);
 	}
 
-	// Unset reads `on` in switch mode, as on a checkbox
 	override get value(): string {
 		const value = super.value;
 
@@ -80,9 +99,15 @@ export class SonicLever extends SonicRadioGroupElement {
 
 	protected readonly group = renderLever();
 
+	readonly #bat = requireChild(this.group, '.sonic-lever-bat', HTMLSpanElement);
+
+	#batPress: BatPress | undefined;
+
 	#checked = false;
 
-	#holder: number | string | undefined;
+	#holding: Hold | undefined;
+
+	#isClickSwallowed = false;
 
 	#isDirty = false;
 
@@ -90,7 +115,7 @@ export class SonicLever extends SonicRadioGroupElement {
 
 	override attributeChangedCallback(name: string): void {
 		if (name === 'checked') this.#isDirty = false;
-		if (this.isDisabled()) this.#release();
+		if (this.isDisabled()) this.#holding?.release();
 		super.attributeChangedCallback(name);
 	}
 
@@ -104,7 +129,6 @@ export class SonicLever extends SonicRadioGroupElement {
 		else super.activate();
 	}
 
-	// A click with no pointer, as from assistive technology, has no release to wait for
 	protected override chooseByClick(option: HTMLButtonElement): void {
 		super.chooseByClick(option);
 		if (this.#isMomentary(option)) this.#springBack();
@@ -122,6 +146,7 @@ export class SonicLever extends SonicRadioGroupElement {
 	}
 
 	protected override claimPress(option: HTMLButtonElement, event: PointerEvent): boolean {
+		if (this.#grabBat(event)) return true;
 		if (!this.#isMomentary(option)) return false;
 
 		this.group.setPointerCapture(event.pointerId);
@@ -140,39 +165,34 @@ export class SonicLever extends SonicRadioGroupElement {
 		this.#switch.addEventListener(
 			'click',
 			() => {
-				this.checked = !this.checked;
-				this.dispatchEvent(new Event('change', { bubbles: true }));
+				if (this.#isClickSwallowed) this.#isClickSwallowed = false;
+				else this.#setChecked(!this.checked);
 			},
 			{ signal },
 		);
+		this.#switch.addEventListener(
+			'pointerdown',
+			(event) => {
+				if (event.button === 0 && !this.isDisabled()) this.#grabBat(event);
+			},
+			{ signal },
+		);
+		this.#bindBat(group, signal);
 
-		bindHoldRelease(
+		this.#holding = bindHold(
 			group,
 			{
-				holder: () => this.#holder,
-				release: () => {
-					this.#release();
+				canHold: () => !this.isDisabled(),
+				leave: 'focusout',
+				onHold: () => {
+					this.toggleState('held', true);
+				},
+				onRelease: () => {
+					this.toggleState('held', false);
+					this.#springBack();
 				},
 			},
 			signal,
-		);
-		// Focus moves onto the held position, so only focus leaving the lever releases it
-		group.addEventListener(
-			'focusout',
-			(event) => {
-				const next = event.relatedTarget;
-				const isLeaving = !(next instanceof Node && group.contains(next));
-
-				if (isLeaving && typeof this.#holder === 'string') this.#release();
-			},
-			{ signal },
-		);
-		signal.addEventListener(
-			'abort',
-			() => {
-				this.#release();
-			},
-			{ once: true },
 		);
 	}
 
@@ -180,7 +200,10 @@ export class SonicLever extends SonicRadioGroupElement {
 		return this.#isSwitch() ? this.#switch : super.focusTarget();
 	}
 
-	// A press on either side of a two-position lever flips it, as flicking the bat does
+	protected override isWrapping(): boolean {
+		return false;
+	}
+
 	protected override releaseTarget(option: HTMLButtonElement): HTMLButtonElement | undefined {
 		if (this.#isMomentary(option)) return undefined;
 
@@ -201,7 +224,7 @@ export class SonicLever extends SonicRadioGroupElement {
 			writeAttribute(group, 'role', 'radiogroup');
 			group.dataset.sonicPositions = String(options.length);
 			super.render();
-			this.#renderThrow(options.findIndex((option) => optionValue(option) === this.value));
+			this.#renderThrow(this.#checkedIndex(options));
 			return;
 		}
 
@@ -215,7 +238,6 @@ export class SonicLever extends SonicRadioGroupElement {
 		toggle.setAttribute('aria-checked', String(isChecked));
 		this.forwardNaming(group, false);
 		this.forwardNaming(toggle, true);
-		// On points up, or toward the end when horizontal, as on hardware
 		const onSide = this.orientation === 'horizontal' ? 1 : -1;
 
 		group.style.setProperty('--_sonic-lever-at', String(isChecked ? onSide : -onSide));
@@ -232,19 +254,74 @@ export class SonicLever extends SonicRadioGroupElement {
 		else super.restoreState(state);
 	}
 
-	protected override wraps(): boolean {
-		return false;
+	#along(event: PointerEvent): number {
+		return this.orientation === 'horizontal' ? event.clientX : event.clientY;
 	}
 
-	#hold(option: HTMLButtonElement, holder: number | string): void {
-		if (this.isDisabled() || this.#holder !== undefined) return;
+	#bindBat(group: HTMLElement, signal: AbortSignal): void {
+		const drop = (event: PointerEvent): void => {
+			if (event.pointerId === this.#batPress?.pointerId) this.#batPress = undefined;
+		};
 
-		this.#holder = holder;
-		this.toggleState('held', true);
-		this.select(option);
+		group.addEventListener(
+			'pointermove',
+			(event) => {
+				const press = this.#batPress;
+				if (press?.pointerId !== event.pointerId) return;
+
+				const delta = this.#along(event) - press.last;
+				if (Math.abs(delta) < this.#bat.getBoundingClientRect().width / 4) return;
+
+				press.hasMoved = true;
+				press.last = this.#along(event);
+				this.#throwBy(Math.sign(delta), event.pointerId);
+			},
+			{ signal },
+		);
+		group.addEventListener(
+			'pointerup',
+			(event) => {
+				const press = this.#batPress;
+				if (press?.pointerId !== event.pointerId) return;
+
+				this.#batPress = undefined;
+				if (!press.hasMoved && !this.isDisabled()) this.#pressBat(event);
+				this.#isClickSwallowed = true;
+				setTimeout(() => {
+					this.#isClickSwallowed = false;
+				}, 0);
+			},
+			{ signal },
+		);
+		group.addEventListener('pointercancel', drop, { signal });
+		group.addEventListener('lostpointercapture', drop, { signal });
 	}
 
-	// Only an end position springs; a bat cannot spring back to both sides
+	#checkedIndex(options: Array<HTMLButtonElement>): number {
+		return options.findIndex((option) => optionValue(option) === this.value);
+	}
+
+	#grabBat(event: PointerEvent): boolean {
+		if (!isUnder(this.#bat, event.clientX, event.clientY)) return false;
+
+		this.group.setPointerCapture(event.pointerId);
+		this.#batPress = { hasMoved: false, last: this.#along(event), pointerId: event.pointerId };
+
+		return true;
+	}
+
+	#hasSprungFrom(option: HTMLButtonElement | undefined): boolean {
+		if (!option || !this.#isMomentary(option)) return false;
+
+		this.#holding?.release();
+
+		return this.value !== optionValue(option);
+	}
+
+	#hold(option: HTMLButtonElement, by: number | string): void {
+		if (this.#holding?.hold(by) === true) this.select(option);
+	}
+
 	#isMomentary(option: HTMLButtonElement): boolean {
 		const options = this.options();
 		const isEnd = option === options[0] || option === options.at(-1);
@@ -260,12 +337,26 @@ export class SonicLever extends SonicRadioGroupElement {
 		return this.options().length === 0;
 	}
 
-	#release(): void {
-		if (this.#holder === undefined) return;
+	#pressBat(event: PointerEvent): void {
+		const options = this.options();
+		if (options.length === 0) {
+			this.#setChecked(!this.checked);
+			return;
+		}
 
-		this.#holder = undefined;
-		this.toggleState('held', false);
-		this.#springBack();
+		const box = this.#bat.getBoundingClientRect();
+		const [start, size] =
+			this.orientation === 'horizontal' ? [box.left, box.width] : [box.top, box.height];
+		const offset = (this.#along(event) - start) / size - 0.5;
+		const option = options[pressedIndex(this.#checkedIndex(options), options.length, offset)];
+		if (!option) return;
+
+		this.chooseByClick(option);
+		this.#refocus(options);
+	}
+
+	#refocus(options: Array<HTMLButtonElement>): void {
+		if (this.group.matches(':focus-within')) options[this.#checkedIndex(options)]?.focus();
 	}
 
 	#renderThrow(index: number): void {
@@ -275,9 +366,16 @@ export class SonicLever extends SonicRadioGroupElement {
 		this.group.style.setProperty('--_sonic-lever-at', String(at));
 	}
 
+	#setChecked(isChecked: boolean): void {
+		if (isChecked === this.checked) return;
+
+		this.checked = isChecked;
+		this.dispatchEvent(new Event('change', { bubbles: true }));
+	}
+
 	#springBack(): void {
 		const options = this.options();
-		const index = options.findIndex((option) => optionValue(option) === this.value);
+		const index = this.#checkedIndex(options);
 		const held = options[index];
 		if (!held || !this.#isMomentary(held)) return;
 
@@ -288,5 +386,21 @@ export class SonicLever extends SonicRadioGroupElement {
 
 		this.select(rest);
 		if (isFocused) rest.focus();
+	}
+
+	#throwBy(direction: number, pointerId: number): void {
+		const options = this.options();
+		if (options.length === 0) {
+			this.#setChecked(direction === (this.orientation === 'horizontal' ? 1 : -1));
+			return;
+		}
+
+		const index = this.#checkedIndex(options);
+		const option = options[clamp(index + direction, 0, options.length - 1)];
+		if (!option || option === options[index] || this.#hasSprungFrom(options[index])) return;
+
+		if (this.#isMomentary(option)) this.#hold(option, pointerId);
+		else this.select(option);
+		this.#refocus(options);
 	}
 }

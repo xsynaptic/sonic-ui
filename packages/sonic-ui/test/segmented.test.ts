@@ -4,7 +4,7 @@ import type { SonicSegmented } from '#elements/segmented.ts';
 
 import '#define/segmented.ts';
 
-import { nextTask, pressKey } from './helpers.ts';
+import { nextTask, pointerAt, pressKey } from './helpers.ts';
 
 const options = /* HTML */ `
 	<span data-sonic-value="lp">LP</span>
@@ -12,7 +12,6 @@ const options = /* HTML */ `
 	<span data-sonic-value="hp">HP</span>
 `;
 
-// happy-dom connects the element before parsing its children, so the options arrive through the observer
 async function mountSegmented(attributes: string): Promise<{
 	group: HTMLElement;
 	segmented: SonicSegmented;
@@ -320,17 +319,8 @@ function layOut(segments: Array<HTMLButtonElement>): void {
 	}
 }
 
-function pointerAt(target: Element, type: string, clientX: number): void {
-	target.dispatchEvent(
-		new PointerEvent(type, {
-			bubbles: true,
-			button: 0,
-			clientX,
-			clientY: 10,
-			pointerId: 1,
-			pointerType: 'mouse',
-		}),
-	);
+function mouseAt(target: Element, type: string, clientX: number): void {
+	pointerAt(target, type, { clientX, clientY: 10, pointerType: 'mouse' });
 }
 
 function held(segments: Array<HTMLButtonElement>): Array<boolean> {
@@ -342,15 +332,15 @@ test('a press follows the pointer across segments and latches where it is releas
 	const changes = recordChanges(segmented);
 
 	layOut(segments);
-	pointerAt(segments[0]?.firstElementChild ?? group, 'pointerdown', 30);
+	mouseAt(segments[0]?.firstElementChild ?? group, 'pointerdown', 30);
 	expect(held(segments)).toEqual([true, false, false]);
 
-	pointerAt(group, 'pointermove', 150);
+	mouseAt(group, 'pointermove', 150);
 	expect(held(segments)).toEqual([false, false, true]);
 	expect(segmented.value).toBe('lp');
 
-	pointerAt(group, 'pointerup', 150);
-	pointerAt(segments[0] ?? group, 'click', 150);
+	mouseAt(group, 'pointerup', 150);
+	mouseAt(segments[0] ?? group, 'click', 150);
 
 	expect(segmented.value).toBe('hp');
 	expect(changes).toEqual(['hp']);
@@ -362,11 +352,11 @@ test('a press released off the switch latches nothing', async () => {
 	const changes = recordChanges(segmented);
 
 	layOut(segments);
-	pointerAt(segments[1] ?? group, 'pointerdown', 90);
-	pointerAt(group, 'pointermove', 400);
+	mouseAt(segments[1] ?? group, 'pointerdown', 90);
+	mouseAt(group, 'pointermove', 400);
 	expect(held(segments)).toEqual([false, false, false]);
 
-	pointerAt(group, 'pointerup', 400);
+	mouseAt(group, 'pointerup', 400);
 
 	expect(segmented.value).toBe('lp');
 	expect(changes).toEqual([]);
@@ -376,8 +366,8 @@ test('a disabled switch holds no press', async () => {
 	const { group, segmented, segments } = await mountSegmented('disabled value="lp"');
 
 	layOut(segments);
-	pointerAt(segments[1] ?? group, 'pointerdown', 90);
-	pointerAt(group, 'pointerup', 90);
+	mouseAt(segments[1] ?? group, 'pointerdown', 90);
+	mouseAt(group, 'pointerup', 90);
 
 	expect(held(segments)).toEqual([false, false, false]);
 	expect(segmented.value).toBe('lp');

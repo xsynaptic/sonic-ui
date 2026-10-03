@@ -10,14 +10,12 @@
 	initial-value: 128px;
 }
 
-/* Registered so the spring return can transition it */
 @property --_sonic-slider-value {
 	syntax: '<number>';
 	inherits: true;
 	initial-value: 0;
 }
 
-/* The size is the thickness across the travel */
 @layer sonic {
 	:is(sonic-slider, .sonic-slider) {
 		--_sonic-slider-size: var(--sonic-slider-size, 2rem);
@@ -42,11 +40,8 @@
 		block-size: var(--_sonic-slider-length);
 	}
 
-	/* Laid out on its side rather than rotated, so the light falls the same way in both orientations */
 	.sonic-slider {
 		--_sonic-slider-groove-ratio: var(--sonic-slider-groove-ratio, 0.15);
-
-		/* Along the travel; across it, the cap fills the size */
 		--_sonic-slider-cap-ratio: var(--sonic-slider-cap-ratio, 0.5);
 		--_sonic-slider-radius-ratio: var(--sonic-slider-radius-ratio, 0.15);
 		--_sonic-slider-bevel-ratio: var(--sonic-slider-bevel-ratio, 0.075);
@@ -54,8 +49,6 @@
 		--_sonic-slider-scale-ratio: var(--sonic-slider-scale-ratio, 0.4);
 		--_sonic-slider-scale-font-ratio: var(--sonic-slider-scale-font-ratio, 0.18);
 		--_sonic-slider-scale-band: 0px;
-
-		/* Across the travel beside the legend, so a legend widens the box without restyling the fader */
 		--_sonic-slider-track: calc(var(--_sonic-slider-size) - var(--_sonic-slider-scale-band));
 		--_sonic-unit: calc(var(--_sonic-slider-track) / 32);
 		--_sonic-slider-lit: var(--_sonic-lit);
@@ -165,11 +158,11 @@
 		cursor: default;
 	}
 
-	.sonic-slider-marks {
-		--_sonic-slider-mark-pitch: calc(
+	.sonic-slider-notches {
+		--_sonic-slider-notch-pitch: calc(
 			var(--_sonic-slider-travel) / (var(--_sonic-slider-positions, 2) - 1)
 		);
-		--_sonic-slider-mark-lip: calc(
+		--_sonic-slider-notch-lip: calc(
 			var(--_sonic-slider-groove) / 2 + var(--_sonic-slider-track) * 0.1
 		);
 
@@ -179,24 +172,24 @@
 		background: repeating-linear-gradient(
 			var(--_sonic-slider-toward),
 			var(--_sonic-etch) 0 var(--_sonic-unit),
-			transparent 0 var(--_sonic-slider-mark-pitch)
+			transparent 0 var(--_sonic-slider-notch-pitch)
 		);
 		mask: linear-gradient(
 			var(--_sonic-slider-across),
 			transparent 15%,
-			#000 0 calc(50% - var(--_sonic-slider-mark-lip)),
-			transparent 0 calc(50% + var(--_sonic-slider-mark-lip)),
+			#000 0 calc(50% - var(--_sonic-slider-notch-lip)),
+			transparent 0 calc(50% + var(--_sonic-slider-notch-lip)),
 			#000 0 85%,
 			transparent 0
 		);
 	}
 
-	[orientation='vertical'] > .sonic-slider > .sonic-slider-marks {
+	[orientation='vertical'] > .sonic-slider > .sonic-slider-notches {
 		inset: calc((var(--_sonic-slider-cap) - var(--_sonic-unit)) / 2) 0
 			calc((var(--_sonic-slider-cap) - var(--_sonic-unit)) / 2) var(--_sonic-slider-scale-band);
 	}
 
-	:not([notched]) > .sonic-slider > .sonic-slider-marks {
+	:not([notched]) > .sonic-slider > .sonic-slider-notches {
 		display: none;
 	}
 
@@ -239,8 +232,6 @@
 		inset: calc(50% + var(--_sonic-slider-scale-band) / 2 - var(--_sonic-slider-groove) / 2)
 			calc((var(--_sonic-slider-cap) - var(--_sonic-slider-groove)) / 2)
 			calc(50% - var(--_sonic-slider-scale-band) / 2 - var(--_sonic-slider-groove) / 2);
-
-		/* At either end of the travel the light runs on to the groove's rounded end */
 		background:
 			linear-gradient(
 				var(--_sonic-slider-toward),
@@ -256,7 +247,7 @@
 					),
 				transparent 0
 			),
-			var(--_sonic-slider-buffered-ranges, none), var(--_sonic-unlit);
+			var(--_sonic-slider-buffered-spans, none), var(--_sonic-unlit);
 		border-radius: calc(var(--_sonic-slider-groove) / 2);
 		box-shadow: var(--_sonic-groove), var(--_sonic-focus-shadow);
 	}
@@ -305,6 +296,70 @@
 		display: none;
 	}
 
+	:state(modulated) > .sonic-slider > .sonic-slider-modulation {
+		--_sonic-slider-live-low: min(var(--_sonic-slider-value, 0), var(--_sonic-slider-modulated, 0));
+		--_sonic-slider-live-high: max(
+			var(--_sonic-slider-value, 0),
+			var(--_sonic-slider-modulated, 0)
+		);
+		--_sonic-slider-live-start: calc(
+			(var(--_sonic-slider-live-low) - var(--_sonic-slider-modulation-from, 0)) *
+				var(--_sonic-slider-travel)
+		);
+		--_sonic-slider-live-length: calc(
+			(var(--_sonic-slider-live-high) - var(--_sonic-slider-live-low)) * var(--_sonic-slider-travel)
+		);
+		--_sonic-slider-tick-start: calc(
+			(var(--_sonic-slider-modulated, 0) - var(--_sonic-slider-modulation-from, 0)) *
+				var(--_sonic-slider-travel) - var(--_sonic-unit) / 2
+		);
+		--_sonic-slider-tick-overhang: calc(
+			(var(--_sonic-slider-modulation-band) - var(--_sonic-slider-groove)) / 2
+		);
+		--_sonic-slider-modulation-tick: color-mix(
+			in oklab,
+			var(--sonic-modulation, var(--_sonic-slider-lit)) 55%,
+			#fff
+		);
+
+		display: block;
+		background: color-mix(in oklab, var(--_sonic-slider-modulation) 50%, transparent);
+
+		&::before,
+		&::after {
+			position: absolute;
+			content: '';
+		}
+
+		&::before {
+			inset: 0 auto 0 var(--_sonic-slider-live-start);
+			inline-size: var(--_sonic-slider-live-length);
+			background: var(--_sonic-slider-modulation);
+			border-radius: inherit;
+		}
+
+		&::after {
+			inset: var(--_sonic-slider-tick-overhang) auto var(--_sonic-slider-tick-overhang)
+				var(--_sonic-slider-tick-start);
+			inline-size: var(--_sonic-unit);
+			background: var(--_sonic-slider-modulation-tick);
+		}
+	}
+
+	:where([orientation='vertical']):state(modulated) > .sonic-slider > .sonic-slider-modulation {
+		&::before {
+			inset: auto 0 var(--_sonic-slider-live-start);
+			inline-size: auto;
+			block-size: var(--_sonic-slider-live-length);
+		}
+
+		&::after {
+			inset: auto var(--_sonic-slider-tick-overhang) var(--_sonic-slider-tick-start);
+			inline-size: auto;
+			block-size: var(--_sonic-unit);
+		}
+	}
+
 	.sonic-slider-cap {
 		--_sonic-slider-pointer-width: calc(
 			var(--_sonic-slider-track) * var(--_sonic-slider-pointer-ratio)
@@ -340,7 +395,6 @@
 			box-shadow: var(--_sonic-face-shadow);
 		}
 
-		/* Stops short of the face's edge, where its round ends clash with the straight bevel */
 		&::after {
 			inset: var(--_sonic-slider-index-inset) calc(50% - var(--_sonic-slider-pointer-width) / 2);
 			background: var(--_sonic-ink);
@@ -378,12 +432,18 @@
 	}
 
 	@media (forced-colors: active) {
-		:is(.sonic-slider-marks, .sonic-slider-groove, .sonic-slider-modulation) {
+		:is(.sonic-slider-notches, .sonic-slider-groove, .sonic-slider-modulation) {
 			forced-color-adjust: none;
 		}
 
 		.sonic-slider-modulation {
 			--_sonic-slider-modulation: CanvasText;
+		}
+
+		:state(modulated) > .sonic-slider > .sonic-slider-modulation {
+			--_sonic-slider-modulation-tick: CanvasText;
+
+			background: GrayText;
 		}
 
 		.sonic-slider {

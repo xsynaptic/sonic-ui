@@ -4,8 +4,6 @@ Native custom elements for audio interfaces. Each control renders in the light D
 
 Early and unstable: any 0.x release may break the API.
 
-## Setup
-
 ```sh
 pnpm add @xsynaptic/sonic-ui
 ```
@@ -23,23 +21,6 @@ import '@xsynaptic/sonic-ui/define';
 
 ```html
 <sonic-dial aria-label="Cutoff" value="40"></sonic-dial>
-<sonic-slider aria-label="Send" value="30"></sonic-slider>
-<sonic-key aria-label="Mute" toggle>…</sonic-key>
 ```
 
-The styles sit in `@layer sonic`, so list it after your resets. A skin (`slate`, `lime` or `ivory`) applies under `.sonic-skin-<name>` on any ancestor. The package root exports the classes without registering them, for your own tag names.
-
-## Usage
-
-- **Attributes and properties** reflect each other: `dial.max = 200` writes `max="200"`. `value`, the key's `pressed` and the lever's `checked` are the live state and never write their attribute, as on native inputs.
-- **Events:** `change` when a control settles, and `input` while a dial or slider moves; both bubble.
-- **Formatting:** `formatValue` sets the text the readout and assistive technology read, `formatValueText` overrides what assistive technology reads, and `parseValue` reads typed entry back. `formatPercent` and `parsePercent` from the package root show 0 to 1 as a percentage.
-- **Forms:** controls that hold a value submit under their `name`, reset, take a `<label>`, and follow a disabled `<fieldset>`, as native inputs do.
-
-## Browsers
-
-Current Chrome and Edge, Safari 26 and Firefox 147.
-
-## License
-
-MIT
+Targets current Chrome and Edge, Safari 26 and Firefox 147. MIT licensed.

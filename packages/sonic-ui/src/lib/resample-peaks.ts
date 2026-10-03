@@ -1,0 +1,52 @@
+function bucketBounds(sourceLength: number, index: number, count: number): [number, number] {
+	const start = Math.floor((index * sourceLength) / count);
+
+	return [start, Math.max(start + 1, Math.floor(((index + 1) * sourceLength) / count))];
+}
+
+function downsample(peaks: ArrayLike<number>, count: number): Array<number> {
+	const resampled: Array<number> = [];
+
+	for (let index = 0; index < count; index += 1) {
+		const [start, end] = bucketBounds(peaks.length, index, count);
+		let total = 0;
+
+		for (let source = start; source < end; source += 1) total += peaks[source] ?? 0;
+		resampled.push(total / (end - start));
+	}
+
+	return resampled;
+}
+
+function renormalize(peaks: Array<number>): Array<number> {
+	const loudest = Math.max(...peaks);
+	if (loudest <= 0) return peaks;
+
+	return peaks.map((peak) => peak / loudest);
+}
+
+function upsample(peaks: ArrayLike<number>, count: number): Array<number> {
+	const resampled: Array<number> = [];
+	const last = peaks.length - 1;
+
+	for (let index = 0; index < count; index += 1) {
+		const place = count === 1 ? 0 : (index * last) / (count - 1);
+		const before = Math.floor(place);
+		const weight = place - before;
+
+		resampled.push(
+			(peaks[before] ?? 0) * (1 - weight) + (peaks[Math.min(last, before + 1)] ?? 0) * weight,
+		);
+	}
+
+	return resampled;
+}
+
+export function resamplePeaks(peaks: ArrayLike<number>, count: number): Array<number> {
+	if (count <= 0 || peaks.length === 0) return [];
+	// eslint-disable-next-line unicorn/prefer-spread -- an `ArrayLike` has no iterator to spread
+	if (count === peaks.length) return Array.from(peaks);
+	if (count > peaks.length) return upsample(peaks, count);
+
+	return renormalize(downsample(peaks, count));
+}

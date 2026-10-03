@@ -1,5 +1,4 @@
 import { SonicRangeElement } from '#elements/range-element.ts';
-import { readPxProperty } from '#lib/read-px-property.ts';
 import { requireChild, template } from '#lib/render.ts';
 
 declare global {
@@ -25,12 +24,23 @@ const renderNumber = template(
 	HTMLDivElement,
 );
 
-const fallbackTravelPx = 160;
-
 export class SonicNumber extends SonicRangeElement {
+	get press(): 'none' | 'step' {
+		return this.getAttribute('press') === 'step' ? 'step' : 'none';
+	}
+
+	set press(gesture: 'none' | 'step' | undefined) {
+		this.reflect('press', gesture);
+	}
+
 	readonly #number = renderNumber();
 
 	readonly #digits = requireChild(this.#number, '.sonic-number-value', HTMLSpanElement);
+
+	override connectedCallback(): void {
+		this.upgradeProperties('press');
+		super.connectedCallback();
+	}
 
 	protected connect(signal: AbortSignal): void {
 		const number = this.#number;
@@ -40,11 +50,7 @@ export class SonicNumber extends SonicRangeElement {
 		this.checkStyles(number, 'number.css');
 		this.bindGestures(number, signal, () => ({
 			position: (event) => -event.clientY,
-			travelPx: readPxProperty(
-				getComputedStyle(number),
-				'--_sonic-number-travel',
-				fallbackTravelPx,
-			),
+			travelPx: this.travelPx(number, '--_sonic-number-travel'),
 		}));
 	}
 
@@ -52,12 +58,20 @@ export class SonicNumber extends SonicRangeElement {
 		return 'spinbutton';
 	}
 
+	protected draw(): void {
+		this.#digits.textContent = this.valueText;
+	}
+
 	protected override focusTarget(): HTMLElement {
 		return this.#number;
 	}
 
-	protected render(): void {
-		this.#digits.textContent = this.valueText();
-		this.renderAria(this.#number);
+	protected override tapTarget(): number | undefined {
+		if (this.press !== 'step') return undefined;
+
+		const scale = this.scale();
+		const next = scale.keyTarget('ArrowUp', this.value);
+
+		return next === undefined || next === this.value ? scale.bounds[0] : next;
 	}
 }

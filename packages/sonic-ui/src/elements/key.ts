@@ -1,6 +1,8 @@
+import type { Hold } from '#lib/hold.ts';
+
 import { SonicFormElement } from '#elements/form-element.ts';
 import { copyNode } from '#lib/copy-node.ts';
-import { bindHoldRelease } from '#lib/hold.ts';
+import { bindHold } from '#lib/hold.ts';
 import { requireChild, template } from '#lib/render.ts';
 import { writeAttribute } from '#lib/write-attribute.ts';
 
@@ -30,6 +32,14 @@ export class SonicKey extends SonicFormElement {
 		'value',
 	];
 
+	get armed(): boolean {
+		return this.hasAttribute('armed');
+	}
+
+	set armed(isArmed: boolean) {
+		this.reflect('armed', isArmed);
+	}
+
 	get busy(): boolean {
 		return this.hasAttribute('busy');
 	}
@@ -38,7 +48,6 @@ export class SonicKey extends SonicFormElement {
 		this.reflect('busy', isBusy);
 	}
 
-	// The `pressed` attribute, as `defaultChecked` holds a checkbox's `checked` attribute
 	get defaultPressed(): boolean {
 		return this.hasAttribute('pressed');
 	}
@@ -55,7 +64,6 @@ export class SonicKey extends SonicFormElement {
 		this.reflect('momentary', isMomentary);
 	}
 
-	// The live state, which never writes the attribute, as `value` on the range
 	get pressed(): boolean {
 		return this.#isDirty ? this.#pressed : this.defaultPressed;
 	}
@@ -82,7 +90,6 @@ export class SonicKey extends SonicFormElement {
 		this.reflect('toggle', isToggle);
 	}
 
-	// What a pressed toggle submits, reading `on` while unset as a checkbox does
 	get value(): string {
 		return this.getAttribute('value') ?? 'on';
 	}
@@ -91,10 +98,8 @@ export class SonicKey extends SonicFormElement {
 		this.reflect('value', value);
 	}
 
-	#holder: number | string | undefined;
+	#holding: Hold | undefined;
 
-	// Re-read from the attribute until a press or a write
-	// An attribute write clears it, so a framework driving `pressed` keeps control
 	#isDirty = false;
 
 	readonly #key = renderKey();
@@ -103,16 +108,14 @@ export class SonicKey extends SonicFormElement {
 
 	attributeChangedCallback(name: string): void {
 		if (name === 'pressed') this.#isDirty = false;
-		if (this.isDisabled() || this.#isSoftDisabled()) this.#release();
+		if (this.isDisabled() || this.#isSoftDisabled()) this.#holding?.release();
 		this.render();
 	}
 
-	// Back to the `pressed` attribute, as a checkbox resets to `checked`
 	override formResetCallback(): void {
 		this.attributeChangedCallback('pressed');
 	}
 
-	// As a checkbox's label toggles it
 	protected override activate(): void {
 		this.#key.click();
 	}
@@ -122,6 +125,7 @@ export class SonicKey extends SonicFormElement {
 		const cap = requireChild(key, '.sonic-key-cap', HTMLSpanElement);
 
 		this.upgradeProperties(
+			'armed',
 			'busy',
 			'defaultPressed',
 			'momentary',
@@ -141,13 +145,6 @@ export class SonicKey extends SonicFormElement {
 		);
 		this.render();
 		this.checkStyles(key, 'key.css');
-		signal.addEventListener(
-			'abort',
-			() => {
-				this.#release();
-			},
-			{ once: true },
-		);
 
 		key.addEventListener(
 			'click',
@@ -186,7 +183,6 @@ export class SonicKey extends SonicFormElement {
 		// eslint-disable-next-line unicorn/no-null -- `null` submits nothing
 		const submitted = this.toggle && this.pressed ? this.value : null;
 
-		// The state restores an unpressed toggle too
 		this.writeFormValue(submitted, String(this.pressed));
 	}
 
@@ -194,53 +190,42 @@ export class SonicKey extends SonicFormElement {
 		if (this.toggle) this.pressed = state === 'true';
 	}
 
-	// Not `click`, which lands a tap late by the finger's dwell
 	#bindMomentary(key: HTMLButtonElement, signal: AbortSignal): void {
+		const holding = bindHold(
+			key,
+			{
+				canHold: () => !this.isDisabled() && !this.#isSoftDisabled(),
+				leave: 'blur',
+				onHold: () => {
+					this.#press(true);
+				},
+				onRelease: () => {
+					this.#press(false);
+				},
+			},
+			signal,
+		);
+
+		this.#holding = holding;
 		key.addEventListener(
 			'pointerdown',
 			(event) => {
 				if (event.button !== 0 || !this.#isMomentary()) return;
 
 				key.setPointerCapture(event.pointerId);
-				this.#hold(event.pointerId);
+				holding.hold(event.pointerId);
 			},
 			{ signal },
-		);
-		bindHoldRelease(
-			key,
-			{
-				holder: () => this.#holder,
-				release: () => {
-					this.#release();
-				},
-			},
-			signal,
 		);
 		key.addEventListener(
 			'keydown',
 			(event) => {
 				if (event.repeat || !holdKeys.has(event.key) || !this.#isMomentary()) return;
 
-				this.#hold(event.key);
+				holding.hold(event.key);
 			},
 			{ signal },
 		);
-		// Keyboard holds only; a finger on the next pad takes focus while this one is still held
-		key.addEventListener(
-			'blur',
-			() => {
-				if (typeof this.#holder === 'string') this.#release();
-			},
-			{ signal },
-		);
-	}
-
-	#hold(holder: number | string): void {
-		if (this.isDisabled() || this.#isSoftDisabled() || this.#holder !== undefined) return;
-
-		this.#holder = holder;
-		this.pressed = true;
-		this.dispatchEvent(new Event('change', { bubbles: true }));
 	}
 
 	#isMomentary(): boolean {
@@ -251,11 +236,8 @@ export class SonicKey extends SonicFormElement {
 		return this.softDisabled && !this.isDisabled();
 	}
 
-	#release(): void {
-		if (this.#holder === undefined) return;
-
-		this.#holder = undefined;
-		this.pressed = false;
+	#press(isPressed: boolean): void {
+		this.pressed = isPressed;
 		this.dispatchEvent(new Event('change', { bubbles: true }));
 	}
 }

@@ -1,5 +1,4 @@
 import { SonicRangeElement } from '#elements/range-element.ts';
-import { readPxProperty } from '#lib/read-px-property.ts';
 import { requireChild, template } from '#lib/render.ts';
 
 declare global {
@@ -33,8 +32,6 @@ const renderDial = template(
 	HTMLDivElement,
 );
 
-const fallbackTravelPx = 160;
-
 export class SonicDial extends SonicRangeElement {
 	static override readonly observedAttributes = [
 		...SonicRangeElement.observedAttributes,
@@ -50,7 +47,16 @@ export class SonicDial extends SonicRangeElement {
 		this.reflect('endless', isEndless);
 	}
 
-	// fallow-ignore-next-line code-duplication -- one accessor pair per reflected attribute, as on a native element
+	// fallow-ignore-next-line code-duplication -- one accessor pair per property
+	get modulated(): number | undefined {
+		return this.modulatedValue();
+	}
+
+	set modulated(value: number | undefined) {
+		this.writeModulated(this.#dial, 'dial', value);
+	}
+
+	// fallow-ignore-next-line code-duplication -- one accessor pair per reflected attribute
 	get modulation(): number {
 		return this.numberAttribute('modulation', 0);
 	}
@@ -62,7 +68,7 @@ export class SonicDial extends SonicRangeElement {
 	readonly #dial = renderDial();
 
 	override connectedCallback(): void {
-		this.upgradeProperties('endless', 'modulation');
+		this.upgradeProperties('endless', 'modulated', 'modulation');
 		super.connectedCallback();
 	}
 
@@ -74,33 +80,19 @@ export class SonicDial extends SonicRangeElement {
 		this.checkStyles(dial, 'dial.css');
 		this.bindGestures(dial, signal, () => ({
 			position: (event) => -event.clientY,
-			// Once per gesture; a computed style read per move forces a style recalc
-			travelPx: readPxProperty(getComputedStyle(dial), '--_sonic-dial-travel', fallbackTravelPx),
+			travelPx: this.travelPx(dial, '--_sonic-dial-travel'),
 		}));
+	}
+
+	protected draw(): void {
+		this.writePlaces(this.#dial, 'dial', this.endless ? 0 : this.modulation);
 	}
 
 	protected override focusTarget(): HTMLElement {
 		return this.#dial;
 	}
 
-	protected render(): void {
-		const dial = this.#dial;
-		const positions = this.positions();
-		const [modulationFrom, modulationTo] = this.modulationFractions(
-			this.endless ? 0 : this.modulation,
-		);
-
-		dial.style.setProperty('--_sonic-dial-value', String(this.fraction(this.value)));
-		dial.style.setProperty('--_sonic-dial-origin', String(this.originFraction()));
-		dial.style.setProperty('--_sonic-dial-modulation-from', String(modulationFrom));
-		dial.style.setProperty('--_sonic-dial-modulation-to', String(modulationTo));
-		if (positions === undefined) dial.style.removeProperty('--_sonic-dial-positions');
-		else dial.style.setProperty('--_sonic-dial-positions', String(positions));
-		this.renderScale();
-		this.renderAria(dial);
-	}
-
-	protected override wraps(): boolean {
+	protected override isWrapping(): boolean {
 		return this.endless;
 	}
 }

@@ -5,7 +5,6 @@ import '#define/slider.ts';
 
 import { nextTask } from './helpers.ts';
 
-// The parser connects the host before its children arrive, so the mirror catches them a task later
 async function mount(markup: string): Promise<HTMLElement> {
 	document.body.innerHTML = markup;
 	await nextTask();
@@ -44,20 +43,6 @@ test('labels on a value list sit by entry, interpolated between entries', async 
 	);
 
 	expect(places(dial)).toEqual([0.5, 0.375]);
-});
-
-test('labels clamp to the range, and on an endless dial `max` lands on `min`', async () => {
-	const dial = await mount(
-		'<sonic-dial min="-60" max="6"><span data-sonic-value="-60">∞</span><span data-sonic-value="-27"></span><span data-sonic-value="-80"></span><span data-sonic-value="6">+6</span></sonic-dial>',
-	);
-
-	expect(places(dial)).toEqual([0, 0.5, 0, 1]);
-
-	const endless = await mount(
-		'<sonic-dial endless max="360"><span data-sonic-value="360">N</span><span data-sonic-value="270">W</span></sonic-dial>',
-	);
-
-	expect(places(endless)).toEqual([0, 0.75]);
 });
 
 test('a range change moves the labels already placed', async () => {

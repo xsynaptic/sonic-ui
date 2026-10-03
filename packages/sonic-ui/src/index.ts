@@ -1,16 +1,16 @@
-/** @public */
 export { SonicDial } from '#elements/dial.ts';
-/** @public */
+export { SonicEnvelope } from '#elements/envelope.ts';
 export { SonicKey } from '#elements/key.ts';
-/** @public */
 export { SonicLever } from '#elements/lever.ts';
-/** @public */
 export { SonicMeter } from '#elements/meter.ts';
-/** @public */
 export { SonicNumber } from '#elements/number.ts';
-/** @public */
 export { SonicSegmented } from '#elements/segmented.ts';
-/** @public */
 export { SonicSlider } from '#elements/slider.ts';
-/** @public */
+export { SonicSum } from '#elements/sum.ts';
+export { SonicWaveform } from '#elements/waveform.ts';
+export { SonicWavestrip } from '#elements/wavestrip.ts';
+export { SonicXy } from '#elements/xy.ts';
+export { crossfadeGains } from '#lib/crossfade.ts';
+export { envelopeCurve } from '#lib/envelope-curve.ts';
 export { formatPercent, parsePercent } from '#lib/percent.ts';
+export type { WaveformData } from '#lib/waveform-buckets.ts';

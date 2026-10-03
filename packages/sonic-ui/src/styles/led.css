@@ -30,6 +30,8 @@
 
 		@media (forced-colors: active) {
 			--_sonic-lit-alt: Mark;
+			--_sonic-hot: Highlight;
+			--_sonic-clip: Mark;
 
 			forced-color-adjust: none;
 			background: none;
@@ -45,14 +47,42 @@
 		--_sonic-lit: var(--_sonic-lit-alt);
 	}
 
+	.sonic-led[data-sonic-lit='hot'] {
+		--_sonic-lit: var(--_sonic-hot);
+	}
+
+	.sonic-led[data-sonic-lit='clip'] {
+		--_sonic-lit: var(--_sonic-clip);
+	}
+
+	/* Before the lit rule, which a latched key's LED also matches */
 	.sonic-led:is(
-		[data-sonic-lit],
+		[data-sonic-lit='dim'],
+		:where(:is([armed], [busy]) > .sonic-key:not(:disabled, [aria-disabled='true'])) *
+	) {
+		&::after {
+			background:
+				var(--_sonic-lens-glint),
+				color-mix(in oklab, var(--_sonic-lit) 35%, var(--_sonic-lens-glass));
+		}
+
+		@media (forced-colors: active) {
+			&::after {
+				background: GrayText;
+				box-shadow: 0 0 0 1px var(--_sonic-lit);
+			}
+		}
+	}
+
+	.sonic-led:is(
+		[data-sonic-lit]:where(:not([data-sonic-lit='dim'])),
 		:where(
 				.sonic-key[aria-pressed='true'],
 				[momentary]:state(pressed) > .sonic-key,
 				.sonic-segmented-segment[aria-checked='true']
 			)
-			*
+			*,
+		:where(:state(at-rest):not(:disabled) > .sonic-led)
 	) {
 		background:
 			radial-gradient(
@@ -76,6 +106,7 @@
 
 			&::after {
 				background: var(--_sonic-lit);
+				box-shadow: 0 0 0 1px CanvasText;
 			}
 		}
 	}

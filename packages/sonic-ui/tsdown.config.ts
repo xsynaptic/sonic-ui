@@ -3,9 +3,8 @@ import type { UserConfig } from 'tsdown';
 import { defineConfig } from 'tsdown';
 
 const shared = {
-	// Clean runs once for both trees, and clears a flat `dist` from before the split
 	clean: ['dist'],
-	entry: ['src/index.ts', 'src/define.ts', 'src/define/*.ts'],
+	entry: ['src/index.ts', 'src/dat.ts', 'src/define.ts', 'src/define/*.ts'],
 	format: 'esm',
 	minify: false,
 	platform: 'browser',

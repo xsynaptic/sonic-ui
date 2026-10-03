@@ -1,4 +1,4 @@
-import { expect, test } from 'vitest';
+import { expect, test, vi } from 'vitest';
 
 import type { SonicLever } from '#elements/lever.ts';
 
@@ -12,7 +12,6 @@ const duck = /* HTML */ `
 	<span data-sonic-value="on">On</span>
 `;
 
-// happy-dom connects before parsing children, so the options arrive through the observer
 async function mountLever(
 	attributes: string,
 	children = duck,
@@ -266,4 +265,122 @@ test('the throw is spread evenly across the positions', async () => {
 
 	lever.value = 'on';
 	expect(throwOf(group)).toBe('1');
+});
+
+function mockBat(group: HTMLElement): void {
+	const bat = group.querySelector('.sonic-lever-bat');
+	if (!bat) throw new Error('The lever has no bat');
+
+	vi.spyOn(bat, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 40, 40));
+}
+
+function pointerAt(target: Element, type: string, [clientX, clientY]: [number, number]): void {
+	target.dispatchEvent(
+		new PointerEvent(type, {
+			bubbles: true,
+			button: 0,
+			clientX,
+			clientY,
+			pointerId: 1,
+			pointerType: 'mouse',
+		}),
+	);
+}
+
+const abc = /* HTML */ `
+	<span data-sonic-value="a">A</span>
+	<span data-sonic-value="off">Off</span>
+	<span data-sonic-value="b">B</span>
+`;
+
+test.each([
+	['off', 30, 'b'],
+	['off', 8, 'a'],
+	['off', 21, 'b'],
+	['b', 30, 'off'],
+	['a', 8, 'off'],
+])('a press on the bat from %s at %ipx throws it to %s', async (from, clientY, expected) => {
+	const { group, lever, positions } = await mountLever(`value="${from}"`, abc);
+
+	mockBat(group);
+	pointerAt(positionAt(positions, 1), 'pointerdown', [20, clientY]);
+	pointerAt(group, 'pointerup', [20, clientY]);
+
+	expect(lever.value).toBe(expected);
+});
+
+test('a drag on the bat throws one position per quarter of its size, and stops at the end', async () => {
+	const { group, lever, positions } = await mountLever('value="b"', abc);
+	const changes = recordChanges(lever);
+
+	mockBat(group);
+	pointerAt(positionAt(positions, 1), 'pointerdown', [20, 30]);
+	for (const clientY of [21, 19, 11, 9, -20]) pointerAt(group, 'pointermove', [20, clientY]);
+	pointerAt(group, 'pointerup', [20, -20]);
+
+	expect(changes).toEqual(['off', 'a']);
+});
+
+test('a horizontal drag reads the pointer across, and a press outside the bat goes to its position', async () => {
+	const { group, lever, positions } = await mountLever('orientation="horizontal" value="a"', abc);
+
+	mockBat(group);
+	pointerAt(positionAt(positions, 0), 'pointerdown', [5, 20]);
+	pointerAt(group, 'pointermove', [16, 90]);
+	expect(lever.value).toBe('off');
+	pointerAt(group, 'pointerup', [16, 90]);
+
+	pointerAt(positionAt(positions, 2), 'pointerdown', [60, 20]);
+	pointerAt(group, 'pointerup', [60, 20]);
+	expect(lever.value).toBe('b');
+});
+
+test('a drag onto a momentary position holds it, and dragging back or letting go springs it back', async () => {
+	const { group, lever, positions } = await mountLever('value="off"');
+	const changes = recordChanges(lever);
+
+	mockBat(group);
+	pointerAt(positionAt(positions, 1), 'pointerdown', [20, 20]);
+	pointerAt(group, 'pointermove', [20, 9]);
+	expect(lever.value).toBe('duck');
+	pointerAt(group, 'pointermove', [20, 20]);
+	expect(lever.value).toBe('off');
+	pointerAt(group, 'pointermove', [20, 9]);
+	pointerAt(group, 'pointerup', [20, 9]);
+
+	expect(changes).toEqual(['duck', 'off', 'duck', 'off']);
+});
+
+test('a switch flips once on a bat press, though its own click follows', async () => {
+	const { group, lever, positions } = await mountLever('', '');
+	const toggle = positionAt(positions, 0);
+
+	mockBat(group);
+	pointerAt(toggle, 'pointerdown', [20, 20]);
+	pointerAt(group, 'pointerup', [20, 20]);
+	toggle.click();
+	expect(lever.checked).toBe(true);
+
+	await nextTask();
+	toggle.click();
+	expect(lever.checked).toBe(false);
+});
+
+test('a drag sets a switch by direction: on is up, or right when horizontal', async () => {
+	const upright = await mountLever('checked', '');
+
+	mockBat(upright.group);
+	pointerAt(positionAt(upright.positions, 0), 'pointerdown', [20, 10]);
+	pointerAt(upright.group, 'pointermove', [20, 0]);
+	expect(upright.lever.checked).toBe(true);
+	pointerAt(upright.group, 'pointermove', [20, 12]);
+	expect(upright.lever.checked).toBe(false);
+	pointerAt(upright.group, 'pointerup', [20, 12]);
+
+	const across = await mountLever('orientation="horizontal"', '');
+
+	mockBat(across.group);
+	pointerAt(positionAt(across.positions, 0), 'pointerdown', [10, 20]);
+	pointerAt(across.group, 'pointermove', [22, 20]);
+	expect(across.lever.checked).toBe(true);
 });

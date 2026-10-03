@@ -1,16 +1,13 @@
 import { attachSlot } from '#lib/render.ts';
 import { writeAttribute } from '#lib/write-attribute.ts';
 
-// Replaced at build: `true` in the `development` tree, `false` in the default one
 // eslint-disable-next-line unicorn/consistent-boolean-name -- the name bundlers and other kits use
 declare const __DEV__: boolean;
 
-// Forwarding another attribute is a public API decision
 const namingAttributes = ['aria-describedby', 'aria-label', 'aria-labelledby'];
 
 const checkedClasses = new WeakSet<object>();
 
-// Rewriting the same labels on every render would churn the attribute through a drag
 function writeLabelledBy(target: Element, labels: Array<Element>): void {
 	const current = target.ariaLabelledByElements;
 	if (
@@ -26,11 +23,10 @@ function writeLabelledBy(target: Element, labels: Array<Element>): void {
 interface Mirror {
 	control: Element;
 	copy: (originals: Array<ChildNode>) => void;
-	// Children left out render beside the control, as they are
 	isCopied?: (child: Node) => boolean;
 }
 
-// eslint-disable-next-line wc/define-tag-after-class-definition -- abstract, so only its subclasses are ever defined
+// eslint-disable-next-line wc/define-tag-after-class-definition -- abstract; only subclasses are defined
 export abstract class SonicElement extends HTMLElement {
 	static readonly observedAttributes = [...namingAttributes, 'disabled'];
 
@@ -60,7 +56,6 @@ export abstract class SonicElement extends HTMLElement {
 
 		const connection = new AbortController();
 
-		// A throw leaves nothing bound behind it
 		try {
 			this.connect(connection.signal);
 		} catch (error) {
@@ -88,7 +83,6 @@ export abstract class SonicElement extends HTMLElement {
 		});
 	}
 
-	// As `delegatesFocus` does, focus already inside the control stays where it is
 	override focus(options?: FocusOptions): void {
 		const target = this.focusTarget();
 		if (!target) {
@@ -103,7 +97,6 @@ export abstract class SonicElement extends HTMLElement {
 		if (child.parentNode !== this) this.append(child);
 	}
 
-	// A missing sheet draws the control blank without an error
 	protected checkStyles(control: HTMLElement, sheet: string): void {
 		if (!__DEV__) return;
 
@@ -112,7 +105,6 @@ export abstract class SonicElement extends HTMLElement {
 
 		checkedClasses.add(elementClass);
 		requestAnimationFrame(() => {
-			// A detached control computes no styles
 			if (!control.isConnected) {
 				checkedClasses.delete(elementClass);
 				return;
@@ -156,7 +148,6 @@ export abstract class SonicElement extends HTMLElement {
 		return this.disabled || this.matches(':disabled');
 	}
 
-	// A framework keeps editing the children it owns, so the control copies them rather than taking them
 	protected mirrorChildren(
 		{ control, copy, isCopied = () => true }: Mirror,
 		signal: AbortSignal,
@@ -216,7 +207,6 @@ export abstract class SonicElement extends HTMLElement {
 		return Number.isNaN(value) ? undefined : value;
 	}
 
-	// `undefined`, `null` and `false` remove the attribute, as the Lit kits reflect
 	protected reflect(name: string, value: boolean | null | number | string | undefined): void {
 		if (value === true) {
 			this.setAttribute(name, '');
@@ -267,18 +257,15 @@ export abstract class SonicElement extends HTMLElement {
 		if (record.target === this) {
 			if (record.type === 'attributes') return false;
 
-			// The control's own arrival, or every mirror would run twice
 			return (
 				record.removedNodes.length > 0 || [...record.addedNodes].some((node) => node !== control)
 			);
 		}
 
-		// A node removed since keeps reporting until delivery, and belongs to no child
 		const child = this.#childHolding(record.target);
 
 		if (child === undefined || child === control) return false;
 
-		// A child's own attribute can move it out of the copies, which `isCopied` no longer sees
 		return isCopied(child) || (record.type === 'attributes' && record.target === child);
 	}
 }

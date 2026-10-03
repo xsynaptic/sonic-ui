@@ -113,7 +113,6 @@
 		}
 	}
 
-	/* In flow, so a long label widens its segment rather than spilling over the next */
 	.sonic-segmented-cap {
 		position: relative;
 		display: grid;
@@ -152,7 +151,6 @@
 		}
 	}
 
-	/* Engraving under the glow keeps a lit label's edge */
 	.sonic-segmented-segment[aria-checked='true'] .sonic-segmented-cap > * {
 		filter: var(--_sonic-engraving)
 			drop-shadow(0 0 var(--_sonic-unit) color-mix(in oklab, var(--_sonic-lit) 35%, transparent));

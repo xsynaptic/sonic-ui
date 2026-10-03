@@ -4,15 +4,9 @@
 	initial-value: 32px;
 }
 
-@property --_sonic-key-busy-angle {
-	syntax: '<angle>';
-	inherits: false;
-	initial-value: 0deg;
-}
-
 @keyframes sonic-key-busy {
-	to {
-		--_sonic-key-busy-angle: 1turn;
+	from {
+		opacity: 0.35;
 	}
 }
 
@@ -70,9 +64,24 @@
 		transition: color 120ms ease-out;
 	}
 
-	/* A drifting finger would turn a held pad into a pan */
 	:where([momentary]) > .sonic-key {
 		touch-action: none;
+	}
+
+	/* Before the latched rule, which must win unchanged */
+	:where([armed]) > .sonic-key:not(:disabled, [aria-disabled='true']) {
+		--_sonic-key-glow: color-mix(in oklab, var(--_sonic-lit) 8%, transparent);
+
+		color: color-mix(in oklab, var(--_sonic-lit) 55%, var(--_sonic-ink));
+
+		@media (forced-colors: active) {
+			--_sonic-key-glow: transparent;
+		}
+	}
+
+	/* Before the latched rule too; a key with an LED blinks the LED and keeps its legend */
+	:where([busy]) > .sonic-key:not(:disabled, [aria-disabled='true'], :has(.sonic-led)) {
+		color: color-mix(in oklab, var(--_sonic-lit) 55%, var(--_sonic-ink));
 	}
 
 	.sonic-key:active:where(:not(:disabled, [aria-disabled='true'])),
@@ -86,8 +95,6 @@
 		--_sonic-key-glow: color-mix(in oklab, var(--_sonic-lit) 22%, transparent);
 
 		color: var(--_sonic-lit);
-
-		/* A full-strength floor shows as a hard line where the sunk cap uncovers it */
 		background: linear-gradient(
 			var(--_sonic-light-fall),
 			color-mix(in oklab, var(--_sonic-lit) 25%, #000),
@@ -106,49 +113,22 @@
 			[aria-pressed='true'],
 			:disabled,
 			[aria-disabled='true'],
-			:where([momentary]:state(pressed)) > *
+			:where([momentary]:state(pressed), [armed]) > *,
+			:where([busy]) > :not(:has(.sonic-led))
 		):is(:focus-visible, :active) {
 		color: var(--_sonic-ink-lift);
 	}
 
 	@media (hover: hover) {
-		/* fallow-ignore-next-line code-duplication -- `:hover` sits under `(hover: hover)` and its `:focus-visible` partner outside it */
+		/* fallow-ignore-next-line code-duplication -- `:hover` and `:focus-visible` split by `(hover: hover)` */
 		.sonic-key:not(
 				[aria-pressed='true'],
 				:disabled,
 				[aria-disabled='true'],
-				:where([momentary]:state(pressed)) > *
+				:where([momentary]:state(pressed), [armed]) > *,
+				:where([busy]) > :not(:has(.sonic-led))
 			):hover {
 			color: var(--_sonic-ink-lift);
-		}
-	}
-
-	/* Turns with the arc, so evenly shaded */
-	[busy] > .sonic-key::after {
-		position: absolute;
-		inset: 0;
-		box-sizing: border-box;
-		padding: calc(var(--_sonic-key-size) * var(--_sonic-key-bevel-ratio));
-		pointer-events: none;
-		content: '';
-		background: conic-gradient(
-			from var(--_sonic-key-busy-angle),
-			transparent 0 55%,
-			var(--_sonic-lit)
-		);
-		border-radius: var(--_sonic-key-corner);
-		mask:
-			linear-gradient(#000 0 0) content-box exclude,
-			linear-gradient(#000 0 0);
-		animation: sonic-key-busy 1s linear infinite;
-
-		@media (prefers-reduced-motion: reduce) {
-			background: color-mix(in oklab, var(--_sonic-lit) 45%, transparent);
-			animation: none;
-		}
-
-		@media (forced-colors: active) {
-			forced-color-adjust: none;
 		}
 	}
 
@@ -202,7 +182,6 @@
 		block-size: calc(var(--_sonic-key-size) * var(--_sonic-key-led-icon-ratio));
 	}
 
-	/* Engraving under the glow keeps a lit icon's edge */
 	.sonic-key:is([aria-pressed='true'], :where([momentary]:state(pressed)) > *)
 		.sonic-key-cap
 		> svg {
@@ -210,7 +189,7 @@
 			drop-shadow(0 0 var(--_sonic-unit) color-mix(in oklab, var(--_sonic-lit) 35%, transparent));
 	}
 
-	/* fallow-ignore-next-line code-duplication -- one pressed state, restated for each part of the cap it reaches */
+	/* fallow-ignore-next-line code-duplication -- one pressed state across the cap's parts */
 	.sonic-key:is([aria-pressed='true'], :where([momentary]:state(pressed)) > *)
 		.sonic-key-cap
 		> [data-sonic-when='off'],
@@ -218,6 +197,15 @@
 		.sonic-key-cap
 		> [data-sonic-when='on'] {
 		display: none;
+	}
+
+	[busy] > .sonic-key:not(:disabled, [aria-disabled='true'], :has(.sonic-led)) > .sonic-key-cap > *,
+	[busy] > .sonic-key:not(:disabled, [aria-disabled='true']) .sonic-led::after {
+		animation: sonic-key-busy 500ms ease-in-out infinite alternate;
+
+		@media (prefers-reduced-motion: reduce) {
+			animation: none;
+		}
 	}
 
 	@media (forced-colors: active) {

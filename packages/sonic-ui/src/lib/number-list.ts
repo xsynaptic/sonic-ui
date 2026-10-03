@@ -14,7 +14,7 @@ export function parseNumberList(text: null | string): Array<number> | undefined 
 	return entries.length >= 2 ? entries : undefined;
 }
 
-export function nearestEntry(entries: Array<number>, value: number): number {
+export function nearestEntry(entries: ReadonlyArray<number>, value: number): number {
 	let nearest = entries[0] ?? value;
 
 	for (const entry of entries) {

@@ -1,0 +1,173 @@
+@property --_sonic-waveform-size {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 96px;
+}
+
+@property --_sonic-waveform-length {
+	syntax: '<length-percentage>';
+	inherits: true;
+	initial-value: 320px;
+}
+
+@property --_sonic-waveform-label-inset {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 0;
+}
+
+@property --_sonic-waveform-wave {
+	syntax: '<color>';
+	inherits: true;
+	initial-value: rgb(245 158 10);
+}
+
+@property --_sonic-waveform-wave-edge {
+	syntax: '<color>';
+	inherits: true;
+	initial-value: rgb(110 70 5);
+}
+
+@property --_sonic-waveform-grid {
+	syntax: '<color>';
+	inherits: true;
+	initial-value: rgb(96 96 104);
+}
+
+@property --_sonic-waveform-hatch {
+	syntax: '<color>';
+	inherits: true;
+	initial-value: rgb(96 96 104);
+}
+
+@property --_sonic-waveform-marker {
+	syntax: '<color>';
+	inherits: true;
+	initial-value: rgb(200 200 208);
+}
+
+@layer sonic {
+	:is(sonic-waveform, .sonic-waveform) {
+		--_sonic-waveform-size: var(--sonic-waveform-size, 6rem);
+		--_sonic-waveform-length: var(--sonic-waveform-length, 20rem);
+	}
+
+	:has(> .sonic-waveform):not([hidden]) {
+		display: contents;
+	}
+
+	sonic-waveform:not(:defined, [hidden]) {
+		display: block;
+		visibility: hidden;
+		flex-shrink: 0;
+		inline-size: var(--_sonic-waveform-length);
+		block-size: var(--_sonic-waveform-size);
+	}
+
+	.sonic-waveform {
+		--_sonic-waveform-inset: calc(var(--_sonic-waveform-size) * 0.06);
+		--_sonic-unit: calc(var(--_sonic-waveform-size) / 48);
+		--_sonic-waveform-line: max(1px, var(--_sonic-unit));
+		--_sonic-waveform-lit: var(--_sonic-lit);
+		--_sonic-waveform-wave: var(--_sonic-waveform-lit);
+		--_sonic-waveform-wave-edge: color-mix(in oklab, var(--_sonic-waveform-lit) 45%, #000);
+		--_sonic-waveform-grid: var(--_sonic-etch);
+		--_sonic-waveform-hatch: var(--_sonic-etch);
+		--_sonic-waveform-marker: var(--sonic-cue, var(--_sonic-ink));
+		--_sonic-waveform-label-inset: calc(
+			var(--_sonic-waveform-size) * var(--sonic-waveform-label-inset-ratio, 0.08)
+		);
+
+		inline-size: var(--_sonic-waveform-length);
+		block-size: var(--_sonic-waveform-size);
+		padding: var(--_sonic-waveform-inset);
+		container-type: size;
+
+		/* A label riding in from the far side would otherwise widen the page */
+		overflow: hidden;
+		touch-action: pan-y;
+		cursor: grab;
+		border-radius: calc(var(--_sonic-waveform-size) * 0.08);
+		box-shadow: var(--_sonic-focus-shadow);
+	}
+
+	:state(dragging) > .sonic-waveform {
+		cursor: grabbing;
+	}
+
+	[dimmed] > .sonic-waveform {
+		--_sonic-waveform-lit: var(--_sonic-lit-off);
+	}
+
+	:disabled > .sonic-waveform {
+		--_sonic-waveform-lit: var(--_sonic-lit-disabled);
+
+		cursor: default;
+	}
+
+	.sonic-waveform-canvas {
+		display: block;
+		inline-size: 100%;
+		block-size: 100%;
+	}
+
+	:is(.sonic-waveform-playhead, .sonic-waveform-ghost) {
+		position: absolute;
+		inset-block: var(--_sonic-waveform-inset);
+		inset-inline-start: calc(var(--_sonic-waveform-inset) - var(--_sonic-waveform-line) / 2);
+		inline-size: var(--_sonic-waveform-line);
+		pointer-events: none;
+		translate: 50cqi;
+	}
+
+	.sonic-waveform-playhead {
+		background: var(--_sonic-ink);
+	}
+
+	.sonic-waveform-ghost {
+		background: var(--_sonic-etch);
+	}
+
+	.sonic-waveform-label {
+		position: absolute;
+		inset-block-end: calc(var(--_sonic-waveform-inset) + var(--_sonic-waveform-label-inset));
+		inset-inline-start: var(--_sonic-waveform-inset);
+		font-size: calc(var(--_sonic-waveform-size) * var(--sonic-waveform-label-font-ratio, 0.13));
+		line-height: 1;
+		color: var(--_sonic-waveform-marker);
+		white-space: nowrap;
+		pointer-events: none;
+	}
+
+	.sonic-waveform-label[data-sonic-dimmed] {
+		color: color-mix(in oklab, var(--_sonic-waveform-marker) 50%, transparent);
+	}
+
+	/* Opaque, since a system highlight carries alpha that would blend the wave into the glass */
+	@media (forced-colors: active) {
+		.sonic-waveform {
+			--_sonic-waveform-wave: rgb(from CanvasText r g b / 100%);
+			--_sonic-waveform-wave-edge: rgb(from CanvasText r g b / 100%);
+			--_sonic-waveform-grid: rgb(from GrayText r g b / 100%);
+			--_sonic-waveform-hatch: rgb(from GrayText r g b / 100%);
+			--_sonic-waveform-marker: rgb(from CanvasText r g b / 100%);
+		}
+
+		:disabled > .sonic-waveform {
+			--_sonic-waveform-wave: rgb(from GrayText r g b / 100%);
+			--_sonic-waveform-wave-edge: rgb(from GrayText r g b / 100%);
+		}
+
+		:is(.sonic-waveform-playhead, .sonic-waveform-ghost) {
+			forced-color-adjust: none;
+		}
+
+		.sonic-waveform-playhead {
+			background: CanvasText;
+		}
+
+		.sonic-waveform-ghost {
+			background: Highlight;
+		}
+	}
+}

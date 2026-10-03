@@ -1,0 +1,74 @@
+import type { SurfaceSize } from '#lib/canvas-surface.ts';
+
+import { clampUnit } from '#lib/math.ts';
+import { resamplePeaks } from '#lib/resample-peaks.ts';
+
+export interface BarRect {
+	height: number;
+	radius: number;
+	width: number;
+	x: number;
+	y: number;
+}
+
+interface BarGrid {
+	gapRatio: number;
+	pitch: number;
+	radiusRatio: number;
+}
+
+interface SpanState {
+	buffered: ReadonlyArray<[number, number]>;
+	played: number;
+	scrub?: number;
+}
+
+export interface StripSpans {
+	key: string;
+	spans: Array<{ from: number; kind: 'buffered' | 'played' | 'scrub'; to: number }>;
+}
+
+// Whole device pixels, or bars alias unevenly and Skia's CPU raster crawls
+export function stripBars(
+	peaks: ArrayLike<number>,
+	size: SurfaceSize,
+	grid: BarGrid,
+): Array<BarRect> {
+	const pitch = Math.max(1, Math.round(grid.pitch * size.dpr));
+	const gap = Math.min(pitch - 1, Math.max(0, Math.round(pitch * grid.gapRatio)));
+	const width = pitch - gap;
+	const count = Math.max(0, Math.floor((size.width + gap) / pitch));
+
+	return resamplePeaks(peaks, count).map((peak, index) => {
+		const height = Math.max(1, Math.round(clampUnit(peak) * size.height));
+
+		return {
+			height,
+			radius: width * grid.radiusRatio,
+			width,
+			x: index * pitch,
+			y: Math.round((size.height - height) / 2),
+		};
+	});
+}
+
+export function stripSpans(state: SpanState, widthPx: number): StripSpans {
+	const px = (place: number): number => Math.round(place * widthPx);
+	const buffered = state.buffered
+		.map(([start, end]): [number, number] => [px(start), px(end)])
+		.filter(([start, end]) => end > start);
+	const played = px(state.played);
+	const scrub = state.scrub === undefined ? played : px(state.scrub);
+	const spans: StripSpans['spans'] = buffered.map(([from, to]) => ({
+		from,
+		kind: 'buffered',
+		to,
+	}));
+
+	if (played > 0) spans.push({ from: 0, kind: 'played', to: played });
+	if (scrub !== played) {
+		spans.push({ from: Math.min(played, scrub), kind: 'scrub', to: Math.max(played, scrub) });
+	}
+
+	return { key: `${String(played)}:${String(scrub)}:${buffered.join(',')}`, spans };
+}

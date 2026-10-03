@@ -4,16 +4,12 @@ import type { SonicNumber } from '#elements/number.ts';
 
 import '#define/number.ts';
 
-import { pressKey, recordEvents } from './helpers.ts';
+import { mountControl, pointerAt, pressKey, recordEvents } from './helpers.ts';
 
 function mountNumber(attributes: string): { control: HTMLElement; number: SonicNumber } {
-	document.body.innerHTML = `<div><sonic-number ${attributes}></sonic-number></div>`;
+	const { control, host } = mountControl('sonic-number', attributes);
 
-	const number = document.querySelector('sonic-number');
-	const control = number?.querySelector<HTMLElement>('.sonic-number');
-	if (!number || !control) throw new Error('The number box did not render');
-
-	return { control, number };
+	return { control, number: host };
 }
 
 function partsOf(control: HTMLElement): { digits: HTMLElement; entry: HTMLInputElement } {
@@ -22,12 +18,6 @@ function partsOf(control: HTMLElement): { digits: HTMLElement; entry: HTMLInputE
 	if (!digits || !entry) throw new Error('The number box is missing a part');
 
 	return { digits, entry };
-}
-
-function pointerAt(control: HTMLElement, type: string, init: PointerEventInit): void {
-	control.dispatchEvent(
-		new PointerEvent(type, { bubbles: true, button: 0, clientX: 10, pointerId: 1, ...init }),
-	);
 }
 
 function doublePress(control: HTMLElement): void {
@@ -65,7 +55,6 @@ test('the digits follow formatValue and the value', () => {
 	expect(digits.textContent).toBe('32.5 Hz');
 });
 
-// happy-dom computes no styles, so the box falls back to 160px of travel
 test('a drag up raises the value over the travel, and Shift slows it tenfold', () => {
 	const { control, number } = mountNumber('min="-20" max="140" step="0.5" value="0"');
 	const events = recordEvents(document.body);
@@ -118,4 +107,54 @@ test('Escape closes the entry and keeps the value', () => {
 	expect(number.value).toBe(40);
 	expect(events).toEqual([]);
 	expect(entry.hidden).toBe(true);
+});
+
+function tap(control: HTMLElement): void {
+	pointerAt(control, 'pointerdown', { clientY: 10 });
+	pointerAt(control, 'pointerup', { clientY: 10 });
+}
+
+test('with press="step", each tap steps to the next entry and wraps past the last', () => {
+	const { control, number } = mountNumber('press="step" values="1 2 4 8" value="4"');
+	const events = recordEvents(document.body);
+	const values: Array<number> = [];
+
+	for (let index = 0; index < 3; index += 1) {
+		tap(control);
+		values.push(number.value);
+	}
+
+	expect(values).toEqual([8, 1, 2]);
+	expect(events).toEqual(['input', 'change', 'input', 'change', 'input', 'change']);
+	expect(partsOf(control).entry.hidden).toBe(true);
+});
+
+test('with press="step" on a stepped range, a tap at the top wraps to the minimum', () => {
+	const { control, number } = mountNumber(
+		'press="step" min="-20" max="80" step="2.5" value="77.5"',
+	);
+
+	tap(control);
+	expect(number.value).toBe(80);
+
+	tap(control);
+	expect(number.value).toBe(-20);
+});
+
+test('with press="step", a drag moves by the drag alone', () => {
+	const { control, number } = mountNumber('press="step" min="10" max="170" step="2" value="50"');
+
+	pointerAt(control, 'pointerdown', { clientY: 100 });
+	pointerAt(control, 'pointermove', { clientY: 80 });
+	pointerAt(control, 'pointerup', { clientY: 80 });
+
+	expect(number.value).toBe(70);
+});
+
+test('without press, a tap leaves the value', () => {
+	const { control, number } = mountNumber('values="1 2 4 8" value="4"');
+
+	tap(control);
+
+	expect(number.value).toBe(4);
 });

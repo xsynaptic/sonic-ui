@@ -1,11 +1,16 @@
 @import './material.css';
 @import './dial.css';
+@import './envelope.css';
 @import './key.css';
 @import './led.css';
 @import './lever.css';
 @import './meter.css';
 @import './number.css';
 @import './plate.css';
+@import './ring.css';
 @import './screen.css';
 @import './segmented.css';
 @import './slider.css';
+@import './waveform.css';
+@import './wavestrip.css';
+@import './xy.css';

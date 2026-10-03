@@ -38,17 +38,11 @@
 		--_sonic-dial-ring-ratio: var(--sonic-dial-ring-ratio, 0.075);
 		--_sonic-dial-gap-ratio: var(--sonic-dial-gap-ratio, 0.05);
 		--_sonic-dial-pointer-ratio: var(--sonic-dial-pointer-ratio, 0.06);
-
-		/* 0 for a straight bar */
 		--_sonic-dial-pointer-taper: var(--sonic-dial-pointer-taper, 0.5);
-
-		/* A fraction of the knob's angle */
 		--_sonic-dial-face-drift: var(--sonic-dial-face-drift, 0.1);
 		--_sonic-dial-notch-ratio: var(--sonic-dial-notch-ratio, 0.1);
 		--_sonic-dial-scale-ratio: var(--sonic-dial-scale-ratio, 0.2);
 		--_sonic-dial-scale-font-ratio: var(--sonic-dial-scale-font-ratio, 0.175);
-
-		/* Centred on six o'clock */
 		--_sonic-dial-sweep: var(--sonic-dial-sweep, 300deg);
 		--_sonic-dial-segment: var(--sonic-dial-segment, 30deg);
 		--_sonic-dial-ridge-pitch: var(--sonic-dial-ridge-pitch, 4px);
@@ -151,7 +145,6 @@
 	.sonic-dial-scale {
 		font-size: calc(var(--_sonic-dial-size) * var(--_sonic-dial-scale-font-ratio));
 
-		/* The near edge hugs the band's inner edge, and each mark grows outward along its angle */
 		& > * {
 			--_sonic-dial-scale-angle: calc(
 				var(--_sonic-dial-start) + var(--_sonic-scale-at, 0) * var(--_sonic-dial-sweep)
@@ -180,35 +173,25 @@
 	}
 
 	:is(.sonic-dial-ring, .sonic-dial-modulation) {
+		--_sonic-arc-width: var(--_sonic-dial-ring-width);
+
 		position: absolute;
 		inset: calc(var(--_sonic-dial-scale-band) + var(--_sonic-dial-notch-band));
 		border-radius: 50%;
-		mask: radial-gradient(
-			closest-side,
-			transparent calc(100% - var(--_sonic-dial-ring-width) - 0.5px),
-			#000 calc(100% - var(--_sonic-dial-ring-width)),
-			#000 calc(100% - var(--_sonic-dial-band-inset) - 0.5px),
-			transparent calc(100% - var(--_sonic-dial-band-inset))
-		);
+		mask: var(--_sonic-arc-mask);
 	}
 
 	.sonic-dial-ring {
-		--_sonic-dial-band-inset: 0px;
+		--_sonic-arc-inset: 0px;
 		--_sonic-dial-lit-from: calc(
 			min(var(--_sonic-dial-origin, 0), var(--_sonic-dial-value, 0)) * var(--_sonic-dial-sweep)
 		);
 		--_sonic-dial-lit-to: calc(
 			max(var(--_sonic-dial-origin, 0), var(--_sonic-dial-value, 0)) * var(--_sonic-dial-sweep)
 		);
-		--_sonic-dial-ring-shade: radial-gradient(
-			closest-side,
-			rgb(0 0 0 / 55%) calc(100% - var(--_sonic-dial-ring-width)),
-			transparent calc(100% - var(--_sonic-dial-ring-width) * 0.4),
-			rgb(0 0 0 / 25%) 100%
-		);
 
 		background:
-			var(--_sonic-dial-ring-shade),
+			var(--_sonic-arc-shade),
 			conic-gradient(
 				from var(--_sonic-dial-start),
 				var(--_sonic-unlit) var(--_sonic-dial-lit-from),
@@ -220,7 +203,7 @@
 
 	[endless] > .sonic-dial > .sonic-dial-ring {
 		background:
-			var(--_sonic-dial-ring-shade),
+			var(--_sonic-arc-shade),
 			conic-gradient(
 				from
 					calc(var(--_sonic-dial-start) + var(--_sonic-dial-angle) - var(--_sonic-dial-segment) / 2),
@@ -234,7 +217,7 @@
 			--sonic-modulation,
 			color-mix(in oklab, var(--_sonic-dial-lit) 60%, #000)
 		);
-		--_sonic-dial-band-inset: calc(var(--_sonic-dial-ring-width) * 0.55);
+		--_sonic-arc-inset: calc(var(--_sonic-dial-ring-width) * 0.55);
 
 		background: conic-gradient(
 			from var(--_sonic-dial-start),
@@ -248,6 +231,60 @@
 	:not([notched]) > .sonic-dial > .sonic-dial-notches,
 	:not([modulation]) > .sonic-dial > .sonic-dial-modulation {
 		display: none;
+	}
+
+	:state(modulated) > .sonic-dial > .sonic-dial-modulation {
+		--_sonic-dial-modulated-angle: calc(var(--_sonic-dial-modulated, 0) * var(--_sonic-dial-sweep));
+		--_sonic-dial-modulation-range: color-mix(
+			in oklab,
+			var(--_sonic-dial-modulation) 50%,
+			transparent
+		);
+		--_sonic-dial-modulation-tick: color-mix(
+			in oklab,
+			var(--sonic-modulation, var(--_sonic-dial-lit)) 55%,
+			#fff
+		);
+
+		display: block;
+		background: none;
+		mask: none;
+
+		&::before,
+		&::after {
+			position: absolute;
+			inset: 0;
+			content: '';
+			border-radius: 50%;
+		}
+
+		&::before {
+			background:
+				conic-gradient(
+					from var(--_sonic-dial-start),
+					transparent min(var(--_sonic-dial-angle), var(--_sonic-dial-modulated-angle)),
+					var(--_sonic-dial-modulation) 0
+						max(var(--_sonic-dial-angle), var(--_sonic-dial-modulated-angle)),
+					transparent 0
+				),
+				conic-gradient(
+					from var(--_sonic-dial-start),
+					transparent calc(var(--_sonic-dial-modulation-from, 0) * var(--_sonic-dial-sweep)),
+					var(--_sonic-dial-modulation-range) 0
+						calc(var(--_sonic-dial-modulation-to, 0) * var(--_sonic-dial-sweep)),
+					transparent 0
+				);
+			mask: var(--_sonic-arc-mask);
+		}
+
+		&::after {
+			background: linear-gradient(
+					var(--_sonic-dial-modulation-tick),
+					var(--_sonic-dial-modulation-tick)
+				)
+				50% 0 / var(--_sonic-unit) var(--_sonic-dial-ring-width) no-repeat;
+			rotate: calc(var(--_sonic-dial-start) + var(--_sonic-dial-modulated-angle));
+		}
 	}
 
 	.sonic-dial-cap {
@@ -340,11 +377,16 @@
 		}
 
 		.sonic-dial-ring {
-			--_sonic-dial-ring-shade: none;
+			--_sonic-arc-shade: none;
 		}
 
 		.sonic-dial-modulation {
 			--_sonic-dial-modulation: CanvasText;
+		}
+
+		:state(modulated) > .sonic-dial > .sonic-dial-modulation {
+			--_sonic-dial-modulation-range: GrayText;
+			--_sonic-dial-modulation-tick: CanvasText;
 		}
 
 		.sonic-dial-cap::before,

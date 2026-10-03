@@ -11,12 +11,10 @@
 }
 
 @layer sonic {
-	/* Lines take the page's colour, so a plate suits any background */
 	:is(.sonic-plate, .sonic-plate-title, .sonic-plate-rule) {
 		--_sonic-plate-line: color-mix(in oklab, currentcolor 20%, transparent);
 	}
 
-	/* A signed depth is the unit, so the cast flips for a tray and vanishes at 0 */
 	.sonic-plate {
 		--_sonic-plate-depth: var(--sonic-plate-depth, 0.125rem);
 		--_sonic-plate-radius: var(--sonic-plate-radius, 0.75rem);

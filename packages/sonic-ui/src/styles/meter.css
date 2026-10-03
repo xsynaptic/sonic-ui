@@ -16,7 +16,6 @@
 	initial-value: 4px;
 }
 
-/* The size is the thickness */
 @layer sonic {
 	:is(sonic-meter, .sonic-meter) {
 		--_sonic-meter-size: var(--sonic-meter-size, 0.5rem);
@@ -40,17 +39,10 @@
 	}
 
 	.sonic-meter {
-		/* Absolute, so a longer meter gains segments rather than stretching them */
 		--_sonic-meter-pitch: var(--sonic-meter-segment-pitch, 4px);
-
-		/* A fraction of the pitch */
 		--_sonic-meter-gap-ratio: var(--sonic-meter-gap-ratio, 0.25);
 		--_sonic-meter-radius-ratio: var(--sonic-meter-radius-ratio, 0.25);
-
-		/* A fraction of the light's length along the meter */
 		--_sonic-meter-segment-radius-ratio: var(--sonic-meter-segment-radius-ratio, 0.35);
-
-		/* dBFS */
 		--_sonic-meter-hot-from: var(--sonic-meter-hot-from, -12);
 		--_sonic-meter-clip-from: var(--sonic-meter-clip-from, -3);
 		--_sonic-unit: calc(var(--_sonic-meter-size) / 8);
@@ -94,7 +86,6 @@
 		block-size: var(--_sonic-meter-size);
 	}
 
-	/* No clip on either, so the lights take the lens's room */
 	:is([scale='linear'], :state(ladder)) > .sonic-meter {
 		--_sonic-meter-clip-space: 0px;
 	}
@@ -114,7 +105,6 @@
 		);
 	}
 
-	/* Snapped to whole lights, so none is split between two colours */
 	:is(.sonic-meter-segments, .sonic-meter-level) {
 		--_sonic-meter-span: calc(var(--_sonic-meter-max, 0) - var(--_sonic-meter-min, -60));
 		--_sonic-meter-hot-at: round(
@@ -129,7 +119,7 @@
 		--_sonic-meter-clip-at: round(
 			clamp(
 					0,
-					/* fallow-ignore-next-line code-duplication -- each zone snaps its own threshold by the same rule */
+					/* fallow-ignore-next-line code-duplication -- each zone snaps its own threshold */
 						(var(--_sonic-meter-clip-from) - var(--_sonic-meter-min, -60)) /
 						var(--_sonic-meter-span),
 					1
@@ -137,8 +127,6 @@
 				var(--_sonic-meter-segments),
 			var(--_sonic-meter-pitch)
 		);
-
-		/* Each rounded light is two crossed bands and four corner dots added together */
 		--_sonic-meter-lights:
 			linear-gradient(to top, #000 var(--_sonic-meter-segment), transparent 0)
 				var(--_sonic-meter-segment-radius) 100% /
@@ -199,7 +187,6 @@
 			0 100% / 100% var(--_sonic-meter-pitch) no-repeat repeat;
 	}
 
-	/* The zones are dBFS, which a linear level is not */
 	[scale='linear'] > .sonic-meter > :is(.sonic-meter-segments, .sonic-meter-level) {
 		--_sonic-meter-hot-at: var(--_sonic-meter-segments);
 		--_sonic-meter-clip-at: var(--_sonic-meter-segments);
@@ -300,8 +287,6 @@
 		);
 	}
 
-	/* One mask for the bar and peak, so a frame repaints without layout */
-
 	/* The hair of slack keeps an exact fraction from losing a light to float error */
 	.sonic-meter-level {
 		--_sonic-meter-lit-from: round(
@@ -316,9 +301,9 @@
 				var(--_sonic-meter-segments) + 0.01px,
 			var(--_sonic-meter-pitch)
 		);
-		--_sonic-meter-held: round(
+		--_sonic-meter-peak-hold-edge: round(
 			down,
-			var(--_sonic-meter-peak, 0) * var(--_sonic-meter-segments) + 0.01px,
+			var(--_sonic-meter-peak-hold, 0) * var(--_sonic-meter-segments) + 0.01px,
 			var(--_sonic-meter-pitch)
 		);
 
@@ -333,8 +318,8 @@
 				var(--_sonic-meter-toward),
 				transparent var(--_sonic-meter-lit-from),
 				#000 0 var(--_sonic-meter-lit),
-				transparent 0 calc(var(--_sonic-meter-held) - var(--_sonic-meter-pitch)),
-				#000 0 var(--_sonic-meter-held),
+				transparent 0 calc(var(--_sonic-meter-peak-hold-edge) - var(--_sonic-meter-pitch)),
+				#000 0 var(--_sonic-meter-peak-hold-edge),
 				transparent 0
 			),
 			var(--_sonic-meter-lights);

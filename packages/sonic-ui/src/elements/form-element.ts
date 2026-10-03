@@ -1,6 +1,5 @@
 import { SonicElement } from '#elements/sonic-element.ts';
 
-// A `<label>` names and clicks the host, which has no role and no box, so both pass to the control
 export abstract class SonicFormElement extends SonicElement {
 	static readonly formAssociated = true;
 
@@ -28,7 +27,7 @@ export abstract class SonicFormElement extends SonicElement {
 		// Otherwise the host takes the label's name and shows as a named generic beside the control
 		if (this.internals) this.internals.role = 'none';
 
-		// Only a label's click targets the host itself; a click inside the control bubbles here from its own target
+		// A click inside the control bubbles here with its own target; only a label's click targets the host
 		this.addEventListener('click', (event) => {
 			if (event.target === this) this.activate();
 		});
@@ -51,13 +50,11 @@ export abstract class SonicFormElement extends SonicElement {
 		this.attributeChangedCallback('disabled');
 	}
 
-	// Back to the `value` attribute; the key overrides it to return to `pressed`
 	formResetCallback(): void {
 		this.attributeChangedCallback('value');
 	}
 
 	// Firefox hands a restored state to the wrong control when tags upgrade out of document order
-	// Each state names its tag, and a control drops one another tag wrote
 	formStateRestoreCallback(state: File | FormData | null | string): void {
 		const prefix = `${this.localName}:`;
 
@@ -70,7 +67,6 @@ export abstract class SonicFormElement extends SonicElement {
 		this.focus();
 	}
 
-	// An author's `aria-label` or `aria-labelledby` wins over a label, as on native inputs
 	protected override namingLabels(): Array<Element> {
 		const internals = this.internals;
 		if (!internals || this.hasAttribute('aria-label') || this.hasAttribute('aria-labelledby')) {
@@ -84,7 +80,7 @@ export abstract class SonicFormElement extends SonicElement {
 
 	protected abstract restoreState(state: string): void;
 
-	protected writeFormValue(value: null | string, state: string): void {
+	protected writeFormValue(value: FormData | null | string, state: string): void {
 		this.internals?.setFormValue(value, `${this.localName}:${state}`);
 	}
 }

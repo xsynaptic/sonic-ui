@@ -1,0 +1,215 @@
+@property --_sonic-wavestrip-size {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 56px;
+}
+
+@property --_sonic-wavestrip-length {
+	syntax: '<length-percentage>';
+	inherits: true;
+	initial-value: 256px;
+}
+
+@property --_sonic-wavestrip-bar-pitch {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 3px;
+}
+
+@property --_sonic-wavestrip-bar-gap-ratio {
+	syntax: '<number>';
+	inherits: true;
+	initial-value: 0.33;
+}
+
+@property --_sonic-wavestrip-bar-radius-ratio {
+	syntax: '<number>';
+	inherits: true;
+	initial-value: 0.5;
+}
+
+@property --_sonic-wavestrip-wave {
+	syntax: '<color>';
+	inherits: true;
+	initial-value: rgb(96 96 104);
+}
+
+@property --_sonic-wavestrip-buffered {
+	syntax: '<color>';
+	inherits: true;
+	initial-value: rgb(128 128 136);
+}
+
+@property --_sonic-wavestrip-played {
+	syntax: '<color>';
+	inherits: true;
+	initial-value: rgb(245 158 10);
+}
+
+@property --_sonic-wavestrip-scrub {
+	syntax: '<color>';
+	inherits: true;
+	initial-value: rgb(250 210 140);
+}
+
+@property --_sonic-marker-size {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 0;
+}
+
+@property --_sonic-cancel-zone {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 48px;
+}
+
+@layer sonic {
+	:is(sonic-wavestrip, .sonic-wavestrip) {
+		--_sonic-wavestrip-size: var(--sonic-wavestrip-size, 3.5rem);
+		--_sonic-wavestrip-length: var(--sonic-wavestrip-length, 16rem);
+	}
+
+	:has(> .sonic-wavestrip):not([hidden]) {
+		display: contents;
+	}
+
+	sonic-wavestrip:not(:defined, [hidden]) {
+		display: block;
+		visibility: hidden;
+		flex-shrink: 0;
+		inline-size: var(--_sonic-wavestrip-length);
+		block-size: var(--_sonic-wavestrip-size);
+	}
+
+	.sonic-wavestrip {
+		--_sonic-cancel-zone: var(--sonic-cancel-zone, 48px);
+		--_sonic-wavestrip-bar-pitch: var(--sonic-wavestrip-bar-pitch, 3px);
+		--_sonic-wavestrip-bar-gap-ratio: var(--sonic-wavestrip-bar-gap-ratio, 0.33);
+		--_sonic-wavestrip-bar-radius-ratio: var(--sonic-wavestrip-bar-radius-ratio, 0.5);
+		--_sonic-wavestrip-marker-ratio: var(--sonic-wavestrip-marker-ratio, 0.065);
+		--_sonic-wavestrip-inset: calc(var(--_sonic-wavestrip-size) * 0.1);
+		--_sonic-unit: calc(var(--_sonic-wavestrip-size) / 32);
+		--_sonic-wavestrip-lit: var(--_sonic-lit);
+		--_sonic-marker-size: calc(var(--_sonic-wavestrip-size) * var(--_sonic-wavestrip-marker-ratio));
+		--_sonic-marker-default: var(--sonic-cue, var(--_sonic-ink));
+		--_sonic-wavestrip-wave: var(
+			--sonic-wave,
+			color-mix(in oklab, var(--_sonic-ink) 30%, var(--_sonic-unlit))
+		);
+		--_sonic-wavestrip-buffered: var(
+			--sonic-buffered,
+			color-mix(in oklab, var(--_sonic-ink) 50%, var(--_sonic-unlit))
+		);
+		--_sonic-wavestrip-played: var(--_sonic-wavestrip-lit);
+		--_sonic-wavestrip-scrub: var(--sonic-scrub, color-mix(in oklab, var(--_sonic-lit) 55%, #fff));
+
+		inline-size: var(--_sonic-wavestrip-length);
+		block-size: var(--_sonic-wavestrip-size);
+		padding: var(--_sonic-wavestrip-inset);
+		container-type: size;
+		touch-action: pan-y;
+		cursor: ew-resize;
+		border-radius: calc(var(--_sonic-wavestrip-size) * 0.15);
+		box-shadow: var(--_sonic-focus-shadow);
+	}
+
+	[dimmed] > .sonic-wavestrip {
+		--_sonic-wavestrip-lit: var(--_sonic-lit-off);
+	}
+
+	:disabled > .sonic-wavestrip {
+		--_sonic-wavestrip-lit: var(--_sonic-lit-disabled);
+
+		cursor: default;
+	}
+
+	.sonic-wavestrip-canvas {
+		display: block;
+		inline-size: 100%;
+		block-size: 100%;
+	}
+
+	.sonic-wavestrip-markers {
+		position: absolute;
+		inset: var(--_sonic-wavestrip-inset);
+		pointer-events: none;
+	}
+
+	:is(.sonic-wavestrip-marker, .sonic-wavestrip-span) {
+		--_sonic-marker-colour: var(--_sonic-marker, var(--_sonic-marker-default));
+
+		position: absolute;
+
+		&[data-sonic-dimmed] {
+			--_sonic-marker-colour: color-mix(
+				in oklab,
+				var(--_sonic-marker, var(--_sonic-marker-default)) 45%,
+				var(--_sonic-glass)
+			);
+		}
+	}
+
+	.sonic-wavestrip-marker {
+		inset: 0 auto auto calc(var(--_sonic-marker-from, 0) * 100% - var(--_sonic-marker-size) / 2);
+		inline-size: var(--_sonic-marker-size);
+		block-size: var(--_sonic-marker-size);
+		background: color-mix(in oklab, var(--_sonic-marker-colour) 85%, transparent);
+		border-radius: 50%;
+		box-shadow: 0 0 0 max(1px, 0.5 * var(--_sonic-unit)) var(--_sonic-glass);
+	}
+
+	.sonic-wavestrip-span {
+		inset: 0 auto 0 calc(var(--_sonic-marker-from, 0) * 100%);
+		box-sizing: border-box;
+		inline-size: calc((var(--_sonic-marker-to, 0) - var(--_sonic-marker-from, 0)) * 100%);
+		background: color-mix(in oklab, var(--_sonic-marker-colour) 16%, transparent);
+		border-inline: max(1px, var(--_sonic-unit)) solid
+			color-mix(in oklab, var(--_sonic-marker-colour) 55%, transparent);
+	}
+
+	/* Bare `block-start` spans the viewport; `translate` belongs to the open transition */
+	.sonic-wavestrip-readout {
+		--_sonic-wavestrip-readout-inset: calc(
+			var(--_sonic-wavestrip-inset) + var(--_sonic-wavestrip-readout-at, 0) * 100cqi
+		);
+
+		inset-inline: var(--_sonic-wavestrip-readout-inset)
+			calc(100cqi + 2 * var(--_sonic-wavestrip-inset) - var(--_sonic-wavestrip-readout-inset));
+		justify-self: center;
+		position-area: block-start center;
+	}
+
+	/* Opaque, since a system highlight carries alpha that would blend the bars into the glass */
+	@media (forced-colors: active) {
+		.sonic-wavestrip {
+			--_sonic-wavestrip-lit: Highlight;
+			--_sonic-wavestrip-wave: rgb(from GrayText r g b / 100%);
+			--_sonic-wavestrip-buffered: rgb(
+				from color-mix(in srgb, CanvasText 50%, GrayText) r g b / 100%
+			);
+			--_sonic-wavestrip-played: rgb(from var(--_sonic-wavestrip-lit) r g b / 100%);
+			--_sonic-wavestrip-scrub: rgb(from CanvasText r g b / 100%);
+		}
+
+		:is(.sonic-wavestrip-marker, .sonic-wavestrip-span) {
+			--_sonic-marker-colour: CanvasText;
+
+			forced-color-adjust: none;
+
+			&[data-sonic-dimmed] {
+				--_sonic-marker-colour: GrayText;
+			}
+		}
+
+		.sonic-wavestrip-marker {
+			background: var(--_sonic-marker-colour);
+			box-shadow: 0 0 0 max(1px, 0.5 * var(--_sonic-unit)) Canvas;
+		}
+
+		.sonic-wavestrip-span {
+			background: none;
+			border-inline-color: var(--_sonic-marker-colour);
+		}
+	}
+}

@@ -1,0 +1,159 @@
+@property --_sonic-envelope-size {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 80px;
+}
+
+@layer sonic {
+	:is(sonic-envelope, .sonic-envelope) {
+		--_sonic-envelope-size: var(--sonic-envelope-size, 5rem);
+		--_sonic-envelope-aspect-ratio: var(--sonic-envelope-aspect-ratio, 3);
+	}
+
+	:has(> .sonic-envelope):not([hidden]) {
+		display: contents;
+	}
+
+	sonic-envelope:not(:defined, [hidden]) {
+		display: block;
+		flex-shrink: 0;
+		inline-size: calc(var(--_sonic-envelope-size) * var(--_sonic-envelope-aspect-ratio));
+		block-size: var(--_sonic-envelope-size);
+	}
+
+	.sonic-envelope {
+		--_sonic-envelope-radius-ratio: var(--sonic-envelope-radius-ratio, 0.08);
+		--_sonic-envelope-inset-ratio: var(--sonic-envelope-inset-ratio, 0.1);
+		--_sonic-envelope-handle-ratio: var(--sonic-envelope-handle-ratio, 0.14);
+		--_sonic-envelope-handle-stroke-ratio: var(--sonic-envelope-handle-stroke-ratio, 0.025);
+		--_sonic-envelope-line-ratio: var(--sonic-envelope-line-ratio, 0.03);
+		--_sonic-envelope-dot-ratio: var(--sonic-envelope-dot-ratio, 0.08);
+		--_sonic-unit: calc(var(--_sonic-envelope-size) / 64);
+		--_sonic-envelope-inset: calc(var(--_sonic-envelope-size) * var(--_sonic-envelope-inset-ratio));
+
+		inline-size: calc(var(--_sonic-envelope-size) * var(--_sonic-envelope-aspect-ratio));
+		block-size: var(--_sonic-envelope-size);
+		container-type: size;
+		border-radius: calc(var(--_sonic-envelope-size) * var(--_sonic-envelope-radius-ratio));
+	}
+
+	.sonic-envelope-graph {
+		position: absolute;
+		inset: var(--_sonic-envelope-inset);
+		inline-size: calc(100% - 2 * var(--_sonic-envelope-inset));
+		block-size: calc(100% - 2 * var(--_sonic-envelope-inset));
+		overflow: visible;
+		pointer-events: none;
+	}
+
+	.sonic-envelope-fill {
+		fill: color-mix(in oklab, var(--_sonic-lit) 18%, transparent);
+	}
+
+	.sonic-envelope-line {
+		fill: none;
+		stroke: var(--_sonic-lit);
+		stroke-width: calc(var(--_sonic-envelope-size) * var(--_sonic-envelope-line-ratio));
+		stroke-linecap: round;
+		stroke-linejoin: round;
+		vector-effect: non-scaling-stroke;
+	}
+
+	:is(.sonic-envelope-handle, .sonic-envelope-dot) {
+		--_sonic-point-ring: var(--_sonic-glass-text);
+		--_sonic-point-core: var(--_sonic-glass);
+		--_sonic-point-halo: 0 0 transparent;
+		--_sonic-point-held-halo: 0 0 calc(0.5 * var(--_sonic-point-size))
+			calc(0.05 * var(--_sonic-point-size)) color-mix(in oklab, var(--_sonic-lit) 50%, transparent);
+
+		position: absolute;
+		inset: auto auto
+			calc(
+				var(--_sonic-envelope-inset) + var(--_sonic-envelope-y, 0) *
+					(100cqb - 2 * var(--_sonic-envelope-inset)) - var(--_sonic-point-size) / 2
+			)
+			calc(
+				var(--_sonic-envelope-inset) + var(--_sonic-envelope-x, 0) *
+					(100cqi - 2 * var(--_sonic-envelope-inset)) - var(--_sonic-point-size) / 2
+			);
+		box-sizing: border-box;
+		inline-size: var(--_sonic-point-size);
+		block-size: var(--_sonic-point-size);
+		touch-action: none;
+		background: var(--_sonic-point-core);
+		border: max(1px, var(--_sonic-point-stroke, 0px)) solid var(--_sonic-point-ring);
+		border-radius: 50%;
+		box-shadow: var(--_sonic-point-halo), var(--_sonic-focus-shadow, 0 0 transparent);
+		transition:
+			background-color 120ms ease-out,
+			border-color 120ms ease-out,
+			box-shadow 120ms ease-out;
+	}
+
+	.sonic-envelope-handle {
+		--_sonic-point-size: calc(var(--_sonic-envelope-size) * var(--_sonic-envelope-handle-ratio));
+		--_sonic-point-stroke: calc(
+			var(--_sonic-envelope-size) * var(--_sonic-envelope-handle-stroke-ratio)
+		);
+
+		cursor: grab;
+	}
+
+	.sonic-envelope-dot {
+		--_sonic-point-size: calc(var(--_sonic-envelope-size) * var(--_sonic-envelope-dot-ratio));
+		--_sonic-point-core: var(--_sonic-point-ring);
+
+		cursor: ns-resize;
+	}
+
+	.sonic-envelope-handle[data-sonic-axes='x'] {
+		cursor: ew-resize;
+	}
+
+	.sonic-envelope-handle[data-sonic-axes='y'] {
+		cursor: ns-resize;
+	}
+
+	:is(.sonic-envelope-dot, .sonic-envelope-handle)[data-sonic-disabled] {
+		--_sonic-point-ring: var(--_sonic-unlit);
+
+		cursor: default;
+	}
+
+	@media (hover: hover) {
+		:is(.sonic-envelope-dot, .sonic-envelope-handle):not([data-sonic-disabled]):hover {
+			--_sonic-point-ring: var(--_sonic-lit);
+		}
+	}
+
+	:is(.sonic-envelope-dot, .sonic-envelope-handle):not([data-sonic-disabled]):active {
+		--_sonic-point-ring: var(--_sonic-lit);
+		--_sonic-point-core: var(--_sonic-lit);
+		--_sonic-point-halo: var(--_sonic-point-held-halo);
+	}
+
+	@media (forced-colors: active) {
+		.sonic-envelope {
+			--_sonic-lit: Highlight;
+			--_sonic-unlit: GrayText;
+		}
+
+		.sonic-envelope-graph {
+			forced-color-adjust: none;
+		}
+
+		:is(.sonic-envelope-dot, .sonic-envelope-handle) {
+			--_sonic-point-ring: CanvasText;
+
+			forced-color-adjust: none;
+		}
+
+		.sonic-envelope-handle {
+			--_sonic-point-core: Canvas;
+		}
+
+		.sonic-envelope-fill {
+			fill: none;
+		}
+	}
+}

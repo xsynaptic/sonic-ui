@@ -10,25 +10,35 @@
 	initial-value: 8px;
 }
 
+@keyframes sonic-glass-breathe {
+	to {
+		opacity: calc(0.4 * min(1, var(--_sonic-glass-texture)));
+	}
+}
+
 @layer sonic {
-	/* Resolved per control rather than on `:root`, so each follows its own cap and unit */
 	:is(
 		.sonic-dial,
 		.sonic-dial-readout,
+		.sonic-envelope,
 		.sonic-key,
 		.sonic-led,
 		.sonic-lever,
 		.sonic-meter,
 		.sonic-number,
 		.sonic-plate,
+		.sonic-ring,
 		.sonic-screen,
 		.sonic-segmented,
 		.sonic-slider,
-		.sonic-slider-readout
+		.sonic-slider-readout,
+		.sonic-waveform,
+		.sonic-waveform-readout,
+		.sonic-wavestrip,
+		.sonic-wavestrip-readout,
+		.sonic-xy
 	) {
 		--_sonic-unlit: var(--sonic-unlit, oklch(27.4% 0.005 286deg));
-
-		/* Degrees left of overhead */
 		--_sonic-light-tilt: var(--sonic-light-tilt, 17deg);
 		--_sonic-light-fall: calc(180deg - var(--_sonic-light-tilt));
 		--_sonic-cast-x: calc(sin(var(--_sonic-light-tilt)) * var(--_sonic-unit));
@@ -37,23 +47,48 @@
 
 	:is(
 		.sonic-dial,
+		.sonic-envelope,
 		.sonic-key,
 		.sonic-led,
 		.sonic-meter,
 		.sonic-number,
+		.sonic-ring,
 		.sonic-segmented-segment,
-		.sonic-slider
+		.sonic-slider,
+		.sonic-waveform,
+		.sonic-wavestrip,
+		.sonic-xy
 	) {
 		--_sonic-lit: var(--sonic-lit, oklch(76.9% 0.165 70deg));
 	}
 
-	:is(.sonic-led, .sonic-meter) {
-		--_sonic-lens:
-			linear-gradient(var(--_sonic-light-fall), rgb(255 255 255 / 10%), transparent 60%),
-			color-mix(in oklab, var(--_sonic-unlit) 60%, #000);
+	/* On the parts, since a recipe's `var()`s resolve where it is declared */
+	.sonic-dial-ring,
+	.sonic-dial-modulation,
+	.sonic-ring::before {
+		--_sonic-arc-mask: radial-gradient(
+			closest-side,
+			transparent calc(100% - var(--_sonic-arc-width) - 0.5px),
+			#000 calc(100% - var(--_sonic-arc-width)),
+			#000 calc(100% - var(--_sonic-arc-inset) - 0.5px),
+			transparent calc(100% - var(--_sonic-arc-inset))
+		);
+		--_sonic-arc-shade: radial-gradient(
+			closest-side,
+			rgb(0 0 0 / 55%) calc(100% - var(--_sonic-arc-width)),
+			transparent calc(100% - var(--_sonic-arc-width) * 0.4),
+			rgb(0 0 0 / 25%) 100%
+		);
 	}
 
-	.sonic-meter {
+	:is(.sonic-led, .sonic-meter) {
+		--_sonic-lens-glint: linear-gradient(
+			var(--_sonic-light-fall),
+			rgb(255 255 255 / 10%),
+			transparent 60%
+		);
+		--_sonic-lens-glass: color-mix(in oklab, var(--_sonic-unlit) 60%, #000);
+		--_sonic-lens: var(--_sonic-lens-glint), var(--_sonic-lens-glass);
 		--_sonic-hot: var(--sonic-hot, oklch(70.5% 0.187 48deg));
 		--_sonic-clip: var(--sonic-clip, oklch(63.7% 0.208 25deg));
 	}
@@ -64,7 +99,10 @@
 		.sonic-lever,
 		.sonic-number,
 		.sonic-segmented-segment,
-		.sonic-slider
+		.sonic-slider,
+		.sonic-waveform,
+		.sonic-wavestrip,
+		.sonic-xy
 	) {
 		--_sonic-cap: var(--sonic-cap, oklch(37% 0.012 286deg));
 		--_sonic-cap-hover: var(--sonic-cap-hover, oklch(44.2% 0.015 286deg));
@@ -78,8 +116,6 @@
 			color-mix(in oklab, var(--_sonic-cap) 70%, #fff),
 			color-mix(in oklab, var(--_sonic-cap) 55%, #000)
 		);
-
-		/* Inverted from the skirt, as a dished face takes light */
 		--_sonic-face: linear-gradient(
 			var(--_sonic-light-fall),
 			color-mix(in oklab, var(--_sonic-cap) 85%, #000),
@@ -108,13 +144,11 @@
 			color-mix(in oklab, var(--_sonic-focus) 60%, transparent);
 	}
 
-	/* A gesture distance, absolute like the travel */
-	:is(.sonic-dial, .sonic-number, .sonic-slider) {
+	:is(.sonic-dial, .sonic-number, .sonic-slider, .sonic-waveform, .sonic-wavestrip) {
 		--_sonic-detent-zone: var(--sonic-detent-zone, 8px);
 	}
 
-	:is(.sonic-dial, .sonic-slider) {
-		/* On the control, since the readout's font size reads it */
+	:is(.sonic-dial, .sonic-slider, .sonic-waveform, .sonic-wavestrip) {
 		--_sonic-readout-size: var(--sonic-readout-size, 1.5rem);
 		--_sonic-lit-off: var(
 			--sonic-dimmed,
@@ -122,7 +156,18 @@
 		);
 	}
 
-	:is(.sonic-dial-readout, .sonic-number, .sonic-screen, .sonic-slider-readout) {
+	:is(
+		.sonic-dial-readout,
+		.sonic-envelope,
+		.sonic-number,
+		.sonic-screen,
+		.sonic-slider-readout,
+		.sonic-waveform,
+		.sonic-waveform-readout,
+		.sonic-wavestrip,
+		.sonic-wavestrip-readout,
+		.sonic-xy
+	) {
 		--_sonic-glass: var(--sonic-glass, color-mix(in oklab, var(--_sonic-unlit) 45%, #000));
 		--_sonic-glass-fill: radial-gradient(
 				closest-side,
@@ -130,46 +175,160 @@
 				var(--_sonic-glass)
 			)
 			var(--_sonic-glass);
-
-		/* Not the cap's ink, which a skin may darken */
 		--_sonic-glass-text: var(
 			--sonic-glass-text,
 			color-mix(in oklab, var(--_sonic-glass) 20%, #fff)
 		);
+		--_sonic-glass-edge: 0 none;
+
+		/* Glass is forced to Canvas like the page, so only a border shows its edge */
+		@media (forced-colors: active) {
+			--_sonic-glass-edge: 1px solid CanvasText;
+		}
 	}
 
 	/* A definite cell, so percentage-sized content fills the glass; a canvas sized to its own box would feed back */
-	:is(.sonic-number, .sonic-screen) {
+	:is(.sonic-envelope, .sonic-number, .sonic-screen, .sonic-waveform, .sonic-wavestrip, .sonic-xy) {
+		--_sonic-glass-depth: var(--sonic-glass-depth, 1);
+		--_sonic-glass-texture: var(--sonic-glass-texture, 1);
+		--_sonic-glass-pitch: max(2px, round(2 * var(--_sonic-unit), 1px));
+
 		position: relative;
 		box-sizing: border-box;
 		display: grid;
 		flex-shrink: 0;
 		grid-template: minmax(0, 1fr) / minmax(0, 1fr);
 		place-items: center;
-		font-family: var(--sonic-glass-font);
+		font-family: var(--sonic-glass-font, inherit);
 		color: var(--_sonic-glass-text);
-
-		/* A double click aimed at a neighbouring control would highlight it */
 		user-select: none;
 		background: var(--_sonic-glass-fill);
+		border: var(--_sonic-glass-edge);
+
+		@media (forced-colors: active) {
+			--_sonic-glass-texture: 0;
+		}
 
 		&::after {
 			position: absolute;
 			inset: 0;
 			pointer-events: none;
 			content: '';
-			background: linear-gradient(var(--_sonic-light-fall), rgb(255 255 255 / 7%), transparent 45%);
+			background:
+				linear-gradient(
+					var(--_sonic-light-fall),
+					rgb(255 255 255 / calc(0.07 * var(--_sonic-glass-depth))),
+					transparent 45%
+				),
+				radial-gradient(
+					farthest-corner,
+					transparent 55%,
+					rgb(0 0 0 / calc(0.4 * var(--_sonic-glass-texture)))
+				),
+				repeating-linear-gradient(
+					to bottom,
+					rgb(0 0 0 / calc(0.04 * var(--_sonic-glass-texture))) 0
+						calc(var(--_sonic-glass-pitch) / 2),
+					transparent 0 var(--_sonic-glass-pitch)
+				);
 			border-radius: inherit;
 			box-shadow:
 				var(--_sonic-well),
-				inset 0 0 calc(3 * var(--_sonic-unit)) rgb(0 0 0 / 45%);
+				inset 0 0 calc(3 * var(--_sonic-glass-depth) * var(--_sonic-unit)) rgb(0 0 0 / 45%);
 		}
 	}
 
-	:is(.sonic-key, .sonic-number, .sonic-screen, .sonic-segmented) {
+	@media (forced-colors: none) {
+		/* An ink bloom over static grain; the declaration with the tile holds no var(), which would parse the url() again on every style recalculation */
+		:is(
+			.sonic-envelope,
+			.sonic-number,
+			.sonic-screen,
+			.sonic-waveform,
+			.sonic-wavestrip,
+			.sonic-xy
+		)::before {
+			position: absolute;
+			inset: 0;
+			color: color-mix(in oklab, var(--_sonic-glass-text) 7.5%, transparent);
+			pointer-events: none;
+			content: '';
+			background:
+				radial-gradient(closest-side, currentcolor, transparent) no-repeat,
+				url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='128'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.056 -0.01925'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")
+					0 0 / 128px 128px repeat;
+			border-radius: inherit;
+			opacity: min(1, var(--_sonic-glass-texture));
+		}
+
+		:is(.sonic-number, .sonic-screen),
+		:is(.sonic-envelope, .sonic-waveform, .sonic-wavestrip, .sonic-xy)::after {
+			filter: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='w' x='-0.3' y='-0.3' width='1.6' height='1.6' primitiveUnits='objectBoundingBox' color-interpolation-filters='sRGB'%3E%3CfeFlood x='0' y='0' width='1' height='1' flood-color='%23000'/%3E%3CfeFlood x='.5' y='0' width='.5' height='1' flood-color='%23f00' result='r'/%3E%3CfeFlood x='0' y='.5' width='1' height='.5' flood-color='%230f0' result='g'/%3E%3CfeFlood x='0' y='0' width='1' height='1' flood-color='%23000' result='k'/%3E%3CfeComposite in='r' in2='g' operator='arithmetic' k2='1' k3='1' result='h'/%3E%3CfeMerge x='0' y='0' width='1' height='1'%3E%3CfeMergeNode in='k'/%3E%3CfeMergeNode in='h'/%3E%3C/feMerge%3E%3CfeGaussianBlur x='0' y='0' width='1' height='1' stdDeviation='0.25'/%3E%3CfeColorMatrix values='1 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 1'/%3E%3CfeComponentTransfer result='a'%3E%3CfeFuncR type='table' tableValues='0 0.052 0.172 0.25 0.312 0.364 0.412 0.457 0.5 0.543 0.588 0.636 0.688 0.75 0.828 0.948 1'/%3E%3CfeFuncG type='table' tableValues='0 0.052 0.172 0.25 0.312 0.364 0.412 0.457 0.5 0.543 0.588 0.636 0.688 0.75 0.828 0.948 1'/%3E%3C/feComponentTransfer%3E%3CfeComponentTransfer%3E%3CfeFuncR type='table' tableValues='1 0.563 0.25 0.063 0 0.063 0.25 0.563 1'/%3E%3CfeFuncG type='table' tableValues='1 0.563 0.25 0.063 0 0.063 0.25 0.563 1'/%3E%3C/feComponentTransfer%3E%3CfeColorMatrix values='.5 .5 0 0 0 .5 .5 0 0 0 0 0 0 0 0 0 0 0 0 1'/%3E%3CfeComponentTransfer result='f'%3E%3CfeFuncR type='gamma' amplitude='0.333' exponent='2'/%3E%3CfeFuncG type='gamma' exponent='2'/%3E%3C/feComponentTransfer%3E%3CfeComposite in='a' in2='f' operator='arithmetic' k1='1' k3='-.5' k4='.5' result='m'/%3E%3CfeFlood flood-color='%23808080'/%3E%3CfeMerge result='n'%3E%3CfeMergeNode/%3E%3CfeMergeNode in='m'/%3E%3C/feMerge%3E%3CfeDisplacementMap in='SourceGraphic' in2='n' scale='0.04' xChannelSelector='R' yChannelSelector='G'/%3E%3C/filter%3E%3C/svg%3E#w");
+		}
+
+		/* A query reads the parent, or a pseudo-element's own element: on a readout itself, 0 leaves the warp on */
+		@container style(--sonic-glass-texture: 0) {
+			:is(.sonic-number, .sonic-screen),
+			:is(.sonic-envelope, .sonic-waveform, .sonic-wavestrip, .sonic-xy)::after {
+				filter: none;
+			}
+		}
+
+		@media (prefers-reduced-motion: no-preference) {
+			:is(
+					.sonic-envelope,
+					.sonic-number,
+					.sonic-screen,
+					.sonic-waveform,
+					.sonic-wavestrip,
+					.sonic-xy
+				):is(:focus-visible, :focus-within)::before {
+				animation: sonic-glass-breathe 3s ease-in-out infinite alternate;
+			}
+
+			:state(dragging)
+				> :is(
+					.sonic-envelope,
+					.sonic-number,
+					.sonic-waveform,
+					.sonic-wavestrip,
+					.sonic-xy
+				)::before {
+				animation: sonic-glass-breathe 3s ease-in-out infinite alternate;
+			}
+
+			@media (hover: hover) {
+				:is(
+						.sonic-envelope,
+						.sonic-number,
+						.sonic-screen,
+						.sonic-waveform,
+						.sonic-wavestrip,
+						.sonic-xy
+					):hover::before {
+					animation: sonic-glass-breathe 3s ease-in-out infinite alternate;
+				}
+			}
+		}
+	}
+
+	:is(
+		.sonic-envelope,
+		.sonic-key,
+		.sonic-number,
+		.sonic-screen,
+		.sonic-segmented,
+		.sonic-waveform,
+		.sonic-wavestrip,
+		.sonic-xy
+	) {
+		--_sonic-well-depth: var(--_sonic-glass-depth, 1);
 		--_sonic-well:
-			inset var(--_sonic-cast-x) var(--_sonic-cast-y) calc(2 * var(--_sonic-unit)) rgb(0 0 0 / 60%),
-			calc(0.5 * var(--_sonic-cast-x)) calc(0.5 * var(--_sonic-cast-y)) 0 rgb(255 255 255 / 6%);
+			inset calc(var(--_sonic-well-depth) * var(--_sonic-cast-x))
+				calc(var(--_sonic-well-depth) * var(--_sonic-cast-y))
+				calc(2 * var(--_sonic-well-depth) * var(--_sonic-unit)) rgb(0 0 0 / 60%),
+			calc(0.5 * var(--_sonic-well-depth) * var(--_sonic-cast-x))
+				calc(0.5 * var(--_sonic-well-depth) * var(--_sonic-cast-y)) 0 rgb(255 255 255 / 6%);
 	}
 
 	:is(.sonic-key, .sonic-segmented) {
@@ -193,7 +352,6 @@
 			var(--_sonic-unit) var(--_sonic-drop-shade);
 	}
 
-	/* The well's full blur would fill a slot this narrow */
 	:is(.sonic-meter, .sonic-slider) {
 		--_sonic-groove:
 			inset var(--_sonic-cast-x) var(--_sonic-cast-y) calc(0.75 * var(--_sonic-unit))
@@ -216,22 +374,32 @@
 		.sonic-key,
 		.sonic-number,
 		.sonic-segmented-segment,
-		.sonic-slider
+		.sonic-slider,
+		.sonic-waveform,
+		.sonic-wavestrip,
+		.sonic-xy-axis
 	):focus-visible {
-		--_sonic-cap: var(--_sonic-cap-hover);
-		--_sonic-focus-shadow: var(--_sonic-focus-glow);
-
 		outline: 2px solid transparent;
 		outline-offset: -2px;
+
+		&:not([data-sonic-pointer-focus]) {
+			--_sonic-cap: var(--_sonic-cap-hover);
+			--_sonic-focus-shadow: var(--_sonic-focus-glow);
+		}
 	}
 
-	/* Keeps the glow while focus is in the entry; its own rule, since an engine without `:state()` drops a whole selector list */
-	:state(editing) > :is(.sonic-dial, .sonic-number, .sonic-slider) {
+	:state(editing)
+		> :is(.sonic-dial, .sonic-number, .sonic-slider, .sonic-waveform, .sonic-wavestrip) {
 		--_sonic-cap: var(--_sonic-cap-hover);
 		--_sonic-focus-shadow: var(--_sonic-focus-glow);
 	}
 
-	:is(.sonic-dial-readout, .sonic-slider-readout) {
+	:is(
+		.sonic-dial-readout,
+		.sonic-slider-readout,
+		.sonic-waveform-readout,
+		.sonic-wavestrip-readout
+	) {
 		--_sonic-unit: calc(var(--_sonic-readout-size) / 32);
 
 		box-sizing: border-box;
@@ -244,7 +412,7 @@
 		position-try-fallbacks: flip-block;
 		overflow: visible;
 		font: inherit;
-		font-family: var(--sonic-glass-font);
+		font-family: var(--sonic-glass-font, inherit);
 		font-size: calc(0.5 * var(--_sonic-readout-size));
 		font-variant-numeric: tabular-nums;
 		line-height: 1;
@@ -253,7 +421,7 @@
 		cursor: default;
 		user-select: none;
 		background: var(--_sonic-glass-fill);
-		border: 0;
+		border: var(--_sonic-glass-edge);
 		border-radius: calc(0.25 * var(--_sonic-readout-size));
 		box-shadow:
 			calc(2 * var(--_sonic-cast-x)) calc(2 * var(--_sonic-cast-y)) calc(6 * var(--_sonic-unit))
@@ -267,7 +435,7 @@
 			display 120ms allow-discrete,
 			overlay 120ms allow-discrete;
 
-		/* Grid only while open; a closed readout left rendered is placed against a filtered ancestor, and engines keep the flip it took there */
+		/* Grid only while open; engines keep the flip a closed readout took against a filtered ancestor */
 		&:popover-open {
 			display: grid;
 			opacity: 1;
@@ -291,13 +459,24 @@
 	}
 
 	:state(editing)
-		> :is(.sonic-dial, .sonic-slider)
-		> :is(.sonic-dial-readout, .sonic-slider-readout) {
+		> :is(.sonic-dial, .sonic-slider, .sonic-waveform, .sonic-wavestrip)
+		> :is(
+			.sonic-dial-readout,
+			.sonic-slider-readout,
+			.sonic-waveform-readout,
+			.sonic-wavestrip-readout
+		) {
 		pointer-events: auto;
 		cursor: text;
 	}
 
-	:is(.sonic-dial-entry, .sonic-number-entry, .sonic-slider-entry) {
+	:is(
+		.sonic-dial-entry,
+		.sonic-number-entry,
+		.sonic-slider-entry,
+		.sonic-waveform-entry,
+		.sonic-wavestrip-entry
+	) {
 		inline-size: 6ch;
 		padding: 0;
 		font: inherit;
@@ -323,7 +502,6 @@
 		}
 	}
 
-	/* Printed on the consumer's panel rather than the cap, so the text takes the page's colour and font */
 	:is(.sonic-dial-scale, .sonic-slider-scale) {
 		position: absolute;
 		inset: 0;
@@ -357,6 +535,7 @@
 			.sonic-led,
 			.sonic-meter,
 			.sonic-number,
+			.sonic-ring,
 			.sonic-segmented-segment,
 			.sonic-slider
 		) {
@@ -365,7 +544,16 @@
 		}
 
 		/* Tokens rather than properties, so a state rule that restates one still paints in system colours */
-		:is(.sonic-dial, .sonic-key, .sonic-number, .sonic-segmented-segment, .sonic-slider) {
+		:is(
+			.sonic-dial,
+			.sonic-key,
+			.sonic-number,
+			.sonic-segmented-segment,
+			.sonic-slider,
+			.sonic-waveform,
+			.sonic-wavestrip,
+			.sonic-xy
+		) {
 			--_sonic-ink: ButtonText;
 			--_sonic-etch: ButtonText;
 			--_sonic-lit-disabled: GrayText;
@@ -378,13 +566,12 @@
 			--_sonic-focus-glow: 0 0 transparent;
 		}
 
-		/* Dimmed is a hint, not a state; the value stays readable */
-		:is(.sonic-dial, .sonic-slider) {
+		:is(.sonic-dial, .sonic-slider, .sonic-waveform, .sonic-wavestrip) {
 			--_sonic-lit-off: Highlight;
 		}
 
 		:is(
-			:disabled > :is(.sonic-dial, .sonic-slider),
+			:disabled > :is(.sonic-dial, .sonic-slider, .sonic-waveform, .sonic-wavestrip, .sonic-xy),
 			.sonic-key:is(:disabled, [aria-disabled='true']),
 			.sonic-segmented-segment:disabled
 		) {
@@ -392,25 +579,25 @@
 			--_sonic-etch: GrayText;
 		}
 
-		/* Stands in for the glow, which forced colours drop; inset, it merged with the cap's rim */
 		:is(
 			.sonic-dial,
 			.sonic-key,
 			.sonic-number,
 			.sonic-segmented-segment,
-			.sonic-slider
+			.sonic-slider,
+			.sonic-waveform,
+			.sonic-wavestrip
 		):focus-visible {
 			outline-offset: 2px;
+
+			&[data-sonic-pointer-focus] {
+				outline-style: none;
+			}
 		}
 
 		:is(.sonic-dial-cap, .sonic-key-cap, .sonic-segmented-cap, .sonic-slider-cap) {
 			color: var(--_sonic-ink);
 			forced-color-adjust: none;
-		}
-
-		/* Glass is forced to Canvas like the page, so only a border shows its edge */
-		:is(.sonic-dial-readout, .sonic-number, .sonic-screen, .sonic-slider-readout) {
-			border: 1px solid CanvasText;
 		}
 	}
 }

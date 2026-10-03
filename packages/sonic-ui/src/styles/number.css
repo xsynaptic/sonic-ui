@@ -46,6 +46,10 @@
 		box-shadow: var(--_sonic-focus-shadow);
 	}
 
+	[press='step'] > .sonic-number {
+		cursor: pointer;
+	}
+
 	:disabled > .sonic-number {
 		color: var(--_sonic-etch);
 		cursor: default;

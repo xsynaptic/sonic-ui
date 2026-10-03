@@ -1,15 +1,35 @@
-interface Hold {
-	holder: () => number | string | undefined;
-	release: () => void;
+export interface Hold {
+	hold(by: number | string): boolean;
+	release(): void;
 }
 
-export function bindHoldRelease(
-	target: HTMLElement,
-	{ holder, release }: Hold,
-	signal: AbortSignal,
-): void {
+interface HoldOptions {
+	canHold: () => boolean;
+	leave: 'blur' | 'focusout';
+	onHold: () => void;
+	onRelease: () => void;
+}
+
+export function bindHold(target: HTMLElement, options: HoldOptions, signal: AbortSignal): Hold {
+	let holder: number | string | undefined;
+	const hold: Hold = {
+		hold(by) {
+			if (holder !== undefined || !options.canHold()) return false;
+
+			holder = by;
+			options.onHold();
+
+			return true;
+		},
+		release() {
+			if (holder === undefined) return;
+
+			holder = undefined;
+			options.onRelease();
+		},
+	};
 	const releasePointer = (event: PointerEvent): void => {
-		if (event.pointerId === holder()) release();
+		if (event.pointerId === holder) hold.release();
 	};
 
 	target.addEventListener('lostpointercapture', releasePointer, { signal });
@@ -18,8 +38,27 @@ export function bindHoldRelease(
 	target.addEventListener(
 		'keyup',
 		(event) => {
-			if (event.key === holder()) release();
+			if (event.key === holder) hold.release();
 		},
 		{ signal },
 	);
+	target.addEventListener(
+		options.leave,
+		(event) => {
+			const next = event.relatedTarget;
+			const isInside = next instanceof Node && target.contains(next);
+
+			if (typeof holder === 'string' && !isInside) hold.release();
+		},
+		{ signal },
+	);
+	signal.addEventListener(
+		'abort',
+		() => {
+			hold.release();
+		},
+		{ once: true },
+	);
+
+	return hold;
 }

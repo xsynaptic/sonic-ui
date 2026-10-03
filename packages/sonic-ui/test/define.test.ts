@@ -13,11 +13,17 @@ test('the define entries register their tags', async () => {
 
 	for (const tag of [
 		'sonic-dial',
+		'sonic-envelope',
 		'sonic-key',
+		'sonic-lever',
 		'sonic-meter',
 		'sonic-number',
 		'sonic-segmented',
 		'sonic-slider',
+		'sonic-sum',
+		'sonic-waveform',
+		'sonic-wavestrip',
+		'sonic-xy',
 	]) {
 		expect(customElements.get(tag), tag).toBeDefined();
 	}

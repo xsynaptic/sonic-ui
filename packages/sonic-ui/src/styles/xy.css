@@ -1,0 +1,204 @@
+@property --_sonic-xy-size {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 128px;
+}
+
+@layer sonic {
+	:is(sonic-xy, .sonic-xy) {
+		--_sonic-xy-size: var(--sonic-xy-size, 8rem);
+		--_sonic-xy-aspect-ratio: var(--sonic-xy-aspect-ratio, 1);
+	}
+
+	:has(> .sonic-xy):not([hidden]) {
+		display: contents;
+	}
+
+	sonic-xy:not(:defined, [hidden]) {
+		display: block;
+		flex-shrink: 0;
+		inline-size: calc(var(--_sonic-xy-size) * var(--_sonic-xy-aspect-ratio));
+		block-size: var(--_sonic-xy-size);
+	}
+
+	.sonic-xy {
+		--_sonic-xy-puck-ratio: var(--sonic-xy-puck-ratio, 0.2);
+		--_sonic-xy-radius-ratio: var(--sonic-xy-radius-ratio, 0.06);
+		--_sonic-xy-inset-ratio: var(--sonic-xy-inset-ratio, 0.04);
+		--_sonic-unit: calc(var(--_sonic-xy-size) / 96);
+		--_sonic-xy-lit: var(--_sonic-lit);
+		--_sonic-xy-cursor: grab;
+		--_sonic-xy-puck: calc(var(--_sonic-xy-size) * var(--_sonic-xy-puck-ratio));
+		--_sonic-xy-inset: calc(var(--_sonic-xy-size) * var(--_sonic-xy-inset-ratio));
+		--_sonic-xy-travel-x: calc(100cqi - 2 * var(--_sonic-xy-inset) - var(--_sonic-xy-puck));
+		--_sonic-xy-travel-y: calc(100cqb - 2 * var(--_sonic-xy-inset) - var(--_sonic-xy-puck));
+
+		inline-size: calc(var(--_sonic-xy-size) * var(--_sonic-xy-aspect-ratio));
+		block-size: var(--_sonic-xy-size);
+		container-type: size;
+		touch-action: none;
+		cursor: crosshair;
+		border-radius: calc(var(--_sonic-xy-size) * var(--_sonic-xy-radius-ratio));
+	}
+
+	:disabled > .sonic-xy {
+		--_sonic-xy-lit: var(--_sonic-lit-disabled);
+		--_sonic-xy-cursor: default;
+
+		cursor: default;
+	}
+
+	.sonic-xy-field {
+		--_sonic-xy-line: max(1px, round(var(--_sonic-unit), 1px));
+		--_sonic-xy-x-low: min(var(--_sonic-xy-x-origin, 0), var(--_sonic-xy-x, 0));
+		--_sonic-xy-x-high: max(var(--_sonic-xy-x-origin, 0), var(--_sonic-xy-x, 0));
+		--_sonic-xy-y-low: min(var(--_sonic-xy-y-origin, 0), var(--_sonic-xy-y, 0));
+		--_sonic-xy-y-high: max(var(--_sonic-xy-y-origin, 0), var(--_sonic-xy-y, 0));
+
+		position: absolute;
+		inset: var(--_sonic-xy-inset);
+		pointer-events: none;
+
+		&::before,
+		&::after {
+			position: absolute;
+			content: '';
+		}
+
+		&::before {
+			inset: auto 0
+				calc(
+					var(--_sonic-xy-y, 0) * var(--_sonic-xy-travel-y) +
+						(var(--_sonic-xy-puck) - var(--_sonic-xy-line)) / 2
+				);
+			block-size: var(--_sonic-xy-line);
+			background:
+				linear-gradient(
+					to right,
+					transparent
+						calc(
+							var(--_sonic-xy-x-low) * var(--_sonic-xy-travel-x) + var(--_sonic-xy-puck) / 2 *
+								sign(var(--_sonic-xy-x-low))
+						),
+					var(--_sonic-xy-lit) 0
+						calc(
+							var(--_sonic-xy-x-high) * var(--_sonic-xy-travel-x) + var(--_sonic-xy-puck) / 2 *
+								(2 - sign(1 - var(--_sonic-xy-x-high)))
+						),
+					transparent 0
+				),
+				var(--_sonic-unlit);
+		}
+
+		&::after {
+			inset: 0 auto 0
+				calc(
+					var(--_sonic-xy-x, 0) * var(--_sonic-xy-travel-x) +
+						(var(--_sonic-xy-puck) - var(--_sonic-xy-line)) / 2
+				);
+			inline-size: var(--_sonic-xy-line);
+			background:
+				linear-gradient(
+					to top,
+					transparent
+						calc(
+							var(--_sonic-xy-y-low) * var(--_sonic-xy-travel-y) + var(--_sonic-xy-puck) / 2 *
+								sign(var(--_sonic-xy-y-low))
+						),
+					var(--_sonic-xy-lit) 0
+						calc(
+							var(--_sonic-xy-y-high) * var(--_sonic-xy-travel-y) + var(--_sonic-xy-puck) / 2 *
+								(2 - sign(1 - var(--_sonic-xy-y-high)))
+						),
+					transparent 0
+				),
+				var(--_sonic-unlit);
+		}
+	}
+
+	.sonic-xy-puck {
+		--_sonic-xy-star: var(--_sonic-xy-lit);
+		--_sonic-xy-star-lift: color-mix(in oklab, var(--_sonic-xy-lit) 85%, #fff);
+		--_sonic-xy-star-glow: transparent;
+
+		position: absolute;
+		inset: auto auto var(--_sonic-xy-inset) var(--_sonic-xy-inset);
+		inline-size: var(--_sonic-xy-puck);
+		block-size: var(--_sonic-xy-puck);
+		cursor: var(--_sonic-xy-cursor);
+		border-radius: 50%;
+		box-shadow: var(--_sonic-focus-shadow);
+		filter: drop-shadow(0 0 calc(0.1 * var(--_sonic-xy-puck)) var(--_sonic-xy-star-glow));
+		translate: calc(var(--_sonic-xy-x, 0) * var(--_sonic-xy-travel-x))
+			calc(var(--_sonic-xy-y, 0) * var(--_sonic-xy-travel-y) * -1);
+		transition:
+			box-shadow 120ms ease-out,
+			filter 120ms ease-out;
+
+		&::before {
+			position: absolute;
+			inset: 0;
+			pointer-events: none;
+			content: '';
+			background: var(--_sonic-xy-star);
+			mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 108 108'%3E%3Cpath d='M50 0C52 38 62 48 100 50C62 52 52 62 50 100C48 62 38 52 0 50C38 48 48 38 50 0Z'/%3E%3C/svg%3E")
+				center / 100% 100% no-repeat;
+			transition: background-color 120ms ease-out;
+		}
+	}
+
+	@media (hover: hover) {
+		:not(:disabled) > .sonic-xy > .sonic-xy-puck:hover {
+			--_sonic-xy-star: var(--_sonic-xy-star-lift);
+		}
+	}
+
+	/* The glow goes on the puck, since a custom property cannot travel up from the part */
+	.sonic-xy-puck:has(> :focus-visible:not([data-sonic-pointer-focus])) {
+		--_sonic-xy-star: var(--_sonic-xy-star-lift);
+		--_sonic-focus-shadow: var(--_sonic-focus-glow);
+	}
+
+	:state(dragging) > .sonic-xy > .sonic-xy-puck {
+		--_sonic-xy-star: var(--_sonic-xy-star-lift);
+		--_sonic-xy-star-glow: color-mix(in oklab, var(--_sonic-xy-lit) 25%, transparent);
+	}
+
+	.sonic-xy-axis {
+		position: absolute;
+		inset: 0;
+		border-radius: 50%;
+	}
+
+	/* Restated here; one more selector makes material's lists clones for the dupes check */
+	@media (forced-colors: active) {
+		.sonic-xy {
+			--_sonic-lit: Highlight;
+			--_sonic-unlit: GrayText;
+		}
+
+		.sonic-xy-field {
+			forced-color-adjust: none;
+		}
+
+		.sonic-xy-puck {
+			--_sonic-xy-star: CanvasText;
+			--_sonic-xy-star-lift: CanvasText;
+			--_sonic-xy-star-glow: transparent;
+
+			forced-color-adjust: none;
+		}
+
+		.sonic-xy-axis {
+			forced-color-adjust: auto;
+		}
+
+		.sonic-xy-axis:focus-visible {
+			outline-offset: 2px;
+
+			&[data-sonic-pointer-focus] {
+				outline-style: none;
+			}
+		}
+	}
+}

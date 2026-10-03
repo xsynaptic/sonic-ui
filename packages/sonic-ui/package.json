@@ -40,6 +40,11 @@
 			"development": "./dist/dev/index.js",
 			"import": "./dist/default/index.js"
 		},
+		"./dat": {
+			"types": "./dist/dev/dat.d.ts",
+			"development": "./dist/dev/dat.js",
+			"import": "./dist/default/dat.js"
+		},
 		"./define": {
 			"types": "./dist/dev/define.d.ts",
 			"development": "./dist/dev/define.js",
@@ -53,15 +58,20 @@
 		"./controls.css": "./dist/styles/controls.css",
 		"./material.css": "./dist/styles/material.css",
 		"./dial.css": "./dist/styles/dial.css",
+		"./envelope.css": "./dist/styles/envelope.css",
 		"./key.css": "./dist/styles/key.css",
 		"./led.css": "./dist/styles/led.css",
 		"./lever.css": "./dist/styles/lever.css",
 		"./meter.css": "./dist/styles/meter.css",
 		"./number.css": "./dist/styles/number.css",
 		"./plate.css": "./dist/styles/plate.css",
+		"./ring.css": "./dist/styles/ring.css",
 		"./screen.css": "./dist/styles/screen.css",
 		"./segmented.css": "./dist/styles/segmented.css",
 		"./slider.css": "./dist/styles/slider.css",
+		"./waveform.css": "./dist/styles/waveform.css",
+		"./wavestrip.css": "./dist/styles/wavestrip.css",
+		"./xy.css": "./dist/styles/xy.css",
 		"./skins/*.css": "./dist/skins/*.css"
 	},
 	"imports": {

@@ -29,7 +29,6 @@ afterEach(() => {
 	});
 });
 
-// The observer mirrors after the task that changed the children
 async function render(node: ReactNode): Promise<void> {
 	act(() => {
 		root.render(node);

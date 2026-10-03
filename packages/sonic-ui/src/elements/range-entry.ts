@@ -65,7 +65,6 @@ export class RangeEntry {
 			{ signal },
 		);
 
-		// The field's own events would reach the host's listeners as if the value had moved
 		for (const type of ['change', 'input']) {
 			input.addEventListener(
 				type,
@@ -84,14 +83,12 @@ export class RangeEntry {
 		);
 	}
 
-	// Closes first, so the committed value renders with the control's role back in place
 	close(isCommitting: boolean): void {
 		if (!this.#isOpen) return;
 
 		this.#isOpen = false;
 		this.#input.hidden = true;
 		this.#options.toggle(false);
-		// A format that rounds would otherwise write its rounding back
 		if (isCommitting && this.#input.value !== this.#openedText)
 			this.#options.commit(this.#input.value);
 	}
