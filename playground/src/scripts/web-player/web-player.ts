@@ -3,6 +3,7 @@ import {
 	parsePercent,
 	SonicDial,
 	SonicKey,
+	SonicSegmented,
 	SonicSlider,
 	SonicWaveform,
 	SonicWavestrip,
@@ -130,13 +131,14 @@ function renderPosition(state: StreamState, bar: Bar): void {
 	bar.seek.buffered = state.buffered;
 	bar.wave.buffered = state.buffered;
 	if (bar.detail.playing !== isPlaying) bar.detail.playing = isPlaying;
+	if (bar.detail.rate !== state.rate) bar.detail.rate = state.rate;
 	if (String(state.pending) !== String(bar.detail.pending)) bar.detail.pending = state.pending;
 }
 
 function bindControls(root: Element, stream: ReturnType<typeof createStream>, bar: Bar): void {
-	const { mute, panel, volume } = readControls(
+	const { mute, panel, rate, volume } = readControls(
 		root,
-		{ mute: SonicKey, panel: HTMLElement, volume: SonicDial },
+		{ mute: SonicKey, panel: HTMLElement, rate: SonicSegmented, volume: SonicDial },
 		dataHook,
 	);
 
@@ -175,6 +177,9 @@ function bindControls(root: Element, stream: ReturnType<typeof createStream>, ba
 	});
 	bar.panelToggle.addEventListener('change', () => {
 		panel.hidden = !bar.panelToggle.pressed;
+	});
+	rate.addEventListener('change', () => {
+		stream.setRate(Number(rate.value));
 	});
 	mute.addEventListener('change', () => {
 		volume.dimmed = mute.pressed;

@@ -17,7 +17,7 @@ export default defineConfig({
 	testDir: './e2e',
 	use: {
 		baseURL: `http://localhost:${String(port)}`,
-		trace: 'retain-on-failure',
+		trace: 'off',
 	},
 	// Astro 7 daemonizes preview when it detects an agent; `--ignore-lock` leaves a running preview alone
 	// Never reused: a preview from another checkout on this port would serve its own build

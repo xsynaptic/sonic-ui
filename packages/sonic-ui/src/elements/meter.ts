@@ -148,6 +148,8 @@ export class SonicMeter extends SonicElement {
 
 	#bar = -Infinity;
 
+	#carryMs = 0;
+
 	#clipAt = -Infinity;
 
 	#frame: number | undefined;
@@ -310,15 +312,22 @@ export class SonicMeter extends SonicElement {
 			this.#peakHold = this.#bar;
 			this.#peakHoldAt = now;
 		}
-		if (now - this.#peakHoldAt >= holdMs) {
-			this.#peakHold = fall(this.#peakHold, { fallDecibelsPerSecond, floor: this.#bar }, elapsedMs);
+
+		const pastHoldMs = now - this.#peakHoldAt - holdMs;
+
+		if (pastHoldMs >= 0) {
+			this.#peakHold = fall(
+				this.#peakHold,
+				{ fallDecibelsPerSecond, floor: this.#bar },
+				Math.min(elapsedMs, pastHoldMs),
+			);
 		}
 	}
 
 	#stepNeedle(elapsedMs: number): void {
 		const target = toAmplitude(this.#target);
 		const needle = stepNeedle(
-			{ position: toAmplitude(this.#bar), velocity: this.#velocity },
+			{ carryMs: this.#carryMs, position: toAmplitude(this.#bar), velocity: this.#velocity },
 			target,
 			elapsedMs,
 		);
@@ -326,6 +335,7 @@ export class SonicMeter extends SonicElement {
 			Math.abs(needle.position - target) < settledAmplitude &&
 			Math.abs(needle.velocity) < settledPerSecond;
 
+		this.#carryMs = needle.carryMs;
 		this.#velocity = isLanded ? 0 : needle.velocity;
 		this.#bar = isLanded ? this.#target : toDecibels(Math.max(0, needle.position));
 	}

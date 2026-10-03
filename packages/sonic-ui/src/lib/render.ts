@@ -22,6 +22,21 @@ export function template<Root extends Element>(html: string, root: new () => Roo
 	};
 }
 
+export function placeChildren(parent: Element, children: Array<Node>): void {
+	const dropped = [...parent.childNodes].filter((child) => !children.includes(child));
+
+	for (const child of dropped) child.remove();
+	for (const [index, child] of children.entries()) {
+		const current = parent.childNodes[index];
+
+		// A node taken out and put back restarts its animations
+		if (current === child) continue;
+
+		if (current) current.before(child);
+		else parent.append(child);
+	}
+}
+
 export interface MirrorSlots {
 	kept: HTMLSlotElement;
 	shown: HTMLSlotElement;

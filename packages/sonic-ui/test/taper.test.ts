@@ -71,3 +71,18 @@ test.each([
 ])('a list taper over -10, 0 and 100 places %d at %d', (value, place) => {
 	expect(listTaper([-10, 0, 100]).place(value)).toBe(place);
 });
+
+test.each([
+	[1, 10],
+	[20, 20_000],
+	[0.3, 7],
+])('a log taper from %d to %d returns its bounds exactly at the ends', (min, max) => {
+	const taper = logTaper(min, max);
+
+	expect(taper?.valueAt(0)).toBe(min);
+	expect(taper?.valueAt(1)).toBe(max);
+});
+
+test('a list taper has no place for a value that is not a number', () => {
+	expect(listTaper([1, 2, 4]).place(NaN)).toBeNaN();
+});

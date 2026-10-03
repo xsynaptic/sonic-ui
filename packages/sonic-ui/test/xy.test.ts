@@ -6,6 +6,10 @@ import { requireChild } from '#lib/render.ts';
 
 import { pointerAt, pressKey, recordEvents } from './helpers.ts';
 
+vi.hoisted(() => {
+	Object.defineProperty(navigator, 'platform', { value: 'Win32' });
+});
+
 interface Pad {
 	glass: HTMLElement;
 	parent: HTMLElement;
@@ -103,14 +107,44 @@ test('Alt holds the drag to one axis, and Shift moves both a tenth as far', () =
 	expect([xy.x, xy.y]).toEqual([16, 152]);
 });
 
-test('a Cmd-click returns only the axis that has a default, as one change', () => {
+test('off Apple platforms, a Ctrl-click returns only the axis that has a default, as one change', () => {
 	const { glass, parent, xy } = mountXy(`${offset} x-default="25"`);
 	const events = recordEvents(parent);
 
-	pointerAt(glass, 'pointerdown', { clientX: 200, clientY: 20, metaKey: true });
+	pointerAt(glass, 'pointerdown', { clientX: 200, clientY: 20, ctrlKey: true });
 
 	expect([xy.x, xy.y]).toEqual([25, 150]);
 	expect(events).toEqual(['input', 'change']);
+});
+
+test('off Apple platforms, a press with the Meta key down is an ordinary press', () => {
+	const { glass, xy } = mountXy(`${offset} x-default="25"`);
+
+	pointerAt(glass, 'pointerdown', { clientX: 60, clientY: 40, metaKey: true });
+
+	expect([xy.x, xy.y]).toEqual([-25, 170]);
+});
+
+test('a secondary button on the glass moves nothing', () => {
+	const { glass, xy } = mountXy(offset);
+
+	pointerAt(glass, 'pointerdown', { button: 2, clientX: 200, clientY: 20 });
+	pointerAt(glass, 'pointermove', { clientX: 180, clientY: 40 });
+
+	expect([xy.x, xy.y]).toEqual([0, 150]);
+});
+
+test('lostpointercapture alone ends the drag with a change', () => {
+	const { parent, puck, xy } = mountXy(offset);
+	const events = recordEvents(parent);
+
+	pointerAt(puck, 'pointerdown', { clientX: 60, clientY: 80 });
+	pointerAt(puck, 'pointermove', { clientX: 80, clientY: 80 });
+	pointerAt(puck, 'lostpointercapture', { clientX: 80, clientY: 80 });
+	expect(events).toEqual(['input', 'change']);
+
+	pointerAt(puck, 'pointermove', { clientX: 80, clientY: 70 });
+	expect([xy.x, xy.y]).toEqual([10, 150]);
 });
 
 test('disabled mid-drag ends the drag with a change, and a later press does nothing', () => {

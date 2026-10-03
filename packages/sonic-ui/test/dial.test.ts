@@ -7,6 +7,10 @@ import { formatPercent, parsePercent } from '#lib/percent.ts';
 
 import { mountDial, pressKey, recordEvents } from './helpers.ts';
 
+vi.hoisted(() => {
+	Object.defineProperty(navigator, 'platform', { value: 'MacIntel' });
+});
+
 test('a value parsed before its max is not clamped to the default max', () => {
 	const { control, dial } = mountDial('value="150" max="200"');
 
@@ -41,6 +45,12 @@ test('a dial without a value starts at min', () => {
 
 	expect(dial.value).toBe(-10);
 	expect(control.getAttribute('aria-valuenow')).toBe('-10');
+});
+
+test('an empty or blank numeric attribute takes its default', () => {
+	const { dial } = mountDial('max="" step=" " value="40.4"');
+
+	expect(dial.value).toBe(40);
 });
 
 test('a non-finite value is ignored', () => {
@@ -208,17 +218,27 @@ test('properties set before the tag upgrades still take effect', async () => {
 	expect(late.querySelector('.sonic-dial')?.getAttribute('aria-valuetext')).toBe('40 Hz');
 });
 
-test('Cmd- or Ctrl-click resets to the default and reports it', () => {
+test('on an Apple platform, Cmd-click resets to the default and reports it', () => {
 	const { control, dial } = mountDial('default="25" value="70"');
 	const events = recordEvents(dial);
 
 	press(control, { metaKey: true });
-	expect(dial.value).toBe(25);
 
-	dial.value = 70;
-	press(control, { ctrlKey: true });
 	expect(dial.value).toBe(25);
-	expect(events).toEqual(['input', 'change', 'input', 'change']);
+	expect(events).toEqual(['input', 'change']);
+});
+
+test('on an Apple platform, Ctrl-click is left to the context menu: no reset, tap or drag', () => {
+	const { control, dial } = mountDial('default="25" value="70"');
+	const events = recordEvents(dial);
+
+	control.dispatchEvent(
+		new PointerEvent('pointerdown', { bubbles: true, button: 0, clientY: 100, ctrlKey: true }),
+	);
+	control.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, clientY: 84 }));
+
+	expect(dial.value).toBe(70);
+	expect(events).toEqual([]);
 });
 
 test('without a default, Cmd-click leaves the value alone', () => {

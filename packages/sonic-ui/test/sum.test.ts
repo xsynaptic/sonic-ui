@@ -122,6 +122,19 @@ test('a locked member holds its value, stops the mover, and cannot be dragged it
 	expect(valuesOf(members)).toEqual([70, 30, 0]);
 });
 
+test('a drag past what the siblings can give turns back at once, as it does from the end', async () => {
+	const { members } = await mountSum(
+		'',
+		sliders(50, '<sonic-slider data-sonic-locked value="30"></sonic-slider>', 20),
+	);
+	const [first] = members;
+	if (!first) throw new Error('No member');
+
+	await drag(first, [100, 90]);
+
+	expect(valuesOf(members)).toEqual([60, 30, 10]);
+});
+
 test('a script write on a locked member lands, the others make room, and it stays locked', async () => {
 	const { members } = await mountSum(
 		'',

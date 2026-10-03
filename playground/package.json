@@ -11,7 +11,8 @@
 		"build": "astro build",
 		"preview": "astro preview",
 		"check-types": "astro check",
-		"test-e2e": "astro build && playwright test"
+		"test-e2e": "astro build && playwright test --project chromium",
+		"test-e2e-full": "astro build && playwright test"
 	},
 	"dependencies": {
 		"@lucide/astro": "^1.49.0",

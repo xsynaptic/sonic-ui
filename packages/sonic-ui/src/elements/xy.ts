@@ -6,6 +6,7 @@ import { SonicFormElement } from '#elements/form-element.ts';
 import { dragThresholdPx } from '#lib/drag-step.ts';
 import { focusByPointer } from '#lib/focus-by-pointer.ts';
 import { clampUnit } from '#lib/math.ts';
+import { isMenuPress, isResetPress } from '#lib/modifier-press.ts';
 import { pointerMove, pointerPosition, startPlaneDrag, stepPlaneDrag } from '#lib/plane.ts';
 import { bindDrag } from '#lib/pointer-drag.ts';
 import { rangeScale, resetKeys } from '#lib/range-scale.ts';
@@ -387,10 +388,10 @@ export class SonicXy extends SonicFormElement {
 					this.#input(drag.from);
 				},
 				grab: (event) => {
-					if (this.isDisabled()) return;
+					if (this.isDisabled() || isMenuPress(event)) return;
 
 					focusByPointer(this.focusTarget());
-					if (!event.metaKey && !event.ctrlKey) return this.#grab(event);
+					if (!isResetPress(event)) return this.#grab(event);
 
 					this.#reset();
 

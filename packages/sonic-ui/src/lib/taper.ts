@@ -21,7 +21,13 @@ export function logTaper(min: number, max: number): Taper | undefined {
 
 	return {
 		place: (value) => clampUnit(Math.log(Math.max(min, value) / min) / span),
-		valueAt: (place) => min * Math.exp(clampUnit(place) * span),
+		valueAt: (place) => {
+			const unit = clampUnit(place);
+			if (unit === 0) return min;
+			if (unit === 1) return max;
+
+			return min * Math.exp(unit * span);
+		},
 	};
 }
 
@@ -45,6 +51,8 @@ export function listTaper(entries: ReadonlyArray<number>): Taper {
 
 	return {
 		place: (value) => {
+			if (Number.isNaN(value)) return NaN;
+
 			const above = entries.findIndex((entry) => entry >= value);
 			if (above === -1) return 1;
 

@@ -88,3 +88,35 @@ test('a pause lands on the source, however small the error', () => {
 
 	expect(clock.read(16, { isPlaying: false, rate: 1, seconds: 10.2 })).toBe(10.2);
 });
+
+test('a seek back under half a second lands at once', () => {
+	const clock = createTrackingClock();
+
+	clock.read(0, playing(10));
+
+	expect(clock.read(16, playing(9.7))).toBe(9.7);
+});
+
+test('a source that jitters back 5ms never pulls the position back', () => {
+	const clock = createTrackingClock();
+	const before = clock.read(0, playing(10));
+
+	expect(clock.read(16, playing(9.995))).toBeGreaterThan(before);
+});
+
+test('one source report that is not a number passes, and the next one tracks', () => {
+	const clock = createTrackingClock();
+
+	clock.read(0, playing(10));
+
+	expect(clock.read(16, playing(NaN))).toBeCloseTo(10.016, 9);
+	expect(clock.read(32, playing(10.032))).toBeCloseTo(10.032, 9);
+});
+
+test('a frame timestamp that goes backwards counts as no time passed', () => {
+	const clock = createTrackingClock();
+
+	clock.read(1000, playing(10));
+
+	expect(clock.read(900, playing(10))).toBe(10);
+});

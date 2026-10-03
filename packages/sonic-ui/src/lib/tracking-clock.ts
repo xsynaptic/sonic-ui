@@ -1,4 +1,5 @@
 const seekThresholdSeconds = 0.5;
+const jitterSeconds = 0.05;
 
 // The share of the error closed in a 60 Hz frame; scaled by elapsed time so every refresh rate converges alike
 const catchUpPerFrame = 0.06;
@@ -14,25 +15,44 @@ interface TrackingClock {
 	read: (frameMs: number, source: ClockSource) => number;
 }
 
+function isLandingOnSource(
+	{ isPlaying, seconds }: ClockSource,
+	carried: number,
+	lastSourceSeconds: number | undefined,
+): boolean {
+	const hasSteppedBack =
+		lastSourceSeconds !== undefined && lastSourceSeconds - seconds > jitterSeconds;
+
+	return !isPlaying || hasSteppedBack || Math.abs(seconds - carried) > seekThresholdSeconds;
+}
+
 export function createTrackingClock(): TrackingClock {
 	let positionSeconds: number | undefined;
 	let lastFrameMs: number | undefined;
+	let lastSourceSeconds: number | undefined;
 	let wasPlaying = false;
 
 	return {
-		read: (frameMs, { isPlaying, rate, seconds }) => {
-			const elapsedSeconds =
-				wasPlaying && lastFrameMs !== undefined ? Math.max(0, frameMs - lastFrameMs) / 1000 : 0;
+		read: (frameMs, source) => {
+			const { isPlaying, rate, seconds } = source;
+			const elapsedSeconds = wasPlaying
+				? Math.max(0, frameMs - (lastFrameMs ?? frameMs)) / 1000
+				: 0;
 			const carried = (positionSeconds ?? seconds) + elapsedSeconds * rate;
 
 			lastFrameMs = frameMs;
 			wasPlaying = isPlaying;
 
-			if (
-				positionSeconds === undefined ||
-				!isPlaying ||
-				Math.abs(seconds - carried) > seekThresholdSeconds
-			) {
+			if (!Number.isFinite(seconds)) {
+				if (positionSeconds !== undefined) positionSeconds = carried;
+				return carried;
+			}
+
+			const isLanding = isLandingOnSource(source, carried, lastSourceSeconds);
+
+			lastSourceSeconds = seconds;
+
+			if (positionSeconds === undefined || isLanding) {
 				positionSeconds = seconds;
 				return positionSeconds;
 			}

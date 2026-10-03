@@ -97,12 +97,21 @@ test('a vertical fader drags upward from its cap', async ({ page }) => {
 		.toBeLessThanOrEqual(1);
 });
 
-test('Cmd or Ctrl-click resets to the default', async ({ page }) => {
-	await page.keyboard.down('ControlOrMeta');
-	await page.locator('#level .sonic-dial').click();
-	await page.keyboard.up('ControlOrMeta');
+test('Cmd-click on an Apple platform, or Ctrl-click elsewhere, resets to the default', async ({
+	page,
+}) => {
+	// `ControlOrMeta` follows the host; the control follows the page's `navigator.platform`
+	const isApple = await page.evaluate(() => /^(Mac|iP)/.test(navigator.platform));
+	const [reset, other] = isApple ? (['Meta', 'Control'] as const) : (['Control', 'Meta'] as const);
+	const dial = page.locator('#level .sonic-dial');
+	const level = page.getByRole('slider', { name: 'Level' });
+	const before = await level.getAttribute('aria-valuenow');
 
-	await expect(page.getByRole('slider', { name: 'Level' })).toHaveAttribute('aria-valuenow', '20');
+	await dial.click({ modifiers: [other] });
+	await expect(level).toHaveAttribute('aria-valuenow', before ?? '');
+
+	await dial.click({ modifiers: [reset] });
+	await expect(level).toHaveAttribute('aria-valuenow', '20');
 });
 
 test('a disabled dial ignores drags and presses', async ({ page }) => {

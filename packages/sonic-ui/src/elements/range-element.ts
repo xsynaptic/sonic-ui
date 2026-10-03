@@ -9,10 +9,11 @@ import { copyNode } from '#lib/copy-node.ts';
 import { dragThresholdPx, startDrag, stepDrag } from '#lib/drag-step.ts';
 import { focusByPointer } from '#lib/focus-by-pointer.ts';
 import { clamp } from '#lib/math.ts';
+import { isMenuPress, isResetPress } from '#lib/modifier-press.ts';
 import { parseNumberList } from '#lib/number-list.ts';
 import { rangeScale, resetKeys } from '#lib/range-scale.ts';
 import { readPxProperty } from '#lib/read-px-property.ts';
-import { requireChild } from '#lib/render.ts';
+import { placeChildren, requireChild } from '#lib/render.ts';
 import { readSpans } from '#lib/time-spans.ts';
 import { writeAttribute } from '#lib/write-attribute.ts';
 
@@ -69,16 +70,16 @@ function scaleValue(mark: ScaleMark): number {
 	return text ? Number(text) : NaN;
 }
 
-function scaleMark(original: ChildNode): Array<ScaleMark> {
+function scaleMark(original: ChildNode): ScaleMark | undefined {
 	const mark = copyNode(original);
-	if (!(mark instanceof HTMLElement || mark instanceof SVGElement)) return [];
-	if (!Number.isFinite(scaleValue(mark))) return [];
+	if (!(mark instanceof HTMLElement || mark instanceof SVGElement)) return undefined;
+	if (!Number.isFinite(scaleValue(mark))) return undefined;
 
 	const isTick = mark.childElementCount === 0 && mark.textContent.trim() === '';
 
 	mark.classList.add(isTick ? 'sonic-scale-tick' : 'sonic-scale-label');
 
-	return [mark];
+	return mark;
 }
 
 type RangeLanding = (target: number, direction: -1 | 0 | 1) => number;
@@ -413,7 +414,7 @@ export abstract class SonicRangeElement extends SonicFormElement {
 				// A click listener above makes WebKit send a tap's compatibility mousedown, which blurs the entry a double tap just opened
 				if (event.pointerType === 'touch') event.preventDefault();
 				focusByPointer(control);
-				if (event.metaKey || event.ctrlKey) {
+				if (isResetPress(event)) {
 					this.#reset();
 					return;
 				}
@@ -508,11 +509,12 @@ export abstract class SonicRangeElement extends SonicFormElement {
 		this.mirrorChildren(
 			{
 				control,
-				copy: (originals) => {
-					marks.replaceChildren(...originals.flatMap((original) => scaleMark(original)));
+				copy: scaleMark,
+				isCopied: (child) => child instanceof Element && child.matches('[data-sonic-value]'),
+				place: (copies) => {
+					placeChildren(marks, copies);
 					this.#renderScale();
 				},
-				isCopied: (child) => child instanceof Element && child.matches('[data-sonic-value]'),
 			},
 			signal,
 		);
@@ -627,7 +629,7 @@ export abstract class SonicRangeElement extends SonicFormElement {
 	}
 
 	protected travelPx(control: HTMLElement, property: `--_sonic-${string}`): number {
-		return readPxProperty(getComputedStyle(control), property, fallbackTravelPx);
+		return Math.max(1, readPxProperty(getComputedStyle(control), property, fallbackTravelPx));
 	}
 
 	protected writeModulated(
@@ -743,7 +745,7 @@ export abstract class SonicRangeElement extends SonicFormElement {
 	}
 
 	#canPress(event: PointerEvent, entry: RangeEntry): boolean {
-		if (event.button !== 0 || this.isDisabled() || entry.isOpen) return false;
+		if (event.button !== 0 || isMenuPress(event) || this.isDisabled() || entry.isOpen) return false;
 
 		return !this.#drag || this.#drag.pointerId === event.pointerId;
 	}
@@ -761,13 +763,14 @@ export abstract class SonicRangeElement extends SonicFormElement {
 	#dragTo(drag: RangeDrag, event: PointerEvent): void {
 		const isOutside = drag.outside?.(event) === true;
 		const wasEngaged = drag.state.isEngaged;
-		const { state, value } = stepDrag(this.scale(), drag.state, {
+		const scale = this.scale();
+		const { state, value } = stepDrag(scale, drag.state, {
 			isFine: event.shiftKey,
 			isOutside,
 			position: drag.position(event),
 		});
 
-		drag.state = state;
+		drag.state = this.#withinLimit(scale, state);
 		if (value === undefined) return;
 
 		if (!wasEngaged) this.#reveal(drag);
@@ -985,6 +988,15 @@ export abstract class SonicRangeElement extends SonicFormElement {
 			},
 			{ signal: watch.signal },
 		);
+	}
+
+	#withinLimit(scale: RangeScale, state: DragState): DragState {
+		const limit = this.#limit;
+		if (!limit || scale.isWrapping) return state;
+
+		const [low, high] = limit;
+
+		return { ...state, rawPlace: clamp(state.rawPlace, scale.place(low), scale.place(high)) };
 	}
 
 	#write(next: number): void {

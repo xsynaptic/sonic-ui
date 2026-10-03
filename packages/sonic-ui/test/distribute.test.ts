@@ -202,6 +202,18 @@ test('a move with a direction never lands back where it started while a value th
 	expect(distribute(full, rule, { direction: -1, index: 0, target: 49 })).toEqual([50, 25, 25]);
 });
 
+test('a sibling whose next step lies past its bound is not stepped there, nor counted as able to step', () => {
+	const pinned: SumMember = {
+		...member(10, { max: 10, min: 10 }),
+		stepFrom: (from, direction) => from + direction,
+	};
+	const snapshot = [member(70), pinned, member(20, { step: 5 })];
+	const rule = { mode: 'proportional', total: 100 } as const;
+
+	expect(distribute(snapshot, rule, { index: 0, target: 68 })).toEqual([70, 10, 20]);
+	expect(distribute(snapshot, rule, { direction: -1, index: 0, target: 69 })).toEqual([65, 10, 25]);
+});
+
 test('a total past what the bounds allow saturates at the bounds', () => {
 	expect(distribute(members([10, 10], { max: 20 }), { mode: 'equal', total: 100 })).toEqual([
 		20, 20,

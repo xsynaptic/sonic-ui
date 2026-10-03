@@ -101,6 +101,11 @@ import Layout from '#components/layout.astro';
 						--:--
 					</button>
 				</div>
+				<sonic-segmented aria-label="Playback rate" class="font-mono text-xs" data-rate value="1">
+					<span data-sonic-value="1">1×</span>
+					<span data-sonic-value="1.5">1.5×</span>
+					<span data-sonic-value="2">2×</span>
+				</sonic-segmented>
 				<sonic-key aria-label="Waveform panel" data-panel-toggle disabled toggle>
 					<AudioWaveform aria-hidden="true" />
 				</sonic-key>

@@ -18,13 +18,6 @@ function downsample(peaks: ArrayLike<number>, count: number): Array<number> {
 	return resampled;
 }
 
-function renormalize(peaks: Array<number>): Array<number> {
-	const loudest = Math.max(...peaks);
-	if (loudest <= 0) return peaks;
-
-	return peaks.map((peak) => peak / loudest);
-}
-
 function upsample(peaks: ArrayLike<number>, count: number): Array<number> {
 	const resampled: Array<number> = [];
 	const last = peaks.length - 1;
@@ -50,5 +43,5 @@ export function resamplePeaks(peaks: ArrayLike<number>, count: number): Array<nu
 	if (count === finite.length) return finite;
 	if (count > finite.length) return upsample(finite, count);
 
-	return renormalize(downsample(finite, count));
+	return downsample(finite, count);
 }

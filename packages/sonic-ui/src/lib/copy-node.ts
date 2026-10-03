@@ -4,14 +4,40 @@ const idListAttributes = new Set(['aria-describedby', 'aria-labelledby']);
 
 const hrefAttributes = new Set(['href', 'xlink:href']);
 
-const urlReference = /url\(\s*(['"]?)#([^'")\s]+)\1\s*\)/g;
+const timingAttributes = new Set(['begin', 'end']);
+
+const urlAttributes = new Set([
+	'clip-path',
+	'color-profile',
+	'fill',
+	'filter',
+	'marker-end',
+	'marker-mid',
+	'marker-start',
+	'mask',
+	'stroke',
+	'style',
+]);
+
+const urlReference = /url\(\s*(['"]?)#([^'")\s]+)\1\s*\)/gi;
 
 // A `#name` with a block still to open is a selector; inside a block it is a colour
 const idSelector = /#([\w-]+)(?=[^;{}]*\{)/g;
 
+// SMIL: an id leads a `;` list entry, before `.event`; `2.5s` is a clock value
+const timingReference = /(^|;\s*)([^\s;.]+)(?=\.[a-z])/gi;
+
+function decoded(id: string): string {
+	try {
+		return decodeURIComponent(id);
+	} catch {
+		return id;
+	}
+}
+
 function rewriteUrls(value: string, ids: Set<string>): string {
 	return value.replaceAll(urlReference, (reference, quote: string, id: string) =>
-		ids.has(id) ? `url(${quote}#${copyPrefix}${id}${quote})` : reference,
+		ids.has(decoded(id)) ? `url(${quote}#${copyPrefix}${id}${quote})` : reference,
 	);
 }
 
@@ -27,8 +53,13 @@ function rewriteReferences(name: string, value: string, ids: Set<string>): strin
 			.map((id) => (ids.has(id) ? copyPrefix + id : id))
 			.join(' ');
 	}
+	if (timingAttributes.has(name)) {
+		return value.replaceAll(timingReference, (reference, lead: string, id: string) =>
+			ids.has(id) ? lead + copyPrefix + id : reference,
+		);
+	}
 
-	return rewriteUrls(value, ids);
+	return urlAttributes.has(name) ? rewriteUrls(value, ids) : value;
 }
 
 function rewriteStyle(text: string, ids: Set<string>): string {

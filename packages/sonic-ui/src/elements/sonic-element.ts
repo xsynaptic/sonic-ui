@@ -24,8 +24,9 @@ function writeLabelledBy(target: Element, labels: Array<Element>): void {
 
 interface Mirror {
 	control: Element;
-	copy: (originals: Array<ChildNode>) => void;
+	copy: (original: ChildNode) => Node | undefined;
 	isCopied?: (child: Node) => boolean;
+	place: (copies: Array<Node>) => void;
 }
 
 // eslint-disable-next-line wc/define-tag-after-class-definition -- abstract; only subclasses are defined
@@ -95,8 +96,14 @@ export abstract class SonicElement extends HTMLElement {
 		if (!this.isDisabled() && !this.#focused()) target.focus(options);
 	}
 
-	protected appendOnce(child: Element): void {
-		if (child.parentNode !== this) this.append(child);
+	protected appendOnce(control: Element): void {
+		const [hook] = control.classList;
+		const stale = [...this.children].filter(
+			(child) => child !== control && hook !== undefined && child.classList.contains(hook),
+		);
+
+		for (const child of stale) child.remove();
+		if (control.parentNode !== this) this.append(control);
 	}
 
 	protected checkStyles(control: HTMLElement, sheet: string): void {
@@ -151,25 +158,42 @@ export abstract class SonicElement extends HTMLElement {
 	}
 
 	protected mirrorChildren(
-		{ control, copy, isCopied = () => true }: Mirror,
+		{ control, copy, isCopied = () => true, place }: Mirror,
 		signal: AbortSignal,
 	): void {
 		const slots = this.#slots ?? attachSlots(this);
+		let copies = new Map<ChildNode, Node | undefined>();
 
 		this.#slots = slots;
-		const mirror = (): void => {
+		const mirror = (touched?: Set<Node | undefined>): void => {
+			this.appendOnce(control);
+
 			const children = [...this.childNodes].filter((child) => child !== control);
 			const slotted = children.filter(
 				(child): child is Element | Text => child instanceof Element || child instanceof Text,
 			);
+			const kept = copies;
 
-			copy(children.filter((child) => isCopied(child)));
-			this.appendOnce(control);
+			copies = new Map(
+				children
+					.filter((child) => isCopied(child))
+					.map((original) => [
+						original,
+						touched && !touched.has(original) && kept.has(original)
+							? kept.get(original)
+							: copy(original),
+					]),
+			);
+			place([...copies.values()].filter((made) => made !== undefined));
 			slots.shown.assign(...slotted.filter((child) => !isCopied(child)), control);
 			slots.kept.assign(...slotted.filter((child) => isCopied(child)));
 		};
 		const observer = new MutationObserver((records) => {
-			if (records.some((record) => this.#isCopiedChange(record, control, isCopied))) mirror();
+			const changes = records.filter((record) => this.#isCopiedChange(record, control, isCopied));
+			if (changes.length === 0) return;
+
+			if (changes.some((record) => record.target === this)) mirror();
+			else mirror(new Set(changes.map((record) => this.#childHolding(record.target))));
 		});
 
 		mirror();
@@ -194,7 +218,7 @@ export abstract class SonicElement extends HTMLElement {
 
 	protected numberAttribute(name: string, fallback: number): number {
 		const attribute = this.getAttribute(name);
-		if (attribute === null) return fallback;
+		if (attribute === null || attribute.trim() === '') return fallback;
 
 		const parsed = Number(attribute);
 

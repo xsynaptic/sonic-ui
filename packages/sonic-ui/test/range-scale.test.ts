@@ -71,6 +71,28 @@ test('a Page key that would step across the detent lands on it, and the next mov
 });
 
 test.each([
+	['PageUp', 340, 10],
+	['PageDown', 32.5, 10],
+	['PageUp', 10, 85],
+])('%s from %d on an endless scale with a detent at the seam targets %d', (key, from, expected) => {
+	const endless = scaleOf({ detent: 10, isWrapping: true, max: 370, min: 10, step: 7.5 });
+
+	expect(endless.keyTarget(key, from)).toBe(expected);
+});
+
+test.each([
+	['ArrowDown', 1, 3],
+	['ArrowUp', 1, 7],
+	['ArrowDown', 3, 1],
+	['ArrowUp', 3, 9],
+])(
+	'%s with a key step of %d on a step of 2 moves by the nearest whole steps, never none, from 5 to %d',
+	(key, keyStep, expected) => {
+		expect(scaleOf({ max: 21, min: 1, step: 2 }).keyTarget(key, 5, keyStep)).toBe(expected);
+	},
+);
+
+test.each([
 	[{ isNotched: true, max: 7 }, 8],
 	[{ isNotched: true, max: 1 }, 2],
 	[{ isNotched: true, max: 3, min: -3 }, 7],
@@ -204,6 +226,16 @@ describe('a taper', () => {
 		expect(logged.keyTarget('PageUp', 100)).toBe(251);
 		expect(logged.keyTarget('ArrowUp', 100)).toBe(110);
 	});
+
+	test.each([
+		[{ max: 20_000, min: 20, taper: 'log' }, 'ArrowUp', 1500],
+		[{ max: 20_000, midpoint: 1000, min: 20 }, 'ArrowDown', 500],
+	] as const)(
+		'on %o, a key step of 500 is added to the value, so %s takes 1000 to %d',
+		(spec, key, expected) => {
+			expect(scaleOf(spec).keyTarget(key, 1000, 500)).toBe(expected);
+		},
+	);
 
 	test('a midpoint at the centre is linear, so each arrow moves one step', () => {
 		expect(scaleOf({ max: 20_000, midpoint: 10_010, min: 20 }).keyTarget('ArrowUp', 1000)).toBe(

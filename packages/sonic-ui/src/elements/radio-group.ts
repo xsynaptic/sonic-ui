@@ -1,5 +1,6 @@
 import { SonicFormElement } from '#elements/form-element.ts';
 import { copyNode } from '#lib/copy-node.ts';
+import { placeChildren } from '#lib/render.ts';
 
 // RTL is not mirrored
 const keySteps = new Map([
@@ -69,10 +70,11 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 		this.mirrorChildren(
 			{
 				control: group,
-				copy: (originals) => {
-					this.#copyOptions(originals);
-				},
+				copy: copyNode,
 				isCopied: (child) => child instanceof Element && child.matches('[data-sonic-value]'),
+				place: (copies) => {
+					this.#copyOptions(copies);
+				},
 			},
 			signal,
 		);
@@ -219,22 +221,22 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 		);
 	}
 
-	#copyOptions(originals: Array<Node>): void {
+	#copyOptions(copies: Array<Node>): void {
 		const group = this.group;
 		const options = this.options();
 		const focused = this.optionOf(group.querySelector(':scope > :focus'));
 		const focusedValue = focused && optionValue(focused);
 
-		for (const [index, original] of originals.entries()) {
+		for (const [index, copy] of copies.entries()) {
 			let option = options[index];
 			if (!option) {
 				option = this.renderOption();
 				group.append(option);
 			}
 
-			option.firstElementChild?.replaceChildren(copyNode(original));
+			if (option.firstElementChild) placeChildren(option.firstElementChild, [copy]);
 		}
-		for (const option of options.slice(originals.length)) option.remove();
+		for (const option of options.slice(copies.length)) option.remove();
 		this.render();
 		if (focused) this.#refocus(focused, focusedValue);
 	}

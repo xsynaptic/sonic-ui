@@ -3,7 +3,7 @@ import type { Hold } from '#lib/hold.ts';
 import { SonicFormElement } from '#elements/form-element.ts';
 import { copyNode } from '#lib/copy-node.ts';
 import { bindHold } from '#lib/hold.ts';
-import { requireChild, template } from '#lib/render.ts';
+import { placeChildren, requireChild, template } from '#lib/render.ts';
 import { writeAttribute } from '#lib/write-attribute.ts';
 
 declare global {
@@ -137,8 +137,9 @@ export class SonicKey extends SonicFormElement {
 		this.mirrorChildren(
 			{
 				control: key,
-				copy: (originals) => {
-					cap.replaceChildren(...originals.map((original) => copyNode(original)));
+				copy: copyNode,
+				place: (copies) => {
+					placeChildren(cap, copies);
 				},
 			},
 			signal,

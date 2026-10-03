@@ -139,8 +139,16 @@ export function rangeScale(spec: RangeSpec): RangeScale {
 		if (spec.detent === undefined) return next;
 
 		const detent = snap(spec.detent);
+		const toward = Math.sign(next - from) * (detent - from);
+		const ahead = spec.isWrapping ? wrap(min + toward, isStepped ? count * step : range) : toward;
 
-		return (from - detent) * (next - detent) < 0 ? detent : next;
+		return ahead > 0 && ahead < Math.abs(next - from) ? detent : next;
+	}
+
+	function keyStride(keyStep: number): number | undefined {
+		if (entries || !(keyStep > 0)) return undefined;
+
+		return step > 0 ? Math.max(1, Math.round(trimFloat(keyStep / step))) * step : keyStep;
 	}
 
 	function end(size: number): number {
@@ -158,7 +166,9 @@ export function rangeScale(spec: RangeSpec): RangeScale {
 		const steps = keySteps.get(key);
 		if (steps === undefined) return undefined;
 
-		const next = stopAtDetent(from, stepBy(from, steps, keyStep > 0 ? keyStep : size));
+		const stride = keyStride(keyStep);
+		const moved = stride === undefined ? stepBy(from, steps, size) : from + steps * stride;
+		const next = stopAtDetent(from, moved);
 
 		return isStepped && spec.isWrapping ? ring(next, count * step) : snap(next);
 	}

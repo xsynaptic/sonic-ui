@@ -234,15 +234,34 @@ test.each([
 	expect(read(control, 'level')).toBeCloseTo(expected, 2);
 });
 
-test('a PPM rise takes a frame rather than lifting the bar at once', () => {
+test('a PPM rise takes a frame, and one longer than the integration time lands within its 2 dB', () => {
 	const { control, meter } = mountMeter('ballistics="ppm-2"');
 
 	meter.level = 1;
 	expect(read(control, 'level')).toBe(0);
 
-	// 1.6 time constants: 80% of the amplitude, 1.96 dB under full scale
 	vi.advanceTimersByTime(16);
-	expect(read(control, 'level')).toBeCloseTo((60 - 1.96) / 60, 3);
+	expect(read(control, 'level')).toBeGreaterThan((60 - 2) / 60);
+	expect(read(control, 'level')).toBeLessThan(1);
+});
+
+test('a stalled frame that ends the peak hold falls only for the time past the hold', () => {
+	const frames: Array<FrameRequestCallback> = [];
+
+	vi.stubGlobal('requestAnimationFrame', (frame: FrameRequestCallback) => {
+		frames.push(frame);
+	});
+
+	const { control, meter } = mountMeter();
+	const start = performance.now();
+
+	meter.level = 1;
+	meter.level = 0;
+	frames.shift()?.(start + 1000);
+	expect(read(control, 'peak-hold')).toBe(1);
+
+	frames.shift()?.(start + 3000);
+	expect(read(control, 'peak-hold')).toBeCloseTo(30 / 60, 6);
 });
 
 test('a VU needle swings to the level with no peak light, then stops its loop', () => {

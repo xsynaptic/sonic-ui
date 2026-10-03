@@ -58,7 +58,7 @@ export function datByteRange(
 	const from = clamp(Math.floor(fromPair), 0, header.pairs);
 	const to = clamp(Math.ceil(toPair), from, header.pairs);
 	// A server ignores an inverted `Range` and sends the whole file
-	if (to === from) return undefined;
+	if (!(to > from)) return undefined;
 
 	const pairBytes = (header.channels * 2 * header.bits) / 8;
 

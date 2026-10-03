@@ -77,6 +77,18 @@ test.each([
 	expect(dial.value).toBe(65);
 });
 
+test('a travel of zero leaves the drag alive', () => {
+	const { control, dial } = mountDial('value="50"');
+
+	control.style.setProperty('--_sonic-dial-travel', '0px');
+	mouseAt(control, 'pointerdown', 100);
+	mouseAt(control, 'pointermove', 84);
+	mouseAt(control, 'pointermove', 84);
+	mouseAt(control, 'pointermove', 100);
+
+	expect(dial.value).toBe(0);
+});
+
 test('a secondary button starts no drag', () => {
 	const { control, dial } = mountDial('value="50"');
 

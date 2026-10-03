@@ -87,6 +87,14 @@ test('a fine move goes a tenth as far, from where the last move left off', () =>
 	expect(drag({ from: 0, moves: [40, { isFine: true, position: 80 }], spec })).toEqual([40, 44]);
 });
 
+test('Shift let go with the pointer still leaves the value where the fine move put it', () => {
+	const spec = { max: 140, min: -20, step: 0.5 };
+
+	expect(drag({ from: 0, moves: [40, { isFine: true, position: 80 }, 80], spec })).toEqual([
+		40, 44, 44,
+	]);
+});
+
 test('a drag from min -0.3 in steps of 0.1 lands exactly on 0', () => {
 	expect(drag({ from: -0.3, moves: [48], spec: { max: 0.7, min: -0.3, step: 0.1 } })).toEqual([0]);
 });
@@ -121,9 +129,14 @@ test('a drag held at the detent that turns back has to push the zone the other w
 	]);
 });
 
-// The downward crossing only; a drag up across the seam is not held, a known gap
-test('on an endless scale a drag down onto a detent at the seam is held there', () => {
-	const endless = { isWrapping: true, max: 360 };
+test.each([
+	[10, [-6, -10, -20], [0, 0, 343]],
+	[350, [8, 12, 20], [0, 0, 17]],
+])(
+	'on an endless scale a drag from %d onto a detent at the seam is held there, then moves on',
+	(from, moves, expected) => {
+		const endless = { isWrapping: true, max: 360 };
 
-	expect(drag({ detent: 0, from: 10, moves: [-6, -10], spec: endless })).toEqual([0, 0]);
-});
+		expect(drag({ detent: 0, from, moves, spec: endless })).toEqual(expected);
+	},
+);

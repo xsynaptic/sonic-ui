@@ -90,3 +90,55 @@ test('a style block inside a copy follows the prefixed ids, in url() and in sele
 		'.pb{fill:url(#sonic-copy-gb)}#sonic-copy-gb i,#sonic-copy-fade{color:#fade;stroke:url(#sprite)}',
 	);
 });
+
+function copyOf(markup: string): Element {
+	const copy = copyNode(parse(markup));
+	if (!(copy instanceof Element)) throw new Error('The copy is not an element');
+
+	return copy;
+}
+
+test('url() follows its id in any letter case and through percent-encoding', () => {
+	const copy = copyOf(
+		'<span><i id="g b"></i><i id="c"></i><b fill="url(#g%20b)" stroke="URL(#c)" mask="url(#100%)"></b></span>',
+	);
+	const painted = copy.querySelector('b');
+
+	expect(painted?.getAttribute('fill')).toBe('url(#sonic-copy-g%20b)');
+	expect(painted?.getAttribute('stroke')).toBe('url(#sonic-copy-c)');
+	expect(painted?.getAttribute('mask')).toBe('url(#100%)');
+});
+
+test('a SMIL begin and end follow the ids they wait on, and leave clock values alone', () => {
+	const copy = copyOf(
+		'<span><i id="a1"></i><i id="2"></i><b begin="a1.end" end="2.5s; a1.begin+1s; other.end"></b></span>',
+	);
+	const animated = copy.querySelector('b');
+
+	expect(animated?.getAttribute('begin')).toBe('sonic-copy-a1.end');
+	expect(animated?.getAttribute('end')).toBe('2.5s; sonic-copy-a1.begin+1s; other.end');
+});
+
+test('url() inside a text attribute is left alone', () => {
+	const copy = copyOf('<span aria-label="see url(#x)" title="url(#x)"><i id="x"></i></span>');
+
+	expect(copy.getAttribute('aria-label')).toBe('see url(#x)');
+	expect(copy.getAttribute('title')).toBe('url(#x)');
+});
+
+test('an id list keeps the ids from outside the copy and follows the ones inside', () => {
+	const copy = copyOf('<span aria-labelledby="outside  inside other"><i id="inside"></i></span>');
+
+	expect(copy.getAttribute('aria-labelledby')).toBe('outside sonic-copy-inside other');
+});
+
+test('an href to another document is left alone, even when its fragment names an id in the copy', () => {
+	const copy = copyOf(
+		'<span><i id="x"></i><a href="https://example.com/#x"></a><a href="page.html#x"></a></span>',
+	);
+
+	expect([...copy.querySelectorAll('a')].map((link) => link.getAttribute('href'))).toEqual([
+		'https://example.com/#x',
+		'page.html#x',
+	]);
+});

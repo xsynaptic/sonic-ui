@@ -3,6 +3,11 @@ import { expect, test } from '@playwright/test';
 
 const pages = ['/', '/club-mixer/', '/tape-echo/', '/web-player/', '/fixtures/'];
 
+test.skip(
+	({ browserName }) => browserName !== 'chromium',
+	'Axe reads the same DOM in every engine',
+);
+
 for (const path of pages) {
 	test(`${path} has no axe violations`, async ({ page }, testInfo) => {
 		await page.goto(path);

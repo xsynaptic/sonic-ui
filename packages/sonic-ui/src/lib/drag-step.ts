@@ -67,6 +67,10 @@ function passDetent(
 	return { place: hold.place + slack - Math.sign(slack) * hold.zone, slack: undefined };
 }
 
+function nearestTurn(hold: DetentHold, from: number): DetentHold {
+	return { ...hold, place: hold.place + Math.round(from - hold.place) };
+}
+
 function land(scale: RangeScale, state: DragState, place: number): DragStep {
 	const rawPlace = scale.isWrapping ? wrapUnit(place) : clampUnit(place);
 
@@ -112,7 +116,8 @@ export function stepDrag(scale: RangeScale, state: DragState, move: DragMove): D
 	const { detent } = state;
 	if (!detent) return land(scale, moved, to);
 
-	const passed = passDetent(detent, state.rawPlace, to);
+	const near = scale.isWrapping ? nearestTurn(detent, state.rawPlace) : detent;
+	const passed = passDetent(near, state.rawPlace, to);
 	const held = { ...moved, detent: { ...detent, slack: passed.slack } };
 	if (passed.place === undefined) {
 		return { state: { ...held, rawPlace: detent.place }, value: detent.value };

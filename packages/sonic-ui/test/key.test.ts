@@ -469,3 +469,34 @@ test('a Meta keyup leaves a momentary key held by a pointer alone', () => {
 
 	expect(key.pressed).toBe(true);
 });
+
+test('a cloned key discards the button it was cloned with', async () => {
+	const { host } = mountControl('sonic-key', '', '<span id="label">Play</span>');
+	const clone = host.cloneNode(true);
+	if (!(clone instanceof HTMLElement)) throw new Error('The clone is not an element');
+
+	document.body.append(clone);
+	await nextTask();
+
+	expect(clone.querySelectorAll('button')).toHaveLength(1);
+	expect(clone.querySelector('.sonic-key-cap')?.getHTML()).toBe(
+		'<span id="sonic-copy-label">Play</span>',
+	);
+});
+
+test('a change inside one child leaves the copies of its siblings in place', async () => {
+	const { host } = mountControl('sonic-key', '', '<svg data-icon="play"></svg><span>Play</span>');
+	const cap = host.querySelector('.sonic-key-cap');
+	const label = host.querySelector(':scope > span');
+
+	await nextTask();
+
+	const icon = cap?.firstChild;
+
+	label?.classList.add('is-live');
+	await nextTask();
+
+	expect(icon).toBeInstanceOf(SVGElement);
+	expect(cap?.firstChild).toBe(icon);
+	expect(cap?.querySelector('span')?.className).toBe('is-live');
+});

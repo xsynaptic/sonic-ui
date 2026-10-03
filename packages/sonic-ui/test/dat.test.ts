@@ -121,3 +121,10 @@ test('a 16-bit body cut at an odd byte reads the whole samples before it', () =>
 
 	expect([...readDatSamples(header, bytes('d4feb004', 'fe'))]).toEqual([-300, 1200]);
 });
+
+test.each([
+	[0, NaN],
+	[NaN, 200],
+])('pairs %d to %d give no byte range', (fromPair, toPair) => {
+	expect(datByteRange(readDatHeader(bytes(...stereoHeader)), fromPair, toPair)).toBeUndefined();
+});

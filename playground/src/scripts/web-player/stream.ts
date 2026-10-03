@@ -26,6 +26,7 @@ export interface StreamState {
 	isWaiting: boolean;
 	pending: Array<[number, number]>;
 	positionSeconds: number;
+	rate: number;
 	samples: Int8Array<ArrayBuffer>;
 	track: Track;
 }
@@ -38,6 +39,7 @@ interface Player {
 	isPlaying: boolean;
 	latencySeconds: number;
 	positionSeconds: number;
+	rate: number;
 	samples: Int8Array<ArrayBuffer>;
 	tracks: ReadonlyArray<Track>;
 }
@@ -155,7 +157,7 @@ function isWaiting(player: Player): boolean {
 function advance(player: Player, elapsedSeconds: number): void {
 	if (!player.isPlaying || isWaiting(player)) return;
 
-	player.positionSeconds += elapsedSeconds;
+	player.positionSeconds += elapsedSeconds * player.rate;
 	if (player.positionSeconds < trackOf(player).durationSeconds) return;
 	if (player.index < player.tracks.length - 1) {
 		load(player, player.index + 1);
@@ -219,6 +221,7 @@ function stateOf(player: Player): StreamState {
 		isWaiting: isWaiting(player),
 		pending: pendingOf(player),
 		positionSeconds,
+		rate: player.rate,
 		samples: player.samples,
 		track: trackOf(player),
 	};
@@ -233,6 +236,7 @@ export function createStream(tracks: ReadonlyArray<Track>) {
 		isPlaying: false,
 		latencySeconds: 0,
 		positionSeconds: 0,
+		rate: 1,
 		samples: new Int8Array(0),
 		tracks,
 	};
@@ -259,6 +263,9 @@ export function createStream(tracks: ReadonlyArray<Track>) {
 		},
 		seek(seconds: number): void {
 			seek(player, seconds);
+		},
+		setRate(rate: number): void {
+			player.rate = rate;
 		},
 		get state(): StreamState {
 			return stateOf(player);

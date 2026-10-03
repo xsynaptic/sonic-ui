@@ -11,12 +11,10 @@ test('downsampling takes the mean of the values each bar covers', () => {
 	expect(rounded(resamplePeaks([0.2, 0.4, 0.6, 0.8, 1, 1, 1, 1], 3))).toEqual([0.3, 0.8, 1]);
 });
 
-test('downsampling renormalizes so the loudest bar fills the box', () => {
-	expect(rounded(resamplePeaks([0.1, 0.3, 0.1, 0.1], 2))).toEqual([1, 0.5]);
-});
-
-test('silence stays silent rather than dividing by zero', () => {
-	expect(resamplePeaks([0, 0, 0, 0], 2)).toEqual([0, 0]);
+test('a quiet source stays quiet at every bar count', () => {
+	expect(rounded(resamplePeaks([0.1, 0.2, 0.1], 2))).toEqual([0.1, 0.15]);
+	expect(rounded(resamplePeaks([0.1, 0.2, 0.1], 3))).toEqual([0.1, 0.2, 0.1]);
+	expect(rounded(resamplePeaks([0.1, 0.2, 0.1], 4))).toEqual([0.1, 0.167, 0.167, 0.1]);
 });
 
 test('upsampling interpolates between the values', () => {
@@ -31,7 +29,7 @@ test('nothing to draw gives no bars', () => {
 });
 
 test.each([NaN, Infinity, -Infinity])('a peak of %d draws as silence at every ratio', (bad) => {
-	expect(rounded(resamplePeaks([0.2, bad, 0.6, 0.4], 2))).toEqual([0.2, 1]);
+	expect(rounded(resamplePeaks([0.2, bad, 0.6, 0.4], 2))).toEqual([0.1, 0.5]);
 	expect(resamplePeaks([0.2, bad, 0.6], 3)).toEqual([0.2, 0, 0.6]);
 	expect(rounded(resamplePeaks([0.2, bad, 0.6], 5))).toEqual([0.2, 0.1, 0, 0.3, 0.6]);
 });
