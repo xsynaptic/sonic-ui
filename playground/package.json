@@ -14,7 +14,7 @@
 		"test-e2e": "astro build && playwright test"
 	},
 	"dependencies": {
-		"@lucide/astro": "^1.48.0",
+		"@lucide/astro": "^1.49.0",
 		"@tailwindcss/vite": "^4.3.3",
 		"@xsynaptic/sonic-ui": "*",
 		"astro": "^7.3.5",
