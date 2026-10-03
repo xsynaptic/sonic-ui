@@ -2,10 +2,9 @@ import type { Page } from '@playwright/test';
 
 import { expect, test } from '@playwright/test';
 
-interface Point {
-	x: number;
-	y: number;
-}
+import type { Point } from './pointer.ts';
+
+import { centreOf } from './pointer.ts';
 
 test.skip(({ browserName }) => browserName !== 'chromium', 'A touch swipe needs CDP');
 test.use({ hasTouch: true, viewport: { height: 400, width: 400 } });
@@ -24,15 +23,12 @@ async function swipe(page: Page, from: Point, to: Point): Promise<void> {
 	await session.send('Input.dispatchTouchEvent', { touchPoints: [], type: 'touchEnd' });
 }
 
-async function centreOf(page: Page, selector: string): Promise<Point> {
+async function centreInView(page: Page, selector: string): Promise<Point> {
 	const target = page.locator(selector);
 
 	await target.scrollIntoViewIfNeeded();
 
-	const box = await target.boundingBox();
-	if (!box) throw new Error(`${selector} has no box`);
-
-	return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+	return centreOf(target);
 }
 
 test('a mostly vertical swipe from a horizontal slider scrolls the page and leaves the value', async ({
@@ -40,7 +36,7 @@ test('a mostly vertical swipe from a horizontal slider scrolls the page and leav
 }) => {
 	await page.goto('/fixtures/');
 
-	const from = await centreOf(page, '#send .sonic-slider');
+	const from = await centreInView(page, '#send .sonic-slider');
 	const scrolled = await page.evaluate(() => window.scrollY);
 
 	await swipe(page, from, { x: from.x + 30, y: from.y - 150 });
@@ -54,7 +50,7 @@ test('a horizontal swipe on a horizontal slider moves the value and not the page
 }) => {
 	await page.goto('/fixtures/');
 
-	const from = await centreOf(page, '#send .sonic-slider');
+	const from = await centreInView(page, '#send .sonic-slider');
 	const scrolled = await page.evaluate(() => window.scrollY);
 
 	await swipe(page, from, { x: from.x + 60, y: from.y });
@@ -64,5 +60,22 @@ test('a horizontal swipe on a horizontal slider moves the value and not the page
 	await expect
 		.poll(async () => Number(await slider.getAttribute('aria-valuenow')))
 		.toBeGreaterThan(0);
+	expect(await page.evaluate(() => window.scrollY)).toBe(scrolled);
+});
+
+test('a swipe on a pad moves both values and never the page', async ({ page }) => {
+	await page.goto('/fixtures/');
+
+	const from = await centreInView(page, '#xy .sonic-xy-puck');
+	const scrolled = await page.evaluate(() => window.scrollY);
+
+	await swipe(page, from, { x: from.x + 30, y: from.y - 30 });
+
+	const pad = page.getByRole('slider', { exact: true, name: 'Pad' });
+
+	await expect
+		.poll(async () => Number(await pad.getAttribute('aria-valuenow')))
+		.toBeGreaterThan(50);
+	await expect(pad).toHaveAttribute('aria-valuetext', /^X \d+, Y (5[1-9]|[6-9]\d)$/);
 	expect(await page.evaluate(() => window.scrollY)).toBe(scrolled);
 });

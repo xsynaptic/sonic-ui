@@ -1,37 +1,15 @@
-import type { Locator, Page } from '@playwright/test';
+import type { Locator } from '@playwright/test';
 
 import { expect, test } from '@playwright/test';
 
-interface Point {
-	x: number;
-	y: number;
-}
+import { centreOf, drag, mouseOnly } from './pointer.ts';
+import { readState } from './state.ts';
 
-test.skip(({ isMobile }) => isMobile, 'Touch has its own spec');
+test.skip(({ isMobile }) => isMobile, mouseOnly);
 
 test.beforeEach(async ({ page }) => {
 	await page.goto('/fixtures/');
 });
-
-async function centreOf(target: Locator): Promise<Point> {
-	const box = await target.boundingBox();
-	if (!box) throw new Error('The target has no box');
-
-	return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
-}
-
-async function drag(page: Page, target: Locator, by: Point): Promise<void> {
-	const start = await centreOf(target);
-
-	await page.mouse.move(start.x, start.y);
-	await page.mouse.down();
-	await page.mouse.move(start.x + by.x, start.y + by.y, { steps: 4 });
-	await page.mouse.up();
-}
-
-function readDragging(host: Locator): Promise<boolean> {
-	return host.evaluate((element) => element.matches(':state(dragging)'));
-}
 
 test('a 32px drag moves a dial by a fifth of its 160px travel, dragging only while held', async ({
 	page,
@@ -42,10 +20,10 @@ test('a 32px drag moves a dial by a fifth of its 160px travel, dragging only whi
 	await page.mouse.move(start.x, start.y);
 	await page.mouse.down();
 	await page.mouse.move(start.x, start.y - 32, { steps: 4 });
-	expect(await readDragging(host)).toBe(true);
+	expect(await readState(host, 'dragging')).toBe(true);
 
 	await page.mouse.up();
-	expect(await readDragging(host)).toBe(false);
+	expect(await readState(host, 'dragging')).toBe(false);
 	await expect(host.getByRole('slider')).toHaveAttribute('aria-valuenow', '70');
 });
 
@@ -290,7 +268,6 @@ test('a springing slider lands its value at once while the cap glides back, then
 }) => {
 	const host = page.locator('#bend');
 
-	// Slowed so the glide is still under way when the test reads it
 	await page.addStyleTag({
 		content: '#bend:state(springing) > .sonic-slider { transition-duration: 2s; }',
 	});

@@ -2,9 +2,10 @@ import type { Locator, Page } from '@playwright/test';
 
 import { expect, test } from '@playwright/test';
 
-test.skip(({ isMobile }) => isMobile, 'Touch has its own spec');
+import { mouseOnly } from './pointer.ts';
 
-// Paused, so the reveal and hide timers fire only when a test runs the clock
+test.skip(({ isMobile }) => isMobile, mouseOnly);
+
 test.beforeEach(async ({ page }) => {
 	await page.clock.install({ time: 0 });
 	await page.goto('/fixtures/');

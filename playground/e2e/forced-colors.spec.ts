@@ -2,6 +2,8 @@ import type { Page } from '@playwright/test';
 
 import { expect, test } from '@playwright/test';
 
+import { expectPixel, middleOf, paintedColour, pixelAt } from './canvas-probe.ts';
+
 // A part paints at all only if it opts out; forced colours drop gradients and force backgrounds to Canvas
 const drawnParts = [
 	'#locked .sonic-dial-notches',
@@ -12,8 +14,9 @@ const drawnParts = [
 	'.sonic-slider-groove',
 	'#fader .sonic-slider-modulation',
 	'.sonic-slider-cap',
+	'#wavestrip .sonic-wavestrip-marker',
+	'#waveform .sonic-waveform-playhead',
 	'.sonic-key-cap',
-	'#loading .sonic-key::after',
 	'.sonic-segmented-cap',
 	'.sonic-meter-segments',
 	'.sonic-meter-level',
@@ -23,6 +26,10 @@ const drawnParts = [
 	'#talk .sonic-lever-bushing',
 	'#talk .sonic-lever-bat::before',
 	'#talk .sonic-lever-bat::after',
+	'#xy .sonic-xy-field::before',
+	'#xy .sonic-xy-field::after',
+	'#xy .sonic-xy-puck::before',
+	'#envelope .sonic-envelope-handle[data-sonic-stage="decay"]',
 ];
 
 async function paintOf(
@@ -40,11 +47,11 @@ async function paintOf(
 	});
 }
 
-async function systemColour(page: Page, keyword: string): Promise<string> {
-	return page.evaluate((colour) => {
+async function systemColour(page: Page, colour: string): Promise<string> {
+	return page.evaluate((expression) => {
 		const probe = document.createElement('div');
 
-		probe.style.cssText = `forced-color-adjust: none; background: ${colour}`;
+		probe.style.cssText = `forced-color-adjust: none; background: ${expression}`;
 		document.body.append(probe);
 
 		const computed = getComputedStyle(probe).backgroundColor;
@@ -52,16 +59,19 @@ async function systemColour(page: Page, keyword: string): Promise<string> {
 		probe.remove();
 
 		return computed;
-	}, keyword);
+	}, colour);
 }
 
 const focusable = [
 	'.sonic-dial',
 	'.sonic-slider',
+	'.sonic-wavestrip',
+	'.sonic-waveform',
 	'.sonic-number',
 	'.sonic-key',
 	'.sonic-segmented-segment',
 	'.sonic-lever-position',
+	'.sonic-xy-axis',
 ];
 
 test.skip(({ browserName }) => browserName === 'webkit', 'WebKit has no forced-colours mode');
@@ -93,7 +103,6 @@ test('every drawn part opts out of forced colours and paints', async ({ page }) 
 	);
 });
 
-// Opted out, the transparent focus outline would stay transparent
 test('every focusable element stays forced', async ({ page }) => {
 	const adjusts = await page.evaluate(
 		(selectors) =>
@@ -108,7 +117,6 @@ test('every focusable element stays forced', async ({ page }) => {
 	expect(adjusts).toEqual(focusable.map(() => 'auto'));
 });
 
-// A state rule that paints a cap directly would bring its gradient or drop back
 test('a hovered or latched cap keeps to system colours', async ({ page }) => {
 	const [buttonFace, highlight] = [
 		await systemColour(page, 'ButtonFace'),
@@ -215,22 +223,185 @@ test('an LED lens is grey at rest, Highlight lit and Mark in its second colour, 
 		});
 
 	const [unlit, lit, alt] = [await lens('#led'), await lens('#led-lit'), await lens('#led-alt')];
+	const [clip, dim] = [await lens('#led-clip'), await lens('#led-dim')];
 
 	expect(unlit.fill).toBe(grayText);
 	expect(lit.fill).toBe(highlight);
 	expect(alt.fill).toBe(mark);
+	expect(clip.fill).toBe(mark);
 	expect(unlit.rim).toContain(canvasText);
+	expect(lit.rim).toContain(canvasText);
+
+	expect(dim.fill).toBe(grayText);
+	expect(dim.rim).toContain(highlight);
+	expect(dim.rim).not.toBe(unlit.rim);
+});
+
+test('a live modulation paints its tick in CanvasText', async ({ page }) => {
+	const canvasText = await systemColour(page, 'CanvasText');
+
+	for (const id of ['modulated', 'modulated-slider']) {
+		await page.locator(`#${id}`).evaluate((element) => {
+			Object.assign(element, { modulated: 95 });
+		});
+	}
+
+	const tick = (selector: string): Promise<{ adjust: string; paint: string }> =>
+		page.locator(selector).evaluate((part) => {
+			const style = getComputedStyle(part, '::after');
+
+			return {
+				adjust: style.forcedColorAdjust,
+				paint: `${style.backgroundImage} ${style.backgroundColor}`,
+			};
+		});
+	const [dial, slider] = [
+		await tick('#modulated .sonic-dial-modulation'),
+		await tick('#modulated-slider .sonic-slider-modulation'),
+	];
+
+	expect(dial.adjust).toBe('none');
+	expect(dial.paint).toContain(canvasText);
+	expect(slider.adjust).toBe('none');
+	expect(slider.paint).toContain(canvasText);
+});
+
+test('a ring paints its arc in system colours and leaves the key inside it forced', async ({
+	page,
+}) => {
+	const [grayText, highlight] = [
+		await systemColour(page, 'GrayText'),
+		await systemColour(page, 'Highlight'),
+	];
+	const arc = await page.locator('#ring-key').evaluate((ring) => {
+		const style = getComputedStyle(ring, '::before');
+
+		return { adjust: style.forcedColorAdjust, image: style.backgroundImage };
+	});
+	const key = await page
+		.locator('#ring-key .sonic-key')
+		.evaluate((element) => getComputedStyle(element).forcedColorAdjust);
+
+	expect(arc.adjust).toBe('none');
+	expect(arc.image).toContain(grayText);
+	expect(arc.image).toContain(highlight);
+	expect(key).toBe('auto');
 });
 
 test('a lever draws its bat in CanvasText and a plate keeps its edge', async ({ page }) => {
 	const canvasText = await systemColour(page, 'CanvasText');
 	const ball = await page
 		.locator('#talk .sonic-lever-bat')
-		.evaluate((element) => getComputedStyle(element, '::after').backgroundImage);
+		.evaluate((element) => getComputedStyle(element, '::after').backgroundColor);
 	const plate = await page
 		.locator('#plate')
 		.evaluate((element) => getComputedStyle(element).borderTopColor);
 
-	expect(ball).toContain(canvasText);
+	expect(ball).toBe(canvasText);
 	expect(plate).toBe(canvasText);
+});
+
+test('a wave strip plays in opaque Highlight', async ({ page }) => {
+	const canvas = page.locator('#wavestrip canvas');
+
+	await canvas.scrollIntoViewIfNeeded();
+
+	const opaque = await paintedColour(
+		canvas,
+		await systemColour(page, 'rgb(from Highlight r g b / 1)'),
+	);
+
+	await expect(async () => {
+		expectPixel(await pixelAt(canvas, 0), opaque);
+	}).toPass();
+});
+
+test('a waveform paints its wave in opaque CanvasText', async ({ page }) => {
+	const canvas = page.locator('#waveform canvas');
+
+	await canvas.scrollIntoViewIfNeeded();
+
+	const opaque = await paintedColour(
+		canvas,
+		await systemColour(page, 'rgb(from CanvasText r g b / 1)'),
+	);
+	const middle = await middleOf(canvas);
+
+	await expect(async () => {
+		expectPixel(await pixelAt(canvas, middle), opaque);
+	}).toPass();
+});
+
+test('a pad draws its crosshair lit in Highlight over GrayText, grey throughout when disabled', async ({
+	page,
+}) => {
+	const [grayText, highlight] = [
+		await systemColour(page, 'GrayText'),
+		await systemColour(page, 'Highlight'),
+	];
+	const line = (id: string): Promise<{ lit: string; unlit: string }> =>
+		page.locator(`#${id} .sonic-xy-field`).evaluate((lines) => {
+			const style = getComputedStyle(lines, '::before');
+
+			return { lit: style.backgroundImage, unlit: style.backgroundColor };
+		});
+	const [pad, locked] = [await line('xy'), await line('xy-disabled')];
+
+	expect(pad.unlit).toBe(grayText);
+	expect(pad.lit).toContain(highlight);
+	expect(highlight).not.toBe(grayText);
+	expect(locked.lit).toContain(grayText);
+	expect(locked.lit).not.toContain(highlight);
+});
+
+test("a pad's focused part paints its outline outside the puck", async ({ page }) => {
+	const part = page.locator('#xy [data-sonic-axis="x"]');
+
+	await part.scrollIntoViewIfNeeded();
+	await part.press('ArrowRight');
+
+	const outline = await part.evaluate((element) => {
+		const style = getComputedStyle(element);
+
+		return { colour: style.outlineColor, offset: style.outlineOffset, style: style.outlineStyle };
+	});
+
+	expect(outline.colour).not.toMatch(/^(rgba\(0, 0, 0, 0\)|transparent)$/);
+	expect(outline).toMatchObject({ offset: '2px', style: 'solid' });
+});
+
+// The graph opts out, so the answer is the same whether or not an engine forces an SVG stroke by itself
+test('an envelope strokes its line in Highlight and drops its fill', async ({ page }) => {
+	const highlight = await systemColour(page, 'Highlight');
+	const graph = await page.locator('#envelope .sonic-envelope-graph').evaluate((svg) => {
+		const line = getComputedStyle(svg.querySelector('.sonic-envelope-line') ?? svg);
+		const fill = getComputedStyle(svg.querySelector('.sonic-envelope-fill') ?? svg);
+
+		return {
+			adjust: getComputedStyle(svg).forcedColorAdjust,
+			fill: fill.fill,
+			stroke: line.stroke,
+		};
+	});
+
+	expect(graph).toEqual({ adjust: 'none', fill: 'none', stroke: highlight });
+});
+
+test('a curve dot fills in CanvasText, and the puck is a CanvasText star', async ({ page }) => {
+	const text = await systemColour(page, 'CanvasText');
+	const paintOfPoint = (selector: string) =>
+		page.locator(selector).evaluate((element) => {
+			const style = getComputedStyle(element);
+
+			return { fill: style.backgroundColor, ring: style.borderTopColor };
+		});
+
+	expect(
+		await page
+			.locator('#xy .sonic-xy-puck')
+			.evaluate((element) => getComputedStyle(element, '::before').backgroundColor),
+	).toBe(text);
+	expect(
+		await paintOfPoint('#envelope-curves .sonic-envelope-dot[data-sonic-stage="decay"]'),
+	).toEqual({ fill: text, ring: text });
 });

@@ -2,6 +2,8 @@ import type { Locator, Page } from '@playwright/test';
 
 import { expect, test } from '@playwright/test';
 
+import { drag, mouseOnly } from './pointer.ts';
+
 test.beforeEach(async ({ page }) => {
 	await page.goto('/fixtures/form/');
 });
@@ -61,6 +63,8 @@ test('a label for the host, or around it, reaches the inner control', async ({ p
 		send: await readBridge(page.locator('#send'), '.sonic-slider'),
 		sync: await readBridge(page.locator('#sync'), '[role="switch"]'),
 		tempo: await readBridge(page.locator('#tempo'), '.sonic-number'),
+		touchX: await readBridge(page.locator('#touch'), '[data-sonic-axis="x"]'),
+		touchY: await readBridge(page.locator('#touch'), '[data-sonic-axis="y"]'),
 	};
 
 	expect(bridges).toEqual({
@@ -70,6 +74,8 @@ test('a label for the host, or around it, reaches the inner control', async ({ p
 		send: { bridged: 1, labels: 1 },
 		sync: { bridged: 1, labels: 1 },
 		tempo: { bridged: 1, labels: 1 },
+		touchX: { bridged: 1, labels: 1 },
+		touchY: { bridged: 1, labels: 1 },
 	});
 });
 
@@ -80,13 +86,14 @@ test('Chromium names each control from its label, and the host adds no node', as
 	test.skip(browserName !== 'chromium', 'Only Chromium exposes its accessibility tree');
 
 	const names = await readNames(page);
-	const labelled = names.filter((name) => /: (Cutoff|Send|Sync|Tempo|Mute|Mode)$/.test(name));
+	const labelled = names.filter((name) => /: (Cutoff|Send|Sync|Tempo|Mute|Mode|Touch)$/.test(name));
 
 	expect(labelled.toSorted((first, second) => first.localeCompare(second))).toEqual([
 		'button: Mute',
 		'radiogroup: Mode',
 		'slider: Cutoff',
 		'slider: Send',
+		'slider: Touch',
 		'spinbutton: Tempo',
 		'switch: Sync',
 	]);
@@ -136,6 +143,8 @@ test('the form submits each value, and a pressed toggle only', async ({ page }) 
 		['mode', 'lp'],
 		['assign', 'x'],
 		['late', '10'],
+		['touch.x', '40'],
+		['touch.y', '60'],
 	]);
 
 	await page.locator('#cutoff .sonic-dial').press('ArrowUp');
@@ -145,6 +154,8 @@ test('the form submits each value, and a pressed toggle only', async ({ page }) 
 	await page.getByRole('radio', { name: 'HP' }).click();
 	await page.locator('#sync [role="switch"]').click();
 	await page.getByRole('radio', { name: 'Y' }).click();
+	await page.locator('#touch [data-sonic-axis="x"]').press('ArrowUp');
+	await page.locator('#touch [data-sonic-axis="y"]').press('ArrowRight');
 
 	expect(await readFormData(page)).toEqual([
 		['cutoff', '45'],
@@ -155,6 +166,8 @@ test('the form submits each value, and a pressed toggle only', async ({ page }) 
 		['sync', 'on'],
 		['assign', 'y'],
 		['late', '10'],
+		['touch.x', '45'],
+		['touch.y', '61'],
 	]);
 });
 
@@ -168,6 +181,8 @@ test('a reset returns the range and the switch to their value attributes, and ke
 	await page.getByRole('radio', { name: 'HP' }).click();
 	await mute.click();
 	await solo.click();
+	await page.locator('#touch [data-sonic-axis="x"]').press('ArrowUp');
+	await page.locator('#touch [data-sonic-axis="y"]').press('ArrowRight');
 	await expect(mute).toHaveAttribute('aria-pressed', 'true');
 	await expect(solo).toHaveAttribute('aria-pressed', 'false');
 	await page.locator('#patch').evaluate((form) => {
@@ -178,6 +193,8 @@ test('a reset returns the range and the switch to their value attributes, and ke
 	await expect(page.getByRole('radio', { name: 'LP' })).toHaveAttribute('aria-checked', 'true');
 	await expect(mute).toHaveAttribute('aria-pressed', 'false');
 	await expect(solo).toHaveAttribute('aria-pressed', 'true');
+	await expect(page.locator('#touch [data-sonic-axis="x"]')).toHaveAttribute('aria-valuenow', '40');
+	await expect(page.locator('#touch [data-sonic-axis="y"]')).toHaveAttribute('aria-valuenow', '60');
 });
 
 test('a label click flips a bare lever, and a reset returns both levers to their attributes', async ({
@@ -201,23 +218,14 @@ test('a disabled fieldset disables the dial inside it until re-enabled', async (
 	isMobile,
 	page,
 }) => {
-	test.skip(isMobile, 'Touch has its own spec');
+	test.skip(isMobile, mouseOnly);
 
 	const host = page.locator('#drive');
 	const control = host.locator('.sonic-dial');
-	const box = await control.boundingBox();
-	if (!box) throw new Error('The dial has no box');
-
-	const dragUp = async (): Promise<void> => {
-		await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-		await page.mouse.down();
-		await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2 - 32, { steps: 4 });
-		await page.mouse.up();
-	};
 
 	await expect(control).not.toHaveAttribute('tabindex');
 	await expect(control).toHaveAttribute('aria-disabled', 'true');
-	await dragUp();
+	await drag(page, control, { x: 0, y: -32 });
 	await host.evaluate((element: HTMLElement) => {
 		element.focus();
 	});
@@ -231,7 +239,7 @@ test('a disabled fieldset disables the dial inside it until re-enabled', async (
 
 	await expect(control).toHaveAttribute('tabindex', '0');
 	await expect(control).not.toHaveAttribute('aria-disabled');
-	await dragUp();
+	await drag(page, control, { x: 0, y: -32 });
 	await expect(control).toHaveAttribute('aria-valuenow', '70');
 	expect(await readFormData(page)).toContainEqual(['drive', '70']);
 });
