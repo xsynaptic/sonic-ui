@@ -28,6 +28,7 @@ const titleClass =
 					aria-labelledby="panel-cutoff"
 					data-format="hertz"
 					default="1000"
+					id="panel-cutoff-dial"
 					max="20000"
 					min="20"
 					readout
@@ -40,6 +41,7 @@ const titleClass =
 					aria-labelledby="panel-resonance"
 					data-format="percent"
 					default="0"
+					id="panel-resonance-dial"
 					readout
 					value="35"
 				></sonic-dial>
@@ -56,15 +58,41 @@ const titleClass =
 					value="40"
 				></sonic-dial>
 			</Cell>
+			<Cell id="panel-pad" label="Cutoff × Res">
+				<sonic-xy
+					aria-labelledby="panel-pad"
+					class="[--sonic-xy-aspect-ratio:1.5] [--sonic-xy-size:4.5rem]"
+					data-pad-format="hertz percent"
+					data-pad-x="#panel-cutoff-dial"
+					data-pad-y="#panel-resonance-dial"
+					x="1200"
+					x-default="1000"
+					x-label="Cutoff"
+					x-max="20000"
+					x-min="20"
+					x-taper="log"
+					y="35"
+					y-default="0"
+					y-label="Resonance"
+				></sonic-xy>
+			</Cell>
 		</div>
 	</div>
 	<div class={groupClass}>
 		<p class={titleClass}>Envelope</p>
 		<div class="flex flex-1 flex-wrap items-stretch gap-6">
+			<Cell id="panel-shape" label="Shape">
+				<sonic-envelope
+					attack="panel-attack-dial"
+					class="[--sonic-envelope-aspect-ratio:2] [--sonic-envelope-size:4.5rem]"
+					release="panel-release-dial"
+				></sonic-envelope>
+			</Cell>
 			<Cell id="panel-attack" label="Attack">
 				<sonic-dial
 					aria-labelledby="panel-attack"
 					data-format="milliseconds"
+					id="panel-attack-dial"
 					max="2000"
 					midpoint="200"
 					readout
@@ -75,6 +103,7 @@ const titleClass =
 				<sonic-dial
 					aria-labelledby="panel-release"
 					data-format="milliseconds"
+					id="panel-release-dial"
 					max="5000"
 					midpoint="500"
 					readout
@@ -170,18 +199,47 @@ const titleClass =
 				></sonic-number>
 			</Cell>
 			<Cell id="panel-run" label="Run">
-				<sonic-key aria-labelledby="panel-run" data-run pressed toggle>
-					<span class="sonic-led"></span>
-					<Play aria-hidden="true" />
-				</sonic-key>
+				<span class="sonic-ring [--sonic-ring-size:calc(2rem/0.75)]" data-ring-loop>
+					<sonic-key aria-labelledby="panel-run" data-run pressed toggle>
+						<span class="sonic-led"></span>
+						<Play aria-hidden="true" />
+					</sonic-key>
+				</span>
 			</Cell>
 			<Cell id="panel-stop" label="Stop">
-				<sonic-key aria-labelledby="panel-stop" data-stop>
+				<sonic-key
+					aria-labelledby="panel-stop"
+					class="[--sonic-key-face-radius-ratio:0.5] [--sonic-key-radius-ratio:0.5]"
+					data-stop
+				>
 					<Square aria-hidden="true" />
 				</sonic-key>
 			</Cell>
 			<Cell id="panel-sync" label="Sync">
 				<sonic-lever aria-labelledby="panel-sync"></sonic-lever>
+			</Cell>
+			<Cell id="panel-position" label="Position">
+				<sonic-wavestrip
+					aria-labelledby="panel-position"
+					class="[--sonic-wavestrip-length:12rem]"
+					data-markers="40 95 180"
+					data-peaks="6"
+					max="240"
+					readout
+					value="70"
+				></sonic-wavestrip>
+			</Cell>
+			<Cell id="panel-detail" label="Detail">
+				<sonic-waveform
+					aria-labelledby="panel-detail"
+					class="[--sonic-waveform-length:12rem] [--sonic-waveform-size:4rem]"
+					data-markers="40 95 180"
+					data-samples="6"
+					max="240"
+					readout
+					step="0"
+					value="70"
+				></sonic-waveform>
 			</Cell>
 			<Cell id="panel-screen" label="Display">
 				<div class="sonic-screen font-mono text-xs" data-screen-follow>

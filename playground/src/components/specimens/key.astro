@@ -7,6 +7,7 @@ import MuteKey from '#components/specimens/mute-key.astro';
 import Panel from '#components/specimens/panel.astro';
 
 const pads = ['Kick', 'Snare', 'Hat', 'Clap'];
+const hotCues = ['oklch(76.9% 0.165 70deg)', '#22c55e', '#38bdf8', '#e879f9'];
 ---
 
 <Panel>
@@ -23,6 +24,30 @@ const pads = ['Kick', 'Snare', 'Hat', 'Clap'];
 			<sonic-key aria-labelledby={`key-pad-${pad.toLowerCase()}`} momentary />
 		</Cell>
 	))}
+	<Cell id="key-armed" label="Armed">
+		<sonic-key aria-labelledby="key-armed" armed toggle>
+			<Play aria-hidden="true" />
+		</sonic-key>
+	</Cell>
+	<Cell id="key-armed-led" label="Armed, LED">
+		<sonic-key aria-labelledby="key-armed-led" armed toggle>
+			<span class="sonic-led"></span>
+		</sonic-key>
+	</Cell>
+	<Cell id="key-hot-cues" isWide={true} label="Hot cues">
+		{hotCues.map((colour, index) => (
+			<sonic-key
+				aria-label={`Hot cue ${String(index + 1)}`}
+				armed
+				class="font-mono text-[0.625rem]"
+				pressed={index === 1 || undefined}
+				style={{ '--sonic-lit': colour }}
+				toggle
+			>
+				<span aria-hidden="true">{index + 1}</span>
+			</sonic-key>
+		))}
+	</Cell>
 	<Cell id="key-loading" label="Loading">
 		<sonic-key aria-labelledby="key-loading" busy>
 			<Play aria-hidden="true" />

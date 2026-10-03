@@ -1,3 +1,5 @@
+import type { Page } from '@playwright/test';
+
 import { expect, test } from '@playwright/test';
 
 import { centreOf, mouseOnly } from './pointer.ts';
@@ -42,3 +44,57 @@ for (const { focused, lit } of controls) {
 		expect(await readGlow()).not.toBe(rest);
 	});
 }
+
+async function pressDial(page: Page): Promise<{ readGlow: () => Promise<string>; rest: string }> {
+	await page.goto('/fixtures/');
+
+	const dial = page.locator('#phase .sonic-dial');
+	const readGlow = () =>
+		dial.evaluate((element) =>
+			getComputedStyle(element).getPropertyValue('--_sonic-focus-shadow').trim(),
+		);
+	const rest = await readGlow();
+
+	await dial.scrollIntoViewIfNeeded();
+
+	const at = await centreOf(dial);
+
+	await page.mouse.click(at.x, at.y);
+	await expect(dial).toBeFocused();
+
+	return { readGlow, rest };
+}
+
+test('a shortcut after a press leaves the focus glow off', async ({ isMobile, page }) => {
+	test.skip(isMobile, mouseOnly);
+
+	const { readGlow, rest } = await pressDial(page);
+
+	await page.keyboard.press('ControlOrMeta+c');
+	await page.keyboard.press('Alt+F6');
+
+	expect(await readGlow()).toBe(rest);
+});
+
+test('a switch to another tab and back leaves the focus glow off', async ({ isMobile, page }) => {
+	test.skip(isMobile, mouseOnly);
+
+	const { readGlow, rest } = await pressDial(page);
+
+	await page.evaluate(() => {
+		addEventListener('blur', () => {
+			document.documentElement.dataset.windowBlurred = '';
+		});
+	});
+
+	const other = await page.context().newPage();
+
+	await other.bringToFront();
+	await page.bringToFront();
+	await other.close();
+
+	const hasBlurred = await page.evaluate(() => 'windowBlurred' in document.documentElement.dataset);
+
+	test.skip(!hasBlurred, 'Playwright switched tabs without a window blur in this engine');
+	expect(await readGlow()).toBe(rest);
+});

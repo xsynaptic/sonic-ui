@@ -90,7 +90,10 @@ test('empty peaks draw only the glass, and set the empty state', async ({ page }
 	expect(await readState(wavestrip, 'empty')).toBe(true);
 });
 
-test('the hover readout opens over the pointer', async ({ isMobile, page }) => {
+test('the hover readout opens over the pointer, and Escape dismisses it', async ({
+	isMobile,
+	page,
+}) => {
 	test.skip(isMobile, 'Touch shows the readout only once a drag reveals it');
 
 	const { canvas, wavestrip } = await openWavestrip(page);
@@ -108,4 +111,10 @@ test('the hover readout opens over the pointer', async ({ isMobile, page }) => {
 	const bubble = await readout.boundingBox();
 
 	expect(Math.abs((bubble?.x ?? 0) + (bubble?.width ?? 0) / 2 - pointerX)).toBeLessThanOrEqual(1.5);
+
+	await page.keyboard.press('Escape');
+	await expect(readout).toBeHidden();
+
+	await page.mouse.move(pointerX + 10, box.y + box.height / 2);
+	await expect(readout).toBeHidden();
 });

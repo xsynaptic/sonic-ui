@@ -1,0 +1,22 @@
+import type { SonicWaveform, SonicWavestrip } from '@xsynaptic/sonic-ui';
+
+type Marker = SonicWavestrip['markers'][number];
+
+function readMarker(token: string): Marker {
+	const isDimmed = token.endsWith('~');
+	const [place = '', kind] = token.replace(/~$/, '').split(':', 2);
+	const [value = NaN, end] = place.split('..', 2).map(Number);
+
+	return {
+		value,
+		...(end === undefined ? {} : { end }),
+		...(kind === undefined ? {} : { kind }),
+		...(isDimmed ? { dimmed: true } : {}),
+	};
+}
+
+for (const control of document.querySelectorAll<SonicWaveform | SonicWavestrip>(
+	':is(sonic-waveform, sonic-wavestrip)[data-markers]',
+)) {
+	control.markers = (control.dataset.markers ?? '').split(/\s+/).filter(Boolean).map(readMarker);
+}

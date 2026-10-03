@@ -1,6 +1,6 @@
-export const echoModeNames = ['single', 'dual', 'ping-pong', 'rhythm'] as const;
+import type { echoModes } from '#scripts/stop-names.ts';
 
-type EchoMode = (typeof echoModeNames)[number];
+type EchoMode = NonNullable<ReturnType<typeof echoModes.valueAt>>;
 
 export interface EchoParams {
 	feedback: number;
@@ -246,7 +246,6 @@ function updateLevels({ bus, wobble }: Graph, params: EchoParams, glideTo: Glide
 	glideTo(bus.wet.gain, Math.sin(mixAngle));
 }
 
-// Unity for small signals, so feedback alone sets the loop gain until it saturates
 function updateCurves({ bus, heads }: Graph, params: EchoParams, previous?: EchoParams): void {
 	if (params.saturation !== previous?.saturation) {
 		const drive = 1 + (params.saturation / 100) * 9;

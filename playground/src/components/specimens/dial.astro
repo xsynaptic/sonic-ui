@@ -154,13 +154,22 @@ const masterStops = Array.from({ length: 11 }, (_stop, index) => index);
 			readout
 			value="1"
 		>
-			{echoModes.map((mode, index) => (
+			{echoModes.labels.map((mode, index) => (
 				<span data-sonic-value={index}>{mode}</span>
 			))}
 		</sonic-dial>
 	</Cell>
 	<Cell id="dial-wobble" label="Wobble">
 		<sonic-dial aria-labelledby="dial-wobble" data-lfo="25" readout value="50"></sonic-dial>
+	</Cell>
+	<Cell id="dial-depth" label="Depth">
+		<sonic-dial
+			aria-labelledby="dial-depth"
+			data-lfo
+			modulation="35"
+			readout
+			value="40"
+		></sonic-dial>
 	</Cell>
 	<Cell id="dial-run" label="Run">
 		<sonic-key aria-labelledby="dial-run" data-run pressed toggle>

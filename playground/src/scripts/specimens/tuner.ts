@@ -1,11 +1,11 @@
 import type { TunerToken } from '#scripts/specimens/tuner-tokens.ts';
 
-import { tokenGroups } from '#scripts/specimens/tuner-tokens.ts';
+import { resolvedProperty, tokenGroups } from '#scripts/specimens/tuner-tokens.ts';
 
 interface Row {
 	baseline: string;
 	from: string;
-	input: HTMLInputElement;
+	input: HTMLInputElement | HTMLSelectElement;
 	output: HTMLOutputElement | undefined;
 	token: TunerToken;
 }
@@ -41,12 +41,12 @@ function dropUnit(length: string): number {
 
 function readBaseline(row: Row, reader: Reader): string {
 	const { token } = row;
+	if (token.kind === 'choice') return '';
+
 	const part = reader.panel.querySelector(row.from);
 	if (!part) return row.input.value;
 
-	const raw = getComputedStyle(part)
-		.getPropertyValue(token.resolved ?? token.token.replace('--sonic-', '--_sonic-'))
-		.trim();
+	const raw = getComputedStyle(part).getPropertyValue(resolvedProperty(token)).trim();
 
 	if (token.kind === 'colour') return toHex(raw, reader);
 
@@ -63,7 +63,7 @@ function valueOf(row: Row): string {
 function collectRows(root: HTMLElement): Array<Row> {
 	const rows: Array<Row> = [];
 
-	for (const input of root.querySelectorAll<HTMLInputElement>('input[data-token]')) {
+	for (const input of root.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[data-token]')) {
 		const entry = tokens.get(input.dataset.token ?? '');
 		const output = input.parentElement?.querySelector('output') ?? undefined;
 

@@ -6,6 +6,11 @@ import Panel from '#components/specimens/panel.astro';
 
 const ladder = '-30 -25 -20 -16 -13 -10 -7 -4 0';
 const shortLadder = '-24 -12 -6 -3 0';
+const ballistics = [
+	{ id: 'meter-ppm-1', label: 'PPM I', mode: 'ppm-1' },
+	{ id: 'meter-ppm-2', label: 'PPM II', mode: 'ppm-2' },
+	{ id: 'meter-vu', label: 'VU', mode: 'vu' },
+];
 ---
 
 <Panel>
@@ -52,6 +57,35 @@ const shortLadder = '-24 -12 -6 -3 0';
 				origin="0"
 				scale="linear"
 			></sonic-meter>
+		</div>
+	</Cell>
+	{ballistics.map(({ id, label, mode }) => (
+		<Cell id={id} label={label}>
+			<div aria-labelledby={id} role="group">
+				<sonic-meter ballistics={mode} />
+			</div>
+		</Cell>
+	))}
+	<Cell id="meter-peak" isWide={true} label="Peak report">
+		<div
+			aria-labelledby="meter-peak"
+			class="grid justify-items-center gap-2"
+			data-peak-report="-1"
+			role="group"
+		>
+			<sonic-meter orientation="horizontal" />
+			<div class="flex gap-2 font-mono text-[0.5rem]">
+				<sonic-key aria-label="Read peak" data-peak-read>
+					<span aria-hidden="true">PEAK</span>
+				</sonic-key>
+				<sonic-key aria-label="Reset peak" data-peak-reset>
+					<span aria-hidden="true">RST</span>
+				</sonic-key>
+			</div>
+			<p class="min-h-4 font-mono text-[0.625rem] text-zinc-300">
+				<span role="status" />
+				<span class="text-red-300" role="alert" />
+			</p>
 		</div>
 	</Cell>
 	<Cell id="meter-run" label="Run">

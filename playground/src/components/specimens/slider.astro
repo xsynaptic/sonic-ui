@@ -64,6 +64,16 @@ const faderMarks = [
 			value="50"
 		></sonic-slider>
 	</Cell>
+	<Cell id="slider-depth" isWide={true} label="Depth">
+		<sonic-slider
+			aria-labelledby="slider-depth"
+			data-format="percent"
+			data-lfo
+			modulation="35"
+			readout
+			value="40"
+		></sonic-slider>
+	</Cell>
 	<Cell id="slider-fader" label="Fader">
 		<sonic-slider
 			aria-labelledby="slider-fader"
@@ -142,7 +152,9 @@ const faderMarks = [
 			readout
 			step="0.05"
 			value="1.5"
-		></sonic-slider>
+		>
+			<span class="sonic-led"></span>
+		</sonic-slider>
 	</Cell>
 	<Cell id="slider-disabled" label="Disabled">
 		<sonic-slider

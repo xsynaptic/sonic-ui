@@ -1,3 +1,38 @@
-export const echoModes = ['Single', 'Dual', 'Ping-pong', 'Rhythm'];
-export const channelCurves = ['Gentle', 'Medium', 'Sharp'];
-export const tapeStyles = ['Clean', 'Tape', 'Worn tape', 'Analog', 'Lo-fi', 'Radio'];
+export function defineStops<Value extends string>(
+	stops: ReadonlyArray<{ label: string; value: Value }>,
+) {
+	return {
+		labels: stops.map((stop) => stop.label),
+		valueAt: (index: number): undefined | Value => stops[index]?.value,
+		values: stops.map((_stop, index) => String(index)).join(' '),
+	};
+}
+
+export const echoModes = defineStops([
+	{ label: 'Single', value: 'single' },
+	{ label: 'Dual', value: 'dual' },
+	{ label: 'Ping-pong', value: 'ping-pong' },
+	{ label: 'Rhythm', value: 'rhythm' },
+]);
+
+export const channelCurves = defineStops([
+	{ label: 'Gentle', value: 'gentle' },
+	{ label: 'Medium', value: 'medium' },
+	{ label: 'Sharp', value: 'sharp' },
+]);
+
+export const filterTypes = defineStops([
+	{ label: 'LP', value: 'lp' },
+	{ label: 'BP', value: 'bp' },
+	{ label: 'HP', value: 'hp' },
+	{ label: 'Notch', value: 'notch' },
+]);
+
+export const tapeStyles = defineStops([
+	{ label: 'Clean', value: 'clean' },
+	{ label: 'Tape', value: 'tape' },
+	{ label: 'Worn tape', value: 'worn-tape' },
+	{ label: 'Analog', value: 'analog' },
+	{ label: 'Lo-fi', value: 'lo-fi' },
+	{ label: 'Radio', value: 'radio' },
+]);

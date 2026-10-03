@@ -46,13 +46,24 @@ const buttonClass =
 										step={token.step}
 										type="range"
 									/>
-								) : (
+								) : undefined}
+								{token.kind === 'colour' ? (
 									<input
 										class="h-6 w-full cursor-pointer bg-transparent"
 										data-token={token.token}
 										type="color"
 									/>
-								)}
+								) : undefined}
+								{token.kind === 'choice' ? (
+									<select
+										class="w-full min-w-0 rounded border border-zinc-700 bg-zinc-900 px-1 py-0.5 text-zinc-300"
+										data-token={token.token}
+									>
+										{token.options.map((option) => (
+											<option value={option.value}>{option.label}</option>
+										))}
+									</select>
+								) : undefined}
 								<output class="truncate text-right text-zinc-300" />
 							</label>
 						))}

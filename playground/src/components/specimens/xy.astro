@@ -1,0 +1,67 @@
+---
+import Cell from '#components/specimens/cell.astro';
+import Panel from '#components/specimens/panel.astro';
+---
+
+<Panel isLarge={true}>
+	<Cell id="xy-plain" label="Plain">
+		<sonic-xy aria-labelledby="xy-plain" x="30" y="60"></sonic-xy>
+	</Cell>
+	<Cell id="xy-bipolar" label="Bipolar">
+		<sonic-xy
+			aria-labelledby="xy-bipolar"
+			x="20"
+			x-default="0"
+			x-max="50"
+			x-min="-50"
+			x-origin="0"
+			y="-15"
+			y-default="0"
+			y-max="50"
+			y-min="-50"
+			y-origin="0"
+		></sonic-xy>
+	</Cell>
+	<Cell id="xy-filter" label="Filter">
+		<div class="grid justify-items-center gap-2" data-pad-scope>
+			<sonic-xy
+				aria-labelledby="xy-filter"
+				data-pad-format="hertz db"
+				x="1200"
+				x-label="Cutoff"
+				x-max="20000"
+				x-min="20"
+				x-taper="log"
+				y="6"
+				y-label="Gain"
+				y-max="24"
+				y-min="-24"
+				y-origin="0"
+				y-step="0.5"
+			></sonic-xy>
+			<div
+				class="sonic-screen font-mono text-[0.625rem] [--sonic-screen-aspect-ratio:5.3] [--sonic-screen-size:1.5rem]"
+				data-pad-screen
+			></div>
+		</div>
+	</Cell>
+	<Cell id="xy-disabled" label="Disabled">
+		<sonic-xy aria-labelledby="xy-disabled" disabled x="70" y="40"></sonic-xy>
+	</Cell>
+	<Cell id="xy-small" label="Small">
+		<sonic-xy aria-labelledby="xy-small" class="[--sonic-xy-size:4rem]" x="50" y="50"></sonic-xy>
+	</Cell>
+	<Cell id="xy-wide" label="Wide">
+		<sonic-xy
+			aria-labelledby="xy-wide"
+			class="[--sonic-xy-aspect-ratio:1.75] [--sonic-xy-size:6rem]"
+			x="65"
+			y="35"
+		></sonic-xy>
+	</Cell>
+</Panel>
+<Panel isLarge={true}>
+	<Cell id="xy-large" isWide={true} label="Large">
+		<sonic-xy aria-labelledby="xy-large" class="[--sonic-xy-size:14rem]" x="40" y="70"></sonic-xy>
+	</Cell>
+</Panel>

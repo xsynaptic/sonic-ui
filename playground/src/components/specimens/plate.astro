@@ -3,6 +3,7 @@ const plates = [
 	{ depth: undefined, id: 'plate-raised', title: 'Raised' },
 	{ depth: '0rem', id: 'plate-printed', title: 'Printed' },
 	{ depth: '-0.125rem', id: 'plate-tray', title: 'Tray' },
+	{ depth: undefined, id: 'plate-tinted', tint: 'rgb(120 160 255 / 8%)', title: 'Tinted' },
 ];
 ---
 
@@ -11,7 +12,7 @@ const plates = [
 		<section
 			aria-labelledby={plate.id}
 			class="sonic-plate grid gap-3 p-4"
-			style={{ '--sonic-plate-depth': plate.depth }}
+			style={{ '--sonic-plate': plate.tint, '--sonic-plate-depth': plate.depth }}
 		>
 			<h3
 				class="sonic-plate-title font-mono text-[0.625rem] tracking-[0.14em] uppercase"

@@ -1,0 +1,79 @@
+---
+import Repeat from '@lucide/astro/icons/repeat';
+
+import Cell from '#components/specimens/cell.astro';
+import Panel from '#components/specimens/panel.astro';
+---
+
+<Panel>
+	<Cell id="ring-loop" label="Loop">
+		<span class="sonic-ring [--sonic-ring-size:calc(2rem/0.75)]" data-ring-loop>
+			<sonic-key aria-labelledby="ring-loop" pressed toggle>
+				<Repeat aria-hidden="true" />
+			</sonic-key>
+		</span>
+	</Cell>
+	<Cell id="ring-span" label="Span">
+		<span
+			class="sonic-ring [--sonic-ring-size:calc(2rem/0.75)]"
+			style="
+
+--sonic-ring-from: 0.25; --sonic-ring-to: 0.6"
+		>
+			<sonic-key aria-labelledby="ring-span" toggle>
+				<span class="sonic-led"></span>
+			</sonic-key>
+		</span>
+	</Cell>
+	<Cell id="ring-dial" label="Round a dial">
+		<span
+			class="sonic-ring [--sonic-lit:#22c55e] [--sonic-ring-size:calc(2.5rem/0.75)] [--sonic-ring-start:210deg] [--sonic-ring-sweep:300deg]"
+			style="
+
+--sonic-ring-to: 0.45"
+		>
+			<sonic-dial aria-labelledby="ring-dial" class="[--sonic-lit:initial]" value="70"></sonic-dial>
+		</span>
+	</Cell>
+	<Cell id="ring-progress" label="Progress">
+		<span
+			aria-labelledby="ring-progress"
+			aria-valuenow="65"
+			class="sonic-ring"
+			role="progressbar"
+			style="
+
+--sonic-ring-to: 0.65"
+		></span>
+	</Cell>
+	<Cell id="ring-led" label="Round an LED">
+		<span
+			class="sonic-ring [--sonic-ring-size:1.5rem]"
+			style="
+
+--sonic-ring-to: 0.8"
+		>
+			<span class="sonic-led" data-sonic-lit></span>
+		</span>
+	</Cell>
+</Panel>
+<Panel isLarge={true}>
+	<Cell id="ring-large-loop" label="Loop, large">
+		<span class="sonic-ring [--sonic-ring-size:8rem]" data-ring-loop>
+			<sonic-key aria-labelledby="ring-large-loop" pressed toggle>
+				<Repeat aria-hidden="true" />
+			</sonic-key>
+		</span>
+	</Cell>
+	<Cell id="ring-large-progress" label="Progress, large">
+		<span
+			aria-labelledby="ring-large-progress"
+			aria-valuenow="65"
+			class="sonic-ring [--sonic-ring-size:8rem]"
+			role="progressbar"
+			style="
+
+--sonic-ring-to: 0.65"
+		></span>
+	</Cell>
+</Panel>

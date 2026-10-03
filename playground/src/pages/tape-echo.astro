@@ -21,7 +21,13 @@ import TonePlate from '#components/tape-echo/tone-plate.astro';
 	</header>
 	<div class="-mx-4 overflow-x-auto px-4 pb-4 sm:mx-0 sm:px-0" data-tape-echo>
 		<div class="mb-4 flex">
-			<PanelKey data={{ 'data-echo-play': '' }} id="echo-play" label="Play" size="large" />
+			<PanelKey
+				data={{ 'data-echo-play': '' }}
+				id="echo-play"
+				isRound={true}
+				label="Play"
+				size="large"
+			/>
 		</div>
 		<div class="inline-grid min-w-max gap-4 rounded-lg border border-zinc-800 bg-zinc-900 p-4 shadow-[inset_0_1px_0_rgb(255_255_255/4%)]">
 			<div class="flex items-stretch gap-4">

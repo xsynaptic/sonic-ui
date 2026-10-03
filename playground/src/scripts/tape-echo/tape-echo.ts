@@ -1,49 +1,46 @@
-import type {
-	SonicDial,
-	SonicKey,
-	SonicMeter,
-	SonicNumber,
-	SonicSegmented,
-} from '@xsynaptic/sonic-ui';
+import { SonicDial, SonicKey, SonicMeter, SonicNumber, SonicSegmented } from '@xsynaptic/sonic-ui';
 
-import type { TapClock } from '#scripts/tap-tempo.ts';
+import type { ControlsOf } from '#scripts/find.ts';
 import type { Echo, EchoParams } from '#scripts/tape-echo/audio.ts';
 import type { Division } from '#scripts/tape-echo/divisions.ts';
 
-import { find } from '#scripts/find.ts';
+import { dataHook, find, readControls } from '#scripts/find.ts';
 import { applyFormat } from '#scripts/formats.ts';
 import { frameLoop } from '#scripts/frame-loop.ts';
-import { beatMsOf, tap } from '#scripts/tap-tempo.ts';
-import { createEcho, echoModeNames } from '#scripts/tape-echo/audio.ts';
+import { echoModes } from '#scripts/stop-names.ts';
+import { beatMsOf, createTapTempo } from '#scripts/tap-tempo.ts';
+import { createEcho } from '#scripts/tape-echo/audio.ts';
 import { divisions, timeRange } from '#scripts/tape-echo/divisions.ts';
 import { createPlucks } from '#scripts/tape-echo/plucks.ts';
 
-interface EchoHead {
-	dial: SonicDial;
-	division: SonicSegmented;
-	number: SonicNumber;
-}
+const headSpec = { dial: SonicDial, division: SonicSegmented, number: SonicNumber };
 
-interface Controls {
-	bpm: SonicNumber;
-	dials: Record<
-		| 'feedback'
-		| 'feel'
-		| 'groove'
-		| 'highCut'
-		| 'input'
-		| 'lowCut'
-		| 'mix'
-		| 'output'
-		| 'saturation',
-		SonicDial
-	>;
+const dialSpec = {
+	feedback: SonicDial,
+	feel: SonicDial,
+	groove: SonicDial,
+	highCut: SonicDial,
+	input: SonicDial,
+	lowCut: SonicDial,
+	mix: SonicDial,
+	output: SonicDial,
+	saturation: SonicDial,
+};
+
+const panelSpec = {
+	bpm: SonicNumber,
+	mode: SonicDial,
+	play: SonicKey,
+	style: SonicNumber,
+	tap: SonicKey,
+};
+
+type EchoHead = ControlsOf<typeof headSpec>;
+
+interface Controls extends ControlsOf<typeof panelSpec> {
+	dials: ControlsOf<typeof dialSpec>;
 	heads: Array<EchoHead>;
 	meters: { input: SonicMeter; output: SonicMeter };
-	mode: SonicDial;
-	play: SonicKey;
-	style: SonicNumber;
-	tapKey: SonicKey;
 	tapLed: HTMLElement;
 }
 
@@ -59,37 +56,25 @@ function isDivision(value: string): value is Division {
 	return value === 'time' || Object.hasOwn(divisions, value);
 }
 
-function readControls(panel: Element): Controls {
-	const tapKey = find<SonicKey>(panel, ':scope [data-echo-tap]');
-	const dial = (name: string): SonicDial => find(panel, `:scope [data-echo-${name}]`);
+function echoHook(name: string): string {
+	return dataHook(`echo-${name}`);
+}
+
+function readPanel(panel: Element): Controls {
+	const controls = readControls(panel, panelSpec, echoHook);
 
 	return {
-		bpm: find(panel, ':scope [data-echo-bpm]'),
-		dials: {
-			feedback: dial('feedback'),
-			feel: dial('feel'),
-			groove: dial('groove'),
-			highCut: dial('high-cut'),
-			input: dial('input'),
-			lowCut: dial('low-cut'),
-			mix: dial('mix'),
-			output: dial('output'),
-			saturation: dial('saturation'),
-		},
-		heads: [...panel.querySelectorAll(':scope [data-echo-head]')].map((head) => ({
-			dial: find(head, ':scope [data-echo-dial]'),
-			division: find(head, ':scope [data-echo-division]'),
-			number: find(head, ':scope [data-echo-number]'),
-		})),
-		meters: {
-			input: find(panel, ':scope [data-echo-meter="input"]'),
-			output: find(panel, ':scope [data-echo-meter="output"]'),
-		},
-		mode: find(panel, ':scope [data-echo-mode]'),
-		play: find(panel, ':scope [data-echo-play]'),
-		style: find(panel, ':scope [data-echo-style]'),
-		tapKey,
-		tapLed: find(tapKey, ':scope .sonic-led'),
+		...controls,
+		dials: readControls(panel, dialSpec, echoHook),
+		heads: [...panel.querySelectorAll(':scope [data-echo-head]')].map((head) =>
+			readControls(head, headSpec, echoHook),
+		),
+		meters: readControls(
+			panel,
+			{ input: SonicMeter, output: SonicMeter },
+			(name) => `:scope [data-echo-meter="${name}"]`,
+		),
+		tapLed: find(controls.tap, ':scope > .sonic-led', HTMLElement),
 	};
 }
 
@@ -110,7 +95,7 @@ function paramsOf({ bpm, dials, heads, mode, style }: Controls): EchoParams {
 		input: dials.input.value,
 		lowCut: dials.lowCut.value,
 		mix: dials.mix.value,
-		mode: echoModeNames[mode.value] ?? 'single',
+		mode: echoModes.valueAt(mode.value) ?? 'single',
 		output: dials.output.value,
 		saturation: dials.saturation.value,
 		style: style.value,
@@ -140,7 +125,7 @@ function setDivision(head: EchoHead, division: Division, bpm: number): void {
 }
 
 function dimSecondHead({ heads, mode }: Controls): void {
-	const isDimmed = echoModeNames[mode.value] !== 'dual';
+	const isDimmed = echoModes.valueAt(mode.value) !== 'dual';
 
 	for (const control of [heads[1]?.dial, heads[1]?.number]) {
 		if (control) control.dimmed = isDimmed;
@@ -200,7 +185,6 @@ function createTransport(controls: Controls) {
 		const { context, echo, plucks } = start();
 
 		await context.resume();
-		// A stop pressed while the context resumed wins
 		if (current !== runs) return;
 
 		echo.update(paramsOf(controls));
@@ -217,10 +201,10 @@ function createTransport(controls: Controls) {
 }
 
 function bindEcho(panel: Element): void {
-	const controls = readControls(panel);
-	const { bpm, heads, mode, play, tapKey } = controls;
+	const controls = readPanel(panel);
+	const { bpm, heads, mode, play, tap: tapKey } = controls;
 	const transport = createTransport(controls);
-	const clock: TapClock = { beatMs: beatMsOf(bpm.value), phaseAt: 0, taps: [] };
+	const tempo = createTapTempo(bpm.value);
 
 	panel.addEventListener('input', (event) => {
 		for (const head of heads) {
@@ -240,8 +224,9 @@ function bindEcho(panel: Element): void {
 	tapKey.addEventListener('change', () => {
 		if (!tapKey.pressed) return;
 
-		tap(clock, performance.now());
-		if (clock.taps.length > 1) bpm.value = Math.round(600_000 / clock.beatMs) / 10;
+		const settled = tempo.tap(performance.now());
+
+		if (settled !== undefined) bpm.value = settled;
 		transport.restart();
 		transport.update();
 	});

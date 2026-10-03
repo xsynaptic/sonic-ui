@@ -1,0 +1,34 @@
+---
+import Cell from '#components/specimens/cell.astro';
+import Panel from '#components/specimens/panel.astro';
+
+const strips = [
+	{ id: 'wavestrip-default', label: 'Default', seed: 1 },
+	{ className: 'sonic-skin-lime', id: 'wavestrip-skin', label: 'Skin', seed: 2 },
+	{ id: 'wavestrip-dimmed', isDimmed: true, label: 'Dimmed', seed: 3 },
+	{ id: 'wavestrip-disabled', isDisabled: true, label: 'Disabled', seed: 4 },
+	{ id: 'wavestrip-empty', label: 'Empty' },
+	{ className: '[--sonic-glass-depth:0]', id: 'wavestrip-flat', label: 'Flat', seed: 5 },
+];
+---
+
+<Panel isLarge={true}>
+	{strips.map((strip) => (
+		<Cell id={strip.id} isWide={true} label={strip.label}>
+			<sonic-wavestrip
+				aria-labelledby={strip.id}
+				cancellable
+				class:list={['[--sonic-wavestrip-length:20rem]', strip.className]}
+				data-buffered="0 150 190 230"
+				data-markers="30 60..95:intro 140 150 215 260~"
+				data-peaks={strip.seed}
+				dimmed={strip.isDimmed}
+				disabled={strip.isDisabled}
+				key-step="5"
+				max="300"
+				readout
+				value="120"
+			></sonic-wavestrip>
+		</Cell>
+	))}
+</Panel>

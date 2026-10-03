@@ -63,8 +63,9 @@ const ladder = '-24 -12 -6 -3 0';
 			class="font-mono [--sonic-number-aspect-ratio:4.5] [--sonic-number-size:1.5rem]"
 			data-echo-style
 			data-format="tape-style"
+			press="step"
 			value="1"
-			values={tapeStyles.map((_style, index) => index).join(' ')}
+			values={tapeStyles.values}
 		></sonic-number>
 	</div>
 </div>

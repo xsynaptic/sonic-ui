@@ -1,13 +1,15 @@
 ---
+import { filterTypes } from '#scripts/stop-names.ts';
+
 interface Props {
 	hasNotch: boolean;
 }
 
 const { hasNotch } = Astro.props;
 
-const modes = hasNotch ? ['LP', 'BP', 'HP', 'Notch'] : ['LP', 'BP', 'HP'];
+const labels = hasNotch ? filterTypes.labels : filterTypes.labels.slice(0, -1);
 ---
 
-{modes.map((mode) => (
-	<span data-sonic-value={mode.toLowerCase()}>{mode}</span>
+{labels.map((label, index) => (
+	<span data-sonic-value={filterTypes.valueAt(index)}>{label}</span>
 ))}

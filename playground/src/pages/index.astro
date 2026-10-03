@@ -1,27 +1,39 @@
 ---
 import Layout from '#components/layout.astro';
 import DialSpecimens from '#components/specimens/dial.astro';
+import EnvelopeSpecimens from '#components/specimens/envelope.astro';
 import KeySpecimens from '#components/specimens/key.astro';
 import LedSpecimens from '#components/specimens/led.astro';
 import LeverSpecimens from '#components/specimens/lever.astro';
 import MeterSpecimens from '#components/specimens/meter.astro';
 import NumberSpecimens from '#components/specimens/number.astro';
 import PlateSpecimens from '#components/specimens/plate.astro';
+import RingSpecimens from '#components/specimens/ring.astro';
 import ScreenSpecimens from '#components/specimens/screen.astro';
 import Section from '#components/specimens/section.astro';
 import SliderSpecimens from '#components/specimens/slider.astro';
+import SumSpecimens from '#components/specimens/sum.astro';
 import SwitchSpecimens from '#components/specimens/switch.astro';
 import Tuner from '#components/specimens/tuner.astro';
+import WaveformSpecimens from '#components/specimens/waveform.astro';
+import WavestripSpecimens from '#components/specimens/wavestrip.astro';
+import XySpecimens from '#components/specimens/xy.astro';
 
 const sections = [
 	{ id: 'tuner', label: 'Tuner' },
 	{ id: 'dial', label: 'Dial' },
 	{ id: 'slider', label: 'Slider' },
+	{ id: 'xy', label: 'XY pad' },
+	{ id: 'envelope', label: 'Envelope' },
+	{ id: 'wavestrip', label: 'Wave strip' },
+	{ id: 'waveform', label: 'Waveform' },
 	{ id: 'key', label: 'Key' },
 	{ id: 'led', label: 'LED' },
+	{ id: 'ring', label: 'Ring' },
 	{ id: 'switch', label: 'Switch' },
 	{ id: 'lever', label: 'Lever' },
 	{ id: 'number', label: 'Number' },
+	{ id: 'sum', label: 'Linked sum' },
 	{ id: 'meter', label: 'Meter' },
 	{ id: 'screen', label: 'Screen' },
 	{ id: 'plate', label: 'Plate' },
@@ -44,11 +56,26 @@ const sections = [
 	<Section id="slider" title="Slider">
 		<SliderSpecimens />
 	</Section>
+	<Section id="xy" title="XY pad">
+		<XySpecimens />
+	</Section>
+	<Section id="envelope" title="Envelope">
+		<EnvelopeSpecimens />
+	</Section>
+	<Section id="wavestrip" title="Wave strip">
+		<WavestripSpecimens />
+	</Section>
+	<Section id="waveform" title="Waveform">
+		<WaveformSpecimens />
+	</Section>
 	<Section id="key" title="Key">
 		<KeySpecimens />
 	</Section>
 	<Section id="led" title="LED">
 		<LedSpecimens />
+	</Section>
+	<Section id="ring" title="Ring">
+		<RingSpecimens />
 	</Section>
 	<Section id="switch" title="Switch">
 		<SwitchSpecimens />
@@ -58,6 +85,9 @@ const sections = [
 	</Section>
 	<Section id="number" title="Number">
 		<NumberSpecimens />
+	</Section>
+	<Section id="sum" title="Linked sum">
+		<SumSpecimens />
 	</Section>
 	<Section id="meter" title="Meter">
 		<MeterSpecimens />
@@ -71,8 +101,13 @@ const sections = [
 	<Fragment slot="scripts">
 		<script>
 			import '#scripts/specimens/motion.ts';
+			import '#scripts/specimens/pad.ts';
 			import '#scripts/specimens/screen-follow.ts';
+			import '#scripts/specimens/sum.ts';
 			import '#scripts/buffered.ts';
+			import '#scripts/samples.ts';
+			import '#scripts/markers.ts';
+			import '#scripts/peaks.ts';
 			import '#scripts/specimens/tuner.ts';
 			import '#scripts/two-colour.ts';
 		</script>

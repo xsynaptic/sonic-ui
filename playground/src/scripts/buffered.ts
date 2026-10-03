@@ -1,11 +1,9 @@
-import type { SonicSlider } from '@xsynaptic/sonic-ui';
+import type { SonicSlider, SonicWavestrip } from '@xsynaptic/sonic-ui';
 
-for (const slider of document.querySelectorAll<SonicSlider>('sonic-slider[data-buffered]')) {
-	const edges = (slider.dataset.buffered ?? '').split(/\s+/).map(Number);
-	const ranges: Array<[number, number]> = [];
+import { readSpans } from '#scripts/read-spans.ts';
 
-	for (let index = 0; index + 1 < edges.length; index += 2) {
-		ranges.push([edges[index] ?? 0, edges[index + 1] ?? 0]);
-	}
-	slider.buffered = ranges;
+for (const control of document.querySelectorAll<SonicSlider | SonicWavestrip>(
+	':is(sonic-slider, sonic-wavestrip)[data-buffered]',
+)) {
+	control.buffered = readSpans(control.dataset.buffered);
 }

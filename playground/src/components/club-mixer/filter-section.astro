@@ -94,14 +94,22 @@ const passes = [
 	<div class="mt-auto flex items-end gap-3 pt-2">
 		<PanelKey id={`${section}-on`} isRound={true} label="On" size="large" />
 		{filter === 1 ? (
-			<Pot format="percent" id={`${section}-curve`} label="X curve" max={100} min={0} value={50} />
+			<Pot
+				data={{ 'data-crossfade-curve': '' }}
+				format="percent"
+				id={`${section}-curve`}
+				label="X curve"
+				max={100}
+				min={0}
+				value={0}
+			/>
 		) : (
 			<div class="grid justify-items-center gap-1 text-zinc-400">
 				<sonic-dial
 					aria-labelledby={`${section}-curve`}
 					class="[--sonic-dial-scale-ratio:0.24] [--sonic-dial-size:3rem] [--sonic-dial-sweep:180deg]"
 					data-format="channel-curve"
-					max={channelCurves.length - 1}
+					max={channelCurves.labels.length - 1}
 					notched
 					readout
 					value="1"

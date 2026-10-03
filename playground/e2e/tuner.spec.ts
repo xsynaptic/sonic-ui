@@ -6,11 +6,13 @@ test('every tuner baseline resolves on its part', async ({ page }) => {
 	await page.goto('/');
 
 	const rows = tokenGroups.flatMap((group) =>
-		group.tokens.map((token) => ({
-			from: token.from ?? group.from,
-			property: resolvedProperty(token),
-			token: token.token,
-		})),
+		group.tokens
+			.filter((token) => token.kind !== 'choice')
+			.map((token) => ({
+				from: token.from ?? group.from,
+				property: resolvedProperty(token),
+				token: token.token,
+			})),
 	);
 	const unresolved = await page.locator('[data-tuner-panel]').evaluate(
 		(panel, list) =>
@@ -25,4 +27,25 @@ test('every tuner baseline resolves on its part', async ({ page }) => {
 	);
 
 	expect(unresolved).toEqual([]);
+});
+
+test('the glass font choice sets the token, and the first option clears it', async ({ page }) => {
+	await page.goto('/');
+
+	const choice = page.locator('select[data-token="--sonic-glass-font"]');
+	const fontOf = () =>
+		page
+			.locator('[data-tuner-panel] .sonic-number')
+			.first()
+			.evaluate((glass) => getComputedStyle(glass).fontFamily);
+	const inherited = await fontOf();
+
+	await choice.selectOption({ label: 'serif' });
+	expect(await fontOf()).toBe('ui-serif, serif');
+	await expect(page.locator('[data-tuner-output]')).toContainText(
+		'--sonic-glass-font: ui-serif, serif;',
+	);
+
+	await choice.selectOption({ label: 'inherit' });
+	expect(await fontOf()).toBe(inherited);
 });

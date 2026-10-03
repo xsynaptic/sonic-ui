@@ -1,37 +1,41 @@
-import type { SonicDial, SonicKey, SonicSlider } from '@xsynaptic/sonic-ui';
-
-import { formatPercent, parsePercent } from '@xsynaptic/sonic-ui';
-
-import type { Player } from '#scripts/web-player/stream.ts';
-
-import { find } from '#scripts/find.ts';
 import {
-	advance,
-	fill,
-	isFilling,
-	isWaiting,
-	load,
-	restartSeconds,
-	seek,
-	trackOf,
-	tracks,
-} from '#scripts/web-player/stream.ts';
+	formatPercent,
+	parsePercent,
+	SonicDial,
+	SonicKey,
+	SonicSlider,
+	SonicWaveform,
+	SonicWavestrip,
+} from '@xsynaptic/sonic-ui';
+import { readDatWaveformData } from '@xsynaptic/sonic-ui/dat';
 
-interface Bar {
-	artist: HTMLElement;
-	clock: HTMLElement;
-	next: SonicKey;
-	panelToggle: SonicKey;
-	play: SonicKey;
-	previous: SonicKey;
+import type { ControlsOf } from '#scripts/find.ts';
+import type { StreamState } from '#scripts/web-player/stream.ts';
+
+import { dataHook, readControls } from '#scripts/find.ts';
+import { frameLoop } from '#scripts/frame-loop.ts';
+import { seededHeader } from '#scripts/seeded-dat.ts';
+import { createStream, tracks } from '#scripts/web-player/stream.ts';
+
+const barSpec = {
+	artist: HTMLElement,
+	detail: SonicWaveform,
+	next: SonicKey,
+	panelToggle: SonicKey,
+	play: SonicKey,
+	previous: SonicKey,
+	seek: SonicSlider,
+	time: HTMLButtonElement,
+	title: HTMLElement,
+	wave: SonicWavestrip,
+};
+
+interface Bar extends ControlsOf<typeof barSpec> {
 	seekKeys: Array<SonicKey>;
-	strip: SonicSlider;
-	time: SonicKey;
-	title: HTMLElement;
 	zoomKeys: Array<SonicKey>;
 }
 
-const zoomLevels = 5;
+const zoomLadder = [30, 45, 70, 105, 160];
 
 const spokenUnits = [
 	['hour', 3600],
@@ -71,88 +75,103 @@ function formatSpokenTime(seconds: number): string {
 
 function readBar(root: Element): Bar {
 	return {
-		artist: find(root, ':scope [data-artist]'),
-		clock: find(root, ':scope [data-time] > .sonic-screen'),
-		next: find(root, ':scope [data-next]'),
-		panelToggle: find(root, ':scope [data-panel-toggle]'),
-		play: find(root, ':scope [data-play]'),
-		previous: find(root, ':scope [data-previous]'),
+		...readControls(root, barSpec, dataHook),
 		seekKeys: [...root.querySelectorAll<SonicKey>(':scope [data-seek-by]')],
-		strip: find(root, ':scope [data-seek]'),
-		time: find(root, ':scope [data-time]'),
-		title: find(root, ':scope [data-title]'),
 		zoomKeys: [...root.querySelectorAll<SonicKey>(':scope [data-zoom]')],
 	};
 }
 
-// The key copies its children again on every text change
 function writeText(element: HTMLElement, text: string): void {
 	if (element.textContent !== text) element.textContent = text;
 }
 
-function renderText(player: Player, bar: Bar): void {
-	const track = trackOf(player);
-	const { positionSeconds } = player;
-	const shown = bar.time.pressed ? positionSeconds - track.durationSeconds : positionSeconds;
+function renderText(state: StreamState, bar: Bar): void {
+	const { positionSeconds, track } = state;
+	const isRemaining = bar.time.getAttribute('aria-pressed') === 'true';
+	const shown = isRemaining ? positionSeconds - track.durationSeconds : positionSeconds;
 
 	writeText(bar.title, track.title);
 	writeText(bar.artist, track.artist);
-	writeText(bar.clock, player.isLoaded ? formatClock(shown) : '--:--');
+	writeText(bar.time, state.isLoaded ? formatClock(shown) : '--:--');
 }
 
-function renderAvailability(player: Player, bar: Bar, zoom: number): void {
-	const { index, isLoaded } = player;
-
-	bar.play.toggleAttribute('busy', isWaiting(player));
-	bar.previous.toggleAttribute(
-		'soft-disabled',
-		!isLoaded || (index === 0 && player.positionSeconds <= restartSeconds),
-	);
-	bar.next.toggleAttribute('soft-disabled', !isLoaded || index === tracks.length - 1);
-	for (const control of [...bar.seekKeys, bar.strip, bar.time, bar.panelToggle]) {
-		control.toggleAttribute('disabled', !isLoaded);
+function renderAvailability(state: StreamState, bar: Bar, zoom: number): void {
+	bar.play.toggleAttribute('busy', state.isWaiting);
+	bar.previous.toggleAttribute('soft-disabled', !state.canPrevious);
+	bar.next.toggleAttribute('soft-disabled', !state.canNext);
+	for (const control of [
+		...bar.seekKeys,
+		bar.seek,
+		bar.wave,
+		bar.detail,
+		bar.time,
+		bar.panelToggle,
+	]) {
+		control.toggleAttribute('disabled', !state.isLoaded);
 	}
 	for (const key of bar.zoomKeys) {
 		const next = zoom + Number(key.dataset.zoom);
 
-		key.toggleAttribute('soft-disabled', next < 0 || next >= zoomLevels);
+		key.toggleAttribute('soft-disabled', next < 0 || next >= zoomLadder.length);
 	}
 }
 
-function renderStrip(player: Player, strip: SonicSlider): void {
-	const { durationSeconds } = trackOf(player);
-
-	if (strip.max !== durationSeconds) strip.max = durationSeconds;
-	strip.value = player.positionSeconds;
-	strip.buffered = player.buffered;
+function renderTrack({ samples, track }: StreamState, bar: Bar): void {
+	for (const strip of [bar.seek, bar.wave, bar.detail]) strip.max = track.durationSeconds;
+	for (const strip of [bar.wave, bar.detail]) strip.markers = track.cues;
+	bar.wave.peaks = track.peaks;
+	bar.detail.data = readDatWaveformData(seededHeader, samples.buffer);
 }
 
-function bindControls(root: Element, player: Player, bar: Bar): void {
-	const panel = find<HTMLElement>(root, ':scope [data-panel]');
-	const mute = find<SonicKey>(root, ':scope [data-mute]');
-	const volume = find<SonicDial>(root, ':scope [data-volume]');
+function renderPosition(state: StreamState, bar: Bar): void {
+	const isPlaying = state.isPlaying && !state.isWaiting;
+
+	for (const strip of [bar.seek, bar.wave, bar.detail]) strip.value = state.positionSeconds;
+	bar.seek.buffered = state.buffered;
+	bar.wave.buffered = state.buffered;
+	if (bar.detail.playing !== isPlaying) bar.detail.playing = isPlaying;
+	if (String(state.pending) !== String(bar.detail.pending)) bar.detail.pending = state.pending;
+}
+
+function bindControls(root: Element, stream: ReturnType<typeof createStream>, bar: Bar): void {
+	const { mute, panel, volume } = readControls(
+		root,
+		{ mute: SonicKey, panel: HTMLElement, volume: SonicDial },
+		dataHook,
+	);
 
 	bar.play.addEventListener('change', () => {
-		player.isPlaying = bar.play.pressed;
-		if (!player.isPlaying) return;
-		if (!player.isLoaded) load(player, player.index);
-		if (player.positionSeconds >= trackOf(player).durationSeconds) seek(player, 0);
+		if (!bar.play.pressed) {
+			stream.pause();
+			return;
+		}
+
+		stream.play();
 	});
 	bar.previous.addEventListener('click', () => {
-		if (player.positionSeconds > restartSeconds) seek(player, 0);
-		else load(player, player.index - 1);
+		stream.previous();
 	});
 	bar.next.addEventListener('click', () => {
-		load(player, player.index + 1);
+		stream.next();
 	});
 	for (const key of bar.seekKeys) {
 		key.addEventListener('click', () => {
-			seek(player, player.positionSeconds + Number(key.dataset.seekBy));
+			stream.seek(stream.state.positionSeconds + Number(key.dataset.seekBy));
 		});
 	}
-	// `change` rather than `input`, so playback carries on while scrubbing
-	bar.strip.addEventListener('change', () => {
-		seek(player, bar.strip.value);
+	for (const strip of [bar.seek, bar.wave, bar.detail]) {
+		strip.addEventListener('change', () => {
+			stream.seek(strip.value);
+		});
+		strip.formatValue = (seconds) => {
+			const cue = stream.state.track.cues?.findLast((entry) => entry.value <= seconds);
+
+			return cue ? `${formatClock(seconds)} · ${cue.label}` : formatClock(seconds);
+		};
+		strip.formatValueText = formatSpokenTime;
+	}
+	bar.time.addEventListener('click', () => {
+		bar.time.setAttribute('aria-pressed', String(bar.time.getAttribute('aria-pressed') !== 'true'));
 	});
 	bar.panelToggle.addEventListener('change', () => {
 		panel.hidden = !bar.panelToggle.pressed;
@@ -162,55 +181,46 @@ function bindControls(root: Element, player: Player, bar: Bar): void {
 	});
 	volume.formatValue = formatPercent;
 	volume.parseValue = parsePercent;
-	bar.strip.formatValue = formatClock;
-	bar.strip.formatValueText = formatSpokenTime;
 }
 
 function bindPlayer(root: Element): void {
 	const bar = readBar(root);
-	const player: Player = {
-		buffered: [],
-		index: 0,
-		isLoaded: false,
-		isPlaying: false,
-		latencySeconds: 0,
-		positionSeconds: 0,
-	};
+	const stream = createStream(tracks);
 	let zoom = 2;
-	let frame: number | undefined;
-	let last: number | undefined;
-	const tick = (time: number): void => {
-		const elapsedSeconds = last === undefined ? 0 : Math.min((time - last) / 1000, 0.1);
+	let shownSamples: Int8Array | undefined;
+	const loop = frameLoop((elapsedSeconds) => {
+		const { hasLanded, isActive } = stream.tick(elapsedSeconds);
+		const { state } = stream;
 
-		last = time;
-		fill(player, elapsedSeconds);
-		advance(player, elapsedSeconds);
-		if (bar.play.pressed !== player.isPlaying) bar.play.pressed = player.isPlaying;
-		renderText(player, bar);
-		renderAvailability(player, bar, zoom);
-		renderStrip(player, bar.strip);
-		if (player.isPlaying || isFilling(player)) {
-			frame = requestAnimationFrame(tick);
-			return;
+		if (hasLanded) bar.detail.repaint();
+		if (state.samples !== shownSamples) {
+			shownSamples = state.samples;
+			renderTrack(state, bar);
 		}
+		if (bar.play.pressed !== state.isPlaying) bar.play.pressed = state.isPlaying;
+		renderText(state, bar);
+		renderAvailability(state, bar, zoom);
+		renderPosition(state, bar);
 
-		frame = undefined;
-		last = undefined;
-	};
-	// Paused with the buffer full, nothing redraws until a control acts
-	const wake = (): void => {
-		frame = frame ?? requestAnimationFrame(tick);
-	};
+		return isActive;
+	});
 
-	bindControls(root, player, bar);
+	bindControls(root, stream, bar);
+	bar.detail.zoom = zoomLadder[zoom];
+	bar.detail.readTime = () => stream.state.positionSeconds;
+	bar.detail.requestSpan = (fromSeconds, toSeconds) => {
+		stream.wantSamples(fromSeconds, toSeconds);
+		loop.wake();
+	};
 	for (const key of bar.zoomKeys) {
 		key.addEventListener('click', () => {
-			zoom += Number(key.dataset.zoom);
+			zoom = Math.min(Math.max(zoom + Number(key.dataset.zoom), 0), zoomLadder.length - 1);
+			bar.detail.zoom = zoomLadder[zoom];
 		});
 	}
-	root.addEventListener('change', wake);
-	root.addEventListener('click', wake);
-	wake();
+	root.addEventListener('change', loop.wake);
+	root.addEventListener('click', loop.wake);
+	loop.start();
 }
 
 for (const root of document.querySelectorAll('[data-web-player]')) bindPlayer(root);

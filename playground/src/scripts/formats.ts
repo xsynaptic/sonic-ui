@@ -1,14 +1,12 @@
 import type { SonicDial, SonicNumber, SonicSlider } from '@xsynaptic/sonic-ui';
 
-import { channelCurves, echoModes, tapeStyles } from '#scripts/stop-names.ts';
+import { channelCurves, echoModes, filterTypes, tapeStyles } from '#scripts/stop-names.ts';
 
 interface Format {
 	format: (value: number) => string;
 	parse?: (text: string) => number;
 }
 
-const filterTypes = ['LP', 'BP', 'HP', 'Notch'];
-// Ticks per whole note, so triplets and dotted notes stay whole numbers
 const wholeTicks = 192;
 const killDecibels = -60;
 
@@ -59,7 +57,7 @@ function formatDecibels(value: number): string {
 	return `${value.toFixed(1).replace('-', '−')} dB`;
 }
 
-function namedStops(names: Array<string>): Format {
+function namedStops(names: ReadonlyArray<string>): Format {
 	return {
 		format: (value) => names[value] ?? String(value),
 		parse: (text) => {
@@ -79,7 +77,7 @@ function parseScaled(text: string, unit: RegExp, scale: number): number {
 const formats = new Map<string, Format>([
 	['beats', { format: formatBeats, parse: parseBeats }],
 	['bpm', { format: (value) => `${value.toFixed(1)} BPM`, parse: parseNumber }],
-	['channel-curve', namedStops(channelCurves)],
+	['channel-curve', namedStops(channelCurves.labels)],
 	['db', { format: formatDecibels, parse: parseNumber }],
 	[
 		'db-kill',
@@ -89,8 +87,8 @@ const formats = new Map<string, Format>([
 		},
 	],
 	['degrees', { format: (value) => `${String(value)}°`, parse: parseNumber }],
-	['echo-mode', namedStops(echoModes)],
-	['filter', namedStops(filterTypes)],
+	['echo-mode', namedStops(echoModes.labels)],
+	['filter', namedStops(filterTypes.labels)],
 	[
 		'hertz',
 		{
@@ -138,8 +136,12 @@ const formats = new Map<string, Format>([
 		'signed-percent',
 		{ format: (value) => `${value > 0 ? '+' : ''}${String(value)}%`, parse: parseNumber },
 	],
-	['tape-style', namedStops(tapeStyles)],
+	['tape-style', namedStops(tapeStyles.labels)],
 ]);
+
+export function formatterFor(name: string): ((value: number) => string) | undefined {
+	return formats.get(name)?.format;
+}
 
 type FormattedControl = SonicDial | SonicNumber | SonicSlider;
 

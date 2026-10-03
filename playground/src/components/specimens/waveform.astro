@@ -1,0 +1,37 @@
+---
+import Cell from '#components/specimens/cell.astro';
+import Panel from '#components/specimens/panel.astro';
+
+const waveforms = [
+	{ id: 'waveform-playing', isPlaying: true, label: 'Playing', seed: 7 },
+	{ id: 'waveform-paused', label: 'Paused', seed: 8 },
+	{ id: 'waveform-pending', label: 'Pending', pending: '151 162', seed: 9 },
+	{ className: '[--sonic-glass-depth:0]', id: 'waveform-flat', label: 'Flat', seed: 10 },
+	{
+		className: '[--sonic-waveform-label-font-ratio:0.18] [--sonic-waveform-label-inset-ratio:0.14]',
+		id: 'waveform-labels',
+		label: 'Large labels',
+		seed: 11,
+	},
+];
+---
+
+<Panel isLarge={true}>
+	{waveforms.map((waveform) => (
+		<Cell id={waveform.id} isWide={true} label={waveform.label}>
+			<sonic-waveform
+				aria-labelledby={waveform.id}
+				class:list={['[--sonic-waveform-length:20rem]', waveform.className]}
+				data-markers="146 151.5 158~"
+				data-pending={waveform.pending}
+				data-samples={waveform.seed}
+				key-step="1"
+				max="300"
+				playing={waveform.isPlaying}
+				readout
+				step="0"
+				value="150"
+			></sonic-waveform>
+		</Cell>
+	))}
+</Panel>

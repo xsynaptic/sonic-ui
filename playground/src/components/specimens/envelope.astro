@@ -1,0 +1,94 @@
+---
+import Cell from '#components/specimens/cell.astro';
+
+type Control = 'sonic-dial' | 'sonic-slider';
+
+type Stage = 'attack' | 'decay' | 'delay' | 'hold' | 'release' | 'sustain';
+
+interface Rig {
+	control: Control;
+	hasCurves: boolean;
+	id: string;
+	stages: Array<Stage>;
+	title: string;
+}
+
+const adsr: Array<Stage> = ['attack', 'decay', 'sustain', 'release'];
+const curved = ['attack', 'decay', 'release'] as const;
+const values = { attack: 40, decay: 300, delay: 60, hold: 120, release: 700, sustain: 60 };
+const bends = { attack: -3, decay: 3, release: 3 };
+
+const time = { 'data-format': 'milliseconds', max: 2000, midpoint: 200 };
+const level = { 'data-format': 'percent' };
+const bend = { default: 0, max: 8, min: -8, origin: 0, step: 0.1 };
+
+function knob(id: string, label: string, attributes: Record<string, number | string>) {
+	return { attributes: { ...attributes, 'aria-labelledby': `${id}-label`, id }, label };
+}
+
+function build(rig: Rig) {
+	const curves = rig.hasCurves ? curved : [];
+	const across = rig.control === 'sonic-slider' ? { orientation: 'vertical' } : {};
+
+	return {
+		bindings: Object.fromEntries([
+			...rig.stages.map((stage) => [stage, `${rig.id}-${stage}`]),
+			...curves.map((stage) => [`${stage}-curve`, `${rig.id}-${stage}-curve`]),
+		]),
+		knobs: [
+			...rig.stages.map((stage) => ({
+				...knob(`${rig.id}-${stage}`, stage, {
+					...(stage === 'sustain' ? level : time),
+					...across,
+					value: values[stage],
+				}),
+				Tag: rig.control,
+			})),
+			...curves.map((stage) => ({
+				...knob(`${rig.id}-${stage}-curve`, `${stage} curve`, { ...bend, value: bends[stage] }),
+				Tag: 'sonic-dial' as const,
+			})),
+		],
+		title: rig.title,
+	};
+}
+
+const rigs: Array<Rig> = [
+	{ control: 'sonic-dial', hasCurves: false, id: 'envelope-adsr', stages: adsr, title: 'ADSR' },
+	{ control: 'sonic-dial', hasCurves: true, id: 'envelope-curved', stages: adsr, title: 'Curves' },
+	{
+		control: 'sonic-dial',
+		hasCurves: false,
+		id: 'envelope-dahdsr',
+		stages: ['delay', 'attack', 'hold', 'decay', 'sustain', 'release'],
+		title: 'Delay and hold',
+	},
+	{
+		control: 'sonic-slider',
+		hasCurves: false,
+		id: 'envelope-sliders',
+		stages: adsr,
+		title: 'Over sliders',
+	},
+];
+
+const panels = rigs.map((rig) => build(rig));
+---
+
+<div class="grid gap-3 lg:grid-cols-2">
+	{panels.map((panel) => (
+		<div class="grid justify-items-center gap-5 rounded-lg border border-zinc-800 bg-zinc-900 p-5 shadow-[inset_0_1px_0_rgb(255_255_255/4%)]">
+			<p class="justify-self-start font-mono text-[0.625rem] tracking-[0.16em] text-zinc-400 uppercase">
+				{panel.title}
+			</p>
+			<sonic-envelope {...panel.bindings} />
+			<div class="flex flex-wrap justify-center gap-5">
+				{panel.knobs.map(({ attributes, label, Tag }) => (
+					<Cell id={`${attributes.id}-label`} label={label}>
+						<Tag {...attributes} readout />
+					</Cell>
+				))}
+			</div>
+		</div>
+	))}
+</div>
