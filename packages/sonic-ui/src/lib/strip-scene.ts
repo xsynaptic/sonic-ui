@@ -3,7 +3,7 @@ import type { SurfaceSize } from '#lib/canvas-surface.ts';
 import { clampUnit } from '#lib/math.ts';
 import { resamplePeaks } from '#lib/resample-peaks.ts';
 
-export interface BarRect {
+interface BarRect {
 	height: number;
 	radius: number;
 	width: number;

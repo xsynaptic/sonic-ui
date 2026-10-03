@@ -6,7 +6,7 @@ interface MarkerLook {
 	kind?: string;
 }
 
-export interface MarkerBand {
+interface MarkerBand {
 	reachPx: () => number;
 	render: (markers: ReadonlyArray<MarkerLook>, places: ReadonlyArray<[number, number]>) => void;
 }

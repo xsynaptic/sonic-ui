@@ -1,4 +1,4 @@
-export interface Needle {
+interface Needle {
 	position: number;
 	velocity: number;
 }

@@ -217,3 +217,32 @@ test('place clamps to the range', () => {
 
 	expect([-60, -27, -80, 6].map((value) => bounded.place(value))).toEqual([0, 0.5, 0, 1]);
 });
+
+test.each([
+	[{ max: 100, min: -0.5, step: 3 }, 2, 2.5],
+	[{ max: 100, min: -2.5, step: 3 }, -6.2, -2.5],
+	[{ max: 100, min: -100, step: 5 }, -8, -10],
+	[{ max: 100, min: -100, step: 5 }, -6, -5],
+	[{ max: 100, min: -100, step: 5 }, 2, 0],
+	[{ max: 15, min: 1, step: 2.5 }, 2.5, 3.5],
+	[{ max: 15, min: 1, step: 2.5 }, 6.5, 6],
+	[{ max: 15, min: 1, step: 2.5 }, 13, 13.5],
+	[{ max: 1, min: 0.05, step: 0.1 }, 0.3, 0.35],
+	[{ max: 0, min: 10 }, 5, 10],
+])('on %o, %d snaps to %d', (spec, value, expected) => {
+	expect(scaleOf(spec).snap(value)).toBe(expected);
+});
+
+test('two arrows on a step of 1e-7 land on 2e-7', () => {
+	const scale = scaleOf({ max: 1, step: 1e-7 });
+
+	expect(scale.keyTarget('ArrowRight', scale.keyTarget('ArrowRight', 0) ?? NaN)).toBe(2e-7);
+});
+
+test.each([10, 0])('an endless scale from 10 to %d holds min', (max) => {
+	const collapsed = scaleOf({ isWrapping: true, max, min: 10 });
+
+	expect(collapsed.snap(5)).toBe(10);
+	expect(collapsed.keyTarget('End', 5)).toBe(10);
+	expect(collapsed.keyTarget('ArrowUp', 10)).toBe(10);
+});

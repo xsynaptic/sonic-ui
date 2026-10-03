@@ -524,11 +524,11 @@ export abstract class SonicRangeElement extends SonicFormElement {
 	}
 
 	protected heldWrite(_next: number): void {
-		// A write a hold kept off the value, for a subclass drawing where playback carries on
+		// Dropped unless a subclass draws where playback carries on
 	}
 
 	protected holdChanged(): void {
-		// A hold revealed, cancelled or ended
+		// Only a subclass draws a hold
 	}
 
 	protected hoverReadout(value: number | undefined): void {
@@ -560,7 +560,7 @@ export abstract class SonicRangeElement extends SonicFormElement {
 	}
 
 	protected placesChanged(): void {
-		// When a bound, the taper or the entries move every place, never per input
+		// Runs when every place moves, never per input
 	}
 
 	protected readoutValue(): number {

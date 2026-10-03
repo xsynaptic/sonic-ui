@@ -500,7 +500,6 @@ export class SonicXy extends SonicFormElement {
 		this.render();
 	}
 
-	// Provisional until heard in a screen reader
 	#renderAria(): void {
 		const scales = this.#scales();
 		const isDisabled = this.isDisabled();

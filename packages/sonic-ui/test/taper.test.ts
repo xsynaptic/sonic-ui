@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 
-import { logTaper, skewTaper } from '#lib/taper.ts';
+import { listTaper, logTaper, skewTaper } from '#lib/taper.ts';
 
 test('a 20 Hz to 20 kHz skew through 1 kHz puts 68 Hz and 5.7 kHz at the quarters', () => {
 	const taper = skewTaper(20, 20_000, 1000);
@@ -39,4 +39,35 @@ test.each([
 	[50, 50],
 ])('a log taper from %d to %d is impossible', (min, max) => {
 	expect(logTaper(min, max)).toBeUndefined();
+});
+
+test('a log taper clamps a value or a place outside its range', () => {
+	const taper = logTaper(1, 10);
+
+	expect(taper?.place(-1)).toBe(0);
+	expect(taper?.place(15)).toBe(1);
+	expect(taper?.valueAt(-0.1)).toBe(1);
+});
+
+test('a 1 to 2 log taper puts 1.5 at 0.585 of the travel', () => {
+	expect(logTaper(1, 2)?.place(1.5)).toBeCloseTo(0.5849625, 6);
+});
+
+test('a skew from a min above zero keeps its ends exact and clamps past them', () => {
+	const taper = skewTaper(20, 20_000, 1000);
+
+	expect(taper?.valueAt(0)).toBe(20);
+	expect(taper?.valueAt(1)).toBe(20_000);
+	expect(taper?.place(10)).toBe(0);
+	expect(taper?.place(30_000)).toBe(1);
+});
+
+test.each([
+	[-20, 0],
+	[-5, 0.25],
+	[50, 0.75],
+	[75, 0.875],
+	[150, 1],
+])('a list taper over -10, 0 and 100 places %d at %d', (value, place) => {
+	expect(listTaper([-10, 0, 100]).place(value)).toBe(place);
 });

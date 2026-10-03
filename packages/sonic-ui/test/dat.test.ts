@@ -97,3 +97,21 @@ test('waveform data takes its full scale from the bits and its pairs per second 
 		pairsPerSecond: 110.25,
 	});
 });
+
+test.each([
+	['01000080', 8],
+	['02000000', 16],
+	['feffffff', 16],
+] as const)('flags %s read only bit 0, for %d bits', (flags, bits) => {
+	expect(readDatHeader(bytes('01000000', flags, ...monoHeader.slice(2))).bits).toBe(bits);
+});
+
+test('the last pair of an 8-bit mono file ends on the last byte', () => {
+	const header = readDatHeader(bytes('01000000', '01000000', '44ac0000', '00010000', 'f4010000'));
+
+	expect(datByteRange(header, 499, 500)).toEqual([1018, 1019]);
+});
+
+test('a version 2 header cut short of its channels is refused', () => {
+	expect(() => readDatHeader(bytes(...stereoHeader).slice(0, 23))).toThrow('24 bytes');
+});

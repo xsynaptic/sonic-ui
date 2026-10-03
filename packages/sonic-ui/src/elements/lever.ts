@@ -164,15 +164,19 @@ export class SonicLever extends SonicRadioGroupElement {
 
 		this.#switch.addEventListener(
 			'click',
-			() => {
-				if (this.#isClickSwallowed) this.#isClickSwallowed = false;
-				else this.#setChecked(!this.checked);
+			(event) => {
+				const isSwallowed =
+					this.#isClickSwallowed && event instanceof PointerEvent && event.pointerType !== '';
+
+				this.#isClickSwallowed = false;
+				if (!isSwallowed) this.#setChecked(!this.checked);
 			},
 			{ signal },
 		);
 		this.#switch.addEventListener(
 			'pointerdown',
 			(event) => {
+				this.#isClickSwallowed = false;
 				if (event.button === 0 && !this.isDisabled()) this.#grabBat(event);
 			},
 			{ signal },
@@ -267,7 +271,7 @@ export class SonicLever extends SonicRadioGroupElement {
 			'pointermove',
 			(event) => {
 				const press = this.#batPress;
-				if (press?.pointerId !== event.pointerId) return;
+				if (press?.pointerId !== event.pointerId || this.isDisabled()) return;
 
 				const delta = this.#along(event) - press.last;
 				if (Math.abs(delta) < this.#bat.getBoundingClientRect().width / 4) return;
@@ -287,9 +291,6 @@ export class SonicLever extends SonicRadioGroupElement {
 				this.#batPress = undefined;
 				if (!press.hasMoved && !this.isDisabled()) this.#pressBat(event);
 				this.#isClickSwallowed = true;
-				setTimeout(() => {
-					this.#isClickSwallowed = false;
-				}, 0);
 			},
 			{ signal },
 		);

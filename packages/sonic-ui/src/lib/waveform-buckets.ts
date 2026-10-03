@@ -6,7 +6,7 @@ export interface WaveformData {
 	samples: Float32Array | Int8Array | Int16Array;
 }
 
-export interface WaveformBucket {
+interface WaveformBucket {
 	fromPair: number;
 	high: number;
 	low: number;

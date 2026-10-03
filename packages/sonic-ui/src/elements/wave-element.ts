@@ -3,7 +3,7 @@ import type { Surface, SurfaceFrame } from '#lib/canvas-surface.ts';
 import { SonicRangeElement } from '#elements/range-element.ts';
 import { bindSurface } from '#lib/canvas-surface.ts';
 
-export interface WaveMarker {
+interface WaveMarker {
 	dimmed?: boolean;
 	end?: number;
 	kind?: string;

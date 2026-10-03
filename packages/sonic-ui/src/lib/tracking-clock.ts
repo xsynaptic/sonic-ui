@@ -2,7 +2,7 @@ const seekThresholdSeconds = 0.5;
 
 const catchUpPerFrame = 0.06;
 
-export interface TrackingClock {
+interface TrackingClock {
 	// `frameMs` is the frame's timestamp, never `performance.now()` in the callback
 	read: (frameMs: number, sourceSeconds: number, isPlaying: boolean) => number;
 }

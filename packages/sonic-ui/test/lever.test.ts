@@ -351,7 +351,22 @@ test('a drag onto a momentary position holds it, and dragging back or letting go
 	expect(changes).toEqual(['duck', 'off', 'duck', 'off']);
 });
 
-test('a switch flips once on a bat press, though its own click follows', async () => {
+test('a switch flips once on a bat press, however late its own click follows', async () => {
+	const { group, lever, positions } = await mountLever('', '');
+	const toggle = positionAt(positions, 0);
+
+	mockBat(group);
+	pointerAt(toggle, 'pointerdown', [20, 20]);
+	pointerAt(group, 'pointerup', [20, 20]);
+	await nextTask();
+	pointerAt(toggle, 'click', [20, 20]);
+	expect(lever.checked).toBe(true);
+
+	pointerAt(toggle, 'click', [20, 20]);
+	expect(lever.checked).toBe(false);
+});
+
+test('a key flips a switch after a bat press whose click never came', async () => {
 	const { group, lever, positions } = await mountLever('', '');
 	const toggle = positionAt(positions, 0);
 
@@ -359,11 +374,19 @@ test('a switch flips once on a bat press, though its own click follows', async (
 	pointerAt(toggle, 'pointerdown', [20, 20]);
 	pointerAt(group, 'pointerup', [20, 20]);
 	toggle.click();
-	expect(lever.checked).toBe(true);
 
-	await nextTask();
-	toggle.click();
 	expect(lever.checked).toBe(false);
+});
+
+test('disabling the lever mid-drag stops the bat', async () => {
+	const { group, lever, positions } = await mountLever('value="b"', abc);
+
+	mockBat(group);
+	pointerAt(positionAt(positions, 1), 'pointerdown', [20, 30]);
+	lever.disabled = true;
+	pointerAt(group, 'pointermove', [20, 19]);
+
+	expect(lever.value).toBe('b');
 });
 
 test('a drag sets a switch by direction: on is up, or right when horizontal', async () => {

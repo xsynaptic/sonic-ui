@@ -2,7 +2,7 @@ import { clamp } from '#lib/math.ts';
 import { readPxProperty } from '#lib/read-px-property.ts';
 import { requireChild } from '#lib/render.ts';
 
-export interface RiderWindow {
+interface RiderWindow {
 	playheadSeconds: number;
 	startSeconds: number;
 	widthPx: number;
@@ -27,7 +27,7 @@ interface LabelPlacement {
 	x: number;
 }
 
-export interface RiderLayout {
+interface RiderLayout {
 	arriving?: LabelPlacement;
 	parked?: LabelPlacement;
 }

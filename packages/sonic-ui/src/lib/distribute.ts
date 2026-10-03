@@ -11,12 +11,12 @@ export interface SumMember {
 
 export type SumMode = 'cascade' | 'equal' | 'proportional';
 
-export interface SumMove {
+interface SumMove {
 	index: number;
 	target: number;
 }
 
-export interface SumRule {
+interface SumRule {
 	mode: SumMode;
 	total: number;
 }

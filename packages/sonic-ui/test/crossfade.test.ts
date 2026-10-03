@@ -32,3 +32,25 @@ test('positions past either end read as the end', () => {
 	expect(crossfadeGains(-0.2, { law: 'linear' })).toEqual({ a: 1, b: 0 });
 	expect(crossfadeGains(1.4, { law: 'linear' })).toEqual({ a: 0, b: 1 });
 });
+
+test.each([
+	['power', Math.SQRT1_2],
+	['linear', 0.5],
+] as const)('the %s law at the centre gives each side %d', (law, gain) => {
+	const { a, b } = crossfadeGains(0.5, { law });
+
+	expect(a).toBeCloseTo(gain, 12);
+	expect(b).toBeCloseTo(gain, 12);
+});
+
+test('the power law is silent at the far end, not nearly silent', () => {
+	expect(crossfadeGains(1)).toEqual({ a: 0, b: 1 });
+	expect(crossfadeGains(0)).toEqual({ a: 1, b: 0 });
+});
+
+test('a mirrored position swaps the gains', () => {
+	const options = { law: 'linear', sharpness: 0.25 } as const;
+
+	expect(crossfadeGains(0.3, options).a).toBeCloseTo(crossfadeGains(0.7, options).b, 12);
+	expect(crossfadeGains(0.5, options).a).toBeCloseTo(2 / 3, 12);
+});

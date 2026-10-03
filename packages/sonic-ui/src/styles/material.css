@@ -239,7 +239,7 @@
 	}
 
 	@media (forced-colors: none) {
-		/* An ink bloom over static grain; the declaration with the tile holds no var(), which would parse the url() again on every style recalculation */
+		/* No var() beside the tile, which would parse the url() again on every style recalculation */
 		:is(
 			.sonic-envelope,
 			.sonic-number,
