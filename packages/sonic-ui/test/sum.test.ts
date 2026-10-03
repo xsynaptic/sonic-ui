@@ -251,21 +251,60 @@ test('a fine mover among coarse siblings is held to what they can absorb, mid-dr
 	const cap = capOf(first);
 
 	pointerAt(cap, 'pointerdown', { clientX: xAt(50) });
-	pointerAt(cap, 'pointermove', { clientX: xAt(53) });
+	pointerAt(cap, 'pointermove', { clientX: xAt(52) });
 	await Promise.resolve();
 	expect(valuesOf(members)).toEqual([50, 25, 25]);
 
-	pointerAt(cap, 'pointermove', { clientX: xAt(55) });
+	pointerAt(cap, 'pointermove', { clientX: xAt(53) });
 	await Promise.resolve();
 	expect(valuesOf(members)).toEqual([55, 25, 20]);
 
 	pointerAt(cap, 'pointermove', { clientX: xAt(56) });
 	await Promise.resolve();
-	expect(valuesOf(members).reduce((total, value) => total + value, 0)).toBe(100);
+	expect(valuesOf(members)).toEqual([55, 25, 20]);
 
-	pointerAt(cap, 'pointerup', { clientX: xAt(56) });
+	pointerAt(cap, 'pointermove', { clientX: xAt(58) });
+	pointerAt(cap, 'pointerup', { clientX: xAt(58) });
 	await Promise.resolve();
-	expect(valuesOf(members).reduce((total, value) => total + value, 0)).toBe(100);
+	expect(valuesOf(members)).toEqual([60, 20, 20]);
+});
+
+test('an arrow on a fine mover among coarse siblings steps to the next value they can absorb', async () => {
+	const coarse = '<sonic-slider step="5" value="25"></sonic-slider>';
+	const { members, sum } = await mountSum('', sliders(50, coarse, coarse));
+	const control = members[0]?.querySelector<HTMLElement>('.sonic-slider');
+	if (!control) throw new Error('No slider');
+
+	const events = recordTargets(sum, members);
+
+	pressKey(control, 'ArrowRight');
+	await Promise.resolve();
+	expect(valuesOf(members)).toEqual([55, 25, 20]);
+	expect(events).toEqual(['input 0', 'input 2', 'change 0', 'change 2']);
+
+	pressKey(control, 'ArrowLeft');
+	await Promise.resolve();
+	expect(valuesOf(members)).toEqual([50, 30, 20]);
+});
+
+test('a typed value that lands back where the mover was fires nothing', async () => {
+	const coarse = '<sonic-slider step="5" value="25"></sonic-slider>';
+	const { members, sum } = await mountSum('', sliders(50, coarse, coarse));
+	const control = members[0]?.querySelector<HTMLElement>('.sonic-slider');
+	const entry = control?.querySelector('input');
+	if (!control || !entry) throw new Error('No slider');
+
+	const events = recordTargets(sum, members);
+
+	pressKey(control, 'Enter');
+	entry.value = '51';
+	entry.dispatchEvent(
+		new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'Enter' }),
+	);
+	await Promise.resolve();
+
+	expect(valuesOf(members)).toEqual([50, 25, 25]);
+	expect(events).toEqual([]);
 });
 
 test('a total the members cannot reach saturates and warns once', async () => {

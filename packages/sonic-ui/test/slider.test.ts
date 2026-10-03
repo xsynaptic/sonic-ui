@@ -333,3 +333,32 @@ test('a key repeat changes on every repeat', () => {
 	expect(slider.value).toBe(70);
 	expect(events).toEqual(['input', 'change', 'input', 'change']);
 });
+
+test('a value past an off-grid max lands on the last step and stays there', () => {
+	const { control, slider } = mountSlider('max="10" step="3" value="12"');
+
+	expect(slider.value).toBe(9);
+	expect(control.getAttribute('aria-valuemax')).toBe('9');
+
+	slider.setAttribute('aria-label', 'Level');
+	expect(slider.value).toBe(9);
+});
+
+test('with spring, an arrow held under Meta springs back when Meta lifts', () => {
+	const { control, slider } = mountSlider(
+		'spring min="-50" max="50" step="5" origin="0" value="0"',
+	);
+
+	control.dispatchEvent(
+		new KeyboardEvent('keydown', {
+			bubbles: true,
+			cancelable: true,
+			key: 'ArrowUp',
+			metaKey: true,
+		}),
+	);
+	expect(slider.value).toBe(5);
+
+	control.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true, key: 'Meta' }));
+	expect(slider.value).toBe(0);
+});

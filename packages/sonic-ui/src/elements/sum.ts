@@ -210,7 +210,28 @@ export class SonicSum extends SonicElement {
 			});
 		});
 
+		link.land((target, direction) => this.#land(element, target, direction));
+
 		return { element, link, seen: link.value(), unwatch };
+	}
+
+	#land(element: SonicRangeElement, target: number, direction: -1 | 0 | 1): number {
+		if (this.#isQueued) this.#compensate();
+
+		const index = this.#members.findIndex((member) => member.element === element);
+		const mover = this.#members[index];
+		if (!mover) return target;
+
+		const values = distribute(
+			this.#model(
+				this.#members.map(({ seen }) => seen),
+				mover,
+			),
+			{ mode: this.mode, total: this.#total },
+			{ direction, index, target },
+		);
+
+		return values[index] ?? target;
 	}
 
 	#limit(): void {
@@ -296,6 +317,7 @@ export class SonicSum extends SonicElement {
 	#unbind(): void {
 		for (const { link, unwatch } of this.#members) {
 			unwatch();
+			link.land(undefined);
 			link.limit(undefined);
 		}
 		this.#members = [];

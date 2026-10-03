@@ -181,6 +181,27 @@ test('a mover on a finer step is held back to what the coarser siblings can abso
 	]);
 });
 
+test('a held-back mover lands on the nearest value its siblings can absorb, either side of the target', () => {
+	const snapshot = [member(50), member(25, { step: 5 }), member(25, { step: 5 })];
+	const rule = { mode: 'proportional', total: 100 } as const;
+
+	expect(distribute(snapshot, rule, { index: 0, target: 56 })).toEqual([55, 25, 20]);
+	expect(distribute(snapshot, rule, { index: 0, target: 58 })).toEqual([60, 20, 20]);
+	expect(distribute(snapshot, rule, { index: 0, target: 47 })).toEqual([45, 30, 25]);
+});
+
+test('a move with a direction never lands back where it started while a value that way can be reached', () => {
+	const snapshot = [member(50), member(25, { step: 5 }), member(25, { step: 5 })];
+	const rule = { mode: 'proportional', total: 100 } as const;
+
+	expect(distribute(snapshot, rule, { direction: 1, index: 0, target: 51 })).toEqual([55, 25, 20]);
+	expect(distribute(snapshot, rule, { direction: -1, index: 0, target: 49 })).toEqual([45, 30, 25]);
+
+	const full = [member(50), member(25, { max: 25, step: 5 }), member(25, { max: 25, step: 5 })];
+
+	expect(distribute(full, rule, { direction: -1, index: 0, target: 49 })).toEqual([50, 25, 25]);
+});
+
 test('a total past what the bounds allow saturates at the bounds', () => {
 	expect(distribute(members([10, 10], { max: 20 }), { mode: 'equal', total: 100 })).toEqual([
 		20, 20,

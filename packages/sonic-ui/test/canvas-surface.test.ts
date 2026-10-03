@@ -304,3 +304,17 @@ test('resize hears each new size once, and lengths read their registered propert
 	]);
 	expect(looks.at(-1)).toEqual({ pitch: 4.5, unset: 0 });
 });
+
+test('a ratio change the device box does not show still reaches the frame', () => {
+	const { flushFrames, queries } = installCanvasFakes();
+	const { canvas, frames, resize } = mountSurface();
+
+	resize.report([100, 20], [100, 20]);
+	flushFrames();
+	vi.stubGlobal('devicePixelRatio', 2);
+	queries.find(({ media }) => media.startsWith('(resolution'))?.dispatchEvent(new Event('change'));
+	flushFrames();
+
+	expect(frames.at(-1)?.size).toEqual({ dpr: 2, height: 20, width: 100 });
+	expect(canvas.width).toBe(100);
+});

@@ -22,10 +22,19 @@ export function template<Root extends Element>(html: string, root: new () => Roo
 	};
 }
 
-export function attachSlot(host: HTMLElement): HTMLSlotElement {
-	const slot = document.createElement('slot');
+export interface MirrorSlots {
+	kept: HTMLSlotElement;
+	shown: HTMLSlotElement;
+}
 
-	host.attachShadow({ mode: 'open', slotAssignment: 'manual' }).append(slot);
+// An id resolves to the first element in the tree that carries it, and paints nothing when that one has no box
+export function attachSlots(host: HTMLElement): MirrorSlots {
+	const shown = document.createElement('slot');
+	const kept = document.createElement('slot');
 
-	return slot;
+	kept.style.cssText =
+		'position: absolute; display: block; inline-size: 0; block-size: 0; overflow: hidden; visibility: hidden';
+	host.attachShadow({ mode: 'open', slotAssignment: 'manual' }).append(shown, kept);
+
+	return { kept, shown };
 }

@@ -81,10 +81,13 @@ function scaleMark(original: ChildNode): Array<ScaleMark> {
 	return [mark];
 }
 
+type RangeLanding = (target: number, direction: -1 | 0 | 1) => number;
+
 export interface RangeLink {
 	input: (next: number, isMover?: boolean) => boolean;
 	isDisabled: () => boolean;
 	isHeld: () => boolean;
+	land: (resolve: RangeLanding | undefined) => void;
 	limit: (bounds: [number, number] | undefined) => void;
 	scale: () => RangeScale;
 	value: () => number;
@@ -119,6 +122,9 @@ export abstract class SonicRangeElement extends SonicFormElement {
 			input: (next, isMover = false) => (isMover || !element.#isHeld()) && element.input(next),
 			isDisabled: () => element.isDisabled(),
 			isHeld: () => element.#isHeld(),
+			land: (resolve) => {
+				element.#land = resolve;
+			},
 			limit: (bounds) => {
 				element.#limit = bounds;
 			},
@@ -326,6 +332,8 @@ export abstract class SonicRangeElement extends SonicFormElement {
 
 	#keyScrub: KeyScrub | undefined;
 
+	#land: RangeLanding | undefined;
+
 	#limit: [number, number] | undefined;
 
 	#modulated: number | undefined;
@@ -398,8 +406,9 @@ export abstract class SonicRangeElement extends SonicFormElement {
 		control.addEventListener(
 			'pointerdown',
 			(event) => {
-				if (event.button !== 0 || this.isDisabled() || entry.isOpen) return;
+				if (!this.#canPress(event, entry)) return;
 
+				this.#endDrag();
 				this.toggleState('springing', false);
 				// A click listener above makes WebKit send a tap's compatibility mousedown, which blurs the entry a double tap just opened
 				if (event.pointerType === 'touch') event.preventDefault();
@@ -711,8 +720,14 @@ export abstract class SonicRangeElement extends SonicFormElement {
 		control.addEventListener(
 			'keyup',
 			(event) => {
-				if (event.key === this.#keyScrub?.key) this.#endKeyScrub();
-				if (this.scale().keyTarget(event.key, this.#value) !== undefined) this.#springBack();
+				// macOS sends no `keyup` for a key let go while Cmd is down
+				const isMeta = event.key === 'Meta';
+
+				if (isMeta || event.key === this.#keyScrub?.key) this.#endKeyScrub();
+				if (isMeta && this.#drag) return;
+				if (isMeta || this.scale().keyTarget(event.key, this.#value) !== undefined) {
+					this.#springBack();
+				}
 			},
 			{ signal },
 		);
@@ -727,8 +742,16 @@ export abstract class SonicRangeElement extends SonicFormElement {
 		);
 	}
 
-	#commit(next: number): void {
-		if (this.input(next)) this.dispatchEvent(new Event('change', { bubbles: true }));
+	#canPress(event: PointerEvent, entry: RangeEntry): boolean {
+		if (event.button !== 0 || this.isDisabled() || entry.isOpen) return false;
+
+		return !this.#drag || this.#drag.pointerId === event.pointerId;
+	}
+
+	#commit(next: number, direction: -1 | 0 | 1 = 0): void {
+		const landed = Number.isFinite(next) ? (this.#land?.(next, direction) ?? next) : next;
+
+		if (this.input(landed)) this.dispatchEvent(new Event('change', { bubbles: true }));
 	}
 
 	#concealKeyReveal(): void {
@@ -794,7 +817,7 @@ export abstract class SonicRangeElement extends SonicFormElement {
 		}
 
 		this.#endKeyScrub();
-		this.#commit(next);
+		this.#commit(next, next > this.#value ? 1 : -1);
 	}
 
 	#placeModulated(control: HTMLElement, prefix: 'dial' | 'slider'): void {

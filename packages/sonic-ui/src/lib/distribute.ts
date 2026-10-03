@@ -12,6 +12,7 @@ export interface SumMember {
 export type SumMode = 'cascade' | 'equal' | 'proportional';
 
 interface SumMove {
+	direction?: -1 | 0 | 1;
 	index: number;
 	target: number;
 }
@@ -257,24 +258,113 @@ function landShares(
 	return exact;
 }
 
+interface Spread {
+	left: number;
+	order: ReadonlyArray<number>;
+	values: Array<number>;
+}
+
+function spread(
+	members: ReadonlyArray<SumMember>,
+	rule: SumRule,
+	move?: SumMove,
+): Spread | undefined {
+	const values = members.map(({ value }) => value);
+	const owed = move
+		? landMover(members, values, { ...move, total: rule.total })
+		: rule.total - sumOf(values);
+	if (owed === undefined) return undefined;
+
+	const order = poolOrder(members, move?.index ?? -1);
+	const exact = landShares(members, values, shares(pooled(members, order, owed), owed, rule.mode));
+
+	return { left: settle(members, values, { exact, order, total: rule.total }), order, values };
+}
+
+function smallestStep(
+	members: ReadonlyArray<SumMember>,
+	{ left, order, values }: Spread,
+): number | undefined {
+	const steps = order.flatMap((at) => {
+		const member = members[at];
+		const value = values[at];
+		if (!member || value === undefined) return [];
+
+		const next = member.stepFrom(value, left > 0 ? 1 : -1);
+		const isInside = next >= member.min && next <= member.max;
+
+		return isInside && next !== value ? [trimFloat(next - value)] : [];
+	});
+
+	return steps.toSorted((one, other) => Math.abs(one) - Math.abs(other))[0];
+}
+
+// The mover takes what is left on its own grid, or a sibling steps past the total and the mover gives the difference back
+function moverTargets(
+	members: ReadonlyArray<SumMember>,
+	landing: Spread,
+	index: number,
+): Array<number> {
+	const mover = members[index];
+	const landed = landing.values[index];
+	if (!mover || landed === undefined) return [];
+
+	const step = smallestStep(members, landing);
+	const held = stepToward(mover, landed, landing.left);
+
+	return step === undefined
+		? [held]
+		: [held, stepToward(mover, landed, trimFloat(landing.left - step))];
+}
+
+function nearest(
+	candidates: Array<Array<number>>,
+	move: SumMove,
+	from: { landed: number; start: number },
+): Array<number> | undefined {
+	const { direction = 0, index } = move;
+	const moverOf = (candidate: Array<number>): number => candidate[index] ?? NaN;
+	const [first, ...rest] = candidates.toSorted(
+		(one, other) => Math.abs(moverOf(one) - from.landed) - Math.abs(moverOf(other) - from.landed),
+	);
+	if (!first || direction === 0 || moverOf(first) !== from.start) return first;
+
+	return (
+		rest.find((candidate) => Math.sign(moverOf(candidate) - from.start) === direction) ?? first
+	);
+}
+
+function close(
+	members: ReadonlyArray<SumMember>,
+	rule: SumRule,
+	held: { landing: Spread; move: SumMove; mover: SumMember },
+): Array<number> {
+	const { landing, move, mover } = held;
+	const { index } = move;
+	const landed = landing.values[index] ?? mover.value;
+	const targets = moverTargets(members, landing, index);
+	const closed = targets.flatMap((target) => {
+		const attempt = spread(members, rule, { index, target });
+
+		return attempt && Math.abs(attempt.left) <= epsilon ? [attempt.values] : [];
+	});
+
+	return (
+		nearest(closed, move, { landed, start: mover.value }) ??
+		landing.values.with(index, targets[0] ?? landed)
+	);
+}
+
 export function distribute(
 	members: ReadonlyArray<SumMember>,
 	rule: SumRule,
 	move?: SumMove,
 ): Array<number> {
-	const values = members.map(({ value }) => value);
-	const owed = move
-		? landMover(members, values, { ...move, total: rule.total })
-		: rule.total - sumOf(values);
-	if (owed === undefined) return values;
+	const landing = spread(members, rule, move);
+	if (!landing) return members.map(({ value }) => value);
 
-	const index = move?.index ?? -1;
-	const order = poolOrder(members, index);
-	const exact = landShares(members, values, shares(pooled(members, order, owed), owed, rule.mode));
-	const left = settle(members, values, { exact, order, total: rule.total });
-	const mover = members[index];
+	const mover = members[move?.index ?? -1];
+	if (!move || !mover || Math.abs(landing.left) <= epsilon) return landing.values;
 
-	if (mover) values[index] = stepToward(mover, values[index] ?? mover.value, left);
-
-	return values;
+	return close(members, rule, { landing, move, mover });
 }

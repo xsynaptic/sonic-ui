@@ -447,3 +447,25 @@ test('armed reflects both ways and is no state of the toggle', () => {
 	expect(key.hasAttribute('armed')).toBe(true);
 	expect(button.getAttribute('aria-pressed')).toBe('true');
 });
+
+test('a momentary key held under Meta releases when Meta lifts', () => {
+	const { button, key } = mountKey('momentary');
+	const trace = holdTrace(key);
+
+	keyOn(button, 'keydown', { key: 'Meta', metaKey: true });
+	keyOn(button, 'keydown', { key: 'Enter', metaKey: true });
+	expect(key.pressed).toBe(true);
+
+	keyOn(button, 'keyup', { key: 'Meta' });
+	expect(key.pressed).toBe(false);
+	expect(trace).toEqual([true, false]);
+});
+
+test('a Meta keyup leaves a momentary key held by a pointer alone', () => {
+	const { button, key } = mountKey('momentary');
+
+	pointerOn(button, 'pointerdown');
+	keyOn(button, 'keyup', { key: 'Meta' });
+
+	expect(key.pressed).toBe(true);
+});

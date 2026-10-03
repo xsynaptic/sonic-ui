@@ -251,7 +251,10 @@ class CanvasSurface<Colour extends string, Length extends string> implements Sur
 
 	#rescale(): void {
 		const box = this.#cssBox;
-		if (!box) return;
+		if (!box) {
+			this.#resize(this.#size.width, this.#size.height);
+			return;
+		}
 
 		const dpr = deviceRatio();
 

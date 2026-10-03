@@ -43,7 +43,11 @@ export function bindDrag<Drag>(
 	target.addEventListener(
 		'pointerdown',
 		(event) => {
-			const drag = event.button === 0 ? handlers.grab(event) : undefined;
+			if (event.button !== 0 || (held && held.pointerId !== event.pointerId)) return;
+
+			end();
+
+			const drag = handlers.grab(event);
 			if (drag === undefined) return;
 
 			held = { drag, pointerId: event.pointerId };

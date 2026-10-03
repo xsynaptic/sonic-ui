@@ -250,3 +250,56 @@ test.each([10, 0])('an endless scale from 10 to %d holds min', (max) => {
 test('an endless scale wraps a value a float short of max to min', () => {
 	expect(scaleOf({ isWrapping: true, max: 370, min: 10, step: 0 }).snap(370 - 1e-13)).toBe(10);
 });
+
+test.each([
+	[{ max: 10, step: 3 }, 12, 9],
+	[{ max: 15, min: 1, step: 2.5 }, 15, 13.5],
+	[{ max: 10, step: 25 }, 240, 0],
+	[{ max: 0.55, min: -0.3, step: 0.1 }, 0.55, 0.5],
+])('on %o, the top is the last step, so %d snaps to %d', (spec, value, expected) => {
+	const scale = scaleOf(spec);
+
+	expect(scale.snap(value)).toBe(expected);
+	expect(scale.bounds[1]).toBe(expected);
+	expect(scale.keyTarget('End', scale.bounds[0])).toBe(expected);
+});
+
+test.each([
+	[{ max: 10, step: 3 }, [12, 10, 9.6, -4]],
+	[{ max: 15, min: 1, step: 2.5 }, [15, 14.9, 14.2]],
+	[{ isWrapping: true, max: 360, step: 7 }, [365, 359, 358.4, 353.6, -3]],
+	[{ isWrapping: true, max: 370, min: 10, step: 7.5 }, [368, 366.2, 400]],
+])('on %o, a snapped value snaps to itself', (spec, values) => {
+	const scale = scaleOf(spec);
+
+	for (const value of values) expect(scale.snap(scale.snap(value))).toBe(scale.snap(value));
+});
+
+describe('an endless scale whose step of 7 does not divide its 360', () => {
+	const uneven = scaleOf({ isWrapping: true, max: 360, step: 7 });
+
+	test.each([
+		['ArrowUp', 357, 0],
+		['ArrowDown', 0, 357],
+		['ArrowUp', 350, 357],
+		['PageUp', 322, 28],
+		['End', 14, 357],
+	])('%s from %d targets %d, through a short seam', (key, from, expected) => {
+		expect(uneven.keyTarget(key, from)).toBe(expected);
+	});
+
+	test.each([
+		[365, 7],
+		[358.4, 357],
+		[359, 0],
+		[-2, 357],
+	])('%d snaps to %d, the nearer of the last step and min past it', (value, expected) => {
+		expect(uneven.snap(value)).toBe(expected);
+	});
+});
+
+test('End on an endless scale lands on the last step despite float residue in its range', () => {
+	expect(scaleOf({ isWrapping: true, max: -6.1, min: -7, step: 0.1 }).keyTarget('End', -7)).toBe(
+		-6.2,
+	);
+});

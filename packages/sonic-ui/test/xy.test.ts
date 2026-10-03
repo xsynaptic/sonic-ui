@@ -219,3 +219,18 @@ test('a disabled pad takes both parts out of the tab order and ignores keys', ()
 	]);
 	expect(x.getAttribute('aria-disabled')).toBe('true');
 });
+
+test('a second pointer leaves the drag alone, and the drag still ends with change', () => {
+	const { parent, puck, xy } = mountXy(offset);
+	const events = recordEvents(parent);
+
+	pointerAt(puck, 'pointerdown', { clientX: 60, clientY: 80 });
+	pointerAt(puck, 'pointermove', { clientX: 80, clientY: 80 });
+	pointerAt(puck, 'pointerdown', { clientX: 60, clientY: 80, isPrimary: false, pointerId: 2 });
+	pointerAt(puck, 'pointermove', { clientX: 80, clientY: 70 });
+	pointerAt(puck, 'pointerup', { pointerId: 2 });
+	pointerAt(puck, 'pointerup', { clientX: 80, clientY: 70 });
+
+	expect([xy.x, xy.y]).toEqual([10, 160]);
+	expect(events).toEqual(['input', 'input', 'change']);
+});

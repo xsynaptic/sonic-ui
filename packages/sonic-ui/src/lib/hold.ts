@@ -38,7 +38,10 @@ export function bindHold(target: HTMLElement, options: HoldOptions, signal: Abor
 	target.addEventListener(
 		'keyup',
 		(event) => {
-			if (event.key === holder) hold.release();
+			// macOS sends no `keyup` for a key let go while Cmd is down
+			const isMetaLift = event.key === 'Meta' && typeof holder === 'string';
+
+			if (isMetaLift || event.key === holder) hold.release();
 		},
 		{ signal },
 	);

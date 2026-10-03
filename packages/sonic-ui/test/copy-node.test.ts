@@ -76,3 +76,17 @@ test('the original keeps its ids', () => {
 		'clip',
 	]);
 });
+
+// happy-dom drops the text of a `<style>` inside an `<svg>`
+test('a style block inside a copy follows the prefixed ids, in url() and in selectors', () => {
+	const copy = copyNode(
+		parse(
+			'<span><style>.pb{fill:url(#gb)}#gb i,#fade{color:#fade;stroke:url(#sprite)}</style><b id="gb"><i></i></b><b id="fade" class="pb"></b></span>',
+		),
+	);
+	if (!(copy instanceof Element)) throw new Error('The copy is not an element');
+
+	expect(copy.querySelector('style')?.textContent).toBe(
+		'.pb{fill:url(#sonic-copy-gb)}#sonic-copy-gb i,#sonic-copy-fade{color:#fade;stroke:url(#sprite)}',
+	);
+});

@@ -1,4 +1,6 @@
-import { attachSlot } from '#lib/render.ts';
+import type { MirrorSlots } from '#lib/render.ts';
+
+import { attachSlots } from '#lib/render.ts';
 import { writeAttribute } from '#lib/write-attribute.ts';
 
 // eslint-disable-next-line unicorn/consistent-boolean-name -- the name bundlers and other kits use
@@ -44,7 +46,7 @@ export abstract class SonicElement extends HTMLElement {
 
 	#connection: AbortController | undefined;
 
-	#slot: HTMLSlotElement | undefined;
+	#slots: MirrorSlots | undefined;
 
 	override blur(): void {
 		this.#focused()?.blur();
@@ -152,21 +154,19 @@ export abstract class SonicElement extends HTMLElement {
 		{ control, copy, isCopied = () => true }: Mirror,
 		signal: AbortSignal,
 	): void {
-		const slot = this.#slot ?? attachSlot(this);
+		const slots = this.#slots ?? attachSlots(this);
 
-		this.#slot = slot;
+		this.#slots = slots;
 		const mirror = (): void => {
 			const children = [...this.childNodes].filter((child) => child !== control);
+			const slotted = children.filter(
+				(child): child is Element | Text => child instanceof Element || child instanceof Text,
+			);
 
 			copy(children.filter((child) => isCopied(child)));
 			this.appendOnce(control);
-			slot.assign(
-				...children.filter(
-					(child): child is Element | Text =>
-						(child instanceof Element || child instanceof Text) && !isCopied(child),
-				),
-				control,
-			);
+			slots.shown.assign(...slotted.filter((child) => !isCopied(child)), control);
+			slots.kept.assign(...slotted.filter((child) => isCopied(child)));
 		};
 		const observer = new MutationObserver((records) => {
 			if (records.some((record) => this.#isCopiedChange(record, control, isCopied))) mirror();
