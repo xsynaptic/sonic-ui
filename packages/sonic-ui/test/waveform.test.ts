@@ -9,7 +9,7 @@ import {
 	FakeResizeObserver,
 	installCanvasFakes,
 } from './canvas-fakes.ts';
-import { mountControl, pointerAt, recordEvents } from './helpers.ts';
+import { mountControl, pointerAt, pressKey, recordEvents } from './helpers.ts';
 
 afterEach(() => {
 	document.body.replaceChildren();
@@ -127,17 +127,24 @@ test('under reduced motion the playhead pages', () => {
 	expect(playheadAt(control)).toBeCloseTo((6.9 / 7) * 100, 6);
 });
 
-test('the playback rate sets how far a frame carries the playhead past a stale source', () => {
+function carriedAt(playbackRate: number): number {
 	const { flushFrames } = installCanvasFakes({ isReducedMotion: true });
 	const { control, waveform } = mountWaveform(
-		'max="300" playing playback-rate="2" step="0" value="7"',
+		`max="300" playing playback-rate="${String(playbackRate)}" step="0" value="7"`,
 	);
 
 	waveform.readTime = () => 7;
 	flushFrames(1000);
 	flushFrames(1100);
 
-	expect(playheadAt(control)).toBeCloseTo(((0.2 - 0.2 * (1 - 0.94 ** 6)) / 7) * 100, 6);
+	return playheadAt(control);
+}
+
+test('the playback rate scales how far a frame carries the playhead past a stale source', () => {
+	const atUnity = carriedAt(1);
+
+	expect(atUnity).toBeGreaterThan(0);
+	expect(carriedAt(2)).toBeCloseTo(atUnity * 2, 6);
 });
 
 test.each(['0', '-2', 'fast', 'Infinity'])(
@@ -146,9 +153,24 @@ test.each(['0', '-2', 'fast', 'Infinity'])(
 		const { waveform } = mountWaveform(`playback-rate="${playbackRate}"`);
 
 		expect(waveform.playbackRate).toBe(1);
-
-		waveform.playbackRate = 1.5;
-		expect(waveform.playbackRate).toBe(1.5);
-		expect(waveform.getAttribute('playback-rate')).toBe('1.5');
 	},
 );
+
+test.each(['0', 'wide'])('a zoom of %s falls back to the default', (zoom) => {
+	const { waveform } = mountWaveform(`zoom="${zoom}"`);
+
+	expect(waveform.zoom).toBe(mountWaveform('').waveform.zoom);
+});
+
+test('Enter opens the typed entry and moves focus to it', () => {
+	installCanvasFakes();
+
+	const { control, waveform } = mountWaveform('max="300" value="100"');
+	const entry = waveform.querySelector<HTMLInputElement>('.sonic-waveform-entry');
+
+	control.focus();
+	pressKey(control, 'Enter');
+
+	expect(entry?.hidden).toBe(false);
+	expect(document.activeElement).toBe(entry);
+});

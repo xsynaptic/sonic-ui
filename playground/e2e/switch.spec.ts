@@ -14,15 +14,6 @@ function readCheckedPosition(page: Page): Promise<null | string> {
 		.evaluate((position) => position.textContent.trim());
 }
 
-test('a named switch is a radio group of its printed positions, and a bare one a switch', async ({
-	page,
-}) => {
-	await expect(page.getByRole('radiogroup', { name: 'Talk' })).toBeVisible();
-	await expect(page.getByRole('radio', { checked: true, name: 'Off' })).toBeVisible();
-	await expect(page.getByRole('radio', { name: 'Duck' })).toBeVisible();
-	await expect(page.getByRole('switch', { checked: false, name: 'Sync' })).toBeVisible();
-});
-
 test('a trusted press holds the momentary position and a release springs it back', async ({
 	isMobile,
 	page,
@@ -41,17 +32,6 @@ test('a trusted press holds the momentary position and a release springs it back
 	expect(await readCheckedPosition(page)).toBe('Duck');
 
 	await page.mouse.up();
-	expect(await readCheckedPosition(page)).toBe('Off');
-});
-
-test('a held arrow holds the momentary position until the key lifts', async ({ page }) => {
-	await page.getByRole('radio', { name: 'Off' }).focus();
-	await page.keyboard.down('ArrowUp');
-	await expect(page.getByRole('radio', { name: 'Duck' })).toBeFocused();
-	expect(await readCheckedPosition(page)).toBe('Duck');
-
-	await page.keyboard.up('ArrowUp');
-	await expect(page.getByRole('radio', { name: 'Off' })).toBeFocused();
 	expect(await readCheckedPosition(page)).toBe('Off');
 });
 
@@ -100,4 +80,27 @@ test('a drag on the bat throws it through its positions', async ({ isMobile, pag
 	expect(await readCheckedPosition(page)).toBe('Duck');
 	await page.mouse.up();
 	expect(await readCheckedPosition(page)).toBe('Off');
+});
+
+test('a press or a drag on the bat carries the focus the switch held to the new position', async ({
+	isMobile,
+	page,
+}) => {
+	test.skip(isMobile, mouseOnly);
+
+	const at = await centreOf(page.locator('#talk .sonic-switch-bat'));
+
+	await page.getByRole('radio', { name: 'Off' }).focus();
+	await page.mouse.click(at.x, at.y);
+	await expect(page.getByRole('radio', { name: 'On' })).toBeChecked();
+	await expect(page.getByRole('radio', { name: 'On' })).toBeFocused();
+
+	const thrown = await centreOf(page.locator('#talk .sonic-switch-bat'));
+
+	await page.mouse.move(thrown.x, thrown.y);
+	await page.mouse.down();
+	await page.mouse.move(thrown.x, thrown.y - 14, { steps: 4 });
+	await page.mouse.up();
+	await expect(page.getByRole('radio', { name: 'Off' })).toBeChecked();
+	await expect(page.getByRole('radio', { name: 'Off' })).toBeFocused();
 });

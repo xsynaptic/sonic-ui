@@ -152,6 +152,40 @@ test("a disabled dial's handle does not move it, and the other axis still drags"
 	expect([dials.decay.value, dials.sustain.value]).toEqual([350, -18]);
 });
 
+test('a disabled envelope marks every handle still and drags none, until it is enabled again', () => {
+	const { dials, envelope, events, handle } = mountBound();
+
+	envelope.disabled = true;
+	expect(handle('decay').matches('[data-sonic-disabled]')).toBe(true);
+
+	drag(handle('decay'), { x: 25, y: -20 });
+	expect([dials.decay.value, dials.sustain.value]).toEqual([350, -30]);
+	expect(events).toEqual([]);
+
+	envelope.disabled = false;
+	expect(handle('decay').matches('[data-sonic-disabled]')).toBe(false);
+
+	drag(handle('decay'), { x: 25, y: -20 });
+	expect([dials.decay.value, dials.sustain.value]).toEqual([662.5, -18]);
+});
+
+test('disabling the envelope mid-drag ends the drag where it is and reports the change', () => {
+	const { dials, envelope, events, handle } = mountBound();
+	const decay = handle('decay');
+
+	pointerAt(decay, 'pointerdown', { clientX: 100, clientY: 100 });
+	pointerAt(decay, 'pointermove', { clientX: 125, clientY: 80 });
+	envelope.disabled = true;
+	pointerAt(decay, 'pointermove', { clientX: 150, clientY: 60 });
+
+	expect([dials.decay.value, dials.sustain.value]).toEqual([662.5, -18]);
+	expect(events.filter((event) => event.startsWith('change'))).toEqual([
+		'change decay',
+		'change sustain',
+	]);
+	expect(envelope.matches(':state(dragging)')).toBe(false);
+});
+
 test('a cancelled drag puts both dials back and reports no change', () => {
 	const { dials, events, handle } = mountBound();
 	const decay = handle('decay');

@@ -1,6 +1,4 @@
-export function defineStops<Value extends string>(
-	stops: ReadonlyArray<{ label: string; value: Value }>,
-) {
+function defineStops<Value extends string>(stops: ReadonlyArray<{ label: string; value: Value }>) {
 	return {
 		labels: stops.map((stop) => stop.label),
 		positions: stops.map((_stop, index) => String(index)).join(' '),

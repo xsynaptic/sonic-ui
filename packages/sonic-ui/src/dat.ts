@@ -37,6 +37,7 @@ export function readDatHeader(buffer: ArrayBuffer): DatHeader {
 
 	const sampleRate = view.getInt32(8, true);
 	const samplesPerPixel = view.getInt32(12, true);
+	if (samplesPerPixel < 1) throw new Error('A .dat header names no samples per pixel');
 
 	return {
 		bits: (view.getUint32(4, true) & 1) === 1 ? 8 : 16,

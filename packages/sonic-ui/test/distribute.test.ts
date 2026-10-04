@@ -79,9 +79,6 @@ test('proportional weights count from each minimum', () => {
 		{ index: 0, target: 60 },
 	);
 
-	expect(result[0]).toBe(60);
-	expect(sum(result)).toBe(100);
-	expect(Math.min(...result)).toBeGreaterThanOrEqual(10);
 	expect(result).toEqual([60, 23, 17]);
 });
 
@@ -95,13 +92,18 @@ test('proportional splits evenly between members that hold nothing', () => {
 	expect(result).toEqual([80, 10, 10]);
 });
 
-test.each(['proportional', 'equal', 'cascade'] as const)(
-	'%s keeps a locked member and stops the mover at what the rest can give',
-	(mode: SplitMode) => {
-		const snapshot = [member(50), member(30, { isFree: false }), member(20)];
+test.each<[SplitMode, Array<number>]>([
+	['proportional', [60, 30, 9, 1]],
+	['equal', [60, 30, 10, 0]],
+	['cascade', [60, 30, 8, 2]],
+])(
+	'%s keeps a locked member, takes from the free ones its own way, and stops the mover at what they can give',
+	(mode, taken) => {
+		const snapshot = [member(50), member(30, { isFree: false }), member(18), member(2)];
 
-		expect(distribute(snapshot, { mode: mode, total: 100 }, { index: 0, target: 90 })).toEqual([
-			70, 30, 0,
+		expect(distribute(snapshot, { mode, total: 100 }, { index: 0, target: 60 })).toEqual(taken);
+		expect(distribute(snapshot, { mode, total: 100 }, { index: 0, target: 90 })).toEqual([
+			70, 30, 0, 0,
 		]);
 	},
 );

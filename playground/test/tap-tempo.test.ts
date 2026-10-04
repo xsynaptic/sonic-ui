@@ -35,3 +35,21 @@ test('the phase runs from the last tap, before it as well as after', () => {
 	expect(tempo.phaseAt(5125)).toBeCloseTo(0.25);
 	expect(tempo.phaseAt(4875)).toBeCloseTo(0.75);
 });
+
+test('taps slower than the range settle on 40 bpm', () => {
+	const tempo = createTapTempo(96);
+
+	tempo.tap(0);
+
+	expect(tempo.tap(1900)).toBe(40);
+	expect(tempo.phaseAt(1900 + 375)).toBeCloseTo(0.25);
+});
+
+test('the mean runs over the last five taps, so a sixth drops the first', () => {
+	const tempo = createTapTempo(96);
+
+	for (const time of [0, 700, 1000, 1300]) tempo.tap(time);
+
+	expect(tempo.tap(1600)).toBe(150);
+	expect(tempo.tap(1900)).toBe(200);
+});

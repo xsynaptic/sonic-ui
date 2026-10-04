@@ -1,4 +1,4 @@
-import { afterEach, expect, test } from 'vitest';
+import { afterEach, expect, test, vi } from 'vitest';
 
 import { focusByPointer } from '#lib/focus-by-pointer.ts';
 
@@ -62,11 +62,9 @@ test('a blur that leaves the target focused, as a window switch does, keeps the 
 
 test('a second press while marked adds no second pair of listeners', () => {
 	const target = pressed();
+	const added = vi.spyOn(target, 'addEventListener');
 
 	focusByPointer(target);
-	key(target, { key: 'ArrowUp' });
-	focusByPointer(target);
-	key(target, { ctrlKey: true, key: 'c' });
 
-	expect(isMarked(target)).toBe(true);
+	expect(added).not.toHaveBeenCalled();
 });

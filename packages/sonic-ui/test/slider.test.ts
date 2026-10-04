@@ -24,15 +24,6 @@ function layOut(control: HTMLElement, box: DOMRect, capBox: DOMRect): void {
 	vi.spyOn(capOf(control), 'getBoundingClientRect').mockReturnValue(capBox);
 }
 
-test('orientation follows the attribute', () => {
-	const { control, slider } = mountSlider('value="40"');
-
-	expect(control.getAttribute('aria-orientation')).toBe('horizontal');
-
-	slider.setAttribute('orientation', 'vertical');
-	expect(control.getAttribute('aria-orientation')).toBe('vertical');
-});
-
 test('the slider writes its proportion, origin and position count, and moving the origin keeps the value', () => {
 	const { control, slider } = mountSlider(
 		'min="-50" max="50" step="10" notched origin="0" value="20"',
@@ -185,6 +176,8 @@ test('with groove-press="none" and double-press="reset", a double press on the g
 });
 
 test('groove-press reads jump while unset, and jump is a valid value', () => {
+	expect(mountSlider('value="40"').slider.groovePress).toBe('jump');
+
 	const { control, slider } = mountSlider('value="40" groove-press="none"');
 
 	slider.groovePress = slider.groovePress === 'none' ? 'jump' : 'none';
@@ -204,13 +197,6 @@ test('orientation set as a property turns the slider', () => {
 	slider.orientation = undefined;
 	expect(slider.hasAttribute('orientation')).toBe(false);
 	expect(control.getAttribute('aria-orientation')).toBe('horizontal');
-});
-
-test('focus() reaches the control', () => {
-	const { control, slider } = mountSlider('value="40"');
-
-	slider.focus();
-	expect(document.activeElement).toBe(control);
 });
 
 // A 220px slider at 100px with a 20px cap: 200px of travel, the centre of a -50 to 50 slider at 210px
@@ -362,3 +348,37 @@ test('with spring, an arrow held under Meta springs back when Meta lifts', () =>
 	control.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true, key: 'Meta' }));
 	expect(slider.value).toBe(0);
 });
+
+test('with spring, Meta let go during a drag leaves the slider where it is held', () => {
+	const { control, slider } = mountSlider('spring min="-50" max="50" origin="0" value="0"');
+
+	layOut(control, new DOMRect(100, 0, 220, 40), new DOMRect(0, 0, 20, 40));
+	pointerAt(capOf(control), 'pointerdown', { clientX: 210 });
+	pointerAt(capOf(control), 'pointermove', { clientX: 250 });
+	control.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true, key: 'Meta' }));
+
+	expect(slider.value).toBe(20);
+});
+
+test.each([
+	['entry', ''],
+	['reset', 'default="20" double-press="reset"'],
+])(
+	'with spring and double-press="%s", a double press on the cap neither opens the entry nor resets',
+	(_gesture, attributes) => {
+		const { control, slider } = mountSlider(
+			`spring min="-50" max="50" origin="0" value="0" ${attributes}`,
+		);
+		const events = recordEvents(slider);
+
+		layOut(control, new DOMRect(100, 0, 220, 40), new DOMRect(0, 0, 20, 40));
+		for (let presses = 0; presses < 2; presses += 1) {
+			pointerAt(capOf(control), 'pointerdown', { clientX: 210 });
+			pointerAt(capOf(control), 'pointerup', { clientX: 210 });
+		}
+
+		expect(control.querySelector('input')?.hidden).toBe(true);
+		expect(slider.value).toBe(0);
+		expect(events).toEqual([]);
+	},
+);

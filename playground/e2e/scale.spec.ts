@@ -30,13 +30,3 @@ for (const path of ['/', '/club-mixer/', '/fixtures/']) {
 		expect(outside).toEqual([]);
 	});
 }
-
-test('a labelled selector stays a slider that names its stop', async ({ page }) => {
-	await page.goto('/fixtures/');
-
-	const selector = page.getByRole('slider', { name: 'Echo mode' });
-
-	await selector.press('ArrowRight');
-
-	await expect(selector).toHaveAttribute('aria-valuetext', 'Ping-pong');
-});

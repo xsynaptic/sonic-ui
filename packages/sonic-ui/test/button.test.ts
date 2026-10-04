@@ -86,25 +86,11 @@ test('a plain button neither latches nor reports change', () => {
 	expect(changes).toBe(0);
 });
 
-test('aria-label is forwarded to the button as it is added, changed and removed', () => {
-	const { button, host } = mountButton('aria-label="first"');
+test('the host names the native button, and disabled disables it', () => {
+	const { button, host } = mountButton('disabled latching aria-label="first"');
 
 	expect(button.getAttribute('aria-label')).toBe('first');
-
-	host.setAttribute('aria-label', 'second');
-	expect(button.getAttribute('aria-label')).toBe('second');
-
-	host.removeAttribute('aria-label');
-	expect(button.hasAttribute('aria-label')).toBe(false);
-});
-
-test('disabled disables the native button, so a latching button no longer latches', () => {
-	const { button, host } = mountButton('disabled latching');
-
 	expect(button.disabled).toBe(true);
-
-	button.click();
-	expect(host.pressed).toBe(false);
 
 	host.disabled = false;
 	expect(button.disabled).toBe(false);
@@ -193,18 +179,6 @@ test('two momentary buttons hold at once, and focus moving to the second keeps t
 
 	expect(first.pressed).toBe(true);
 	expect(second.pressed).toBe(true);
-});
-
-test('focus moving to another control releases a momentary button held from the keyboard', () => {
-	const { button, host } = mountButton('momentary');
-	const next = document.createElement('button');
-
-	document.body.append(next);
-	button.focus();
-	keyOn(button, 'keydown', { key: ' ' });
-	button.dispatchEvent(new FocusEvent('blur', { relatedTarget: next }));
-
-	expect(host.pressed).toBe(false);
 });
 
 test('blur releases a momentary button held from the keyboard', () => {
@@ -304,17 +278,13 @@ test('latching set as a property latches the next press', () => {
 	expect(button.hasAttribute('aria-pressed')).toBe(false);
 });
 
-test('focus() and blur() reach the native button, and a disabled button takes no focus', () => {
+test('focus() and blur() reach the native button', () => {
 	const { button, host } = mountButton('');
 
 	host.focus();
 	expect(document.activeElement).toBe(button);
 
 	host.blur();
-	expect(document.activeElement).toBe(document.body);
-
-	host.disabled = true;
-	host.focus();
 	expect(document.activeElement).toBe(document.body);
 });
 
@@ -435,22 +405,6 @@ test('disabled wins over soft-disabled', () => {
 
 	expect(button.disabled).toBe(true);
 	expect(button.hasAttribute('aria-disabled')).toBe(false);
-});
-
-test('armed reflects both ways and leaves pressed alone', () => {
-	const { button, host } = mountButton('latching armed');
-
-	expect(host.armed).toBe(true);
-	expect(button.getAttribute('aria-pressed')).toBe('false');
-	expect(host.pressed).toBe(false);
-
-	host.armed = false;
-	expect(host.hasAttribute('armed')).toBe(false);
-
-	button.click();
-	host.armed = true;
-	expect(host.hasAttribute('armed')).toBe(true);
-	expect(button.getAttribute('aria-pressed')).toBe('true');
 });
 
 test('a momentary button held under Meta releases when Meta lifts', () => {

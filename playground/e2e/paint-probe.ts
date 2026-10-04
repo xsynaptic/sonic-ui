@@ -1,0 +1,79 @@
+import type { Locator } from '@playwright/test';
+
+import { expect } from '@playwright/test';
+
+type Colour = [number, number, number];
+
+interface PaintedLine {
+	lengthPx: number;
+	pixels: Array<Colour>;
+}
+
+// Screenshotted rather than read from styles, so the masks and gradients are the engine's own
+export async function paintedLine(target: Locator, axis: 'x' | 'y'): Promise<PaintedLine> {
+	const shot = await target.screenshot();
+	const box = await target.boundingBox();
+	if (!box) throw new Error('The target has no box');
+
+	const pixels = await target.evaluate(
+		async (_element, [data, axis]) => {
+			const image = new Image();
+
+			image.src = `data:image/png;base64,${data}`;
+			await image.decode();
+
+			const canvas = document.createElement('canvas');
+
+			canvas.width = image.naturalWidth;
+			canvas.height = image.naturalHeight;
+
+			const context = canvas.getContext('2d', { willReadFrequently: true });
+			if (!context) throw new Error('No 2d context');
+
+			context.drawImage(image, 0, 0);
+
+			const { height, width } = canvas;
+			const { data: line } =
+				axis === 'x'
+					? context.getImageData(0, Math.floor(height / 2), width, 1)
+					: context.getImageData(Math.floor(width / 2), 0, 1, height);
+
+			return Array.from({ length: line.length / 4 }, (_pixel, index): [number, number, number] => [
+				line[index * 4] ?? 0,
+				line[index * 4 + 1] ?? 0,
+				line[index * 4 + 2] ?? 0,
+			]);
+		},
+		[shot.toString('base64'), axis] as const,
+	);
+
+	return { lengthPx: axis === 'x' ? box.width : box.height, pixels };
+}
+
+export function paintedRuns(
+	{ lengthPx, pixels }: PaintedLine,
+	isPainted: (colour: Colour) => boolean,
+): Array<[number, number]> {
+	const scale = lengthPx / pixels.length;
+	const runs: Array<[number, number]> = [];
+	let from: number | undefined;
+
+	for (const [index, colour] of [...pixels, undefined].entries()) {
+		const isIn = colour !== undefined && isPainted(colour);
+
+		if (isIn && from === undefined) from = index;
+		if (isIn || from === undefined) continue;
+
+		runs.push([from * scale, index * scale]);
+		from = undefined;
+	}
+
+	return runs;
+}
+
+// A screenshot rounds its box out to whole pixels, and an edge antialiases across one more
+export function expectEdge(actual: number | undefined, expected: number): void {
+	const distance = Math.abs((actual ?? NaN) - expected);
+
+	expect(distance, `${String(actual)} against ${String(expected)}`).toBeLessThanOrEqual(1.5);
+}

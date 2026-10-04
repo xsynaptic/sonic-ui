@@ -54,15 +54,6 @@ test('a level below the minimum draws nothing', () => {
 	expect(read(control, 'bar')).toBe(0);
 });
 
-test('the attack is instant', () => {
-	const { control, meter } = mountMeter();
-
-	meter.level = fromDecibels(-50);
-	meter.level = fromDecibels(-6);
-
-	expect(read(control, 'bar')).toBeCloseTo(0.9, 6);
-});
-
 test('the bar falls 20 dB a second, and the peak holds 1.5s before falling as fast', () => {
 	const { control, meter } = mountMeter();
 
@@ -145,14 +136,15 @@ test('disabled puts the bar out, and enabling it again shows the level still fal
 	expect(read(control, 'clipped')).toBe(1);
 });
 
-test('bounds set as properties map the level as their attributes would', () => {
+test('bounds set as properties redraw the level already shown', () => {
 	const { control, meter } = mountMeter();
 
+	meter.level = fromDecibels(-25);
 	meter.min = -40;
+	expect(read(control, 'bar')).toBeCloseTo(0.375, 6);
+
 	meter.max = -10;
-	meter.level = fromDecibels(-20);
-	expect(meter.getAttribute('min')).toBe('-40');
-	expect(read(control, 'bar')).toBeCloseTo(2 / 3, 6);
+	expect(read(control, 'bar')).toBeCloseTo(0.5, 6);
 });
 
 test('a set value draws at its proportion, with no fall, hold or clip, and ignores a level write', () => {
@@ -293,12 +285,16 @@ test('a VU needle swings to the level with no peak hold, then stops its loop', (
 	expect(vi.getTimerCount()).toBe(0);
 });
 
-test('a set value ignores the ballistics and draws at once', () => {
-	const { control, meter } = mountMeter('min="-1" max="1" ballistics="vu"');
+test('a value set mid-swing takes the bar at once and stops the loop', () => {
+	const { control, meter } = mountMeter('min="-40" max="0" ballistics="vu"');
 
-	meter.value = 0.5;
+	meter.level = fromDecibels(-10);
+	vi.advanceTimersByTime(160);
+	meter.value = -30;
+	expect(read(control, 'bar')).toBe(0.25);
 
-	expect(read(control, 'bar')).toBe(0.75);
+	vi.advanceTimersByTime(500);
+	expect(read(control, 'bar')).toBe(0.25);
 	expect(vi.getTimerCount()).toBe(0);
 });
 

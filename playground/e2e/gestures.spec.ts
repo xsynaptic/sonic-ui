@@ -153,18 +153,6 @@ test('double-press="reset" resets rather than opening an entry', async ({ page }
 	await expect(page.getByRole('textbox')).toHaveCount(0);
 });
 
-test('Enter opens typed entry from the keyboard, and Escape leaves the value', async ({ page }) => {
-	const slider = page.getByRole('slider', { name: 'Level' });
-
-	await slider.focus();
-	await page.keyboard.press('Enter');
-	await page.keyboard.type('90');
-	await page.keyboard.press('Escape');
-
-	await expect(slider).toBeFocused();
-	await expect(slider).toHaveAttribute('aria-valuenow', '50');
-});
-
 test('an endless dial dragged past its end wraps to the start', async ({ page }) => {
 	await drag(page, page.locator('#phase .sonic-dial'), { x: 0, y: -16 });
 
@@ -219,6 +207,21 @@ test('a segmented press dragged to another option latches it, and dragged off la
 
 	await drag(page, lowPass, offset);
 	await expect(highPass).toBeChecked();
+});
+
+test('a segmented press released on another option carries the focus the group held there', async ({
+	page,
+}) => {
+	const lowPass = page.getByRole('radio', { name: 'LP' });
+	const highPass = page.getByRole('radio', { name: 'HP' });
+	const start = await centreOf(lowPass);
+	const end = await centreOf(highPass);
+
+	await lowPass.focus();
+	await drag(page, lowPass, { x: end.x - start.x, y: end.y - start.y });
+
+	await expect(highPass).toBeChecked();
+	await expect(highPass).toBeFocused();
 });
 
 // 36 units over 160px: the detent at 0 sits 13px up from -3 and holds for 8px past it

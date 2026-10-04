@@ -56,26 +56,24 @@ test('the digits follow formatValue and the value', () => {
 });
 
 test('a drag up raises the value over the travel, and Shift slows it tenfold', () => {
-	const { control, number } = mountNumber('min="-20" max="140" step="0.5" value="0"');
+	const { control, number } = mountNumber('min="-20" max="300" step="0.5" value="0"');
 	const events = recordEvents(document.body);
 
 	pointerAt(control, 'pointerdown', { clientY: 100 });
 	pointerAt(control, 'pointermove', { clientY: 60 });
-	expect(number.value).toBe(40);
+	expect(number.value).toBe(80);
 
 	pointerAt(control, 'pointermove', { clientY: 20, shiftKey: true });
-	expect(number.value).toBe(44);
+	expect(number.value).toBe(88);
 
 	pointerAt(control, 'pointerup', { clientY: 20 });
 	expect(events).toEqual(['input', 'input', 'change']);
 });
 
-test('a double press types in place with no popover, and Enter commits', () => {
+test('a double press types in place, and Enter commits', () => {
 	const { control, number } = mountNumber('aria-label="Tempo" min="20" max="300" value="120"');
 	const { digits, entry } = partsOf(control);
 	const events = recordEvents(document.body);
-
-	expect(control.querySelector('[popover]')).toBeNull();
 
 	doublePress(control);
 	expect(entry.hidden).toBe(false);
@@ -142,13 +140,13 @@ test('with press="step" on a stepped range, a tap at the top wraps to the minimu
 });
 
 test('with press="step", a drag moves by the drag alone', () => {
-	const { control, number } = mountNumber('press="step" min="10" max="170" step="2" value="50"');
+	const { control, number } = mountNumber('press="step" min="10" max="330" step="2" value="50"');
 
 	pointerAt(control, 'pointerdown', { clientY: 100 });
 	pointerAt(control, 'pointermove', { clientY: 80 });
 	pointerAt(control, 'pointerup', { clientY: 80 });
 
-	expect(number.value).toBe(70);
+	expect(number.value).toBe(90);
 });
 
 test('without press, a tap leaves the value', () => {

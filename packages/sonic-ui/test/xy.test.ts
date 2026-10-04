@@ -48,6 +48,16 @@ test('a press on the glass puts each value at the pointer, on its own mapping, w
 	expect([xy.x, xy.y]).toEqual([632, 12]);
 });
 
+test('each value and origin is drawn at its proportion of its own range, an unset origin at the minimum', () => {
+	const { glass } = mountXy(
+		'x="-25" x-min="-50" x-max="50" y="180" y-min="100" y-max="200" y-origin="125"',
+	);
+	const style = (name: string): string => glass.style.getPropertyValue(`--_sonic-xy-${name}`);
+
+	expect([style('x'), style('y')]).toEqual(['0.25', '0.8']);
+	expect([style('x-origin'), style('y-origin')]).toEqual(['0', '0.25']);
+});
+
 test('a value waits for its range, and an unset value rests at its own minimum', () => {
 	const { xy } = mountXy('x="150" x-max="200" y-min="10"');
 

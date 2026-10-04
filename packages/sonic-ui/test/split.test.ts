@@ -122,6 +122,19 @@ test('a locked member holds its value, stops the mover, and cannot be dragged it
 	expect(valuesOf(members)).toEqual([70, 30, 0]);
 });
 
+test('a disabled member is locked as a marked one is', async () => {
+	const { members } = await mountSplit(
+		'',
+		sliders(50, '<sonic-slider disabled value="30"></sonic-slider>', 20),
+	);
+	const [first] = members;
+	if (!first) throw new Error('No member');
+
+	await drag(first, [100]);
+
+	expect(valuesOf(members)).toEqual([70, 30, 0]);
+});
+
 test('a drag past what the siblings can give turns back at once, as it does from the end', async () => {
 	const { members } = await mountSplit(
 		'',
@@ -217,13 +230,25 @@ test('a property write moves the siblings and fires no change', async () => {
 });
 
 test('a total spreads at bind, and with none the members stay put', async () => {
-	const spread = await mountSplit('mode="equal" total="90"', sliders(20, 20, 20));
+	const spread = await mountSplit('mode="equal" total="90"', sliders(10, 20, 30));
 
-	expect(valuesOf(spread.members)).toEqual([30, 30, 30]);
+	expect(valuesOf(spread.members)).toEqual([20, 30, 40]);
 
-	const kept = await mountSplit('mode="equal"', sliders(20, 20, 20));
+	const kept = await mountSplit('mode="equal"', sliders(10, 20, 30));
 
-	expect(valuesOf(kept.members)).toEqual([20, 20, 20]);
+	expect(valuesOf(kept.members)).toEqual([10, 20, 30]);
+});
+
+test('a total set after bind spreads the members to it, and a drag then holds it', async () => {
+	const { members, split } = await mountSplit('', sliders(50, 30, 20));
+	const [first] = members;
+	if (!first) throw new Error('No member');
+
+	split.total = 50;
+	expect(valuesOf(members)).toEqual([25, 15, 10]);
+
+	await drag(first, [35]);
+	expect(valuesOf(members)).toEqual([35, 9, 6]);
 });
 
 test('a split taken off the page lifts every limit', async () => {

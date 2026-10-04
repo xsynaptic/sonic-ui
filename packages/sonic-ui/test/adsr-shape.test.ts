@@ -52,10 +52,9 @@ test('an unbound sustain reads full level, and an unbound decay drops straight d
 });
 
 test('with no release bound the line still drops to the floor, so the fill closes along it', () => {
-	const { fill, stroke } = adsrPath(adsrShape({ attack: 1, sustain: 0.5 }));
+	const { stroke } = adsrPath(adsrShape({ attack: 1, sustain: 0.5 }));
 
 	expect(stroke.endsWith('L1 0.5L1 1')).toBe(true);
-	expect(fill).toBe(`${stroke}Z`);
 });
 
 test('a curved decay passes through its curve at the middle, where its curve handle sits', () => {

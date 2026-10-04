@@ -31,15 +31,11 @@ test('a latched button lights the LED it holds, as data-sonic-lit does', async (
 	expect(await readLens(held)).toBe(lit);
 });
 
-test('a second-colour LED lights in its own colour', async ({ page }) => {
-	expect(await readLens(page.locator('#led-alt'))).not.toBe(
-		await readLens(page.locator('#led-lit')),
-	);
-});
-
-test('hot, clip and dim lenses each differ from lit and from off', async ({ page }) => {
+test('hot, clip, dim and second-colour lenses each differ from lit and from off', async ({
+	page,
+}) => {
 	const lenses = await Promise.all(
-		['#led', '#led-lit', '#led-hot', '#led-clip', '#led-dim'].map((selector) =>
+		['#led', '#led-lit', '#led-hot', '#led-clip', '#led-dim', '#led-alt'].map((selector) =>
 			readLens(page.locator(selector)),
 		),
 	);

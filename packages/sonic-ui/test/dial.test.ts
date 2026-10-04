@@ -81,15 +81,11 @@ test('a key fires input and change only when the value moves', () => {
 	expect(events).toEqual(['input', 'change']);
 });
 
-test.each([
-	['value="80" modulation="50"', '0.8', '1'],
-	['value="20" modulation="-50"', '0', '0.2'],
-	['value="40" modulation="25"', '0.4', '0.65'],
-])('%s draws the modulation from %s to %s', (attributes, from, to) => {
-	const { control } = mountDial(attributes);
+test('the modulation draws from the value, counted from the minimum', () => {
+	const { control } = mountDial('min="20" max="120" value="60" modulation="25"');
 
-	expect(control.style.getPropertyValue('--_sonic-dial-modulation-from')).toBe(from);
-	expect(control.style.getPropertyValue('--_sonic-dial-modulation-to')).toBe(to);
+	expect(control.style.getPropertyValue('--_sonic-dial-modulation-from')).toBe('0.4');
+	expect(control.style.getPropertyValue('--_sonic-dial-modulation-to')).toBe('0.65');
 });
 
 test('moving the origin re-renders without touching the value', () => {
@@ -137,13 +133,6 @@ test.each(['aria-describedby', 'aria-label', 'aria-labelledby'])(
 		expect(control.hasAttribute(name)).toBe(false);
 	},
 );
-
-test('an attribute outside the allowlist stays on the host', () => {
-	const { control } = mountDial('title="Cutoff" label="Cutoff"');
-
-	expect(control.hasAttribute('title')).toBe(false);
-	expect(control.hasAttribute('aria-label')).toBe(false);
-});
 
 test('formatValue writes the value text, and unsetting it clears it', () => {
 	const { control, dial } = mountDial('max="1" step="0.01" value="0.5"');
@@ -319,6 +308,17 @@ test('two presses apart do not open the entry', () => {
 	press(control, { clientX: 20 });
 
 	expect(entryOf(control).hidden).toBe(true);
+});
+
+test('a second press 3px off on both axes is too far to open the entry, and 2px off opens it', () => {
+	const { control } = mountDial('value="50"');
+
+	press(control);
+	press(control, { clientX: 13, clientY: 13 });
+	expect(entryOf(control).hidden).toBe(true);
+
+	press(control, { clientX: 15, clientY: 15 });
+	expect(entryOf(control).hidden).toBe(false);
 });
 
 test('Enter commits the typed value through parseValue and hands focus back', () => {
@@ -538,6 +538,8 @@ test('an unset origin reads undefined, so writing it back leaves it following mi
 });
 
 test('double-press reads entry while unset, and entry is a valid value', () => {
+	expect(mountDial('value="80"').dial.doublePress).toBe('entry');
+
 	const { control, dial } = mountDial('default="50" double-press="reset" value="80"');
 
 	dial.doublePress = dial.doublePress === 'reset' ? 'entry' : 'reset';
@@ -619,14 +621,16 @@ describe('an endless dial from 10 to 370 in steps of 7.5', () => {
 
 const modulationValueProperty = '--_sonic-dial-modulation-value';
 
-test('the modulation value sits at its proportion, clamped to the ends', () => {
+test('the modulation value sits at its proportion, clamped to the ends, and reports nothing', () => {
 	const { control, dial } = mountDial('min="20" max="120" value="40"');
+	const events = recordEvents(document.body);
 
 	dial.modulationValue = 95;
 	expect(control.style.getPropertyValue(modulationValueProperty)).toBe('0.75');
 
 	dial.modulationValue = 500;
 	expect(control.style.getPropertyValue(modulationValueProperty)).toBe('1');
+	expect(events).toEqual([]);
 });
 
 test('the modulation value follows a taper', () => {
@@ -635,18 +639,6 @@ test('the modulation value follows a taper', () => {
 	dial.modulationValue = 632.5;
 
 	expect(Number(control.style.getPropertyValue(modulationValueProperty))).toBeCloseTo(0.5, 3);
-});
-
-test('the modulation value moves neither the value nor its ARIA, and reports nothing', () => {
-	const { control, dial } = mountDial('min="20" max="120" value="40"');
-	const events = recordEvents(document.body);
-
-	dial.modulationValue = 95;
-
-	expect(events).toEqual([]);
-	expect(dial.value).toBe(40);
-	expect(dial.modulationValue).toBe(95);
-	expect(control.getAttribute('aria-valuenow')).toBe('40');
 });
 
 test('undefined clears the modulation value, NaN is ignored, and a change of bounds moves it', () => {

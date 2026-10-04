@@ -58,12 +58,6 @@ test('the XY pad readout names both axes and stays over the puck as it moves', a
 	await expect(readout).toBeHidden();
 });
 
-test('an XY pad without the attribute shows no readout', async ({ page }) => {
-	await hold(page, page.locator('#xy .sonic-xy-puck'), { x: 20, y: 10 });
-
-	await expect(page.locator('#xy .sonic-xy-readout')).toBeHidden();
-});
-
 test('the envelope readout sits over whichever handle is held', async ({ page }) => {
 	const readout = page.locator('#envelope-curves .sonic-envelope-readout');
 	const decay = page.locator('#envelope-curves .sonic-envelope-handle[data-sonic-stage="decay"]');

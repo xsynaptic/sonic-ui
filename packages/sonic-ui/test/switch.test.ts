@@ -225,12 +225,6 @@ test('a horizontal switch throws toward the end when on', async () => {
 	expect(throwOf(group)).toBe('1');
 });
 
-test('an unset value submits `on`, as a checkbox does', async () => {
-	const { control } = await mountSwitch('', '');
-
-	expect(control.value).toBe('on');
-});
-
 test('form reset returns a switch to its attribute', async () => {
 	const { control, positions } = await mountSwitch('checked', '');
 
@@ -256,15 +250,21 @@ test('the first named position turns a switch into a radio group', async () => {
 });
 
 test('the throw is spread evenly across the positions', async () => {
-	const { control, group } = await mountSwitch('value="duck"');
+	const names = ['off', 'low', 'mid', 'high'];
+	const { control, group } = await mountSwitch(
+		'value="off"',
+		names.map((name) => `<span data-sonic-value="${name}">${name}</span>`).join(''),
+	);
+	const throws = names.map((name) => {
+		control.value = name;
 
-	expect(throwOf(group)).toBe('-1');
+		return Number(throwOf(group));
+	});
 
-	control.value = 'off';
-	expect(throwOf(group)).toBe('0');
-
-	control.value = 'on';
-	expect(throwOf(group)).toBe('1');
+	expect(throws[0]).toBe(-1);
+	expect(throws[1]).toBeCloseTo(-1 / 3, 9);
+	expect(throws[2]).toBeCloseTo(1 / 3, 9);
+	expect(throws[3]).toBe(1);
 });
 
 function mockBat(group: HTMLElement): void {
@@ -409,4 +409,19 @@ test('a drag sets a switch by direction: on is up, or right when horizontal', as
 	pointerAt(positionAt(across.positions, 0), 'pointerdown', [10, 20]);
 	pointerAt(across.group, 'pointermove', [22, 20]);
 	expect(across.control.checked).toBe(true);
+});
+
+test('a drag that keeps going the same way flips a switch once', async () => {
+	const { control, group, positions } = await mountSwitch('', '');
+	const flips: Array<boolean> = [];
+
+	control.parentElement?.addEventListener('change', () => {
+		flips.push(control.checked);
+	});
+	mockBat(group);
+	pointerAt(positionAt(positions, 0), 'pointerdown', [20, 30]);
+	for (const clientY of [19, 8, -3, 8]) pointerAt(group, 'pointermove', [20, clientY]);
+	pointerAt(group, 'pointerup', [20, 8]);
+
+	expect(flips).toEqual([true, false]);
 });

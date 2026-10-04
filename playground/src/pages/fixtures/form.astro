@@ -45,6 +45,22 @@ import '#styles/playground.css';
 			</fieldset>
 			<label for="touch">Touch</label>
 			<sonic-xy id="touch" name="touch" x="40" x-step="5" y="60"></sonic-xy>
+			<sonic-wavestrip
+				aria-label="Position"
+				id="position"
+				max="300"
+				name="position"
+				step="5"
+				value="150"
+			></sonic-wavestrip>
+			<sonic-waveform
+				aria-label="Detail"
+				id="detail"
+				max="300"
+				name="detail"
+				step="2"
+				value="90"
+			></sonic-waveform>
 		</form>
 	</main>
 	<script>

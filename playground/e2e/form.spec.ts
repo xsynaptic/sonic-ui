@@ -145,6 +145,8 @@ test('the form submits each value, and a latching button only when pressed', asy
 		['late', '10'],
 		['touch.x', '40'],
 		['touch.y', '60'],
+		['position', '150'],
+		['detail', '90'],
 	]);
 
 	await page.locator('#cutoff .sonic-dial').press('ArrowUp');
@@ -156,6 +158,8 @@ test('the form submits each value, and a latching button only when pressed', asy
 	await page.getByRole('radio', { name: 'Y' }).click();
 	await page.locator('#touch [data-sonic-axis="x"]').press('ArrowUp');
 	await page.locator('#touch [data-sonic-axis="y"]').press('ArrowRight');
+	await page.locator('#position .sonic-wavestrip').press('ArrowRight');
+	await page.locator('#detail .sonic-waveform').press('ArrowLeft');
 
 	expect(await readFormData(page)).toEqual([
 		['cutoff', '45'],
@@ -168,6 +172,8 @@ test('the form submits each value, and a latching button only when pressed', asy
 		['late', '10'],
 		['touch.x', '45'],
 		['touch.y', '61'],
+		['position', '155'],
+		['detail', '88'],
 	]);
 });
 
@@ -195,6 +201,35 @@ test('a reset returns the value control and the segmented control to their value
 	await expect(solo).toHaveAttribute('aria-pressed', 'true');
 	await expect(page.locator('#touch [data-sonic-axis="x"]')).toHaveAttribute('aria-valuenow', '40');
 	await expect(page.locator('#touch [data-sonic-axis="y"]')).toHaveAttribute('aria-valuenow', '60');
+});
+
+test('a reset returns the number box and both wave controls to their value attributes', async ({
+	page,
+}) => {
+	const tempo = page.locator('#tempo .sonic-number');
+	const position = page.locator('#position .sonic-wavestrip');
+	const detail = page.locator('#detail .sonic-waveform');
+
+	await tempo.press('ArrowDown');
+	await position.press('ArrowRight');
+	await detail.press('ArrowLeft');
+	await expect(tempo).toHaveAttribute('aria-valuenow', '119.5');
+	await expect(position).toHaveAttribute('aria-valuenow', '155');
+	await expect(detail).toHaveAttribute('aria-valuenow', '88');
+	await page.locator('#patch').evaluate((form) => {
+		if (form instanceof HTMLFormElement) form.reset();
+	});
+
+	await expect(tempo).toHaveAttribute('aria-valuenow', '120');
+	await expect(position).toHaveAttribute('aria-valuenow', '150');
+	await expect(detail).toHaveAttribute('aria-valuenow', '90');
+	expect(await readFormData(page)).toEqual(
+		expect.arrayContaining([
+			['tempo', '120'],
+			['position', '150'],
+			['detail', '90'],
+		]),
+	);
 });
 
 test('a label click flips a bare switch, and a reset returns both switches to their attributes', async ({

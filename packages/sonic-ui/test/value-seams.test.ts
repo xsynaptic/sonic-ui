@@ -79,9 +79,9 @@ test('a grab carrying fromProportion starts the drag there rather than at the va
 
 	seam.fromProportion = 0.75;
 	pointerAt(seam.control(), 'pointerdown', { clientX: 100 });
-	pointerAt(seam.control(), 'pointermove', { clientX: 150 });
+	pointerAt(seam.control(), 'pointermove', { clientX: 120 });
 
-	expect(seam.value).toBe(40);
+	expect(seam.value).toBe(28);
 });
 
 test('a link watch hears a scripted write, a change of bounds and a key press, until it lets go', () => {

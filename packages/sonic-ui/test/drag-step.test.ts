@@ -87,13 +87,7 @@ test('a move out of bounds engages at once', () => {
 	expect(drag({ from: 50, moves: [{ isOutside: true, position: 1.6 }] })).toEqual([51]);
 });
 
-test('a fine move goes a tenth as far, from where the last move left off', () => {
-	const spec = { max: 140, min: -20, step: 0.5 };
-
-	expect(drag({ from: 0, moves: [40, { isFine: true, position: 80 }], spec })).toEqual([40, 44]);
-});
-
-test('Shift let go with the pointer still leaves the value where the fine move put it', () => {
+test('a fine move goes a tenth as far, and Shift let go with the pointer still leaves the value there', () => {
 	const spec = { max: 140, min: -20, step: 0.5 };
 
 	expect(drag({ from: 0, moves: [40, { isFine: true, position: 80 }, 80], spec })).toEqual([

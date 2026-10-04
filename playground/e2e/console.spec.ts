@@ -20,15 +20,6 @@ test('the club mixer loads with a clean console', async ({ page }) => {
 	expect(messages).toEqual([]);
 });
 
-test('the tape echo loads with a clean console', async ({ page }) => {
-	const messages = collectConsole(page);
-
-	await page.goto('/tape-echo/');
-	await expect(page.getByRole('slider', { name: 'Mode' })).toBeVisible();
-
-	expect(messages).toEqual([]);
-});
-
 test('the tape echo plays through every mode with a clean console', async ({ page }) => {
 	const messages = collectConsole(page);
 

@@ -356,21 +356,34 @@ test('an XY pad draws its crosshair lit in Highlight over GrayText, grey through
 	expect(locked.lit).not.toContain(highlight);
 });
 
-test("an XY pad's focused part paints its outline outside the puck", async ({ page }) => {
-	const part = page.locator('#xy [data-sonic-axis="x"]');
+for (const [name, selector] of [
+	['a dial', '#level .sonic-dial'],
+	['a slider', '#send .sonic-slider'],
+	['a number box', '#tempo .sonic-number'],
+	['a button', '#mute .sonic-button'],
+	['a segmented option', '#mode .sonic-segmented-option[tabindex="0"]'],
+	['a switch position', '#talk .sonic-switch-position[tabindex="0"]'],
+	['a bare switch', '#sync .sonic-switch-position'],
+	['a wavestrip', '#wavestrip .sonic-wavestrip'],
+	['a waveform', '#waveform .sonic-waveform'],
+	['an XY part', '#xy [data-sonic-axis="x"]'],
+] as const) {
+	test(`${name} focused by a key paints its outline outside its box`, async ({ page }) => {
+		const control = page.locator(selector);
 
-	await part.scrollIntoViewIfNeeded();
-	await part.press('ArrowRight');
+		await control.scrollIntoViewIfNeeded();
+		await control.press('Shift');
 
-	const outline = await part.evaluate((element) => {
-		const style = getComputedStyle(element);
+		const outline = await control.evaluate((element) => {
+			const style = getComputedStyle(element);
 
-		return { colour: style.outlineColor, offset: style.outlineOffset, style: style.outlineStyle };
+			return { colour: style.outlineColor, offset: style.outlineOffset, style: style.outlineStyle };
+		});
+
+		expect(outline.colour).not.toMatch(/^(rgba\(0, 0, 0, 0\)|transparent)$/);
+		expect(outline).toMatchObject({ offset: '2px', style: 'solid' });
 	});
-
-	expect(outline.colour).not.toMatch(/^(rgba\(0, 0, 0, 0\)|transparent)$/);
-	expect(outline).toMatchObject({ offset: '2px', style: 'solid' });
-});
+}
 
 // The graph opts out, so the answer is the same whether or not an engine forces an SVG stroke by itself
 test('an envelope strokes its line in Highlight and drops its fill', async ({ page }) => {

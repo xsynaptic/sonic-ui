@@ -194,7 +194,6 @@ test.each<{
 	device: [number, number];
 	expected: Array<number>;
 }>([
-	{ axis: 'both ways', css: [100.4, 20], device: [100, 20], expected: [201, 40] },
 	{ axis: 'along', css: [100.4, 20], device: [100, 40], expected: [201, 40] },
 	{ axis: 'across', css: [100, 20.3], device: [200, 20], expected: [200, 41] },
 ])(

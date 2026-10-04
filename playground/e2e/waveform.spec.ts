@@ -91,9 +91,20 @@ test('under reduced motion the picture holds still while the playhead crosses it
 			value: 147,
 		});
 	});
-	await page.waitForTimeout(100);
 
-	const [before, playheadBefore] = [await upperRow(canvas), await readPlayhead(waveform)];
+	let before = await upperRow(canvas);
+
+	await expect
+		.poll(async () => {
+			const previous = before;
+
+			before = await upperRow(canvas);
+
+			return before === previous;
+		})
+		.toBe(true);
+
+	const playheadBefore = await readPlayhead(waveform);
 
 	await expect.poll(() => readPlayhead(waveform)).not.toBe(playheadBefore);
 	expect(await upperRow(canvas)).toBe(before);
@@ -118,13 +129,4 @@ test('the pending state follows a region in the window, and clears when it lands
 
 	await setPending([[250, 260]]);
 	await expect.poll(readPending).toBe(false);
-});
-
-test('Enter opens the typed entry', async ({ page }) => {
-	const { waveform } = await openWaveform(page);
-
-	await waveform.locator('.sonic-waveform').focus();
-	await page.keyboard.press('Enter');
-
-	await expect(waveform.locator('.sonic-waveform-entry')).toBeFocused();
 });

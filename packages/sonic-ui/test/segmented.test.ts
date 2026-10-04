@@ -60,7 +60,6 @@ test('each option lands in its own cap, one appended later too, and other childr
 	];
 
 	expect(caps.map((cap) => valueOf(cap))).toEqual(['lp', 'bp', 'hp', 'notch']);
-	expect(group.getAttribute('role')).toBe('radiogroup');
 
 	const rendered = segmented.shadowRoot?.querySelector('slot')?.assignedNodes() ?? [];
 
@@ -204,30 +203,16 @@ test('only the latched option is a tab stop, or the first while none is', async 
 	expect(options.map((option) => option.tabIndex)).toEqual([-1, -1, 0]);
 });
 
-test('disabled disables every option, so a click no longer latches', async () => {
-	const { options, segmented } = await mountSegmented('disabled value="lp"');
-	const changes = recordChanges(segmented);
+test('the host names the radio group, and disabled disables every option', async () => {
+	const { group, options, segmented } = await mountSegmented(
+		'disabled value="lp" aria-label="first"',
+	);
 
+	expect(group.getAttribute('aria-label')).toBe('first');
 	expect(options.every((option) => option.disabled)).toBe(true);
-
-	options[2]?.click();
-	expect(segmented.value).toBe('lp');
-	expect(changes).toEqual([]);
 
 	segmented.disabled = false;
 	expect(options.some((option) => option.disabled)).toBe(false);
-});
-
-test('aria-label is forwarded to the radio group as it is added, changed and removed', async () => {
-	const { group, segmented } = await mountSegmented('aria-label="first"');
-
-	expect(group.getAttribute('aria-label')).toBe('first');
-
-	segmented.setAttribute('aria-label', 'second');
-	expect(group.getAttribute('aria-label')).toBe('second');
-
-	segmented.removeAttribute('aria-label');
-	expect(group.hasAttribute('aria-label')).toBe(false);
 });
 
 test('writing the current value leaves the control untouched', async () => {

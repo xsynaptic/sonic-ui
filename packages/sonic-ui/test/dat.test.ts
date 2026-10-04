@@ -60,9 +60,22 @@ test('a byte range stops at the last pair, and one past it is empty', () => {
 });
 
 test('a header it cannot read throws', () => {
-	expect(() => readDatHeader(bytes('03000000', ...stereoHeader.slice(1)))).toThrow();
-	expect(() => readDatHeader(bytes(...monoHeader.slice(0, 3)))).toThrow();
-	expect(() => readDatHeader(bytes(...stereoHeader.slice(0, 5), '00000000'))).toThrow();
+	expect(() => readDatHeader(bytes('03000000', ...stereoHeader.slice(1)))).toThrow('version 3');
+	expect(() => readDatHeader(bytes(...monoHeader.slice(0, 3)))).toThrow('at least 20 bytes');
+	expect(() => readDatHeader(bytes(...stereoHeader.slice(0, 5), '00000000'))).toThrow(
+		'names no channels',
+	);
+	expect(() =>
+		readDatHeader(bytes(...monoHeader.slice(0, 3), '00000000', ...monoHeader.slice(4))),
+	).toThrow('no samples per pixel');
+});
+
+test('one sample per pixel is the finest a header may name, a pair for every sample', () => {
+	const header = readDatHeader(
+		bytes(...monoHeader.slice(0, 3), '01000000', ...monoHeader.slice(4)),
+	);
+
+	expect(header.pairsPerSecond).toBe(44_100);
 });
 
 test('a 16-bit body reads back its interleaved min and max', () => {

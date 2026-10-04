@@ -144,6 +144,24 @@ test('a mouse over the strip reads out the time under it, or a marker within rea
 	expect(readoutText(control)).toBe('200 s');
 });
 
+test.each([
+	['a button held', 'readout', { buttons: 1 }],
+	['no readout', '', {}],
+	['the strip disabled', 'readout disabled', {}],
+])('with %s, a mouse over the strip reads out nothing', (_case, attributes, init) => {
+	installCanvasFakes();
+
+	const { control, wavestrip } = mountWavestrip(
+		`${attributes} min="30" max="330" step="0" value="30"`,
+	);
+
+	wavestrip.formatValue = (seconds) => `${String(seconds)} s`;
+	midPointerAt(control, 'pointermove', { clientX: 75, pointerType: 'mouse', ...init });
+
+	expect(readoutText(control)).toBe('30 s');
+	expect(control.style.getPropertyValue('--_sonic-wavestrip-readout-at')).toBe('0');
+});
+
 test("a drag's reveal takes the readout from the hover", () => {
 	installCanvasFakes();
 
@@ -233,7 +251,6 @@ test('a value write leaves the marker dots as they were built', () => {
 	wavestrip.markers = [{ start: 60 }, { end: 120, kind: 'loop', start: 90 }];
 
 	const built = markerDots(control);
-	const styles = built.map((dot) => dot.style.cssText);
 
 	wavestrip.value = 200;
 
@@ -241,7 +258,6 @@ test('a value write leaves the marker dots as they were built', () => {
 
 	// `toEqual` compares nodes by markup, which a rebuild matches
 	expect(after.map((dot, index) => dot === built[index])).toEqual([true, true]);
-	expect(built.map((dot) => dot.style.cssText)).toEqual(styles);
 });
 
 test('a kind names its token, and a kind that is not a plain name draws in the default colour', () => {

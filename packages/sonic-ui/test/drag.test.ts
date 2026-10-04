@@ -98,20 +98,6 @@ test('a secondary button starts no drag', () => {
 	expect(dial.value).toBe(50);
 });
 
-test('writes after release apply', () => {
-	const { control, dial } = mountDial('value="50"');
-
-	mouseAt(control, 'pointerdown', 100);
-	mouseAt(control, 'pointermove', 84);
-	mouseAt(control, 'pointerup', 84);
-
-	dial.value = 10;
-	expect(dial.value).toBe(10);
-
-	dial.setAttribute('value', '20');
-	expect(dial.value).toBe(20);
-});
-
 test('disabled mid-drag ends the drag, reporting the value it reached', () => {
 	const { control, dial } = mountDial('value="50"');
 	const events = recordEvents(dial);
@@ -141,6 +127,9 @@ test('lostpointercapture ends the drag, reporting the value it reached', () => {
 
 	dial.value = 10;
 	expect(dial.value).toBe(10);
+
+	dial.setAttribute('value', '20');
+	expect(dial.value).toBe(20);
 });
 
 test('pointercancel ends the drag back where it started, reporting no change', () => {

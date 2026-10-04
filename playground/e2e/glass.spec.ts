@@ -55,3 +55,36 @@ test('forced colours draw no texture', async ({ page }) => {
 	expect(forced.bloom).toBe('none');
 	expect(forced.warp).toBe('none');
 });
+
+test('a screen is cut from the glass a number box is, and sizes every edge from its token', async ({
+	page,
+}) => {
+	await page.goto('/fixtures/');
+
+	const readPane = (selector: string) =>
+		page.locator(selector).evaluate((pane) => {
+			const style = getComputedStyle(pane);
+
+			return {
+				bloom: getComputedStyle(pane, '::before').backgroundImage,
+				fill: `${style.backgroundColor} ${style.backgroundImage}`,
+				ink: style.color,
+				warp: style.filter,
+			};
+		});
+	const readBox = () =>
+		page.locator('#screen').evaluate((screen) => {
+			const style = getComputedStyle(screen);
+			const box = screen.getBoundingClientRect();
+
+			return [box.width, box.height, style.paddingTop, style.borderTopLeftRadius].join(' ');
+		});
+
+	expect(await readPane('#screen')).toEqual(await readPane('#tempo .sonic-number'));
+	expect(await readBox()).toBe('120 40 4px 6px');
+
+	await page.locator('#screen').evaluate((screen) => {
+		screen.style.setProperty('--sonic-screen-size', '5rem');
+	});
+	expect(await readBox()).toBe('240 80 8px 12px');
+});

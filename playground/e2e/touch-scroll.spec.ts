@@ -79,3 +79,91 @@ test('a swipe on an XY pad moves both values and never the page', async ({ page 
 	await expect(pad).toHaveAttribute('aria-valuetext', /^X \d+, Y (5[1-9]|[6-9]\d)$/);
 	expect(await page.evaluate(() => window.scrollY)).toBe(scrolled);
 });
+
+// Room to pan both ways from any control, wherever it sits in the document
+const roomToPan =
+	'body::after { content: ""; display: block; inline-size: 300vw; block-size: 200vh; }';
+
+function readScroll(page: Page): Promise<Point> {
+	return page.evaluate(() => ({ x: window.scrollX, y: window.scrollY }));
+}
+
+async function readScrollAlong(page: Page, axis: 'x' | 'y'): Promise<number> {
+	const scroll = await readScroll(page);
+
+	return scroll[axis];
+}
+
+for (const { name, role, selector, value } of [
+	{ name: 'Level', role: 'slider', selector: '#level .sonic-dial', value: '50' },
+	{ name: 'Fader', role: 'slider', selector: '#fader .sonic-slider', value: '0' },
+	{ name: 'Tempo', role: 'spinbutton', selector: '#tempo .sonic-number', value: '120' },
+] as const) {
+	test(`a mostly sideways swipe from ${name}, which drags up and down, scrolls the page and leaves the value`, async ({
+		page,
+	}) => {
+		await page.goto('/fixtures/');
+		await page.addStyleTag({ content: roomToPan });
+
+		const from = await centreInView(page, selector);
+		const scrolled = await readScroll(page);
+
+		await swipe(page, from, { x: from.x - 150, y: from.y - 30 });
+
+		await expect.poll(() => readScrollAlong(page, 'x')).toBeGreaterThan(scrolled.x);
+		await expect(page.getByRole(role, { name })).toHaveAttribute('aria-valuenow', value);
+	});
+}
+
+for (const { name, selector } of [
+	{ name: 'Position', selector: '#wavestrip .sonic-wavestrip' },
+	{ name: 'Detail', selector: '#waveform .sonic-waveform' },
+]) {
+	test(`a mostly vertical swipe from ${name}, off its centre, scrolls the page and leaves the value`, async ({
+		page,
+	}) => {
+		await page.goto('/fixtures/');
+		await page.addStyleTag({ content: roomToPan });
+
+		const centre = await centreInView(page, selector);
+		const from = { x: centre.x - 60, y: centre.y };
+		const scrolled = await readScroll(page);
+
+		await swipe(page, from, { x: from.x + 30, y: from.y - 150 });
+
+		await expect.poll(() => readScrollAlong(page, 'y')).toBeGreaterThan(scrolled.y);
+		await expect(page.getByRole('slider', { name })).toHaveAttribute('aria-valuenow', '150');
+	});
+}
+
+test('a swipe on an envelope handle turns its dials and never the page, and one beside it scrolls', async ({
+	page,
+}) => {
+	await page.goto('/fixtures/');
+	await page.addStyleTag({ content: roomToPan });
+
+	const decay = page.getByRole('slider', { exact: true, name: 'Envelope decay' });
+	const handle = await centreInView(
+		page,
+		'#envelope .sonic-envelope-handle[data-sonic-stage="decay"]',
+	);
+	const scrolled = await readScroll(page);
+
+	await swipe(page, handle, { x: handle.x + 30, y: handle.y - 30 });
+
+	await expect
+		.poll(async () => Number(await decay.getAttribute('aria-valuenow')))
+		.toBeGreaterThan(45);
+	expect(await readScroll(page)).toEqual(scrolled);
+
+	const held = await decay.getAttribute('aria-valuenow');
+	const box = await page.locator('#envelope .sonic-envelope').boundingBox();
+	if (!box) throw new Error('The envelope has no box');
+
+	const glass = { x: box.x + box.width - 20, y: box.y + 20 };
+
+	await swipe(page, glass, { x: glass.x + 30, y: glass.y - 150 });
+
+	await expect.poll(() => readScrollAlong(page, 'y')).toBeGreaterThan(scrolled.y);
+	await expect(decay).toHaveAttribute('aria-valuenow', held ?? '');
+});

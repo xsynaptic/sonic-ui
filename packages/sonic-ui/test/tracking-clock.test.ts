@@ -79,12 +79,12 @@ test('a late frame counts its own elapsed time before judging a seek', () => {
 	expect(clock.read(5300, playing(10.6))).toBeCloseTo(10.3 + 0.3 * (1 - 0.94 ** 18), 9);
 });
 
-test('a seek back over half a second snaps too', () => {
+test('a position carried over half a second past a stalled source snaps back to it', () => {
 	const clock = createTrackingClock();
 
-	clock.read(0, playing(100));
+	clock.read(0, playing(10, 3));
 
-	expect(clock.read(16, playing(10))).toBe(10);
+	expect(clock.read(300, playing(10, 3))).toBe(10);
 });
 
 test('a pause lands on the source, however small the error', () => {
