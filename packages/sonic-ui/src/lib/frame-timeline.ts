@@ -41,6 +41,8 @@ interface Timeline {
 
 const placeholderPeriodMs = 2500;
 
+const lookAheadSeconds = 30;
+
 function windowStart(input: TimelineInput, seconds: number, windowSeconds: number): number {
 	if (!input.isPaged) return seconds - windowSeconds / 2;
 	if (input.held) return input.held.grabbed.startSeconds + seconds - input.held.grabbed.seconds;
@@ -87,7 +89,13 @@ export function frameTimeline(input: TimelineInput): Timeline {
 	const pending = pendingIn(input, [startSeconds, startSeconds + windowSeconds]);
 	const placeholder = placeholderPhase(input, pending);
 	const phase = placeholder ?? 0;
-	const wanted = overlap([startSeconds - windowSeconds, startSeconds + 2 * windowSeconds], range);
+	const wanted = overlap(
+		[
+			startSeconds - windowSeconds,
+			startSeconds + windowSeconds + Math.max(windowSeconds, lookAheadSeconds),
+		],
+		range,
+	);
 	const at = (time: number): number => (time - startSeconds) / windowSeconds;
 
 	return {

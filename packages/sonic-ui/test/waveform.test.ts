@@ -108,7 +108,7 @@ test('requestPeaks asks at the current zoom, and not out of view', () => {
 	flushFrames();
 	waveform.zoom = 35;
 	flushFrames();
-	expect(requests.at(-1)).toEqual([79, 121]);
+	expect(requests.at(-1)).toEqual([79, 137]);
 
 	const asked = requests.length;
 

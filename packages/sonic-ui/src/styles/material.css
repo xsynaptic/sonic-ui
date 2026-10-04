@@ -112,7 +112,7 @@
 		--_sonic-focus: var(--sonic-focus, oklch(90% 0.23 128deg));
 		--_sonic-ink: var(--sonic-ink, color-mix(in oklab, var(--_sonic-cap) 30%, #fff));
 		--_sonic-etch: color-mix(in oklab, var(--_sonic-ink) 30%, transparent);
-		--_sonic-ink-lift: color-mix(in oklab, var(--_sonic-ink) 60%, #fff);
+		--_sonic-ink-lift: var(--sonic-ink-hover, color-mix(in oklab, var(--_sonic-ink) 60%, #fff));
 		--_sonic-lit-disabled: color-mix(in oklab, var(--_sonic-ink) 25%, var(--_sonic-unlit));
 		--_sonic-skirt: linear-gradient(
 			var(--_sonic-light-fall),
@@ -343,6 +343,16 @@
 		--_sonic-keycap-drop: calc(1.5 * var(--_sonic-cast-x)) calc(1.5 * var(--_sonic-cast-y))
 			calc(2 * var(--_sonic-unit)) var(--_sonic-drop-shade);
 		--_sonic-keycap-glow: transparent;
+	}
+
+	:is(.sonic-button, .sonic-segmented-option, .sonic-switch-position) {
+		--_sonic-hit-outset: min(0px, calc((100% - var(--sonic-hit-size, 100%)) / 2));
+
+		&::after {
+			position: absolute;
+			inset: var(--_sonic-hit-outset);
+			content: '';
+		}
 	}
 
 	/* Each sheet maps its own depth, corner, bevel and face corner onto the `keycap` tokens */

@@ -250,7 +250,12 @@ class CanvasSurface<Colour extends string, Length extends string> implements Sur
 		const styles = getComputedStyle(canvas);
 
 		return {
-			colours: readEach(colours, (property) => styles.getPropertyValue(property).trim()),
+			colours: readEach(colours, (property) =>
+				styles
+					.getPropertyValue(property)
+					.trim()
+					.replaceAll('currentcolor', () => styles.color),
+			),
 			isReducedMotion: this.#reducedMotion.matches,
 			lengths: readEach<Length, number>(lengths, (property) => readPxProperty(styles, property, 0)),
 		};

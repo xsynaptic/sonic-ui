@@ -2,17 +2,11 @@
 import Document from '#components/document.astro';
 import '#styles/playground.css';
 
-interface Section {
-	id: string;
-	label: string;
-}
-
 interface Props {
-	sections?: Array<Section>;
 	title: string;
 }
 
-const { sections = [], title } = Astro.props;
+const { title } = Astro.props;
 
 const pages = [
 	{ href: '/', label: 'Specimens' },
@@ -20,7 +14,7 @@ const pages = [
 	{ href: '/tape-echo/', label: 'Tape echo' },
 	{ href: '/web-player/', label: 'Web player' },
 ];
-const skins = ['default', 'slate', 'lime', 'ivory', 'flat'];
+const skins = ['default', 'slate', 'lime', 'ivory', 'flat', 'bare'];
 ---
 
 <Document bodyClass="bg-zinc-950 text-zinc-300 antialiased" title={title}>
@@ -51,20 +45,6 @@ const skins = ['default', 'slate', 'lime', 'ivory', 'flat'];
 					</li>
 				))}
 			</ul>
-			{sections.length > 0 ? (
-				<ul aria-label="Sections" class="flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs">
-					{sections.map((section) => (
-						<li>
-							<a
-								class="inline-flex min-h-6 items-center text-zinc-400 hover:text-zinc-100"
-								href={`#${section.id}`}
-							>
-								{section.label}
-							</a>
-						</li>
-					))}
-				</ul>
-			) : undefined}
 			<div class="ms-auto font-mono [--sonic-segmented-size:1.75rem]">
 				<sonic-segmented aria-label="Skin" data-skin-choice value="default">
 					{skins.map((skin) => (

@@ -58,6 +58,12 @@
 	initial-value: 0;
 }
 
+@property --_sonic-marker-step {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 0;
+}
+
 @property --_sonic-cancel-zone {
 	syntax: '<length>';
 	inherits: true;
@@ -94,6 +100,8 @@
 		--_sonic-unit: calc(var(--_sonic-wavestrip-size) / 32);
 		--_sonic-wavestrip-lit: var(--_sonic-lit);
 		--_sonic-marker-size: calc(var(--_sonic-wavestrip-size) * var(--_sonic-wavestrip-marker-ratio));
+		--_sonic-marker-ring: max(1px, 0.5 * var(--_sonic-unit));
+		--_sonic-marker-step: calc(var(--_sonic-marker-size) + var(--_sonic-marker-ring));
 		--_sonic-marker-default: var(--sonic-marker, var(--_sonic-ink));
 		--_sonic-wavestrip-wave: var(
 			--sonic-wave,
@@ -153,12 +161,13 @@
 	}
 
 	.sonic-wavestrip-marker {
-		inset: 0 auto auto calc(var(--_sonic-marker-from, 0) * 100% - var(--_sonic-marker-size) / 2);
+		inset: calc(var(--_sonic-marker-lane, 0) * var(--_sonic-marker-step)) auto auto
+			calc(var(--_sonic-marker-from, 0) * 100% - var(--_sonic-marker-size) / 2);
 		inline-size: var(--_sonic-marker-size);
 		block-size: var(--_sonic-marker-size);
 		background: color-mix(in oklab, var(--_sonic-marker-colour) 85%, transparent);
 		border-radius: 50%;
-		box-shadow: 0 0 0 max(1px, 0.5 * var(--_sonic-unit)) var(--_sonic-glass);
+		box-shadow: 0 0 0 var(--_sonic-marker-ring) var(--_sonic-glass);
 	}
 
 	.sonic-wavestrip-region {
@@ -206,7 +215,7 @@
 
 		.sonic-wavestrip-marker {
 			background: var(--_sonic-marker-colour);
-			box-shadow: 0 0 0 max(1px, 0.5 * var(--_sonic-unit)) Canvas;
+			box-shadow: 0 0 0 var(--_sonic-marker-ring) Canvas;
 		}
 
 		.sonic-wavestrip-region {

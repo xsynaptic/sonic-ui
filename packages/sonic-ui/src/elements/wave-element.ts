@@ -89,6 +89,10 @@ export abstract class SonicWaveElement<
 
 	protected abstract isEmpty(): boolean;
 
+	protected markerList(): ReadonlyArray<WaveMarker> {
+		return this.#markers;
+	}
+
 	protected markerProportions(): Array<[number, number]> {
 		const mapping = this.mapping();
 

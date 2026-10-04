@@ -130,6 +130,16 @@
 		}
 	}
 
+	.sonic-button[aria-pressed='true']:not(:disabled, [aria-disabled='true']):focus-visible {
+		color: var(--sonic-lit-hover, var(--_sonic-lit));
+	}
+
+	@media (hover: hover) {
+		.sonic-button[aria-pressed='true']:not(:disabled, [aria-disabled='true']):hover {
+			color: var(--sonic-lit-hover, var(--_sonic-lit));
+		}
+	}
+
 	.sonic-button-cap {
 		--_sonic-keycap-corner: max(0px, var(--_sonic-button-corner) - var(--_sonic-button-gap));
 		--_sonic-keycap-bevel: calc(var(--_sonic-button-size) * var(--_sonic-button-bevel-ratio));
@@ -153,7 +163,11 @@
 			inline-size: calc(var(--_sonic-button-size) * var(--_sonic-button-icon-ratio));
 			block-size: calc(var(--_sonic-button-size) * var(--_sonic-button-icon-ratio));
 			filter: var(--_sonic-engraving);
-			mask-image: linear-gradient(var(--_sonic-light-fall), #000 15%, rgb(0 0 0 / 60%));
+			mask-image: linear-gradient(
+				var(--_sonic-light-fall),
+				#000 15%,
+				rgb(0 0 0 / calc(1 - 0.4 * var(--_sonic-relief)))
+			);
 			mask-repeat: no-repeat;
 		}
 	}

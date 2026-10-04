@@ -55,6 +55,9 @@
 	}
 
 	.sonic-segmented-option {
+		--_sonic-segmented-well-lit: var(--sonic-well-lit, var(--_sonic-lit));
+
+		position: relative;
 		display: grid;
 		min-inline-size: calc(var(--_sonic-segmented-size) - 2 * var(--_sonic-segmented-gap));
 		padding: 0;
@@ -80,7 +83,7 @@
 		--_sonic-keycap-glow: color-mix(in oklab, var(--_sonic-lit) 22%, transparent);
 
 		color: var(--_sonic-lit);
-		background: var(--_sonic-lit);
+		background: var(--_sonic-segmented-well-lit);
 		box-shadow: var(--_sonic-well);
 	}
 
@@ -103,6 +106,20 @@
 		.sonic-segmented-option:not([aria-checked='true'], :disabled):hover {
 			color: var(--_sonic-ink-lift);
 		}
+	}
+
+	.sonic-segmented-option[aria-checked='true']:not(:disabled):focus-visible {
+		color: var(--sonic-lit-hover, var(--_sonic-lit));
+	}
+
+	@media (hover: hover) {
+		.sonic-segmented-option[aria-checked='true']:not(:disabled):hover {
+			color: var(--sonic-lit-hover, var(--_sonic-lit));
+		}
+	}
+
+	.sonic-segmented-option::after {
+		inset-inline: 0;
 	}
 
 	.sonic-segmented-cap {

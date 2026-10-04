@@ -46,7 +46,7 @@ test('the device ratio multiplies the pixels, not the seconds a window holds', (
 	const timeline = frameTimeline({ ...base, size: { dpr: 2, height: 192, width: 980 } });
 
 	expect(timeline.view.pixelsPerSecond).toBe(140);
-	expect(timeline.wanted).toEqual([89.5, 110.5]);
+	expect(timeline.wanted).toEqual([89.5, 133.5]);
 });
 
 test('pending regions clip to the window and the range', () => {
@@ -78,15 +78,24 @@ test('the placeholder travels only while a pending region shows and motion is al
 	expect(frameTimeline({ ...base, frameMs: 1250 }).isMoving).toBe(false);
 });
 
-test('the wanted region is the window and one either side, inside the range', () => {
+test('the wanted region runs a window behind and 30 seconds ahead, inside the range', () => {
 	const wanted = (clockSeconds: number, range: [number, number]): unknown =>
 		frameTimeline({ ...base, clockSeconds, range }).wanted;
 
-	expect(wanted(100, [3, 300])).toEqual([89.5, 110.5]);
-	expect(frameTimeline({ ...base, zoom: 35 }).wanted).toEqual([79, 121]);
-	expect(wanted(4, [3, 300])).toEqual([3, 14.5]);
+	expect(wanted(100, [3, 300])).toEqual([89.5, 133.5]);
+	expect(frameTimeline({ ...base, zoom: 35 }).wanted).toEqual([79, 137]);
+	expect(wanted(4, [3, 300])).toEqual([3, 37.5]);
 	expect(wanted(4, [3, 9])).toEqual([3, 9]);
 	expect(wanted(100, [3, 50])).toBeUndefined();
+});
+
+function wantedAt(width: number, zoom: number): [number, number] | undefined {
+	return frameTimeline({ ...base, size: { ...base.size, width }, zoom }).wanted;
+}
+
+test('a narrow window at a high zoom still wants 30 seconds ahead, and a wide one its own length', () => {
+	expect(wantedAt(390, 240)).toEqual([97.5625, 130.8125]);
+	expect(wantedAt(2800, 70)).toEqual([40, 160]);
 });
 
 test('a playing timeline keeps moving, and a paused one at rest does not', () => {

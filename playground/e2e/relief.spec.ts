@@ -53,3 +53,21 @@ for (const { name, pseudo, selector } of faces) {
 		expect(messages).toEqual([]);
 	});
 }
+
+test("the flat skin inks a button's icon evenly, where the default fades it along the light", async ({
+	page,
+}) => {
+	await page.goto('/fixtures/');
+
+	const icon = page.locator('#next .sonic-button-cap > svg');
+	const readMask = (): Promise<string> =>
+		icon.evaluate((element) => getComputedStyle(element).maskImage);
+
+	expect(await readMask()).toContain('rgba(0, 0, 0, 0.6)');
+
+	await page.evaluate(() => {
+		document.documentElement.classList.add('sonic-skin-flat');
+	});
+
+	expect(await readMask()).not.toContain('rgba');
+});

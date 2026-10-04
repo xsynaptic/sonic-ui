@@ -1,0 +1,15 @@
+@layer sonic {
+	.sonic-skin-bare {
+		--sonic-relief: 0;
+		--sonic-cap: transparent;
+		--sonic-cap-hover: transparent;
+		--sonic-cap-edge: transparent;
+		--sonic-well: transparent;
+		--sonic-well-lit: transparent;
+		--sonic-ink: currentcolor;
+		--sonic-glass-depth: 0;
+		--sonic-glass-texture: 0;
+		--sonic-button-depth-ratio: 0;
+		--sonic-segmented-depth-ratio: 0;
+	}
+}

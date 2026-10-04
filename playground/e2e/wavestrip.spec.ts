@@ -79,6 +79,32 @@ test('a lit colour set on an ancestor repaints within two frames', async ({ page
 	expectPixel(await pixelAt(canvas, 1), [0, 128, 255, 255]);
 });
 
+test('an ink of currentcolor paints the bars from the text colour on the glass', async ({
+	page,
+}) => {
+	const { canvas } = await openWavestrip(page);
+	const { device } = await readWidth(canvas);
+
+	await page.evaluate(async () => {
+		const box = document.querySelector<HTMLElement>('#wavestrip-box');
+
+		box?.style.setProperty('--sonic-ink', 'currentcolor');
+		box?.style.setProperty('--sonic-glass-text', '#0080ff');
+		for (let frame = 0; frame < 2; frame += 1) {
+			await new Promise((resolve) => requestAnimationFrame(resolve));
+		}
+	});
+
+	const unlit = await canvas.evaluate((element) =>
+		getComputedStyle(element).getPropertyValue('--_sonic-unlit'),
+	);
+
+	expectPixel(
+		await pixelAt(canvas, (Math.floor(device / 2 / pitch) + 4) * pitch + 1),
+		await paintedColour(canvas, `color-mix(in oklab, #0080ff 30%, ${unlit})`),
+	);
+});
+
 test('empty peaks draw only the glass, and set the empty state', async ({ page }) => {
 	const { canvas, wavestrip } = await openWavestrip(page);
 
@@ -117,4 +143,40 @@ test('the hover readout opens over the pointer, and Escape dismisses it', async 
 
 	await page.mouse.move(pointerX + 10, box.y + box.height / 2);
 	await expect(readout).toBeHidden();
+});
+
+async function pressBy(page: Page, dot: Locator, by: { x: number; y: number }): Promise<void> {
+	const box = await dot.boundingBox();
+	if (!box) throw new Error('The marker has no box');
+
+	await page.mouse.click(box.x + box.width / 2 + by.x, box.y + box.height / 2 + by.y);
+}
+
+function readValue(wavestrip: Locator): Promise<number> {
+	return wavestrip.evaluate((element) => ('value' in element ? Number(element.value) : NaN));
+}
+
+test('a press on a dot snaps to its marker, in whichever lane it sits', async ({ page }) => {
+	const { wavestrip } = await openWavestrip(page);
+	const dots = wavestrip.locator('.sonic-wavestrip-marker');
+	const [first, second] = await Promise.all([dots.nth(0).boundingBox(), dots.nth(1).boundingBox()]);
+
+	expect(second?.y).toBeGreaterThan((first?.y ?? 0) + (first?.height ?? 0));
+
+	await pressBy(page, dots.nth(0), { x: -3, y: 0 });
+	expect(await readValue(wavestrip)).toBe(60);
+
+	await pressBy(page, dots.nth(1), { x: 3, y: 0 });
+	expect(await readValue(wavestrip)).toBe(62);
+});
+
+test('a press below a dot, in its column, seeks to where it lands', async ({ page }) => {
+	const { wavestrip } = await openWavestrip(page);
+
+	await pressBy(page, wavestrip.locator('.sonic-wavestrip-marker').nth(0), { x: -3, y: 20 });
+
+	const value = await readValue(wavestrip);
+
+	expect(value).toBeGreaterThan(55);
+	expect(value).toBeLessThan(59);
 });

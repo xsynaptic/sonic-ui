@@ -6,8 +6,13 @@ interface MarkerLook {
 	kind?: string;
 }
 
+interface Point {
+	x: number;
+	y: number;
+}
+
 interface MarkerBand {
-	reachPx: () => number;
+	at: (point: Point, widthPx: number) => number | undefined;
 	render: (
 		markers: ReadonlyArray<MarkerLook>,
 		proportions: ReadonlyArray<[number, number]>,
@@ -32,10 +37,15 @@ export function writeKind(part: HTMLElement, kind: string | undefined, fallback:
 	part.style.setProperty('--_sonic-marker', `var(--sonic-marker-${kind}, var(${fallback}))`);
 }
 
-function renderMarker(marker: MarkerLook, [from, to]: [number, number]): HTMLElement {
+function renderMarker(
+	marker: MarkerLook,
+	[from, to]: [number, number],
+	lane: number | undefined,
+): HTMLElement {
 	const part = document.createElement('div');
 
-	part.className = marker.end === undefined ? 'sonic-wavestrip-marker' : 'sonic-wavestrip-region';
+	part.className = lane === undefined ? 'sonic-wavestrip-region' : 'sonic-wavestrip-marker';
+	if (lane !== undefined) part.style.setProperty('--_sonic-marker-lane', String(lane));
 	part.style.setProperty('--_sonic-marker-from', String(from));
 	part.style.setProperty('--_sonic-marker-to', String(to));
 	writeKind(part, marker.kind, '--_sonic-marker-default');
@@ -45,27 +55,68 @@ function renderMarker(marker: MarkerLook, [from, to]: [number, number]): HTMLEle
 }
 
 export function createMarkerBand(band: HTMLElement): MarkerBand {
+	let dots: Array<{ at: number; index: number; lane: number }> = [];
+
+	const px = (property: string): number => readPxProperty(getComputedStyle(band), property, 0);
+
 	return {
-		reachPx: () =>
-			readPxProperty(getComputedStyle(band), '--_sonic-marker-size', 0) / 2 + snapSlopPx,
+		at: ({ x, y }, widthPx) => {
+			const size = px('--_sonic-marker-size');
+			const step = px('--_sonic-marker-step');
+			const nearest = nearestDot(
+				{ x, y },
+				dots.map(({ at, lane }) => ({ x: at * widthPx, y: size / 2 + lane * step })),
+				size / 2 + snapSlopPx,
+			);
+
+			return nearest === undefined ? undefined : dots[nearest]?.index;
+		},
 		render: (markers, proportions) => {
+			const widthPx = band.getBoundingClientRect().width;
+			const points = markers.flatMap((marker, index) =>
+				marker.end === undefined ? [{ at: proportions[index]?.[0] ?? 0, index }] : [],
+			);
+			const lanes = markerLanes(
+				points.map(({ at }) => at * widthPx),
+				px('--_sonic-marker-step'),
+			);
+
+			dots = points.map((point, order) => ({ ...point, lane: lanes[order] ?? 0 }));
+
+			const laneOf = new Map(dots.map(({ index, lane }) => [index, lane]));
+
 			band.replaceChildren(
-				...markers.map((marker, index) => renderMarker(marker, proportions[index] ?? [0, 0])),
+				...markers.map((marker, index) =>
+					renderMarker(marker, proportions[index] ?? [0, 0], laneOf.get(index)),
+				),
 			);
 		},
 	};
 }
 
-export function nearestMarker(
-	proportion: number,
-	markerProportions: ReadonlyArray<number>,
+export function markerLanes(positions: ReadonlyArray<number>, minDistance: number): Array<number> {
+	const lastInLane: Array<number> = [];
+
+	return positions.map((position) => {
+		const free = lastInLane.findIndex((last) => position - last >= minDistance);
+		const lane = free === -1 ? lastInLane.length : free;
+
+		lastInLane[lane] = position;
+
+		return lane;
+	});
+}
+
+export function nearestDot(
+	point: Point,
+	dots: ReadonlyArray<Point>,
 	reach: number,
 ): number | undefined {
 	let nearest: number | undefined;
-	let nearestDistance = reach;
+	let nearestDistance = reach * reach;
 
-	for (const [index, markerProportion] of markerProportions.entries()) {
-		const distance = Math.abs(markerProportion - proportion);
+	for (const [index, dot] of dots.entries()) {
+		const distance = (dot.x - point.x) ** 2 + (dot.y - point.y) ** 2;
 		if (distance > nearestDistance) continue;
 
 		nearest = index;

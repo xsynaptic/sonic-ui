@@ -11,10 +11,26 @@ test('downsampling takes the mean of the values each bar covers', () => {
 	expect(rounded(resamplePeaks([0.2, 0.4, 0.6, 0.8, 1, 1, 1, 1], 3))).toEqual([0.3, 0.8, 1]);
 });
 
+test('the tallest bar stands as tall as the loudest peak, and the rest keep their proportion', () => {
+	expect(rounded(resamplePeaks([0.1, 0.2, 0.8, 0.2, 0.4, 0.2, 0.3], 3))).toEqual([0.24, 0.8, 0.48]);
+});
+
+test('the same peaks reach the same height at every bar count below their own', () => {
+	const peaks = [0.1, 0.2, 0.8, 0.2, 0.4, 0.2, 0.3];
+
+	for (const count of [2, 3, 4, 5, 6, 7]) {
+		expect(Math.max(...resamplePeaks(peaks, count))).toBeCloseTo(0.8, 9);
+	}
+});
+
 test('a quiet source stays quiet at every bar count', () => {
-	expect(rounded(resamplePeaks([0.1, 0.2, 0.1], 2))).toEqual([0.1, 0.15]);
+	expect(rounded(resamplePeaks([0.1, 0.2, 0.1], 2))).toEqual([0.133, 0.2]);
 	expect(rounded(resamplePeaks([0.1, 0.2, 0.1], 3))).toEqual([0.1, 0.2, 0.1]);
 	expect(rounded(resamplePeaks([0.1, 0.2, 0.1], 4))).toEqual([0.1, 0.167, 0.167, 0.1]);
+});
+
+test('silence stays silent', () => {
+	expect(resamplePeaks([0, 0, 0, 0, 0], 2)).toEqual([0, 0]);
 });
 
 test('upsampling interpolates between the values', () => {
@@ -29,7 +45,7 @@ test('nothing to draw gives no bars', () => {
 });
 
 test.each([NaN, Infinity, -Infinity])('a peak of %d draws as silence at every ratio', (bad) => {
-	expect(rounded(resamplePeaks([0.2, bad, 0.6, 0.4], 2))).toEqual([0.1, 0.5]);
+	expect(rounded(resamplePeaks([0.2, bad, 0.6, 0.4], 2))).toEqual([0.12, 0.6]);
 	expect(resamplePeaks([0.2, bad, 0.6], 3)).toEqual([0.2, 0, 0.6]);
 	expect(rounded(resamplePeaks([0.2, bad, 0.6], 5))).toEqual([0.2, 0.1, 0, 0.3, 0.6]);
 });

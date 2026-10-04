@@ -4,7 +4,7 @@ function bucketBounds(sourceLength: number, index: number, count: number): [numb
 	return [start, Math.max(start + 1, Math.floor(((index + 1) * sourceLength) / count))];
 }
 
-function downsample(peaks: ArrayLike<number>, count: number): Array<number> {
+function downsample(peaks: ReadonlyArray<number>, count: number): Array<number> {
 	const resampled: Array<number> = [];
 
 	for (let index = 0; index < count; index += 1) {
@@ -15,7 +15,22 @@ function downsample(peaks: ArrayLike<number>, count: number): Array<number> {
 		resampled.push(total / (end - start));
 	}
 
-	return resampled;
+	return rescale(resampled, peakOf(peaks));
+}
+
+function peakOf(peaks: ReadonlyArray<number>): number {
+	let loudest = 0;
+
+	for (const peak of peaks) loudest = Math.max(loudest, peak);
+
+	return loudest;
+}
+
+function rescale(bars: Array<number>, loudest: number): Array<number> {
+	const tallest = peakOf(bars);
+	if (tallest <= 0) return bars;
+
+	return bars.map((bar) => (bar * loudest) / tallest);
 }
 
 function upsample(peaks: ArrayLike<number>, count: number): Array<number> {

@@ -140,7 +140,7 @@ test('a mouse over the strip reads out the time under it, or a marker within rea
 	expect(readoutText(control)).toBe('105 s');
 
 	wavestrip.markers = [{ start: 200 }];
-	midPointerAt(control, 'pointermove', { clientX: 172, pointerType: 'mouse' });
+	midPointerAt(control, 'pointermove', { clientX: 172, clientY: 2, pointerType: 'mouse' });
 	expect(readoutText(control)).toBe('200 s');
 });
 
@@ -218,15 +218,16 @@ function markerDots(control: HTMLElement): Array<HTMLElement> {
 
 // The reach is 4px, since happy-dom computes no marker size
 test.each([
-	[172, 200],
-	[176, 206],
-])('a press at %ipx beside a marker at 170px lands at %d', (clientX, expected) => {
+	[172, 2, 200],
+	[176, 2, 206],
+	[172, 8, 202],
+])('a press at %ipx, %ipx by a marker at 170px, 0px lands at %d', (clientX, clientY, expected) => {
 	installCanvasFakes();
 
 	const { control, wavestrip } = mountWavestrip('min="30" max="330" step="0" value="50"');
 
 	wavestrip.markers = [{ start: 200 }];
-	midPointerAt(control, 'pointerdown', { clientX });
+	midPointerAt(control, 'pointerdown', { clientX, clientY });
 
 	expect(wavestrip.value).toBe(expected);
 });
@@ -238,9 +239,9 @@ test('a drag from a marker scrubs from the press, and crossing the marker never 
 	const values: Array<number> = [];
 
 	wavestrip.markers = [{ start: 200 }];
-	midPointerAt(control, 'pointerdown', { clientX: 172 });
+	midPointerAt(control, 'pointerdown', { clientX: 172, clientY: 2 });
 	for (const clientX of [176, 168]) {
-		midPointerAt(control, 'pointermove', { clientX });
+		midPointerAt(control, 'pointermove', { clientX, clientY: 2 });
 		values.push(wavestrip.value);
 	}
 

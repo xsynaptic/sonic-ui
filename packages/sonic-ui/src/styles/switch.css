@@ -64,6 +64,7 @@
 	}
 
 	.sonic-switch-position {
+		position: relative;
 		display: grid;
 		place-items: center;
 		place-self: stretch;
@@ -90,6 +91,17 @@
 		&:has([data-sonic-momentary]) {
 			touch-action: none;
 		}
+	}
+
+	.sonic-switch[data-sonic-position-count] > .sonic-switch-position::after {
+		inset-block: 0;
+	}
+
+	[orientation='horizontal']
+		> .sonic-switch[data-sonic-position-count]
+		> .sonic-switch-position::after {
+		inset-block: var(--_sonic-hit-outset);
+		inset-inline: 0;
 	}
 
 	.sonic-switch-label {

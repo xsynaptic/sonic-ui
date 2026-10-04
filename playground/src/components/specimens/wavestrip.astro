@@ -2,6 +2,8 @@
 import Cell from '#components/specimens/cell.astro';
 import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 
+const markers = '30 60..95:intro 140 150 215 260~';
+
 const strips = [
 	{ id: 'wavestrip-default', label: 'Default', seed: 1 },
 	{ className: 'sonic-skin-lime', id: 'wavestrip-skin', label: 'Skin', seed: 2 },
@@ -9,6 +11,12 @@ const strips = [
 	{ id: 'wavestrip-disabled', isDisabled: true, label: 'Disabled', seed: 4 },
 	{ id: 'wavestrip-empty', label: 'Empty' },
 	{ className: '[--sonic-glass-depth:0]', id: 'wavestrip-flat', label: 'Flat', seed: 5 },
+	{
+		id: 'wavestrip-stacked',
+		label: 'Stacked markers',
+		markers: '30 32 34 36 60..95:intro 140 142 215 216 217 260~',
+		seed: 6,
+	},
 ];
 ---
 
@@ -20,7 +28,7 @@ const strips = [
 				cancellable
 				class:list={['[--sonic-wavestrip-length:20rem]', strip.className]}
 				data-buffered="0 150 190 230"
-				data-markers="30 60..95:intro 140 150 215 260~"
+				data-markers={strip.markers ?? markers}
 				data-peaks={strip.seed}
 				dimmed={strip.isDimmed}
 				disabled={strip.isDisabled}

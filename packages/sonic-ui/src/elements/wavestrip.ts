@@ -3,7 +3,7 @@ import type { SurfaceFrame } from '#lib/canvas-surface.ts';
 import type { StripRegions } from '#lib/strip-scene.ts';
 
 import { SonicWaveElement } from '#elements/wave-element.ts';
-import { createMarkerBand, nearestMarker } from '#lib/marker-band.ts';
+import { createMarkerBand } from '#lib/marker-band.ts';
 import { clampProportion } from '#lib/math.ts';
 import { readPxProperty } from '#lib/read-px-property.ts';
 import { requireChild, template } from '#lib/render.ts';
@@ -153,19 +153,20 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 	}
 
 	protected override renderMarkers(): void {
-		this.#markerBand.render(this.markers, this.markerProportions());
+		this.#markerBand.render(this.markerList(), this.markerProportions());
 	}
 
 	protected override scrubsKeyRepeat(): boolean {
 		return true;
 	}
 
-	#axis(): ValueAxis & { startPx: number } {
+	#axis(): ValueAxis & { startPx: number; topPx: number } {
 		const box = this.canvas.getBoundingClientRect();
 
 		return {
 			position: (event: PointerEvent) => event.clientX,
 			startPx: box.left,
+			topPx: box.top,
 			travelPx: Math.max(1, box.width),
 		};
 	}
@@ -195,7 +196,7 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 				const axis = this.#axis();
 				const at = clampProportion((event.clientX - axis.startPx) / axis.travelPx);
 
-				this.hoverReadout(this.#markerAt(at, axis.travelPx) ?? this.mapping().valueAt(at));
+				this.hoverReadout(this.#markerAt(event, axis) ?? this.mapping().valueAt(at));
 				this.#placeReadout();
 			},
 			{ signal },
@@ -212,28 +213,30 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 	}
 
 	#grab(event: PointerEvent): ValueAxis {
-		const { startPx, ...axis } = this.#axis();
-		const at = (event.clientX - startPx) / axis.travelPx;
+		const axis = this.#axis();
+		const at = (event.clientX - axis.startPx) / axis.travelPx;
 		const outside = this.#outside();
-		const grabbed = { ...axis, fromProportion: clampProportion(at) };
+		const grabbed = {
+			fromProportion: clampProportion(at),
+			position: axis.position,
+			travelPx: axis.travelPx,
+		};
 
-		this.input(this.#markerAt(at, axis.travelPx) ?? this.mapping().valueAt(at));
+		this.input(this.#markerAt(event, axis) ?? this.mapping().valueAt(at));
 
 		return outside ? { ...grabbed, outside } : grabbed;
 	}
 
-	#markerAt(at: number, travelPx: number): number | undefined {
-		const markers = this.markers;
-		if (markers.length === 0) return undefined;
-
-		const { proportionOf } = this.mapping();
-		const index = nearestMarker(
-			at,
-			markers.map(({ start }) => proportionOf(start)),
-			this.#markerBand.reachPx() / travelPx,
+	#markerAt(
+		event: PointerEvent,
+		{ startPx, topPx, travelPx }: { startPx: number; topPx: number; travelPx: number },
+	): number | undefined {
+		const index = this.#markerBand.at(
+			{ x: event.clientX - startPx, y: event.clientY - topPx },
+			travelPx,
 		);
 
-		return index === undefined ? undefined : markers[index]?.start;
+		return index === undefined ? undefined : this.markerList()[index]?.start;
 	}
 
 	#outside(): ((event: PointerEvent) => boolean) | undefined {
