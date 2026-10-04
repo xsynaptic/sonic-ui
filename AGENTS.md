@@ -6,6 +6,8 @@
 
 Plans in `.claude/tasks/` (gitignored) carry a frontmatter `status`; only `ready` is live work.
 
+Vocabulary: `.claude/context.md` defines each control, part and value term and the words it replaces; read it before naming anything.
+
 ## Public repo
 
 Everything tracked is public and stands alone. Name no person and none of our other projects in code, comments, fixtures, docs, changesets or commit messages; describe the situation instead ("a docked player bar with `backdrop-filter`"). Dependencies and file formats are named as they are. The `author` field and the licence are the only exceptions. Gitignored notes under `.claude/` may name anything.
