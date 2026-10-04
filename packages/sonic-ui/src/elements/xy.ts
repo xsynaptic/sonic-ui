@@ -8,7 +8,7 @@ import { Readout } from '#elements/readout.ts';
 import { dragThresholdPx } from '#lib/drag-step.ts';
 import { pointerMove, pointerPosition, startFieldDrag, stepFieldDrag } from '#lib/field.ts';
 import { focusByPointer } from '#lib/focus-by-pointer.ts';
-import { clampProportion } from '#lib/math.ts';
+import { clampProportion, toNumber } from '#lib/math.ts';
 import { isMenuPress, isResetPress } from '#lib/modifier-press.ts';
 import { bindDrag } from '#lib/pointer-drag.ts';
 import { requireChild, template } from '#lib/render.ts';
@@ -22,7 +22,7 @@ declare global {
 }
 
 interface AxisValue {
-	isDirty: boolean;
+	asked: number | undefined;
 	value: number;
 }
 
@@ -115,7 +115,7 @@ export class SonicXy extends SonicFormElement {
 		return this.#values.x.value;
 	}
 
-	set x(next: number) {
+	set x(next: null | number | undefined) {
 		this.#write('x', next);
 	}
 
@@ -187,7 +187,7 @@ export class SonicXy extends SonicFormElement {
 		return this.#values.y.value;
 	}
 
-	set y(next: number) {
+	set y(next: null | number | undefined) {
 		this.#write('y', next);
 	}
 
@@ -279,15 +279,15 @@ export class SonicXy extends SonicFormElement {
 	readonly #readout = new Readout(requireChild(this.#xy, '.sonic-xy-readout', HTMLDivElement));
 
 	readonly #values: Record<FieldAxis, AxisValue> = {
-		x: { isDirty: false, value: 0 },
-		y: { isDirty: false, value: 0 },
+		x: { asked: undefined, value: 0 },
+		y: { asked: undefined, value: 0 },
 	};
 
 	attributeChangedCallback(name: string): void {
 		if (name === 'x' || name === 'y') {
 			if (this.#pointerDrag?.current()) return;
 
-			this.#values[name].isDirty = false;
+			this.#values[name].asked = undefined;
 		}
 		if (name === 'disabled' && this.isDisabled()) this.#pointerDrag?.end();
 
@@ -321,7 +321,7 @@ export class SonicXy extends SonicFormElement {
 	}
 
 	override formResetCallback(): void {
-		for (const axis of axes) this.#values[axis].isDirty = false;
+		for (const axis of axes) this.#values[axis].asked = undefined;
 
 		this.#refresh();
 	}
@@ -329,7 +329,7 @@ export class SonicXy extends SonicFormElement {
 	protected connect(signal: AbortSignal): void {
 		const xy = this.#xy;
 
-		this.appendOnce(xy);
+		this.keepControl(xy, signal);
 		this.render();
 		this.checkStyles(xy, 'xy.css');
 		this.#bindPointer(xy, signal);
@@ -555,7 +555,7 @@ export class SonicXy extends SonicFormElement {
 			const mapping = mappings[axis];
 
 			axisValue.value = mapping.snap(
-				axisValue.isDirty ? axisValue.value : this.numberAttribute(axis, mapping.bounds[0]),
+				axisValue.asked ?? this.numberAttribute(axis, mapping.bounds[0]),
 			);
 		}
 		this.render();
@@ -618,7 +618,7 @@ export class SonicXy extends SonicFormElement {
 		const axisValue = this.#values[axis];
 		const snapped = this.#mapping(axis).snap(next);
 
-		axisValue.isDirty = true;
+		axisValue.asked = snapped;
 		if (snapped === axisValue.value) return false;
 
 		axisValue.value = snapped;
@@ -634,8 +634,22 @@ export class SonicXy extends SonicFormElement {
 		return `${this.#axisText(axis)}, ${this.#axisText(axis === 'x' ? 'y' : 'x')}`;
 	}
 
-	#write(axis: FieldAxis, next: number): void {
+	#write(axis: FieldAxis, next: null | number | undefined): void {
 		if (this.#pointerDrag?.current()) return;
-		if (this.#set(axis, next)) this.render();
+
+		const axisValue = this.#values[axis];
+
+		// A framework removes a prop by setting the property to `undefined`
+		if (next === undefined || next === null) {
+			axisValue.asked = undefined;
+			this.#refresh();
+			return;
+		}
+
+		const asked = toNumber(next);
+		const hasMoved = this.#set(axis, asked);
+
+		if (Number.isFinite(asked)) axisValue.asked = asked;
+		if (hasMoved) this.render();
 	}
 }

@@ -61,7 +61,7 @@ export class SonicDial extends SonicValueElement {
 		return this.readModulationValue();
 	}
 
-	set modulationValue(value: number | undefined) {
+	set modulationValue(value: null | number | undefined) {
 		this.writeModulationValue(this.#dial, 'dial', value);
 	}
 

@@ -18,7 +18,7 @@ class SeamControl extends SonicValueElement {
 	}
 
 	protected connect(signal: AbortSignal): void {
-		this.appendOnce(this.#control);
+		this.keepControl(this.#control, signal);
 		this.render();
 		this.bindGestures(this.#control, signal, () => {
 			const axis = { position: (event: PointerEvent) => event.clientX, travelPx: 200 };

@@ -2,6 +2,14 @@ export function clamp(value: number, min: number, max: number): number {
 	return Math.min(max, Math.max(min, value));
 }
 
+// A framework may set a number property as a string; a blank one is no number, as in an attribute
+export function toNumber(value: unknown): number {
+	if (typeof value === 'number') return value;
+	if (typeof value !== 'string' || value.trim() === '') return NaN;
+
+	return Number(value);
+}
+
 export function clampProportion(fraction: number): number {
 	return clamp(fraction, 0, 1);
 }

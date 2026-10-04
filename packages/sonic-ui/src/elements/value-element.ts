@@ -10,7 +10,7 @@ import { ValueEntry } from '#elements/value-entry.ts';
 import { copyNode } from '#lib/copy-node.ts';
 import { dragThresholdPx, startDrag, stepDrag } from '#lib/drag-step.ts';
 import { focusByPointer } from '#lib/focus-by-pointer.ts';
-import { clamp } from '#lib/math.ts';
+import { clamp, toNumber } from '#lib/math.ts';
 import { isMenuPress, isResetPress } from '#lib/modifier-press.ts';
 import { parseNumberList } from '#lib/number-list.ts';
 import { bindDrag } from '#lib/pointer-drag.ts';
@@ -291,18 +291,29 @@ export abstract class SonicValueElement extends SonicFormElement {
 		return this.#value;
 	}
 
-	set value(next: number) {
-		if (this.#isHeld()) {
-			this.heldWrite(next);
+	set value(next: null | number | undefined) {
+		// A framework removes a prop by setting the property to `undefined`
+		if (next === undefined || next === null) {
+			this.formResetCallback();
 			return;
 		}
 
-		this.#write(next);
+		const value = toNumber(next);
+
+		if (this.#isHeld()) {
+			this.heldWrite(value);
+			return;
+		}
+
+		this.#write(value);
+		if (Number.isFinite(value)) this.#asked = value;
 	}
 
 	get valueText(): string {
 		return this.#textFor(this.#value);
 	}
+
+	#asked: number | undefined;
 
 	#buffered: Array<[number, number]> = [];
 
@@ -319,8 +330,6 @@ export abstract class SonicValueElement extends SonicFormElement {
 	#formatValue: ((value: number) => string) | undefined;
 
 	readonly #instance = String((instanceCount += 1));
-
-	#isDirty = false;
 
 	#isModulated = false;
 
@@ -354,13 +363,11 @@ export abstract class SonicValueElement extends SonicFormElement {
 				return;
 			}
 
-			this.#isDirty = false;
+			this.#asked = undefined;
 		}
 		if (name === 'disabled' && this.isDisabled()) this.#endHolds();
 
-		this.#value = this.mapping().snap(
-			this.#isDirty ? this.#value : this.numberAttribute('value', this.min),
-		);
+		this.#value = this.mapping().snap(this.#asked ?? this.numberAttribute('value', this.min));
 		if (proportionAttributes.has(name)) this.proportionsChanged();
 		this.render();
 	}
@@ -484,6 +491,7 @@ export abstract class SonicValueElement extends SonicFormElement {
 				control,
 				copy: scaleMark,
 				isCopied: (child) => child instanceof Element && child.matches('[data-sonic-value]'),
+				isPassed: (child) => child instanceof Element && child.matches('.sonic-led'),
 				place: (copies) => {
 					placeChildren(marks, copies);
 					this.#renderScale();
@@ -608,11 +616,12 @@ export abstract class SonicValueElement extends SonicFormElement {
 	protected writeModulationValue(
 		control: HTMLElement,
 		prefix: 'dial' | 'slider',
-		next: number | undefined,
+		next: null | number | undefined,
 	): void {
-		if (next !== undefined && !Number.isFinite(next)) return;
+		const value = next === undefined || next === null ? undefined : toNumber(next);
+		if (value !== undefined && !Number.isFinite(value)) return;
 
-		this.#modulationValue = next;
+		this.#modulationValue = value;
 		this.#writeModulationProportion(control, prefix);
 	}
 
@@ -964,9 +973,9 @@ export abstract class SonicValueElement extends SonicFormElement {
 	#write(next: number): void {
 		if (!Number.isFinite(next)) return;
 
-		this.#isDirty = true;
-
 		const clamped = this.mapping().snap(next);
+
+		this.#asked = clamped;
 		if (clamped === this.#value) return;
 
 		this.#value = clamped;

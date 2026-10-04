@@ -55,7 +55,7 @@ export abstract class SonicWaveElement<
 	protected connect(signal: AbortSignal): void {
 		const control = this.control;
 
-		this.appendOnce(control);
+		this.keepControl(control, signal);
 		this.renderEmpty();
 		this.#surface = bindSurface({
 			canvas: this.canvas,

@@ -29,7 +29,7 @@ test('a max set by script after the value re-reads the value attribute', () => {
 	expect(dial.value).toBe(150);
 });
 
-test('once the property sets the value, a range change clamps it rather than re-reading the attribute', () => {
+test('once the property sets the value, a range change snaps what was asked rather than re-reading the attribute', () => {
 	const { dial } = mountDial('value="80"');
 
 	dial.value = 50;
@@ -37,7 +37,7 @@ test('once the property sets the value, a range change clamps it rather than re-
 	expect(dial.value).toBe(40);
 
 	dial.setAttribute('max', '200');
-	expect(dial.value).toBe(40);
+	expect(dial.value).toBe(50);
 });
 
 test('a dial without a value starts at min', () => {

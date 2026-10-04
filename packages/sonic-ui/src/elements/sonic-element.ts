@@ -1,5 +1,6 @@
 import type { MirrorSlots } from '#lib/render.ts';
 
+import { toNumber } from '#lib/math.ts';
 import { attachSlots } from '#lib/render.ts';
 import { writeAttribute } from '#lib/write-attribute.ts';
 
@@ -11,6 +12,8 @@ const namingAttributes = ['aria-describedby', 'aria-label', 'aria-labelledby'];
 const checkedSheets = new WeakMap<object, Set<string>>();
 
 const checkedMirrors = new WeakSet<object>();
+
+const checkedChildren = new WeakSet<object>();
 
 const interactive = 'a[href], button, input, select, textarea, [tabindex]';
 
@@ -40,10 +43,17 @@ function unmirrorable(original: Node): Element | undefined {
 	);
 }
 
+function isContent(child: Node): boolean {
+	if (child instanceof Element) return true;
+
+	return child instanceof Text && child.data.trim() !== '';
+}
+
 interface Mirror {
 	control: Element;
 	copy: (original: ChildNode) => Node | undefined;
 	isCopied?: (child: Node) => boolean;
+	isPassed?: (child: Node) => boolean;
 	place: (copies: Array<Node>) => void;
 }
 
@@ -114,16 +124,6 @@ export abstract class SonicElement extends HTMLElement {
 		if (!this.isDisabled() && !this.#focused()) target.focus(options);
 	}
 
-	protected appendOnce(control: Element): void {
-		const [hook] = control.classList;
-		const stale = [...this.children].filter(
-			(child) => child !== control && hook !== undefined && child.classList.contains(hook),
-		);
-
-		for (const child of stale) child.remove();
-		if (control.parentNode !== this) this.append(control);
-	}
-
 	protected checkStyles(control: HTMLElement, sheet: string): void {
 		if (!__DEV__) return;
 
@@ -185,8 +185,27 @@ export abstract class SonicElement extends HTMLElement {
 		return this.disabled || this.matches(':disabled');
 	}
 
+	// A morph against server HTML, or a stray `innerHTML`, deletes the control
+	protected keepControl(control: Element, signal: AbortSignal): void {
+		const keep = (): void => {
+			this.#appendOnce(control);
+			this.#checkChildren([...this.childNodes].filter((child) => child !== control));
+		};
+		const observer = new MutationObserver(keep);
+
+		keep();
+		observer.observe(this, { childList: true });
+		signal.addEventListener(
+			'abort',
+			() => {
+				observer.disconnect();
+			},
+			{ once: true },
+		);
+	}
+
 	protected mirrorChildren(
-		{ control, copy, isCopied = () => true, place }: Mirror,
+		{ control, copy, isCopied = () => true, isPassed = () => false, place }: Mirror,
 		signal: AbortSignal,
 	): void {
 		const slots = this.#slots ?? attachSlots(this);
@@ -194,7 +213,7 @@ export abstract class SonicElement extends HTMLElement {
 
 		this.#slots = slots;
 		const mirror = (touched?: Set<Node | undefined>): void => {
-			this.appendOnce(control);
+			this.#appendOnce(control);
 
 			const children = [...this.childNodes].filter((child) => child !== control);
 			const slotted = children.filter(
@@ -204,6 +223,7 @@ export abstract class SonicElement extends HTMLElement {
 			const originals = children.filter((child) => isCopied(child));
 
 			this.#checkMirrored(originals);
+			this.#checkChildren(children.filter((child) => !isCopied(child) && !isPassed(child)));
 			copies = new Map(
 				originals.map((original) => [
 					original,
@@ -245,10 +265,7 @@ export abstract class SonicElement extends HTMLElement {
 	}
 
 	protected numberAttribute(name: string, fallback: number): number {
-		const attribute = this.getAttribute(name);
-		if (attribute === null || attribute.trim() === '') return fallback;
-
-		const parsed = Number(attribute);
+		const parsed = toNumber(this.getAttribute(name));
 
 		return Number.isFinite(parsed) ? parsed : fallback;
 	}
@@ -283,6 +300,30 @@ export abstract class SonicElement extends HTMLElement {
 			Reflect.deleteProperty(this, name);
 			this[name] = value;
 		}
+	}
+
+	#appendOnce(control: Element): void {
+		const [hook] = control.classList;
+		const stale = [...this.children].filter(
+			(child) => child !== control && hook !== undefined && child.classList.contains(hook),
+		);
+
+		for (const child of stale) child.remove();
+		if (control.parentNode !== this) this.append(control);
+	}
+
+	#checkChildren(undocumented: Array<Node>): void {
+		if (!__DEV__ || checkedChildren.has(this.constructor)) return;
+
+		const found = undocumented.find((child) => isContent(child));
+		if (!found) return;
+
+		checkedChildren.add(this.constructor);
+		console.warn(
+			`<${this.localName}> uses only the children it documents, so the ${
+				found instanceof Element ? `<${found.localName}>` : 'text'
+			} inside it is unsupported`,
+		);
 	}
 
 	#checkMirrored(originals: Array<Node>): void {

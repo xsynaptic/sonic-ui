@@ -1,0 +1,17 @@
+---
+import Document from '#components/document.astro';
+import { IslandDial } from '#components/islands/island-dial.ts';
+import '#styles/playground.css';
+---
+
+<Document
+	bodyClass="bg-ground text-text"
+	scheme="dark"
+	skin="amber"
+	title="sonic-ui fixtures, React island"
+>
+	<main class="flex flex-wrap items-center gap-16 p-16">
+		<h1 class="sr-only">React island</h1>
+		<IslandDial client:load />
+	</main>
+</Document>

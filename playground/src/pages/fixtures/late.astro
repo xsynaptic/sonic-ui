@@ -1,0 +1,23 @@
+---
+import Document from '#components/document.astro';
+import '#styles/playground.css';
+
+// The development tree is imported by path so a warning would reach the console; the preview resolves the default tree
+---
+
+<Document
+	bodyClass="bg-ground text-text"
+	scheme="dark"
+	skin="amber"
+	title="sonic-ui fixtures, late registration"
+>
+	<main class="flex flex-wrap items-center gap-16 p-16">
+		<h1 class="sr-only">Late registration</h1>
+		<sonic-dial aria-label="Cutoff" max="90" min="10" step="5" value="40"></sonic-dial>
+	</main>
+	<script>
+		addEventListener('load', () => {
+			void import('../../../../packages/sonic-ui/dist/dev/define/dial.js');
+		});
+	</script>
+</Document>

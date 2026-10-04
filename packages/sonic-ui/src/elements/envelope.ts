@@ -216,7 +216,7 @@ export class SonicEnvelope extends SonicElement {
 		const envelope = this.#envelope;
 
 		this.#signal = signal;
-		this.appendOnce(envelope);
+		this.keepControl(envelope, signal);
 		this.#bind();
 		this.checkStyles(envelope, 'envelope.css');
 		this.#bindPointer(envelope, signal);

@@ -45,7 +45,7 @@ export class SonicNumber extends SonicValueElement {
 	protected connect(signal: AbortSignal): void {
 		const number = this.#number;
 
-		this.appendOnce(number);
+		this.keepControl(number, signal);
 		this.render();
 		this.checkStyles(number, 'number.css');
 		this.bindGestures(number, signal, () => ({

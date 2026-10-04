@@ -1,5 +1,6 @@
 import { SonicElement } from '#elements/sonic-element.ts';
 import { ballisticsRates, fall, rise, stepNeedle } from '#lib/ballistics.ts';
+import { toNumber } from '#lib/math.ts';
 import { parseNumberList } from '#lib/number-list.ts';
 import { template } from '#lib/render.ts';
 import { linearTaper } from '#lib/taper.ts';
@@ -71,7 +72,8 @@ export class SonicMeter extends SonicElement {
 		return this.#level;
 	}
 
-	set level(amplitude: number) {
+	set level(level: number) {
+		const amplitude = toNumber(level);
 		if (!Number.isFinite(amplitude)) return;
 
 		const decibels = toDecibels(amplitude);
@@ -197,7 +199,7 @@ export class SonicMeter extends SonicElement {
 			'value',
 			'level',
 		);
-		this.appendOnce(this.#meter);
+		this.keepControl(this.#meter, signal);
 		this.#renderSegments();
 		this.#render(now);
 		this.#schedule(now);
