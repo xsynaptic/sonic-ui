@@ -1,5 +1,17 @@
 # @xsynaptic/sonic-ui
 
+## 0.6.0
+
+### Minor Changes
+
+- Breaking: a control with no skin is now bare; the former default look is the `amber` skin, and `flat` is new. `--sonic-relief` scales depth and glow, and new tokens cover edges, wells, hover colours and `--sonic-target-size`.
+
+  Reworked XY puck, envelope handles, wavestrip markers and readout, and dial scale labels.
+
+  Controls put their control back when a morph removes it, warn in development about children they do not document, and take number properties as strings. Under a hydrating framework, register the definitions after hydration.
+
+  Controls draw once on connect and write the DOM only where something changed.
+
 ## 0.5.0
 
 ### Minor Changes
