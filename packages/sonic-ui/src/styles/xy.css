@@ -38,7 +38,10 @@
 		container-type: size;
 		touch-action: none;
 		cursor: crosshair;
-		border-radius: calc(var(--_sonic-xy-size) * var(--_sonic-xy-radius-ratio));
+
+		--_sonic-glass-radius: calc(var(--_sonic-xy-size) * var(--_sonic-xy-radius-ratio));
+
+		border-radius: var(--_sonic-glass-radius);
 	}
 
 	:disabled > .sonic-xy {
@@ -117,9 +120,13 @@
 	}
 
 	.sonic-xy-puck {
-		--_sonic-xy-star: var(--_sonic-xy-lit);
-		--_sonic-xy-star-lift: color-mix(in oklab, var(--_sonic-xy-lit) 85%, #fff);
-		--_sonic-xy-star-glow: transparent;
+		--_sonic-xy-puck-fill: var(--_sonic-xy-lit);
+		--_sonic-xy-puck-edge: var(--_sonic-xy-puck-fill);
+		--_sonic-xy-puck-bracket: transparent;
+		--_sonic-xy-puck-bracket-scale: 0.6;
+		--_sonic-xy-puck-lift: color-mix(in oklab, var(--_sonic-xy-lit) 85%, #fff);
+		--_sonic-xy-puck-glow: transparent;
+		--_sonic-xy-puck-ring: 0 0 transparent;
 
 		position: absolute;
 		inset: auto auto
@@ -129,39 +136,67 @@
 		block-size: var(--_sonic-xy-puck);
 		cursor: var(--_sonic-xy-cursor);
 		border-radius: 50%;
-		box-shadow: var(--_sonic-focus-shadow);
-		filter: drop-shadow(0 0 calc(0.1 * var(--_sonic-xy-puck)) var(--_sonic-xy-star-glow));
-		transition:
-			box-shadow 120ms ease-out,
-			filter 120ms ease-out;
+		filter: drop-shadow(0 0 calc(0.15 * var(--_sonic-xy-puck)) var(--_sonic-xy-puck-glow));
+		transition: filter 120ms ease-out;
 
 		&::before {
 			position: absolute;
-			inset: 0;
+			inset: 25%;
 			pointer-events: none;
 			content: '';
-			background: var(--_sonic-xy-star);
-			mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 108 108'%3E%3Cpath d='M50 0C52 38 62 48 100 50C62 52 52 62 50 100C48 62 38 52 0 50C38 48 48 38 50 0Z'/%3E%3C/svg%3E")
-				center / 100% 100% no-repeat;
-			transition: background-color 120ms ease-out;
+			background: var(--_sonic-xy-puck-fill);
+			border: max(1px, 0.08 * var(--_sonic-xy-puck)) solid var(--_sonic-xy-puck-edge);
+			border-radius: 50%;
+			box-shadow: var(--_sonic-xy-puck-ring);
+			transition:
+				background-color 120ms ease-out,
+				border-color 120ms ease-out,
+				box-shadow 120ms ease-out;
+		}
+
+		&::after {
+			position: absolute;
+			inset: 4%;
+			pointer-events: none;
+			content: '';
+			border: max(1px, 0.08 * var(--_sonic-xy-puck)) solid var(--_sonic-xy-puck-bracket);
+			border-block-start-color: transparent;
+			border-radius: 50%;
+			rotate: 45deg;
+			scale: var(--_sonic-xy-puck-bracket-scale);
+			transition:
+				border-color 120ms ease-out,
+				scale 120ms ease-out;
 		}
 	}
 
 	@media (hover: hover) {
-		:not(:disabled) > .sonic-xy > .sonic-xy-puck:hover {
-			--_sonic-xy-star: var(--_sonic-xy-star-lift);
+		:not(:disabled, :state(dragging)) > .sonic-xy > .sonic-xy-puck:hover {
+			--_sonic-xy-puck-fill: var(--_sonic-xy-puck-lift);
 		}
 	}
 
-	/* The glow goes on the puck, since a custom property cannot travel up from the part */
 	.sonic-xy-puck:has(> :focus-visible:not([data-sonic-pointer-focus])) {
-		--_sonic-xy-star: var(--_sonic-xy-star-lift);
-		--_sonic-focus-shadow: var(--_sonic-focus-glow);
+		--_sonic-xy-puck-fill: var(--_sonic-xy-puck-lift);
+		--_sonic-xy-puck-ring:
+			0 0 0 max(2px, 0.08 * var(--_sonic-xy-puck)) var(--_sonic-glass),
+			0 0 0 max(4px, 0.16 * var(--_sonic-xy-puck)) var(--_sonic-focus);
 	}
 
 	:state(dragging) > .sonic-xy > .sonic-xy-puck {
-		--_sonic-xy-star: var(--_sonic-xy-star-lift);
-		--_sonic-xy-star-glow: color-mix(in oklab, var(--_sonic-xy-lit) 25%, transparent);
+		--_sonic-xy-puck-fill: var(--_sonic-glass);
+		--_sonic-xy-puck-edge: var(--_sonic-xy-lit);
+		--_sonic-xy-puck-glow: color-mix(
+			in oklab,
+			var(--_sonic-xy-lit) calc(45% * var(--_sonic-relief)),
+			transparent
+		);
+		--_sonic-xy-puck-bracket: color-mix(
+			in oklab,
+			var(--_sonic-xy-lit) calc(100% * (1 - var(--_sonic-relief))),
+			transparent
+		);
+		--_sonic-xy-puck-bracket-scale: 1;
 	}
 
 	.sonic-xy-axis {
@@ -175,6 +210,7 @@
 		.sonic-xy {
 			--_sonic-lit: Highlight;
 			--_sonic-unlit: GrayText;
+			--_sonic-glass: Canvas;
 		}
 
 		.sonic-xy-field {
@@ -182,9 +218,10 @@
 		}
 
 		.sonic-xy-puck {
-			--_sonic-xy-star: CanvasText;
-			--_sonic-xy-star-lift: CanvasText;
-			--_sonic-xy-star-glow: transparent;
+			--_sonic-xy-puck-fill: CanvasText;
+			--_sonic-xy-puck-lift: CanvasText;
+			--_sonic-xy-puck-glow: transparent;
+			--_sonic-xy-puck-ring: 0 0 transparent;
 
 			forced-color-adjust: none;
 		}

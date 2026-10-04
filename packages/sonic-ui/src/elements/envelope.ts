@@ -55,11 +55,14 @@ function isParent(node: Node): node is Node & ParentNode {
 	return 'querySelector' in node;
 }
 
+const emptyPath = { fill: '', floor: { from: 0, to: 0 }, stroke: '' };
+
 const renderEnvelope = template(
 	/* HTML */ `
 		<div class="sonic-envelope" aria-hidden="true">
 			<svg class="sonic-envelope-graph" preserveAspectRatio="none" viewBox="0 0 1 1">
 				<path class="sonic-envelope-fill" />
+				<rect class="sonic-envelope-fill sonic-envelope-floor" y="1" />
 				<path class="sonic-envelope-line" />
 			</svg>
 			<div class="sonic-envelope-handle" data-sonic-stage="delay" hidden></div>
@@ -173,6 +176,8 @@ export class SonicEnvelope extends SonicElement {
 
 	readonly #fill = requireChild(this.#envelope, '.sonic-envelope-fill', SVGElement);
 
+	readonly #floor = requireChild(this.#envelope, '.sonic-envelope-floor', SVGElement);
+
 	readonly #graph = requireChild(this.#envelope, '.sonic-envelope-graph', SVGElement);
 
 	readonly #line = requireChild(this.#envelope, '.sonic-envelope-line', SVGElement);
@@ -277,11 +282,13 @@ export class SonicEnvelope extends SonicElement {
 
 	#draw(): void {
 		const shape = this.#readShape();
-		const path = this.#bindings.size === 0 ? { fill: '', stroke: '' } : adsrPath(shape);
+		const path = this.#bindings.size === 0 ? emptyPath : adsrPath(shape);
 
 		this.#shape = shape;
 		this.#line.setAttribute('d', path.stroke);
 		this.#fill.setAttribute('d', path.fill);
+		this.#floor.setAttribute('x', String(path.floor.from));
+		this.#floor.setAttribute('width', String(path.floor.to - path.floor.from));
 		for (const stage of timeStages) {
 			this.#drawPoint(`.sonic-envelope-handle[data-sonic-stage="${stage}"]`, {
 				at: shape.handles.find((point) => point.stage === stage),

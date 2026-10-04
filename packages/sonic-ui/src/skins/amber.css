@@ -1,0 +1,8 @@
+@layer sonic {
+	.sonic-skin-amber {
+		--sonic-relief: 1;
+		--sonic-cap: oklch(37% 0.012 286deg);
+		--sonic-cap-hover: oklch(44.2% 0.015 286deg);
+		--sonic-ink: color-mix(in oklab, var(--sonic-cap) 30%, #fff);
+	}
+}

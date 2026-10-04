@@ -120,7 +120,12 @@
 		container-type: size;
 		touch-action: pan-y;
 		cursor: ew-resize;
-		border-radius: calc(var(--_sonic-wavestrip-size) * var(--sonic-wavestrip-radius-ratio, 0.15));
+
+		--_sonic-glass-radius: calc(
+			var(--_sonic-wavestrip-size) * var(--sonic-wavestrip-radius-ratio, 0.15)
+		);
+
+		border-radius: var(--_sonic-glass-radius);
 		box-shadow: var(--_sonic-focus-shadow);
 	}
 
@@ -171,7 +176,8 @@
 	}
 
 	.sonic-wavestrip-region {
-		inset: 0 auto 0 calc(var(--_sonic-marker-from, 0) * 100%);
+		inset: calc(-1 * var(--_sonic-wavestrip-inset)) auto calc(-1 * var(--_sonic-wavestrip-inset))
+			calc(var(--_sonic-marker-from, 0) * 100%);
 		box-sizing: border-box;
 		inline-size: calc((var(--_sonic-marker-to, 0) - var(--_sonic-marker-from, 0)) * 100%);
 		background: color-mix(in oklab, var(--_sonic-marker-colour) 16%, transparent);

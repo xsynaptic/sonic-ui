@@ -10,6 +10,7 @@
 		--sonic-well-lit: var(--sonic-lit);
 		--sonic-bezel: oklch(90% 0.004 255deg);
 		--sonic-lens: var(--sonic-unlit);
+		--sonic-led-lens-ratio: 0.8;
 		--sonic-waveform-edge: var(--sonic-lit);
 		--sonic-ink: oklch(27% 0.012 255deg);
 		--sonic-focus: oklch(52% 0.21 255deg);

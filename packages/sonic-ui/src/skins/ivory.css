@@ -1,5 +1,6 @@
 @layer sonic {
 	.sonic-skin-ivory {
+		--sonic-relief: 1;
 		--sonic-cap: oklch(85.5% 0.024 85deg);
 		--sonic-cap-hover: oklch(90.5% 0.02 85deg);
 		--sonic-ink: oklch(18.5% 0.012 60deg);

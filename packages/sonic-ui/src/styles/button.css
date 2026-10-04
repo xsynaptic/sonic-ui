@@ -37,7 +37,7 @@
 		--_sonic-button-icon-ratio: var(--sonic-button-icon-ratio, 0.5);
 		--_sonic-button-led-ratio: var(--sonic-button-led-ratio, 0.2);
 		--_sonic-button-led-icon-ratio: var(--sonic-button-led-icon-ratio, 0.35);
-		--_sonic-button-depth-ratio: var(--sonic-button-depth-ratio, 0.03);
+		--_sonic-button-depth-ratio: var(--sonic-button-depth-ratio, calc(0.03 * var(--_sonic-relief)));
 		--_sonic-button-press-scale: var(--sonic-button-press-scale, 0.985);
 		--_sonic-unit: calc(var(--_sonic-button-size) / 32);
 		--_sonic-button-corner: calc(var(--_sonic-button-size) * var(--_sonic-button-radius-ratio));
@@ -65,7 +65,11 @@
 
 	/* Before the latched rule, which must win unchanged */
 	:where([armed]) > .sonic-button:not(:disabled, [aria-disabled='true']) {
-		--_sonic-keycap-glow: color-mix(in oklab, var(--_sonic-lit) 8%, transparent);
+		--_sonic-keycap-glow: color-mix(
+			in oklab,
+			var(--_sonic-lit) calc(8% * var(--_sonic-relief)),
+			transparent
+		);
 
 		color: color-mix(in oklab, var(--_sonic-lit) 55%, var(--_sonic-ink));
 
@@ -87,15 +91,23 @@
 	}
 
 	.sonic-button:is([aria-pressed='true'], :where([momentary]:state(pressed)) > *) {
-		--_sonic-keycap-glow: color-mix(in oklab, var(--_sonic-lit) 22%, transparent);
+		--_sonic-keycap-glow: var(--_sonic-keycap-lit-glow);
 
 		color: var(--_sonic-lit);
 		background: var(
 			--sonic-well-lit,
 			linear-gradient(
 				var(--_sonic-light-fall),
-				color-mix(in oklab, var(--_sonic-lit) 25%, #000),
-				color-mix(in oklab, var(--_sonic-lit) 60%, #000)
+				color-mix(
+					in oklab,
+					color-mix(in oklab, var(--_sonic-lit) 25%, #000) calc(100% * var(--_sonic-relief)),
+					transparent
+				),
+				color-mix(
+					in oklab,
+					color-mix(in oklab, var(--_sonic-lit) 60%, #000) calc(100% * var(--_sonic-relief)),
+					transparent
+				)
 			)
 		);
 	}
@@ -180,8 +192,7 @@
 	.sonic-button:is([aria-pressed='true'], :where([momentary]:state(pressed)) > *)
 		.sonic-button-cap
 		> svg {
-		filter: var(--_sonic-engraving)
-			drop-shadow(0 0 var(--_sonic-unit) color-mix(in oklab, var(--_sonic-lit) 35%, transparent));
+		filter: var(--_sonic-engraving) var(--_sonic-legend-glow);
 	}
 
 	/* fallow-ignore-next-line code-duplication -- one pressed state across the cap's parts */

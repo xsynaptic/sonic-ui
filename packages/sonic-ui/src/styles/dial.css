@@ -145,6 +145,7 @@
 
 	.sonic-dial-scale {
 		font-size: calc(var(--_sonic-dial-size) * var(--_sonic-dial-scale-font-ratio));
+		line-height: 1cap;
 
 		& > * {
 			--_sonic-dial-scale-angle: calc(
@@ -158,8 +159,8 @@
 
 			inset: calc(50% - var(--_sonic-dial-scale-cos) * var(--_sonic-dial-scale-radius)) auto auto
 				calc(50% + var(--_sonic-dial-scale-sin) * var(--_sonic-dial-scale-radius));
-			translate: calc(-50% + var(--_sonic-dial-scale-sin) * 50%)
-				calc(-50% - var(--_sonic-dial-scale-cos) * 50%);
+			translate: calc(-50% + var(--_sonic-dial-scale-sin) * (50% + 0.15cap))
+				calc(-50% - var(--_sonic-dial-scale-cos) * (50% + 0.15cap));
 		}
 
 		& > .sonic-scale-tick {
@@ -352,6 +353,9 @@
 			--_sonic-dial-indicator-width: calc(
 				var(--_sonic-dial-size) * var(--_sonic-dial-indicator-ratio)
 			);
+			--_sonic-dial-indicator-tip: calc(
+				var(--_sonic-dial-indicator-width) * (1 - var(--_sonic-dial-indicator-taper)) / 2
+			);
 
 			position: absolute;
 			inset-block-start: 6%;
@@ -363,11 +367,13 @@
 			border-radius: calc(var(--_sonic-dial-indicator-width) / 2);
 			box-shadow: inset 0 0 calc(0.75 * var(--_sonic-unit))
 				rgb(0 0 0 / calc(0.55 * var(--_sonic-relief)));
-			clip-path: polygon(
-				calc(50% * var(--_sonic-dial-indicator-taper)) 0,
-				calc(100% - 50% * var(--_sonic-dial-indicator-taper)) 0,
-				100% 100%,
-				0 100%
+			clip-path: shape(
+				from 0 100%,
+				line to calc(50% - var(--_sonic-dial-indicator-tip)) var(--_sonic-dial-indicator-tip),
+				arc to calc(50% + var(--_sonic-dial-indicator-tip)) var(--_sonic-dial-indicator-tip) of
+					var(--_sonic-dial-indicator-tip) cw,
+				line to 100% 100%,
+				close
 			);
 			translate: -50% 0;
 		}

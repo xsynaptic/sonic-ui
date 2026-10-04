@@ -91,7 +91,11 @@ export function adsrShape(proportions: AdsrProportions, curves: AdsrCurves = {})
 	return shape;
 }
 
-export function adsrPath({ points }: AdsrShape): { fill: string; stroke: string } {
+export function adsrPath({ points }: AdsrShape): {
+	fill: string;
+	floor: { from: number; to: number };
+	stroke: string;
+} {
 	const stroke = points
 		.map(
 			({ x, y }, index) =>
@@ -99,5 +103,10 @@ export function adsrPath({ points }: AdsrShape): { fill: string; stroke: string 
 		)
 		.join('');
 
-	return { fill: `${stroke}Z`, stroke };
+	const floor = {
+		from: roundTo(points[0]?.x ?? 0, 4),
+		to: roundTo(points.at(-1)?.x ?? 0, 4),
+	};
+
+	return { fill: `${stroke}Z`, floor, stroke };
 }

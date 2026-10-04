@@ -195,8 +195,9 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 
 				const axis = this.#axis();
 				const at = clampProportion((event.clientX - axis.startPx) / axis.travelPx);
+				const mapping = this.mapping();
 
-				this.hoverReadout(this.#markerAt(event, axis) ?? this.mapping().valueAt(at));
+				this.hoverReadout(this.#markerAt(event, axis) ?? mapping.snap(mapping.valueAt(at)));
 				this.#placeReadout();
 			},
 			{ signal },

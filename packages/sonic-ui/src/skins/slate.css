@@ -1,9 +1,11 @@
 @layer sonic {
 	.sonic-skin-slate {
+		--sonic-relief: 1;
 		--sonic-lit: oklch(79.7% 0.134 212deg);
 		--sonic-unlit: oklch(27.9% 0.037 260deg);
 		--sonic-cap: oklch(37.2% 0.039 257deg);
 		--sonic-cap-hover: oklch(44.6% 0.037 257deg);
+		--sonic-ink: color-mix(in oklab, var(--sonic-cap) 30%, #fff);
 		--sonic-dial-ring-ratio: 0.12;
 		--sonic-dial-gap-ratio: 0.07;
 	}

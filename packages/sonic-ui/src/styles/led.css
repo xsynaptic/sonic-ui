@@ -87,7 +87,7 @@
 		background:
 			radial-gradient(
 				closest-side,
-				color-mix(in oklab, var(--_sonic-lit) 60%, transparent)
+				color-mix(in oklab, var(--_sonic-lit) calc(60% * var(--_sonic-relief)), transparent)
 					calc(var(--_sonic-led-lens-ratio) * 100%),
 				transparent
 			),
@@ -96,7 +96,7 @@
 		&::after {
 			background: radial-gradient(
 				closest-side,
-				color-mix(in oklab, var(--_sonic-lit) 55%, #fff),
+				color-mix(in oklab, var(--_sonic-lit) calc(100% - 45% * var(--_sonic-relief)), #fff),
 				var(--_sonic-lit)
 			);
 		}

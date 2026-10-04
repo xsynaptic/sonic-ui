@@ -92,7 +92,12 @@
 		overflow: hidden;
 		touch-action: pan-y;
 		cursor: grab;
-		border-radius: calc(var(--_sonic-waveform-size) * var(--sonic-waveform-radius-ratio, 0.08));
+
+		--_sonic-glass-radius: calc(
+			var(--_sonic-waveform-size) * var(--sonic-waveform-radius-ratio, 0.08)
+		);
+
+		border-radius: var(--_sonic-glass-radius);
 		box-shadow: var(--_sonic-focus-shadow);
 	}
 

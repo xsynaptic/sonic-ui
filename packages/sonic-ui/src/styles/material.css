@@ -41,7 +41,7 @@
 		.sonic-xy-readout
 	) {
 		--_sonic-unlit: var(--sonic-unlit, oklch(27.4% 0.005 286deg));
-		--_sonic-relief: var(--sonic-relief, 1);
+		--_sonic-relief: var(--sonic-relief, 0);
 		--_sonic-light-tilt: var(--sonic-light-tilt, 17deg);
 		--_sonic-light-fall: calc(180deg - var(--_sonic-light-tilt));
 		--_sonic-cast-x: calc(sin(var(--_sonic-light-tilt)) * var(--_sonic-unit));
@@ -107,10 +107,10 @@
 		.sonic-wavestrip,
 		.sonic-xy
 	) {
-		--_sonic-cap: var(--sonic-cap, oklch(37% 0.012 286deg));
-		--_sonic-cap-hover: var(--sonic-cap-hover, oklch(44.2% 0.015 286deg));
+		--_sonic-cap: var(--sonic-cap, transparent);
+		--_sonic-cap-hover: var(--sonic-cap-hover, transparent);
 		--_sonic-focus: var(--sonic-focus, oklch(90% 0.23 128deg));
-		--_sonic-ink: var(--sonic-ink, color-mix(in oklab, var(--_sonic-cap) 30%, #fff));
+		--_sonic-ink: var(--sonic-ink, currentcolor);
 		--_sonic-etch: color-mix(in oklab, var(--_sonic-ink) 30%, transparent);
 		--_sonic-ink-lift: var(--sonic-ink-hover, color-mix(in oklab, var(--_sonic-ink) 60%, #fff));
 		--_sonic-lit-disabled: color-mix(in oklab, var(--_sonic-ink) 25%, var(--_sonic-unlit));
@@ -280,16 +280,20 @@
 	}
 
 	@media (forced-colors: none) {
-		:is(.sonic-number, .sonic-screen),
-		:is(.sonic-envelope, .sonic-waveform, .sonic-wavestrip, .sonic-xy)::after {
-			filter: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='w' x='-0.3' y='-0.3' width='1.6' height='1.6' primitiveUnits='objectBoundingBox' color-interpolation-filters='sRGB'%3E%3CfeFlood x='0' y='0' width='1' height='1' flood-color='%23000'/%3E%3CfeFlood x='.5' y='0' width='.5' height='1' flood-color='%23f00' result='r'/%3E%3CfeFlood x='0' y='.5' width='1' height='.5' flood-color='%230f0' result='g'/%3E%3CfeFlood x='0' y='0' width='1' height='1' flood-color='%23000' result='k'/%3E%3CfeComposite in='r' in2='g' operator='arithmetic' k2='1' k3='1' result='h'/%3E%3CfeMerge x='0' y='0' width='1' height='1'%3E%3CfeMergeNode in='k'/%3E%3CfeMergeNode in='h'/%3E%3C/feMerge%3E%3CfeGaussianBlur x='0' y='0' width='1' height='1' stdDeviation='0.25'/%3E%3CfeColorMatrix values='1 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 1'/%3E%3CfeComponentTransfer result='a'%3E%3CfeFuncR type='table' tableValues='0 0.052 0.172 0.25 0.312 0.364 0.412 0.457 0.5 0.543 0.588 0.636 0.688 0.75 0.828 0.948 1'/%3E%3CfeFuncG type='table' tableValues='0 0.052 0.172 0.25 0.312 0.364 0.412 0.457 0.5 0.543 0.588 0.636 0.688 0.75 0.828 0.948 1'/%3E%3C/feComponentTransfer%3E%3CfeComponentTransfer%3E%3CfeFuncR type='table' tableValues='1 0.563 0.25 0.063 0 0.063 0.25 0.563 1'/%3E%3CfeFuncG type='table' tableValues='1 0.563 0.25 0.063 0 0.063 0.25 0.563 1'/%3E%3C/feComponentTransfer%3E%3CfeColorMatrix values='.5 .5 0 0 0 .5 .5 0 0 0 0 0 0 0 0 0 0 0 0 1'/%3E%3CfeComponentTransfer result='f'%3E%3CfeFuncR type='gamma' amplitude='0.333' exponent='2'/%3E%3CfeFuncG type='gamma' exponent='2'/%3E%3C/feComponentTransfer%3E%3CfeComposite in='a' in2='f' operator='arithmetic' k1='1' k3='-.5' k4='.5' result='m'/%3E%3CfeFlood flood-color='%23808080'/%3E%3CfeMerge result='n'%3E%3CfeMergeNode/%3E%3CfeMergeNode in='m'/%3E%3C/feMerge%3E%3CfeDisplacementMap in='SourceGraphic' in2='n' scale='0.04' xChannelSelector='R' yChannelSelector='G'/%3E%3C/filter%3E%3C/svg%3E#w");
-		}
-
 		/* A query reads the parent, or a pseudo-element's own element: on a readout itself, 0 leaves the warp on */
-		@container style(--sonic-glass-texture: 0) {
+		@container style(--sonic-relief: 1) and (not style(--sonic-glass-texture: 0)) {
 			:is(.sonic-number, .sonic-screen),
 			:is(.sonic-envelope, .sonic-waveform, .sonic-wavestrip, .sonic-xy)::after {
-				filter: none;
+				filter: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='w' x='-0.3' y='-0.3' width='1.6' height='1.6' primitiveUnits='objectBoundingBox' color-interpolation-filters='sRGB'%3E%3CfeFlood x='0' y='0' width='1' height='1' flood-color='%23000'/%3E%3CfeFlood x='.5' y='0' width='.5' height='1' flood-color='%23f00' result='r'/%3E%3CfeFlood x='0' y='.5' width='1' height='.5' flood-color='%230f0' result='g'/%3E%3CfeFlood x='0' y='0' width='1' height='1' flood-color='%23000' result='k'/%3E%3CfeComposite in='r' in2='g' operator='arithmetic' k2='1' k3='1' result='h'/%3E%3CfeMerge x='0' y='0' width='1' height='1'%3E%3CfeMergeNode in='k'/%3E%3CfeMergeNode in='h'/%3E%3C/feMerge%3E%3CfeGaussianBlur x='0' y='0' width='1' height='1' stdDeviation='0.25'/%3E%3CfeColorMatrix values='1 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 1'/%3E%3CfeComponentTransfer result='a'%3E%3CfeFuncR type='table' tableValues='0 0.052 0.172 0.25 0.312 0.364 0.412 0.457 0.5 0.543 0.588 0.636 0.688 0.75 0.828 0.948 1'/%3E%3CfeFuncG type='table' tableValues='0 0.052 0.172 0.25 0.312 0.364 0.412 0.457 0.5 0.543 0.588 0.636 0.688 0.75 0.828 0.948 1'/%3E%3C/feComponentTransfer%3E%3CfeComponentTransfer%3E%3CfeFuncR type='table' tableValues='1 0.563 0.25 0.063 0 0.063 0.25 0.563 1'/%3E%3CfeFuncG type='table' tableValues='1 0.563 0.25 0.063 0 0.063 0.25 0.563 1'/%3E%3C/feComponentTransfer%3E%3CfeColorMatrix values='.5 .5 0 0 0 .5 .5 0 0 0 0 0 0 0 0 0 0 0 0 1'/%3E%3CfeComponentTransfer result='f'%3E%3CfeFuncR type='gamma' amplitude='0.333' exponent='2'/%3E%3CfeFuncG type='gamma' exponent='2'/%3E%3C/feComponentTransfer%3E%3CfeComposite in='a' in2='f' operator='arithmetic' k1='1' k3='-.5' k4='.5' result='m'/%3E%3CfeFlood flood-color='%23808080'/%3E%3CfeMerge result='n'%3E%3CfeMergeNode/%3E%3CfeMergeNode in='m'/%3E%3C/feMerge%3E%3CfeDisplacementMap in='SourceGraphic' in2='n' scale='0.016' xChannelSelector='R' yChannelSelector='G'/%3E%3C/filter%3E%3C/svg%3E#w");
+			}
+
+			:is(.sonic-envelope, .sonic-waveform, .sonic-wavestrip, .sonic-xy)::after {
+				--_sonic-glass-bend: calc(0.008 * hypot(100cqi, 100cqb));
+
+				inset: calc(-1 * var(--_sonic-glass-bend));
+				border: var(--_sonic-glass-bend) solid rgb(0 0 0 / 50%);
+				border-radius: calc(var(--_sonic-glass-radius) + var(--_sonic-glass-bend));
+				clip-path: inset(var(--_sonic-glass-bend) round var(--_sonic-glass-radius));
 			}
 		}
 	}
@@ -320,8 +324,16 @@
 			--sonic-well,
 			linear-gradient(
 				var(--_sonic-light-fall),
-				color-mix(in oklab, var(--_sonic-unlit) 55%, #000),
-				color-mix(in oklab, var(--_sonic-unlit) 85%, #000)
+				color-mix(
+					in oklab,
+					color-mix(in oklab, var(--_sonic-unlit) 55%, #000) calc(100% * var(--_sonic-relief)),
+					transparent
+				),
+				color-mix(
+					in oklab,
+					color-mix(in oklab, var(--_sonic-unlit) 85%, #000) calc(100% * var(--_sonic-relief)),
+					transparent
+				)
 			)
 		);
 		--_sonic-engraving: drop-shadow(
@@ -343,6 +355,15 @@
 		--_sonic-keycap-drop: calc(1.5 * var(--_sonic-cast-x)) calc(1.5 * var(--_sonic-cast-y))
 			calc(2 * var(--_sonic-unit)) var(--_sonic-drop-shade);
 		--_sonic-keycap-glow: transparent;
+		--_sonic-keycap-lit-glow: color-mix(
+			in oklab,
+			var(--_sonic-lit) calc(22% * var(--_sonic-relief)),
+			transparent
+		);
+		--_sonic-legend-glow: drop-shadow(
+			0 0 var(--_sonic-unit)
+				color-mix(in oklab, var(--_sonic-lit) calc(35% * var(--_sonic-relief)), transparent)
+		);
 	}
 
 	:is(.sonic-button, .sonic-segmented-option, .sonic-switch-position) {

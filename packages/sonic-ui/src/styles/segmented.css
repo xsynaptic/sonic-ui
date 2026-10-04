@@ -26,7 +26,10 @@
 		--_sonic-segmented-gap-ratio: var(--sonic-segmented-gap-ratio, 0.06);
 		--_sonic-segmented-radius-ratio: var(--sonic-segmented-radius-ratio, 0.2);
 		--_sonic-segmented-bevel-ratio: var(--sonic-segmented-bevel-ratio, 0.075);
-		--_sonic-segmented-depth-ratio: var(--sonic-segmented-depth-ratio, 0.03);
+		--_sonic-segmented-depth-ratio: var(
+			--sonic-segmented-depth-ratio,
+			calc(0.03 * var(--_sonic-relief))
+		);
 		--_sonic-segmented-press-scale: var(--sonic-segmented-press-scale, 0.985);
 		--_sonic-segmented-font-ratio: var(--sonic-segmented-font-ratio, 0.34);
 		--_sonic-segmented-icon-ratio: var(--sonic-segmented-icon-ratio, 0.5);
@@ -55,7 +58,10 @@
 	}
 
 	.sonic-segmented-option {
-		--_sonic-segmented-well-lit: var(--sonic-well-lit, var(--_sonic-lit));
+		--_sonic-segmented-well-lit: var(
+			--sonic-well-lit,
+			color-mix(in oklab, var(--_sonic-lit) calc(100% * var(--_sonic-relief)), transparent)
+		);
 
 		position: relative;
 		display: grid;
@@ -80,7 +86,7 @@
 	}
 
 	.sonic-segmented-option[aria-checked='true'] {
-		--_sonic-keycap-glow: color-mix(in oklab, var(--_sonic-lit) 22%, transparent);
+		--_sonic-keycap-glow: var(--_sonic-keycap-lit-glow);
 
 		color: var(--_sonic-lit);
 		background: var(--_sonic-segmented-well-lit);
@@ -144,8 +150,7 @@
 	}
 
 	.sonic-segmented-option[aria-checked='true'] .sonic-segmented-cap > * {
-		filter: var(--_sonic-engraving)
-			drop-shadow(0 0 var(--_sonic-unit) color-mix(in oklab, var(--_sonic-lit) 35%, transparent));
+		filter: var(--_sonic-engraving) var(--_sonic-legend-glow);
 	}
 
 	@media (forced-colors: active) {
