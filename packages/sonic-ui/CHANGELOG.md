@@ -1,5 +1,15 @@
 # @xsynaptic/sonic-ui
 
+## 0.5.0
+
+### Minor Changes
+
+- Six new controls: `<sonic-switch>`, `<sonic-xy>`, `<sonic-envelope>`, `<sonic-split>`, `<sonic-wavestrip>` and `<sonic-waveform>`, along with `.sonic-panel`, `.sonic-ring` and a `./dat` reader for audiowaveform files.
+
+  Breaking: names were brought into one vocabulary, with no aliases. `<sonic-key>` is now `<sonic-button>`, `toggle` is `latching`, `values` is `positions`, and several hook classes and tokens were renamed to match.
+
+  The existing controls picked up markers, buffered regions, modulation, meter ballistics and a screen texture on glass, plus a round of fixes to stepping, dragging and focus.
+
 ## 0.4.0
 
 ### Minor Changes
