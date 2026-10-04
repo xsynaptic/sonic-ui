@@ -2,8 +2,7 @@ packages:
   - packages/*
   - playground
 
-# Link the playground to the local package by range; StackBlitz boots the playground
-# directory as its own root and resolves the published package from npm instead
+# Link the playground to the local package by range
 linkWorkspacePackages: true
 saveWorkspaceProtocol: false
 

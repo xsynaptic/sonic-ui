@@ -2,8 +2,6 @@
 
 `@xsynaptic/sonic-ui`: native custom elements for audio interfaces. Light DOM, no framework, no runtime dependencies; Astro lives only in `playground/`.
 
-`playground/` runs the built `dist`, so keep `pnpm dev` running or run `pnpm build` before judging a change there.
-
 Plans in `.claude/tasks/` (gitignored) carry a frontmatter `status`; only `ready` is live work.
 
 Vocabulary: `.claude/glossary.md` defines each control, part and value term and the words it replaces; read it before naming anything.
