@@ -1,7 +1,7 @@
 ---
 import AuxSend from '#components/club-mixer/aux-send.astro';
 import PanelButton from '#components/replica/panel-button.astro';
-import Pot from '#components/replica/pot.astro';
+import PanelDial from '#components/replica/panel-dial.astro';
 
 interface Props {
 	input: string;
@@ -16,7 +16,7 @@ const { input, level, levelData = {}, strip } = Astro.props;
 <AuxSend send={1} strip={strip} />
 <AuxSend send={2} strip={strip} />
 <PanelButton hasTwoColourLed={true} id={`${strip}-${input.toLowerCase()}`} label={input} />
-<Pot
+<PanelDial
 	data={levelData}
 	detent={0}
 	ends={['∞', '+10']}

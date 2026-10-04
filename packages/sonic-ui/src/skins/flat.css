@@ -5,10 +5,17 @@
 		--sonic-unlit: oklch(84% 0.006 255deg);
 		--sonic-cap: oklch(93% 0.004 255deg);
 		--sonic-cap-hover: oklch(97% 0.004 255deg);
+		--sonic-cap-edge: oklch(72% 0.01 255deg);
+		--sonic-well: var(--sonic-unlit);
+		--sonic-well-lit: var(--sonic-lit);
+		--sonic-bezel: oklch(90% 0.004 255deg);
+		--sonic-lens: var(--sonic-unlit);
+		--sonic-waveform-edge: var(--sonic-lit);
 		--sonic-ink: oklch(27% 0.012 255deg);
 		--sonic-focus: oklch(52% 0.21 255deg);
 		--sonic-glass: oklch(97% 0.003 255deg);
 		--sonic-glass-text: oklch(27% 0.012 255deg);
+		--sonic-glass-edge: oklch(84% 0.006 255deg);
 		--sonic-glass-texture: 0;
 		--sonic-panel: oklch(98.5% 0.002 255deg);
 		--sonic-button-depth-ratio: 0;

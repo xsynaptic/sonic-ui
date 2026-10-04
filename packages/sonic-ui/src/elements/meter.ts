@@ -324,12 +324,12 @@ export class SonicMeter extends SonicElement {
 			return;
 		}
 
-		const { fallDecibelsPerSecond, riseMs } = ballisticsRates[mode];
+		const { fallDecibelsPerSecond, riseTimeConstantMs } = ballisticsRates[mode];
 		const floor = Math.max(this.#target, this.min);
 
 		this.#bar =
 			this.#target > this.#bar
-				? this.#risen(riseMs, elapsedMs)
+				? this.#risen(riseTimeConstantMs, elapsedMs)
 				: fall(this.#bar, { fallDecibelsPerSecond, floor }, elapsedMs);
 		if (this.#bar >= this.#peakHold) {
 			this.#peakHold = this.#bar;

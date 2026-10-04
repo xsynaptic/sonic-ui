@@ -1,6 +1,6 @@
 # @xsynaptic/sonic-ui
 
-Native custom elements for audio interfaces. Each control renders in the light DOM, drawn in CSS, skinned with `--sonic-*` tokens (CSS custom properties). No framework, no runtime dependencies.
+Native custom elements for audio interfaces. Each control renders in the light DOM, skinned with `--sonic-*` tokens (CSS custom properties). No framework, no runtime dependencies.
 
 Early and unstable: any 0.x release may break the API.
 

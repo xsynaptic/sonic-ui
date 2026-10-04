@@ -190,7 +190,7 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 			'pointermove',
 			(event) => {
 				if (event.pointerType === 'touch' || event.buttons !== 0) return;
-				if (!this.readout || this.isDisabled()) return;
+				if (!this.readout) return;
 
 				const axis = this.#axis();
 				const at = clampProportion((event.clientX - axis.startPx) / axis.travelPx);

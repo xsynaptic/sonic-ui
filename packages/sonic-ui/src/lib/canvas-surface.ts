@@ -17,6 +17,7 @@ export interface SurfaceLook<Colour extends string, Length extends string = neve
 export interface SurfaceFrame<Colour extends string, Length extends string = never> {
 	frameMs: number;
 	isDirty: boolean;
+	isRebuilt: boolean;
 	look: SurfaceLook<Colour, Length>;
 	size: SurfaceSize;
 }
@@ -152,6 +153,12 @@ class CanvasSurface<Colour extends string, Length extends string> implements Sur
 		style.setProperty('transition-behavior', 'allow-discrete');
 	}
 
+	#current(): { isRebuilt: boolean; look: SurfaceLook<Colour, Length> } {
+		if (this.#look && !this.#isRebuildWanted) return { isRebuilt: false, look: this.#look };
+
+		return { isRebuilt: true, look: this.#read() };
+	}
+
 	#draw(frameMs: number): void {
 		this.#frame = undefined;
 
@@ -159,7 +166,7 @@ class CanvasSurface<Colour extends string, Length extends string> implements Sur
 		if (size.width === 0 || size.height === 0) return;
 
 		const { canvas, paint } = this.#options;
-		const look = this.#isRebuildWanted || !this.#look ? this.#read() : this.#look;
+		const { isRebuilt, look } = this.#current();
 		const isDirty = this.#isDirty;
 
 		this.#look = look;
@@ -168,7 +175,7 @@ class CanvasSurface<Colour extends string, Length extends string> implements Sur
 		// Assigning either clears the canvas and its state
 		if (canvas.width !== size.width) canvas.width = size.width;
 		if (canvas.height !== size.height) canvas.height = size.height;
-		if (this.#context) paint(this.#context, { frameMs, isDirty, look, size });
+		if (this.#context) paint(this.#context, { frameMs, isDirty, isRebuilt, look, size });
 	}
 
 	#measure(entry: ResizeObserverEntry): void {

@@ -1,5 +1,5 @@
 ---
-import Pot from '#components/replica/pot.astro';
+import PanelDial from '#components/replica/panel-dial.astro';
 import { tapeStyles } from '#scripts/stop-names.ts';
 
 const stages = [
@@ -14,7 +14,7 @@ const ladder = '-24 -12 -6 -3 0';
 	class="sonic-panel [--sonic-panel-radius:1.5rem] grid justify-items-center gap-5 p-4"
 	role="group"
 >
-	<Pot
+	<PanelDial
 		data={{ 'data-echo-saturation': '' }}
 		ends={['Min', 'Max']}
 		format="percent"
@@ -28,7 +28,7 @@ const ladder = '-24 -12 -6 -3 0';
 	<div class="flex gap-6">
 		{stages.map((stage) => (
 			<div class="grid justify-items-center gap-2">
-				<Pot
+				<PanelDial
 					data={stage.data}
 					detent={0}
 					ends={['−24', '+24']}

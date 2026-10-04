@@ -88,7 +88,9 @@
 		--_sonic-wavestrip-bar-gap-ratio: var(--sonic-wavestrip-bar-gap-ratio, 0.33);
 		--_sonic-wavestrip-bar-radius-ratio: var(--sonic-wavestrip-bar-radius-ratio, 0.5);
 		--_sonic-wavestrip-marker-ratio: var(--sonic-wavestrip-marker-ratio, 0.065);
-		--_sonic-wavestrip-inset: calc(var(--_sonic-wavestrip-size) * 0.1);
+		--_sonic-wavestrip-inset: calc(
+			var(--_sonic-wavestrip-size) * var(--sonic-wavestrip-inset-ratio, 0.1)
+		);
 		--_sonic-unit: calc(var(--_sonic-wavestrip-size) / 32);
 		--_sonic-wavestrip-lit: var(--_sonic-lit);
 		--_sonic-marker-size: calc(var(--_sonic-wavestrip-size) * var(--_sonic-wavestrip-marker-ratio));
@@ -110,7 +112,7 @@
 		container-type: size;
 		touch-action: pan-y;
 		cursor: ew-resize;
-		border-radius: calc(var(--_sonic-wavestrip-size) * 0.15);
+		border-radius: calc(var(--_sonic-wavestrip-size) * var(--sonic-wavestrip-radius-ratio, 0.15));
 		box-shadow: var(--_sonic-focus-shadow);
 	}
 

@@ -53,18 +53,21 @@ function isAcross(from: number, to: number, proportion: number): boolean {
 
 function passDetent(
 	hold: DetentHold,
-	from: number,
-	to: number,
+	[from, to]: [number, number],
+	pace: number,
 ): { proportion: number | undefined; slack: number | undefined } {
 	if (hold.slack === undefined && !isAcross(from, to, hold.proportion)) {
 		return { proportion: to, slack: undefined };
 	}
 
-	const slack = (hold.slack ?? 0) + to - hold.proportion;
+	const slack = (hold.slack ?? 0) + (to - hold.proportion) / pace;
 
 	if (Math.abs(slack) <= hold.zone) return { proportion: undefined, slack };
 
-	return { proportion: hold.proportion + slack - Math.sign(slack) * hold.zone, slack: undefined };
+	return {
+		proportion: hold.proportion + (slack - Math.sign(slack) * hold.zone) * pace,
+		slack: undefined,
+	};
 }
 
 function nearestTurn(hold: DetentHold, from: number): DetentHold {
@@ -119,7 +122,7 @@ export function stepDrag(mapping: ValueMapping, state: DragState, move: DragMove
 	if (!detent) return land(mapping, moved, to);
 
 	const near = mapping.isWrapping ? nearestTurn(detent, state.rawProportion) : detent;
-	const passed = passDetent(near, state.rawProportion, to);
+	const passed = passDetent(near, [state.rawProportion, to], pace);
 	const held = { ...moved, detent: { ...detent, slack: passed.slack } };
 	if (passed.proportion === undefined) {
 		return { state: { ...held, rawProportion: detent.proportion }, value: detent.value };

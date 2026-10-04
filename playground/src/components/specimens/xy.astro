@@ -23,10 +23,10 @@ import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 		></sonic-xy>
 	</Cell>
 	<Cell id="xy-filter" label="Filter">
-		<div class="grid justify-items-center gap-2" data-pad-scope>
+		<div class="grid justify-items-center gap-2" data-xy-scope>
 			<sonic-xy
 				aria-labelledby="xy-filter"
-				data-pad-format="hertz db"
+				data-xy-format="hertz db"
 				x="1200"
 				x-label="Cutoff"
 				x-max="20000"
@@ -41,7 +41,7 @@ import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 			></sonic-xy>
 			<div
 				class="sonic-screen font-mono text-[0.625rem] [--sonic-screen-aspect-ratio:5.3] [--sonic-screen-size:1.5rem]"
-				data-pad-screen
+				data-xy-screen
 			></div>
 		</div>
 	</Cell>

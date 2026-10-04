@@ -147,7 +147,6 @@ test('a mouse over the strip reads out the time under it, or a marker within rea
 test.each([
 	['a button held', 'readout', { buttons: 1 }],
 	['no readout', '', {}],
-	['the strip disabled', 'readout disabled', {}],
 ])('with %s, a mouse over the strip reads out nothing', (_case, attributes, init) => {
 	installCanvasFakes();
 
@@ -160,6 +159,24 @@ test.each([
 
 	expect(readoutText(control)).toBe('30 s');
 	expect(control.style.getPropertyValue('--_sonic-wavestrip-readout-at')).toBe('0');
+});
+
+test('a disabled strip still reads out under a mouse, and a press moves nothing', () => {
+	installCanvasFakes();
+
+	const { control, wavestrip } = mountWavestrip(
+		'readout disabled min="30" max="330" step="0" value="30"',
+	);
+	const events = recordEvents(document.body);
+
+	wavestrip.formatValue = (seconds) => `${String(seconds)} s`;
+	midPointerAt(control, 'pointermove', { clientX: 75, pointerType: 'mouse' });
+	expect(readoutText(control)).toBe('105 s');
+
+	midPointerAt(control, 'pointerdown', { clientX: 150, pointerType: 'mouse' });
+	midPointerAt(control, 'pointerup', { clientX: 150, pointerType: 'mouse' });
+	expect(wavestrip.value).toBe(30);
+	expect(events).toEqual([]);
 });
 
 test("a drag's reveal takes the readout from the hover", () => {

@@ -90,7 +90,7 @@
 			rgb(255 255 255 / calc(0.1 * var(--_sonic-relief))),
 			transparent 60%
 		);
-		--_sonic-lens-glass: color-mix(in oklab, var(--_sonic-unlit) 60%, #000);
+		--_sonic-lens-glass: var(--sonic-lens, color-mix(in oklab, var(--_sonic-unlit) 60%, #000));
 		--_sonic-lens: var(--_sonic-lens-glint), var(--_sonic-lens-glass);
 		--_sonic-hot: var(--sonic-hot, oklch(70.5% 0.187 48deg));
 		--_sonic-clip: var(--sonic-clip, oklch(63.7% 0.208 25deg));
@@ -140,7 +140,10 @@
 			calc(0.5 * var(--_sonic-cast-x)) calc(0.5 * var(--_sonic-cast-y)) var(--_sonic-unit)
 				rgb(255 255 255 / calc(0.12 * var(--_sonic-relief)));
 		--_sonic-rim: 0 0 0 max(1px, 0.75 * var(--_sonic-unit))
-			color-mix(in oklab, var(--_sonic-cap) calc(100% - 60% * var(--_sonic-relief)), #000);
+			var(
+				--sonic-cap-edge,
+				color-mix(in oklab, var(--_sonic-cap) calc(100% - 60% * var(--_sonic-relief)), #000)
+			);
 		--_sonic-drop-shade: rgb(0 0 0 / calc(0.65 * var(--_sonic-relief)));
 		--_sonic-focus-shadow: 0 0 transparent;
 		--_sonic-focus-glow: 0 0 max(4px, 3 * var(--_sonic-unit)) max(1px, 0.5 * var(--_sonic-unit))
@@ -187,7 +190,7 @@
 			--sonic-glass-text,
 			color-mix(in oklab, var(--_sonic-glass) 20%, #fff)
 		);
-		--_sonic-glass-edge: 0 none;
+		--_sonic-glass-edge: 1px solid var(--sonic-glass-edge);
 
 		/* Glass is forced to Canvas like the page, so only a border shows its edge */
 		@media (forced-colors: active) {
@@ -313,10 +316,13 @@
 	}
 
 	:is(.sonic-button, .sonic-segmented) {
-		--_sonic-well-floor: linear-gradient(
-			var(--_sonic-light-fall),
-			color-mix(in oklab, var(--_sonic-unlit) 55%, #000),
-			color-mix(in oklab, var(--_sonic-unlit) 85%, #000)
+		--_sonic-well-floor: var(
+			--sonic-well,
+			linear-gradient(
+				var(--_sonic-light-fall),
+				color-mix(in oklab, var(--_sonic-unlit) 55%, #000),
+				color-mix(in oklab, var(--_sonic-unlit) 85%, #000)
+			)
 		);
 		--_sonic-engraving: drop-shadow(
 				calc(-0.4 * var(--_sonic-cast-x)) calc(-0.4 * var(--_sonic-cast-y))

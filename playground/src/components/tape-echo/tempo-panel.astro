@@ -1,8 +1,8 @@
 ---
 import Label from '#components/replica/label.astro';
 import PanelButton from '#components/replica/panel-button.astro';
+import PanelDial from '#components/replica/panel-dial.astro';
 import PanelSwitch from '#components/replica/panel-switch.astro';
-import Pot from '#components/replica/pot.astro';
 import { echoModes } from '#scripts/stop-names.ts';
 
 const feels = [
@@ -48,7 +48,7 @@ const feels = [
 	</div>
 	<div class="flex gap-8">
 		{feels.map((feel) => (
-			<Pot
+			<PanelDial
 				data={feel.data}
 				detent={0}
 				ends={[feel.ends[0], feel.ends[1]]}

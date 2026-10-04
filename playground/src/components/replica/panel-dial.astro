@@ -16,7 +16,7 @@ interface Props {
 	size?: 'large' | 'medium' | 'small';
 	step?: number;
 	taper?: 'log';
-	// Even ticks assume a linear taper, so a tapered pot passes its own
+	// Even ticks assume a linear taper, so a tapered dial passes its own
 	ticks?: Array<number>;
 	value: number;
 }
@@ -43,7 +43,7 @@ const {
 const evenTicks = 11;
 const isLinear = midpoint === undefined && taper === undefined;
 
-function legendLabels(): Array<[number, string]> {
+function scaleLabels(): Array<[number, string]> {
 	if (isNumbered) {
 		return Array.from({ length: max - min + 1 }, (_stop, index) => [
 			min + index,
@@ -67,9 +67,9 @@ function evenTickValues(): Array<number> {
 	);
 }
 
-const labels = legendLabels();
+const labels = scaleLabels();
 const tickValues = ticks ?? evenTickValues();
-const marks = [
+const scale = [
 	...labels,
 	...tickValues
 		.filter((tick) => labels.every(([labelled]) => labelled !== tick))
@@ -99,7 +99,7 @@ const sizeClass = {
 		value={value}
 		{...data}
 	>
-		{marks.map(([mark, text]) => (
+		{scale.map(([mark, text]) => (
 			<span class="font-mono uppercase" data-sonic-value={mark}>
 				{text}
 			</span>

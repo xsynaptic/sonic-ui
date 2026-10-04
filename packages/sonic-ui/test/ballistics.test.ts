@@ -26,7 +26,11 @@ test.each([
 ] as const)(
 	'a %s burst as long as its integration time of %dms reads 2 dB low',
 	(mode, burstMs) => {
-		const level = rise(0, { target: 1, timeConstantMs: ballisticsRates[mode].riseMs }, burstMs);
+		const level = rise(
+			0,
+			{ target: 1, timeConstantMs: ballisticsRates[mode].riseTimeConstantMs },
+			burstMs,
+		);
 
 		expect(20 * Math.log10(level)).toBeCloseTo(-2, 1);
 	},

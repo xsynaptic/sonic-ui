@@ -58,6 +58,17 @@ test('a drag that starts on the detent has to push through the zone to leave it'
 	expect(drag({ detent: 0, from: 0, moves: [7, 12], spec: detented })).toEqual([0, 1]);
 });
 
+test('a fine drag that starts on the detent leaves it in the same travel, then moves at the fine pace', () => {
+	const moves = [
+		{ isFine: true, position: 7 },
+		{ isFine: true, position: 20 },
+	];
+
+	expect(drag({ detent: 0, from: 0, moves, spec: { max: 180, min: -180, step: 0.1 } })).toEqual([
+		0, 2.7,
+	]);
+});
+
 test.each([
 	[-3, -1],
 	[3, 5],

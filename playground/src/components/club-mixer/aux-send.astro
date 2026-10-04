@@ -1,6 +1,6 @@
 ---
 import PanelButton from '#components/replica/panel-button.astro';
-import Pot from '#components/replica/pot.astro';
+import PanelDial from '#components/replica/panel-dial.astro';
 
 interface Props {
 	send: 1 | 2;
@@ -13,7 +13,7 @@ const id = `${strip}-aux-${String(send)}`;
 ---
 
 <div class="flex items-center gap-1.5">
-	<Pot
+	<PanelDial
 		ends={['∞', '+6']}
 		format="db-kill"
 		id={id}

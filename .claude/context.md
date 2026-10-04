@@ -22,8 +22,6 @@ The words this library uses for its controls, their parts and their values. Wher
 
 **Slider**: A value control whose cap slides along a groove. _Avoid_: Fader (one use of a slider), range input
 
-**Range**: A slider with several caps on one groove, each holding its own value. _Avoid_: Multi-thumb slider, range slider
-
 **Number box**: A value control shown as digits. It is dragged, stepped or typed into. _Avoid_: Spinner, stepper, value field
 
 **Segmented**: A row of joined caps, one of which is always chosen. _Avoid_: Selector, radio group, button bank
@@ -65,6 +63,14 @@ The words this library uses for its controls, their parts and their values. Wher
 **Scale**: The ticks and labels printed beside a dial or slider. _Avoid_: Legend, graduations; "scale" for the mapping or for a meter's units
 
 **Notch**: The mark etched at each position of a stepped control. _Avoid_: Detent, tick (ticks belong to a scale)
+
+**Edge**: The line that sets a part off from what is behind it. _Avoid_: Rim, outline, border
+
+**Well**: The recess a button or an option sits in. _Avoid_: Socket, floor, pocket
+
+**Bezel**: The surface that houses a light, such as a meter's bed or an LED's surround. _Avoid_: Bed, surround, housing
+
+**Lens**: The glass of a light, lit or not. _Avoid_: Bulb, dome
 
 **Bat**: The handle of a switch. _Avoid_: Lever, toggle, stick
 

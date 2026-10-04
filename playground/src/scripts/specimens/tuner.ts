@@ -121,6 +121,7 @@ function bindTuner(root: HTMLElement, reader: Reader): void {
 		void navigator.clipboard.writeText(output.textContent);
 	});
 	document.addEventListener('playground-skin', refresh);
+	matchMedia('(forced-colors: active)').addEventListener('change', refresh);
 	refresh();
 }
 

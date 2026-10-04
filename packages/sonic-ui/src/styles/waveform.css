@@ -65,12 +65,17 @@
 	}
 
 	.sonic-waveform {
-		--_sonic-waveform-inset: calc(var(--_sonic-waveform-size) * 0.06);
+		--_sonic-waveform-inset: calc(
+			var(--_sonic-waveform-size) * var(--sonic-waveform-inset-ratio, 0.06)
+		);
 		--_sonic-unit: calc(var(--_sonic-waveform-size) / 48);
 		--_sonic-waveform-line: max(1px, var(--_sonic-unit));
 		--_sonic-waveform-lit: var(--_sonic-lit);
 		--_sonic-waveform-wave: var(--_sonic-waveform-lit);
-		--_sonic-waveform-wave-edge: color-mix(in oklab, var(--_sonic-waveform-lit) 45%, #000);
+		--_sonic-waveform-wave-edge: var(
+			--sonic-waveform-edge,
+			color-mix(in oklab, var(--_sonic-waveform-lit) 45%, #000)
+		);
 		--_sonic-waveform-grid: var(--_sonic-etch);
 		--_sonic-waveform-hatch: var(--_sonic-etch);
 		--_sonic-waveform-marker: var(--sonic-marker, var(--_sonic-ink));
@@ -87,7 +92,7 @@
 		overflow: hidden;
 		touch-action: pan-y;
 		cursor: grab;
-		border-radius: calc(var(--_sonic-waveform-size) * 0.08);
+		border-radius: calc(var(--_sonic-waveform-size) * var(--sonic-waveform-radius-ratio, 0.08));
 		box-shadow: var(--_sonic-focus-shadow);
 	}
 
@@ -134,13 +139,18 @@
 		inset-inline-start: var(--_sonic-waveform-inset);
 		font-size: calc(var(--_sonic-waveform-size) * var(--sonic-waveform-label-font-ratio, 0.13));
 		line-height: 1;
-		color: var(--_sonic-waveform-marker);
+		color: var(--_sonic-marker, var(--_sonic-waveform-marker));
 		white-space: nowrap;
+		text-shadow: var(--sonic-waveform-label-shadow, none);
 		pointer-events: none;
 	}
 
 	.sonic-waveform-label[data-sonic-dimmed] {
-		color: color-mix(in oklab, var(--_sonic-waveform-marker) 50%, transparent);
+		color: color-mix(
+			in oklab,
+			var(--_sonic-marker, var(--_sonic-waveform-marker)) 50%,
+			transparent
+		);
 	}
 
 	/* Opaque, since a system highlight carries alpha that would blend the wave into the glass */
@@ -160,6 +170,14 @@
 
 		:is(.sonic-waveform-playhead, .sonic-waveform-ghost) {
 			forced-color-adjust: none;
+		}
+
+		.sonic-waveform-label {
+			color: CanvasText;
+
+			&[data-sonic-dimmed] {
+				color: GrayText;
+			}
 		}
 
 		.sonic-waveform-playhead {

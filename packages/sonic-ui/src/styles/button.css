@@ -90,10 +90,13 @@
 		--_sonic-keycap-glow: color-mix(in oklab, var(--_sonic-lit) 22%, transparent);
 
 		color: var(--_sonic-lit);
-		background: linear-gradient(
-			var(--_sonic-light-fall),
-			color-mix(in oklab, var(--_sonic-lit) 25%, #000),
-			color-mix(in oklab, var(--_sonic-lit) 60%, #000)
+		background: var(
+			--sonic-well-lit,
+			linear-gradient(
+				var(--_sonic-light-fall),
+				color-mix(in oklab, var(--_sonic-lit) 25%, #000),
+				color-mix(in oklab, var(--_sonic-lit) 60%, #000)
+			)
 		);
 	}
 

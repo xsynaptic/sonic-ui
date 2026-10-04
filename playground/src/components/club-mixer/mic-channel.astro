@@ -3,8 +3,8 @@ import ChannelFader from '#components/club-mixer/channel-fader.astro';
 import StripInput from '#components/club-mixer/strip-input.astro';
 import Label from '#components/replica/label.astro';
 import PanelButton from '#components/replica/panel-button.astro';
+import PanelDial from '#components/replica/panel-dial.astro';
 import PanelSwitch from '#components/replica/panel-switch.astro';
-import Pot from '#components/replica/pot.astro';
 
 interface Props {
 	channel: number;
@@ -35,7 +35,7 @@ const bands = [
 >
 	<StripInput input="Return" level={0} strip={strip} />
 	{bands.map((band) => (
-		<Pot
+		<PanelDial
 			detent={0}
 			ends={['−15', '+15']}
 			format="db"

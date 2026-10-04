@@ -6,7 +6,7 @@ interface Needle {
 
 interface BallisticsRate {
 	fallDecibelsPerSecond: number;
-	riseMs: number;
+	riseTimeConstantMs: number;
 }
 
 interface PpmSpec {
@@ -22,13 +22,13 @@ const burstTimeConstants = -Math.log(1 - 10 ** (-burstShortfallDecibels / 20));
 function ppmRate({ burstMs, fallDecibels, fallSeconds }: PpmSpec): BallisticsRate {
 	return {
 		fallDecibelsPerSecond: fallDecibels / fallSeconds,
-		riseMs: burstMs / burstTimeConstants,
+		riseTimeConstantMs: burstMs / burstTimeConstants,
 	};
 }
 
 // The PPM figures are IEC 60268-10's Type I and Type II
 export const ballisticsRates = {
-	peak: { fallDecibelsPerSecond: 20, riseMs: 0 },
+	peak: { fallDecibelsPerSecond: 20, riseTimeConstantMs: 0 },
 	'ppm-1': ppmRate({ burstMs: 5, fallDecibels: 20, fallSeconds: 1.7 }),
 	'ppm-2': ppmRate({ burstMs: 10, fallDecibels: 24, fallSeconds: 2.8 }),
 } as const satisfies Record<string, BallisticsRate>;

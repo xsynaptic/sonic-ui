@@ -135,6 +135,15 @@ test('a 16-bit body cut at an odd byte reads the whole samples before it', () =>
 	expect([...readDatSamples(header, bytes('d4feb004', 'fe'))]).toEqual([-300, 1200]);
 });
 
+test('a whole file read from its data offset gives the samples of its sliced body', () => {
+	const file = bytes(...stereoHeader, ...stereoBody, 'fe');
+	const header = readDatHeader(file);
+	const sliced = readDatPeaks(header, file.slice(header.dataOffset));
+
+	expect([...sliced.samples]).toEqual([-300, 1200, -2, 3]);
+	expect(readDatPeaks(header, file, header.dataOffset)).toEqual(sliced);
+});
+
 test.each([
 	[0, NaN],
 	[NaN, 200],

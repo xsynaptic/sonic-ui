@@ -66,7 +66,7 @@
 		flex-shrink: 0;
 		inline-size: var(--_sonic-meter-size);
 		block-size: var(--_sonic-meter-length);
-		background: color-mix(in oklab, var(--_sonic-unlit) 55%, #000);
+		background: var(--sonic-bezel, color-mix(in oklab, var(--_sonic-unlit) 55%, #000));
 		border-radius: calc(var(--_sonic-meter-size) * var(--_sonic-meter-radius-ratio));
 
 		&::after {

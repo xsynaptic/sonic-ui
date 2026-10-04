@@ -1,6 +1,6 @@
 ---
+import PanelDial from '#components/replica/panel-dial.astro';
 import PanelSwitch from '#components/replica/panel-switch.astro';
-import Pot from '#components/replica/pot.astro';
 import EchoHead from '#components/tape-echo/echo-head.astro';
 
 const cutTicks = {
@@ -16,7 +16,7 @@ const cutTicks = {
 >
 	<EchoHead division="dot" head={1} ticks={36} />
 	<div class="row-span-2 grid justify-items-center gap-4">
-		<Pot
+		<PanelDial
 			data={{ 'data-echo-mix': '' }}
 			ends={['Dry', 'Wet']}
 			format="percent"
@@ -27,7 +27,7 @@ const cutTicks = {
 			size="large"
 			value={35}
 		/>
-		<Pot
+		<PanelDial
 			data={{ 'data-echo-feedback': '' }}
 			ends={['Min', 'Max']}
 			format="percent"
@@ -41,7 +41,7 @@ const cutTicks = {
 		<PanelSwitch id="echo-offset" label="Offset" />
 	</div>
 	<EchoHead division="note" head={2} ticks={48} />
-	<Pot
+	<PanelDial
 		data={{ 'data-echo-low-cut': '' }}
 		ends={['Min', 'Max']}
 		format="hertz"
@@ -54,7 +54,7 @@ const cutTicks = {
 		ticks={cutTicks.low}
 		value={120}
 	/>
-	<Pot
+	<PanelDial
 		data={{ 'data-echo-high-cut': '' }}
 		ends={['Min', 'Max']}
 		format="hertz"

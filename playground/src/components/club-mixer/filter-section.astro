@@ -1,7 +1,7 @@
 ---
 import Label from '#components/replica/label.astro';
 import PanelButton from '#components/replica/panel-button.astro';
-import Pot from '#components/replica/pot.astro';
+import PanelDial from '#components/replica/panel-dial.astro';
 import { channelCurves } from '#scripts/stop-names.ts';
 
 interface Props {
@@ -25,7 +25,7 @@ const passes = [
 	data-filter={filter}
 	role="group"
 >
-	<Pot
+	<PanelDial
 		data={{ 'data-lfo-depth': '' }}
 		ends={['Min', 'Max']}
 		format="percent"
@@ -51,7 +51,7 @@ const passes = [
 		label="Tap"
 		size="large"
 	/>
-	<Pot
+	<PanelDial
 		ends={['Mild', 'Wild']}
 		format="percent"
 		id={`${section}-resonance`}
@@ -78,7 +78,7 @@ const passes = [
 			size="large"
 		/>
 	))}
-	<Pot
+	<PanelDial
 		data={{ 'data-frequency': '' }}
 		ends={['20', '20k']}
 		format="hertz"
@@ -94,7 +94,7 @@ const passes = [
 	<div class="mt-auto flex items-end gap-3 pt-2">
 		<PanelButton id={`${section}-on`} isRound={true} label="On" size="large" />
 		{filter === 1 ? (
-			<Pot
+			<PanelDial
 				data={{ 'data-crossfade-curve': '' }}
 				format="percent"
 				id={`${section}-curve`}

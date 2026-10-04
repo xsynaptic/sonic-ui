@@ -1,3 +1,4 @@
+import { writeKind } from '#lib/marker-band.ts';
 import { clamp } from '#lib/math.ts';
 import { readPxProperty } from '#lib/read-px-property.ts';
 import { requireChild } from '#lib/render.ts';
@@ -15,6 +16,7 @@ export interface RiderView extends RiderWindow {
 
 export interface RiderLabel {
 	isDimmed: boolean;
+	kind?: string;
 	start: number;
 	text: string;
 	widthPx: number;
@@ -34,6 +36,7 @@ interface RiderLayout {
 
 interface LabelSlot {
 	element: HTMLElement;
+	kind: string | undefined;
 	opacity: number;
 	shownPx: number;
 	x: number;
@@ -90,7 +93,7 @@ export function layoutRider(labels: ReadonlyArray<RiderLabel>, view: RiderView):
 }
 
 function labelSlot(element: HTMLElement): LabelSlot {
-	return { element, opacity: NaN, shownPx: NaN, x: NaN };
+	return { element, kind: undefined, opacity: NaN, shownPx: NaN, x: NaN };
 }
 
 function writePlacement(
@@ -119,7 +122,7 @@ function writePlacement(
 
 function writeLabel(
 	slot: LabelSlot,
-	labels: ReadonlyArray<RiderLabel>,
+	[labels, colourProperty]: [ReadonlyArray<RiderLabel>, string],
 	placement: LabelPlacement | undefined,
 ): void {
 	const { element } = slot;
@@ -130,6 +133,10 @@ function writeLabel(
 
 	if (element.textContent !== label.text) element.textContent = label.text;
 	element.toggleAttribute('data-sonic-dimmed', label.isDimmed);
+	if (slot.kind !== label.kind) {
+		slot.kind = label.kind;
+		writeKind(element, label.kind, colourProperty);
+	}
 	writePlacement(slot, placement, label.widthPx);
 }
 
@@ -158,12 +165,16 @@ function measureWidths(
 
 export function createLabelRider(
 	control: HTMLElement,
-	options: { className: string; insetProperty: `--_sonic-${string}` },
+	options: {
+		className: string;
+		colourProperty: `--_sonic-${string}`;
+		insetProperty: `--_sonic-${string}`;
+	},
 ): {
 	measure: (labels: ReadonlyArray<Omit<RiderLabel, 'widthPx'>>) => void;
 	place: (window: RiderWindow) => void;
 } {
-	const { className, insetProperty } = options;
+	const { className, colourProperty, insetProperty } = options;
 	const parked = labelSlot(requireChild(control, `.${className}`, HTMLElement));
 	const arriving = labelSlot(requireChild(control, `.${className} + .${className}`, HTMLElement));
 	let insetPx = 0;
@@ -185,8 +196,8 @@ export function createLabelRider(
 		place: (window) => {
 			const layout = layoutRider(measured, { ...window, insetPx });
 
-			writeLabel(parked, measured, layout.parked);
-			writeLabel(arriving, measured, layout.arriving);
+			writeLabel(parked, [measured, colourProperty], layout.parked);
+			writeLabel(arriving, [measured, colourProperty], layout.arriving);
 		},
 	};
 }

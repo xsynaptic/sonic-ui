@@ -6,6 +6,7 @@ import type { WaveformPeaks } from '#lib/waveform-buckets.ts';
 
 import { SonicWaveElement } from '#elements/wave-element.ts';
 import { frameTimeline } from '#lib/frame-timeline.ts';
+import { isKind, writeKind } from '#lib/marker-band.ts';
 import { createLabelRider } from '#lib/marker-rider.ts';
 import { clamp } from '#lib/math.ts';
 import { requireChild, template } from '#lib/render.ts';
@@ -255,6 +256,8 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 
 	#grabbed: Drawn | undefined;
 
+	#kindColours = new Map<string, string>();
+
 	#paintedKey = '';
 
 	#peaks: undefined | WaveformPeaks;
@@ -269,6 +272,7 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 
 	readonly #rider = createLabelRider(this.control, {
 		className: 'sonic-waveform-label',
+		colourProperty: '--_sonic-waveform-marker',
 		insetProperty: '--_sonic-waveform-label-inset',
 	});
 
@@ -307,7 +311,7 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 
 	protected paint(
 		context: CanvasRenderingContext2D,
-		{ frameMs, isDirty, look, size }: SurfaceFrame<Colour>,
+		{ frameMs, isDirty, isRebuilt, look, size }: SurfaceFrame<Colour>,
 	): void {
 		const held = this.#held();
 		const timeline = frameTimeline({
@@ -339,7 +343,7 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 		});
 		if (isDirty || timeline.paintKey !== this.#paintedKey) {
 			this.#paintedKey = timeline.paintKey;
-			this.#paintScene(context, { ...view, colours: look.colours });
+			this.#paintScene(context, { ...view, colours: look.colours }, isRebuilt);
 			if (timeline.wanted) this.#requestPeaks?.(...timeline.wanted);
 		}
 		if (timeline.isMoving) this.surface()?.requestFrame();
@@ -349,13 +353,20 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 		const bounds = this.mapping().bounds;
 
 		this.#rider.measure(
-			this.markers.flatMap(({ dimmed, label, start }) =>
+			this.markers.flatMap(({ dimmed, kind, label, start }) =>
 				label === undefined || label === ''
 					? []
-					: [{ isDimmed: dimmed === true, start: clamp(start, ...bounds), text: label }],
+					: [
+							{
+								isDimmed: dimmed === true,
+								...(kind === undefined ? {} : { kind }),
+								start: clamp(start, ...bounds),
+								text: label,
+							},
+						],
 			),
 		);
-		this.surface()?.invalidate();
+		this.surface()?.rebuild();
 	}
 
 	#grab(): ValueAxis {
@@ -382,10 +393,26 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 		return { grabbed, seconds: this.value === from ? grabbed.seconds : this.value };
 	}
 
-	#paintScene(context: CanvasRenderingContext2D, scene: Scene): void {
+	#paintMarkers(context: CanvasRenderingContext2D, scene: Scene, isRebuilt: boolean): void {
+		if (isRebuilt) this.#kindColours = this.#readKindColours();
+
+		const line = Math.max(1, Math.round(scene.dpr));
+
+		for (const { dimmed, kind, start } of this.markers) {
+			const x = (start - scene.startSeconds) * scene.pixelsPerSecond;
+
+			context.fillStyle =
+				(isKind(kind) ? this.#kindColours.get(kind) : undefined) ?? scene.colours.marker;
+			context.globalAlpha = dimmed === true ? 0.5 : 1;
+			context.fillRect(x - line / 2, 0, line, scene.height);
+		}
+		context.globalAlpha = 1;
+	}
+
+	#paintScene(context: CanvasRenderingContext2D, scene: Scene, isRebuilt: boolean): void {
 		const { dpr, height, pixelsPerSecond, startSeconds, width } = scene;
 		const x = (seconds: number): number => (seconds - startSeconds) * pixelsPerSecond;
-		const { grid, marker } = scene.colours;
+		const { grid } = scene.colours;
 		const line = Math.max(1, Math.round(dpr));
 		const [opening, closing] = [x(this.min), x(Math.max(this.min, this.max))];
 		const [from, to] = [clamp(opening, 0, width), clamp(closing, 0, width)];
@@ -400,12 +427,27 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 		// Scrolling lines sit at fractional x; rounding them judders
 		context.fillStyle = grid;
 		for (const edge of [opening, closing]) context.fillRect(edge - line / 2, 0, line, height);
-		context.fillStyle = marker;
-		for (const marker of this.markers) {
-			context.globalAlpha = marker.dimmed === true ? 0.5 : 1;
-			context.fillRect(x(marker.start) - line / 2, 0, line, height);
-		}
-		context.globalAlpha = 1;
+		this.#paintMarkers(context, scene, isRebuilt);
+	}
+
+	#readKindColours(): Map<string, string> {
+		const kinds = [...new Set(this.markers.map(({ kind }) => kind).filter((kind) => isKind(kind)))];
+		const probes = kinds.map((kind) => {
+			const probe = document.createElement('div');
+
+			probe.className = 'sonic-waveform-label';
+			writeKind(probe, kind, '--_sonic-waveform-marker');
+
+			return probe;
+		});
+
+		this.control.append(...probes);
+
+		const read = probes.map((probe) => getComputedStyle(probe).color);
+
+		for (const probe of probes) probe.remove();
+
+		return new Map(kinds.map((kind, index) => [kind, read[index] ?? '']));
 	}
 
 	#sourceSeconds(): number {

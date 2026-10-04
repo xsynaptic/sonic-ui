@@ -10,7 +10,7 @@
 		--_sonic-led-lens-ratio: var(--sonic-led-lens-ratio, 0.625);
 		--_sonic-lit-alt: var(--sonic-lit-alt, oklch(79% 0.2 150deg));
 		--_sonic-unit: calc(var(--_sonic-led-size) / 8);
-		--_sonic-led-bezel: color-mix(in oklab, var(--_sonic-unlit) 55%, #000);
+		--_sonic-led-bezel: var(--sonic-bezel, color-mix(in oklab, var(--_sonic-unlit) 55%, #000));
 
 		position: relative;
 		display: inline-block;

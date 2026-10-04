@@ -19,18 +19,26 @@ const kindPattern = /^[a-z][a-z0-9-]*$/;
 
 const snapSlopPx = 4;
 
+export function isKind(kind: string | undefined): kind is string {
+	return kind !== undefined && kindPattern.test(kind);
+}
+
+export function writeKind(part: HTMLElement, kind: string | undefined, fallback: string): void {
+	if (!isKind(kind)) {
+		part.style.removeProperty('--_sonic-marker');
+		return;
+	}
+
+	part.style.setProperty('--_sonic-marker', `var(--sonic-marker-${kind}, var(${fallback}))`);
+}
+
 function renderMarker(marker: MarkerLook, [from, to]: [number, number]): HTMLElement {
 	const part = document.createElement('div');
 
 	part.className = marker.end === undefined ? 'sonic-wavestrip-marker' : 'sonic-wavestrip-region';
 	part.style.setProperty('--_sonic-marker-from', String(from));
 	part.style.setProperty('--_sonic-marker-to', String(to));
-	if (marker.kind !== undefined && kindPattern.test(marker.kind)) {
-		part.style.setProperty(
-			'--_sonic-marker',
-			`var(--sonic-marker-${marker.kind}, var(--_sonic-marker-default))`,
-		);
-	}
+	writeKind(part, marker.kind, '--_sonic-marker-default');
 	if (marker.dimmed === true) part.dataset.sonicDimmed = '';
 
 	return part;

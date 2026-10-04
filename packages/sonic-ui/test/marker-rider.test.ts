@@ -80,6 +80,7 @@ function mountRider(): {
 
 	const rider = createLabelRider(control, {
 		className: 'sonic-test-label',
+		colourProperty: '--_sonic-test-marker',
 		insetProperty: '--_sonic-test-inset',
 	});
 
@@ -181,4 +182,16 @@ test('a label with no room left in the window is hidden, not drawn at no width',
 
 	expect(parked.hidden).toBe(true);
 	expect(arriving.hidden).toBe(true);
+});
+
+test('a label slot taken over by a marker with no kind drops the kind', () => {
+	const { parked, rider } = mountRider();
+
+	rider.measure([{ isDimmed: false, kind: 'loop', start: 1, text: 'Loop' }]);
+	rider.place(early);
+	expect(parked.style.getPropertyValue('--_sonic-marker')).toContain('--sonic-marker-loop');
+
+	rider.measure([{ isDimmed: false, start: 1, text: 'Intro' }]);
+	rider.place(early);
+	expect(parked.style.getPropertyValue('--_sonic-marker')).toBe('');
 });

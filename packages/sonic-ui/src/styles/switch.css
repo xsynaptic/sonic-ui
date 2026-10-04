@@ -240,10 +240,9 @@
 			var(--_sonic-switch-metal-shade) 88%
 		);
 		--_sonic-switch-outline: max(0.5px, 0.4 * var(--_sonic-unit));
-		--_sonic-switch-rim: color-mix(
-			in oklab,
-			var(--_sonic-cap) calc(100% - 30% * var(--_sonic-relief)),
-			#000
+		--_sonic-switch-rim: var(
+			--sonic-cap-edge,
+			color-mix(in oklab, var(--_sonic-cap) calc(100% - 30% * var(--_sonic-relief)), #000)
 		);
 
 		position: relative;

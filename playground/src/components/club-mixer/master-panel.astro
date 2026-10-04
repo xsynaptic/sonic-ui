@@ -2,7 +2,7 @@
 import { meterSegments } from '#components/club-mixer/meter-segments.ts';
 import Label from '#components/replica/label.astro';
 import PanelButton from '#components/replica/panel-button.astro';
-import Pot from '#components/replica/pot.astro';
+import PanelDial from '#components/replica/panel-dial.astro';
 
 const mixes = [
 	{ data: { 'data-master-mix': '' }, id: 'mix-1', label: 'Mix 1', value: 7 },
@@ -22,7 +22,7 @@ const titleClass =
 
 <div class="flex flex-col items-center gap-4 border-s border-zinc-800 ps-3">
 	<div aria-label="Tempo" class="flex items-end gap-3" role="group">
-		<Pot
+		<PanelDial
 			data={{ 'data-tempo': '' }}
 			detent={125}
 			format="bpm"
@@ -52,7 +52,7 @@ const titleClass =
 			</div>
 			<span class={titleClass}>Master</span>
 			{mixes.map((mix) => (
-				<Pot
+				<PanelDial
 					data={mix.data}
 					id={`master-${mix.id}`}
 					isNumbered={true}
@@ -68,7 +68,7 @@ const titleClass =
 		<div aria-label="Booth" class="flex flex-col items-center gap-3" role="group">
 			<span class={titleClass}>Booth</span>
 			<PanelButton hasLed={false} id="booth-mono" label="Mono" />
-			<Pot
+			<PanelDial
 				id="booth-level"
 				isNumbered={true}
 				label="Level"
@@ -91,7 +91,7 @@ const titleClass =
 					<PanelButton id={`monitor-${source.id}`} label={source.label} />
 				))}
 			</div>
-			<Pot
+			<PanelDial
 				ends={['Cue', 'Mix']}
 				format="signed-percent"
 				id="monitor-blend"
@@ -101,7 +101,7 @@ const titleClass =
 				origin={0}
 				value={0}
 			/>
-			<Pot
+			<PanelDial
 				id="monitor-level"
 				isNumbered={true}
 				label="Phones"

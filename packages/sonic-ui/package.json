@@ -6,10 +6,8 @@
 		"custom-elements",
 		"web-components",
 		"audio",
-		"knob",
 		"dial",
 		"slider",
-		"fader",
 		"synth"
 	],
 	"homepage": "https://github.com/xsynaptic/sonic-ui#readme",

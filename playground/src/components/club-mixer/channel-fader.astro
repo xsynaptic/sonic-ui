@@ -10,7 +10,9 @@ const { hasMeter, value } = Astro.props;
 ---
 
 <div class="mt-auto flex items-end gap-2 pt-2">
-	{hasMeter ? <sonic-meter data-channel-meter segments={meterSegments}></sonic-meter> : undefined}
+	{hasMeter ? (
+		<sonic-meter ballistics="ppm-2" data-channel-meter segments={meterSegments}></sonic-meter>
+	) : undefined}
 	<sonic-slider
 		aria-label="Fader"
 		data-channel-fader
