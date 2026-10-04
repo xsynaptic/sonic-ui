@@ -164,4 +164,6 @@ The words this library uses for its controls, their parts and their values. Wher
 
 **Glass**: The dark glazed material behind screens, readouts and wave controls. _Avoid_: Screen (that is the display), backdrop
 
+**Relief**: How strongly the light models a surface: its bevels, ridges, grooves, sheen and cast shadows. `--sonic-relief` scales it from 0, flat, to 1. _Avoid_: Depth (one part's own token), elevation, shadow
+
 **Mirror**: The copy a control makes of its own light-DOM children in order to draw them inside itself. _Avoid_: Clone, slot content

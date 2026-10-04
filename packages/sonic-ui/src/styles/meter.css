@@ -257,14 +257,18 @@
 		position: absolute;
 		inset: 0;
 		content: '';
-		background: linear-gradient(var(--_sonic-light-fall), rgb(255 255 255 / 10%), transparent 60%) 0
-			100% / 100% var(--_sonic-meter-pitch) repeat-y;
+		background: linear-gradient(
+				var(--_sonic-light-fall),
+				rgb(255 255 255 / calc(0.1 * var(--_sonic-relief))),
+				transparent 60%
+			)
+			0 100% / 100% var(--_sonic-meter-pitch) repeat-y;
 	}
 
 	:state(ladder) > .sonic-meter > .sonic-meter-bar::after {
 		background: radial-gradient(
 				circle var(--_sonic-meter-ladder-radius),
-				rgb(255 255 255 / 45%),
+				rgb(255 255 255 / calc(0.45 * var(--_sonic-relief))),
 				transparent
 			)
 			0 100% / 100% var(--_sonic-meter-pitch) repeat-y;

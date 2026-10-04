@@ -92,6 +92,7 @@ export const tokenGroups: Array<TokenGroup> = [
 			colour('hot', '--sonic-hot', { from: '.sonic-meter' }),
 			colour('clip', '--sonic-clip', { from: '.sonic-meter' }),
 			range('light tilt', '--sonic-light-tilt', [-60, 60, 1, 'deg']),
+			range('relief', '--sonic-relief', [0, 1, 0.05]),
 			range('detent zone', '--sonic-detent-zone', [0, 40, 1, 'px']),
 			{
 				...range('readout size', '--sonic-readout-size', [1, 3, 0.125, 'rem']),

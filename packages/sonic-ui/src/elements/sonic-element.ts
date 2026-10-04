@@ -10,6 +10,10 @@ const namingAttributes = ['aria-describedby', 'aria-label', 'aria-labelledby'];
 
 const checkedSheets = new WeakMap<object, Set<string>>();
 
+const checkedMirrors = new WeakSet<object>();
+
+const interactive = 'a[href], button, input, select, textarea, [tabindex]';
+
 interface StyleProbe {
 	selector?: string;
 	sheet: string;
@@ -26,6 +30,14 @@ function writeLabelledBy(target: Element, labels: Array<Element>): void {
 	}
 
 	target.ariaLabelledByElements = labels;
+}
+
+function unmirrorable(original: Node): Element | undefined {
+	if (!(original instanceof Element)) return undefined;
+
+	return [original, ...original.querySelectorAll('*')].find(
+		(element) => element.matches(interactive) || element.localName.includes('-'),
+	);
 }
 
 interface Mirror {
@@ -189,16 +201,16 @@ export abstract class SonicElement extends HTMLElement {
 				(child): child is Element | Text => child instanceof Element || child instanceof Text,
 			);
 			const kept = copies;
+			const originals = children.filter((child) => isCopied(child));
 
+			this.#checkMirrored(originals);
 			copies = new Map(
-				children
-					.filter((child) => isCopied(child))
-					.map((original) => [
-						original,
-						touched && !touched.has(original) && kept.has(original)
-							? kept.get(original)
-							: copy(original),
-					]),
+				originals.map((original) => [
+					original,
+					touched && !touched.has(original) && kept.has(original)
+						? kept.get(original)
+						: copy(original),
+				]),
 			);
 			place([...copies.values()].filter((made) => made !== undefined));
 			slots.shown.assign(...slotted.filter((child) => !isCopied(child)), control);
@@ -271,6 +283,18 @@ export abstract class SonicElement extends HTMLElement {
 			Reflect.deleteProperty(this, name);
 			this[name] = value;
 		}
+	}
+
+	#checkMirrored(originals: Array<Node>): void {
+		if (!__DEV__ || checkedMirrors.has(this.constructor)) return;
+
+		const [found] = originals.flatMap((original) => unmirrorable(original) ?? []);
+		if (!found) return;
+
+		checkedMirrors.add(this.constructor);
+		console.warn(
+			`<${this.localName}> copies its children into the control, so the <${found.localName}> inside it loses its listeners and state; keep mirrored children static`,
+		);
 	}
 
 	#childHolding(node: Node): Node | undefined {

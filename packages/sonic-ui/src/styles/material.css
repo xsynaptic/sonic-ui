@@ -41,6 +41,7 @@
 		.sonic-xy-readout
 	) {
 		--_sonic-unlit: var(--sonic-unlit, oklch(27.4% 0.005 286deg));
+		--_sonic-relief: var(--sonic-relief, 1);
 		--_sonic-light-tilt: var(--sonic-light-tilt, 17deg);
 		--_sonic-light-fall: calc(180deg - var(--_sonic-light-tilt));
 		--_sonic-cast-x: calc(sin(var(--_sonic-light-tilt)) * var(--_sonic-unit));
@@ -77,16 +78,16 @@
 		);
 		--_sonic-arc-shade: radial-gradient(
 			closest-side,
-			rgb(0 0 0 / 55%) calc(100% - var(--_sonic-arc-width)),
+			rgb(0 0 0 / calc(0.55 * var(--_sonic-relief))) calc(100% - var(--_sonic-arc-width)),
 			transparent calc(100% - var(--_sonic-arc-width) * 0.4),
-			rgb(0 0 0 / 25%) 100%
+			rgb(0 0 0 / calc(0.25 * var(--_sonic-relief))) 100%
 		);
 	}
 
 	:is(.sonic-led, .sonic-meter) {
 		--_sonic-lens-glint: linear-gradient(
 			var(--_sonic-light-fall),
-			rgb(255 255 255 / 10%),
+			rgb(255 255 255 / calc(0.1 * var(--_sonic-relief))),
 			transparent 60%
 		);
 		--_sonic-lens-glass: color-mix(in oklab, var(--_sonic-unlit) 60%, #000);
@@ -115,32 +116,32 @@
 		--_sonic-lit-disabled: color-mix(in oklab, var(--_sonic-ink) 25%, var(--_sonic-unlit));
 		--_sonic-skirt: linear-gradient(
 			var(--_sonic-light-fall),
-			color-mix(in oklab, var(--_sonic-cap) 70%, #fff),
-			color-mix(in oklab, var(--_sonic-cap) 55%, #000)
+			color-mix(in oklab, var(--_sonic-cap) calc(100% - 30% * var(--_sonic-relief)), #fff),
+			color-mix(in oklab, var(--_sonic-cap) calc(100% - 45% * var(--_sonic-relief)), #000)
 		);
 		--_sonic-face: linear-gradient(
 			var(--_sonic-light-fall),
-			color-mix(in oklab, var(--_sonic-cap) 85%, #000),
-			color-mix(in oklab, var(--_sonic-cap) 90%, #fff)
+			color-mix(in oklab, var(--_sonic-cap) calc(100% - 15% * var(--_sonic-relief)), #000),
+			color-mix(in oklab, var(--_sonic-cap) calc(100% - 10% * var(--_sonic-relief)), #fff)
 		);
 		--_sonic-sheen: linear-gradient(
 			105deg,
 			transparent 20%,
-			rgb(255 255 255 / 10%) 45%,
+			rgb(255 255 255 / calc(0.1 * var(--_sonic-relief))) 45%,
 			transparent 55%,
-			rgb(0 0 0 / 6%) 80%
+			rgb(0 0 0 / calc(0.06 * var(--_sonic-relief))) 80%
 		);
 		--_sonic-press-transition:
 			scale 60ms cubic-bezier(0.4, 0, 0.2, 1), translate 60ms cubic-bezier(0.4, 0, 0.2, 1),
 			box-shadow 60ms cubic-bezier(0.4, 0, 0.2, 1);
 		--_sonic-face-shadow:
 			inset var(--_sonic-cast-x) var(--_sonic-cast-y) calc(1.5 * var(--_sonic-unit))
-				rgb(0 0 0 / 35%),
+				rgb(0 0 0 / calc(0.35 * var(--_sonic-relief))),
 			calc(0.5 * var(--_sonic-cast-x)) calc(0.5 * var(--_sonic-cast-y)) var(--_sonic-unit)
-				rgb(255 255 255 / 12%);
+				rgb(255 255 255 / calc(0.12 * var(--_sonic-relief)));
 		--_sonic-rim: 0 0 0 max(1px, 0.75 * var(--_sonic-unit))
-			color-mix(in oklab, var(--_sonic-cap) 40%, #000);
-		--_sonic-drop-shade: rgb(0 0 0 / 65%);
+			color-mix(in oklab, var(--_sonic-cap) calc(100% - 60% * var(--_sonic-relief)), #000);
+		--_sonic-drop-shade: rgb(0 0 0 / calc(0.65 * var(--_sonic-relief)));
 		--_sonic-focus-shadow: 0 0 transparent;
 		--_sonic-focus-glow: 0 0 max(4px, 3 * var(--_sonic-unit)) max(1px, 0.5 * var(--_sonic-unit))
 			color-mix(in oklab, var(--_sonic-focus) 60%, transparent);
@@ -196,8 +197,8 @@
 
 	/* A definite cell, so percentage-sized content fills the glass; a canvas sized to its own box would feed back */
 	:is(.sonic-envelope, .sonic-number, .sonic-screen, .sonic-waveform, .sonic-wavestrip, .sonic-xy) {
-		--_sonic-glass-depth: var(--sonic-glass-depth, 1);
-		--_sonic-glass-texture: var(--sonic-glass-texture, 1);
+		--_sonic-glass-depth: var(--sonic-glass-depth, var(--_sonic-relief));
+		--_sonic-glass-texture: var(--sonic-glass-texture, var(--_sonic-relief));
 		--_sonic-glass-pitch: max(2px, round(2 * var(--_sonic-unit), 1px));
 
 		position: relative;
@@ -304,9 +305,11 @@
 		--_sonic-well:
 			inset calc(var(--_sonic-well-depth) * var(--_sonic-cast-x))
 				calc(var(--_sonic-well-depth) * var(--_sonic-cast-y))
-				calc(2 * var(--_sonic-well-depth) * var(--_sonic-unit)) rgb(0 0 0 / 60%),
+				calc(2 * var(--_sonic-well-depth) * var(--_sonic-unit))
+				rgb(0 0 0 / calc(0.6 * var(--_sonic-relief))),
 			calc(0.5 * var(--_sonic-well-depth) * var(--_sonic-cast-x))
-				calc(0.5 * var(--_sonic-well-depth) * var(--_sonic-cast-y)) 0 rgb(255 255 255 / 6%);
+				calc(0.5 * var(--_sonic-well-depth) * var(--_sonic-cast-y)) 0
+				rgb(255 255 255 / calc(0.06 * var(--_sonic-relief)));
 	}
 
 	:is(.sonic-button, .sonic-segmented) {
@@ -317,10 +320,11 @@
 		);
 		--_sonic-engraving: drop-shadow(
 				calc(-0.4 * var(--_sonic-cast-x)) calc(-0.4 * var(--_sonic-cast-y))
-					calc(0.4 * var(--_sonic-unit)) rgb(0 0 0 / 30%)
+					calc(0.4 * var(--_sonic-unit)) rgb(0 0 0 / calc(0.3 * var(--_sonic-relief)))
 			)
 			drop-shadow(
-				calc(0.3 * var(--_sonic-cast-x)) calc(0.3 * var(--_sonic-cast-y)) 0 rgb(255 255 255 / 7%)
+				calc(0.3 * var(--_sonic-cast-x)) calc(0.3 * var(--_sonic-cast-y)) 0
+					rgb(255 255 255 / calc(0.07 * var(--_sonic-relief)))
 			);
 	}
 
@@ -365,9 +369,10 @@
 	:is(.sonic-meter, .sonic-slider) {
 		--_sonic-groove:
 			inset var(--_sonic-cast-x) var(--_sonic-cast-y) calc(0.75 * var(--_sonic-unit))
-				rgb(0 0 0 / 55%),
-			inset 0 0 calc(0.5 * var(--_sonic-unit)) rgb(0 0 0 / 30%),
-			calc(0.5 * var(--_sonic-cast-x)) calc(0.5 * var(--_sonic-cast-y)) 0 rgb(255 255 255 / 6%);
+				rgb(0 0 0 / calc(0.55 * var(--_sonic-relief))),
+			inset 0 0 calc(0.5 * var(--_sonic-unit)) rgb(0 0 0 / calc(0.3 * var(--_sonic-relief))),
+			calc(0.5 * var(--_sonic-cast-x)) calc(0.5 * var(--_sonic-cast-y)) 0
+				rgb(255 255 255 / calc(0.06 * var(--_sonic-relief)));
 	}
 
 	@media (hover: hover) {
@@ -437,8 +442,8 @@
 		border-radius: calc(0.25 * var(--_sonic-readout-size));
 		box-shadow:
 			calc(2 * var(--_sonic-cast-x)) calc(2 * var(--_sonic-cast-y)) calc(6 * var(--_sonic-unit))
-				rgb(0 0 0 / 55%),
-			inset 0 0 0 max(1px, var(--_sonic-unit)) rgb(255 255 255 / 8%);
+				rgb(0 0 0 / calc(0.55 * var(--_sonic-relief))),
+			inset 0 0 0 max(1px, var(--_sonic-unit)) rgb(255 255 255 / calc(0.08 * var(--_sonic-relief)));
 		opacity: 0;
 		translate: 0 calc(0.15 * var(--_sonic-readout-size));
 		transition:

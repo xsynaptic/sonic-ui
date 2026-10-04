@@ -310,9 +310,10 @@
 		&::before {
 			inset: 0;
 			background: repeating-conic-gradient(
-				rgb(0 0 0 / 30%) 0,
-				rgb(255 255 255 / 12%) calc(var(--_sonic-dial-ridge-angle) / 2),
-				rgb(0 0 0 / 30%) var(--_sonic-dial-ridge-angle)
+				rgb(0 0 0 / calc(0.3 * var(--_sonic-relief))) 0,
+				rgb(255 255 255 / calc(0.12 * var(--_sonic-relief)))
+					calc(var(--_sonic-dial-ridge-angle) / 2),
+				rgb(0 0 0 / calc(0.3 * var(--_sonic-relief))) var(--_sonic-dial-ridge-angle)
 			);
 			rotate: var(--_sonic-dial-angle);
 		}
@@ -325,15 +326,15 @@
 						calc(
 							var(--_sonic-dial-face-drift) * var(--_sonic-dial-angle) - var(--_sonic-light-tilt)
 						),
-					rgb(255 255 255 / 16%),
+					rgb(255 255 255 / calc(0.16 * var(--_sonic-relief))),
 					transparent 12%,
-					rgb(0 0 0 / 10%) 25%,
+					rgb(0 0 0 / calc(0.1 * var(--_sonic-relief))) 25%,
 					transparent 38%,
-					rgb(255 255 255 / 12%) 50%,
+					rgb(255 255 255 / calc(0.12 * var(--_sonic-relief))) 50%,
 					transparent 62%,
-					rgb(0 0 0 / 10%) 75%,
+					rgb(0 0 0 / calc(0.1 * var(--_sonic-relief))) 75%,
 					transparent 88%,
-					rgb(255 255 255 / 16%)
+					rgb(255 255 255 / calc(0.16 * var(--_sonic-relief)))
 				),
 				var(--_sonic-face);
 			box-shadow: var(--_sonic-face-shadow);
@@ -360,7 +361,8 @@
 			content: '';
 			background: var(--_sonic-ink);
 			border-radius: calc(var(--_sonic-dial-indicator-width) / 2);
-			box-shadow: inset 0 0 calc(0.75 * var(--_sonic-unit)) rgb(0 0 0 / 55%);
+			box-shadow: inset 0 0 calc(0.75 * var(--_sonic-unit))
+				rgb(0 0 0 / calc(0.55 * var(--_sonic-relief)));
 			clip-path: polygon(
 				calc(50% * var(--_sonic-dial-indicator-taper)) 0,
 				calc(100% - 50% * var(--_sonic-dial-indicator-taper)) 0,
