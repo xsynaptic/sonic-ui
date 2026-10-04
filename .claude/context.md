@@ -112,6 +112,8 @@ The words this library uses for its controls, their parts and their values. Wher
 
 **Region**: A stretch of a wave with a start and an end. _Avoid_: Span, range, interval
 
+**Lane**: One of the rows that point markers stack in when they sit too close to share one. _Avoid_: Row, track, tier
+
 **Scrub**: To drag along a wave looking for a place to seek to. _Avoid_: Seek (the jump itself), drag
 
 ### Values
@@ -158,7 +160,7 @@ The words this library uses for its controls, their parts and their values. Wher
 
 ### Skinning
 
-**Skin**: A stylesheet that restyles every control by setting tokens. _Avoid_: Theme, preset
+**Skin**: A stylesheet that restyles every control by setting tokens. The shipped skins are `slate`, `lime`, `ivory`, `flat` and `bare`; `bare` removes the cap and the well so a press control is its legend alone, in the text colour around it. _Avoid_: Theme, preset
 
 **Token**: A public custom property that a skin may set. _Avoid_: Variable, custom property (that is the mechanism)
 
@@ -169,6 +171,8 @@ The words this library uses for its controls, their parts and their values. Wher
 **Ink**: The colour of anything printed or etched, such as scales, labels and icons. _Avoid_: Mark, engraving colour
 
 **Glass**: The dark glazed material behind screens, readouts and wave controls. _Avoid_: Screen (that is the display), backdrop
+
+**Target**: The region around a press control that takes its presses. It is the control's own box unless `--sonic-target-size` makes it larger. _Avoid_: Hit area, touch target, tap target, hitbox
 
 **Relief**: How strongly the light models a surface: its bevels, ridges, grooves, sheen and cast shadows. `--sonic-relief` scales it from 0, flat, to 1. _Avoid_: Depth (one part's own token), elevation, shadow
 

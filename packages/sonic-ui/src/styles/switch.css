@@ -100,7 +100,7 @@
 	[orientation='horizontal']
 		> .sonic-switch[data-sonic-position-count]
 		> .sonic-switch-position::after {
-		inset-block: var(--_sonic-hit-outset);
+		inset-block: var(--_sonic-target-outset);
 		inset-inline: 0;
 	}
 

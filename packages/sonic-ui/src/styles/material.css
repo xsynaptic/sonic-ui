@@ -346,11 +346,11 @@
 	}
 
 	:is(.sonic-button, .sonic-segmented-option, .sonic-switch-position) {
-		--_sonic-hit-outset: min(0px, calc((100% - var(--sonic-hit-size, 100%)) / 2));
+		--_sonic-target-outset: min(0px, calc((100% - var(--sonic-target-size, 100%)) / 2));
 
 		&::after {
 			position: absolute;
-			inset: var(--_sonic-hit-outset);
+			inset: var(--_sonic-target-outset);
 			content: '';
 		}
 	}

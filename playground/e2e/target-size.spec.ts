@@ -28,7 +28,7 @@ async function pressBeside(page: Page, button: Locator, outsidePx: number): Prom
 	await page.mouse.click(box.x - outsidePx, box.y + box.height / 2);
 }
 
-test('a press just outside a button lands only with a hit size set, and only within it', async ({
+test('a press just outside a button lands only with a target size set, and only within it', async ({
 	page,
 }) => {
 	const { button, clicks } = await openButton(page);
@@ -37,7 +37,7 @@ test('a press just outside a button lands only with a hit size set, and only wit
 	expect(await clicks()).toBe(0);
 
 	await button.evaluate((element) => {
-		element.style.setProperty('--sonic-hit-size', '44px');
+		element.style.setProperty('--sonic-target-size', '44px');
 	});
 	await pressBeside(page, button, 4);
 	expect(await clicks()).toBe(1);
@@ -46,11 +46,11 @@ test('a press just outside a button lands only with a hit size set, and only wit
 	expect(await clicks()).toBe(1);
 });
 
-test("a hit size under the button's own leaves its edge pressable", async ({ page }) => {
+test("a target size under the button's own leaves its edge pressable", async ({ page }) => {
 	const { button, clicks } = await openButton(page);
 
 	await button.evaluate((element) => {
-		element.style.setProperty('--sonic-hit-size', '8px');
+		element.style.setProperty('--sonic-target-size', '8px');
 	});
 	await pressBeside(page, button, -2);
 
@@ -60,11 +60,11 @@ test("a hit size under the button's own leaves its edge pressable", async ({ pag
 test.describe('forced colours', () => {
 	test.use({ forcedColors: 'active' });
 
-	test('a hit area paints nothing', async ({ page }) => {
+	test('a target paints nothing', async ({ page }) => {
 		const { button } = await openButton(page);
 
 		await button.evaluate((element) => {
-			element.style.setProperty('--sonic-hit-size', '44px');
+			element.style.setProperty('--sonic-target-size', '44px');
 		});
 
 		const paint = await button.locator('.sonic-button').evaluate((element) => {
