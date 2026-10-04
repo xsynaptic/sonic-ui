@@ -21,13 +21,13 @@ check:
   jobs:
     # Build first because the playground type-checks against the library's `dist` folder
     - name: build
-      run: node scripts/quiet.ts pnpm build
+      run: pnpm build
     - name: verify
       group:
         parallel: true
         jobs:
           - name: types
-            run: node scripts/quiet.ts pnpm check-types
+            run: pnpm check-types
           - name: format
             run: prettier --check . --cache --log-level warn
           - name: lint
@@ -39,14 +39,14 @@ check:
           - name: dupes
             run: fallow dupes --quiet
           - name: complexity
-            run: node scripts/quiet.ts fallow health --complexity --quiet
+            run: out=$(fallow health --complexity --quiet 2>&1) || { printf '%s\n' "$out"; exit 1; }
           # `fallow health --css` never exits non-zero; audit gates the css-* rules, scoped to changed files
           - name: styling
-            run: node scripts/quiet.ts fallow audit --gate all --quiet
+            run: fallow audit --gate all --quiet
           - name: architecture
             run: fallow dead-code --boundary-violations --circular-deps --stale-suppressions --quiet
           - name: test
-            run: node scripts/quiet.ts vitest run --passWithNoTests
+            run: vitest run --passWithNoTests
 
 fix:
   piped: true
