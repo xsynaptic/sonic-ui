@@ -1,4 +1,4 @@
-import type { Locator } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 
 import { expect } from '@playwright/test';
 
@@ -9,14 +9,9 @@ interface PaintedLine {
 	pixels: Array<Colour>;
 }
 
-// Screenshotted rather than read from styles, so the masks and gradients are the engine's own
-export async function paintedLine(target: Locator, axis: 'x' | 'y'): Promise<PaintedLine> {
-	const shot = await target.screenshot();
-	const box = await target.boundingBox();
-	if (!box) throw new Error('The target has no box');
-
-	const pixels = await target.evaluate(
-		async (_element, [data, axis]) => {
+export function pixelLine(page: Page, shot: Buffer, axis: 'x' | 'y'): Promise<Array<Colour>> {
+	return page.evaluate(
+		async ([data, axis]) => {
 			const image = new Image();
 
 			image.src = `data:image/png;base64,${data}`;
@@ -46,6 +41,15 @@ export async function paintedLine(target: Locator, axis: 'x' | 'y'): Promise<Pai
 		},
 		[shot.toString('base64'), axis] as const,
 	);
+}
+
+// Screenshotted rather than read from styles, so the masks and gradients are the engine's own
+export async function paintedLine(target: Locator, axis: 'x' | 'y'): Promise<PaintedLine> {
+	const shot = await target.screenshot();
+	const box = await target.boundingBox();
+	if (!box) throw new Error('The target has no box');
+
+	const pixels = await pixelLine(target.page(), shot, axis);
 
 	return { lengthPx: axis === 'x' ? box.width : box.height, pixels };
 }

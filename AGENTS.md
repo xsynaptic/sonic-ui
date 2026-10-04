@@ -28,6 +28,7 @@ Tokens, hook classes, attributes, events and `:state()` names are the API. Renam
 - Forced colours: drawn parts opt out and take system colours; the focusable element stays forced so its outline paints.
 - A private value that script or a canvas reads is registered with `@property`; a raw token does not resolve there.
 - A control uses only the children it documents, and puts its control back when removed.
+- A control draws on connect: until then attributes and properties are held as values, and the drawn parts, form value and states are written in the one render `connect` runs.
 
 ## Build gotchas
 
@@ -42,6 +43,10 @@ Run `pnpm fix` after a chunk of work; it autofixes, then runs `pnpm check`. `che
 Run `pnpm test-e2e` after changing a gesture, a control's naming, or its drawn parts; reach for `pnpm test-e2e-full` when a change is engine-specific.
 
 Library changes get a changeset (`pnpm changeset`). Until 1.0, keep changesets short and grouped, and add little to READMEs and package descriptions.
+
+## Visual checks
+
+`pnpm shot '<selector>'` crops one part on the dev server into a montage across engines, skins, schemes and states; `--pixels x` or `y` prints an edge as numbers instead. A look with a known answer is a spec.
 
 ## Tests
 

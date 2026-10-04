@@ -20,6 +20,7 @@
 		"dev": "FORCE_COLOR=1 pnpm --recursive --parallel dev",
 		"check-types": "tsc --noEmit && pnpm --recursive check-types",
 		"test": "pnpm build && vitest run",
+		"shot": "pnpm -F @playground/sonic-ui shot",
 		"test-e2e": "pnpm build && pnpm -F @playground/sonic-ui test-e2e",
 		"test-e2e-full": "pnpm build && pnpm -F @playground/sonic-ui test-e2e-full",
 		"stryker": "pnpm build && stryker run",
