@@ -339,6 +339,9 @@ export abstract class SonicValueElement extends SonicFormElement {
 
 	#limit: [number, number] | undefined;
 
+	// Every attribute it reads is observed; a subclass adding an input to `isWrapping()` has to observe it
+	#mapping: undefined | ValueMapping;
+
 	#modulationValue: number | undefined;
 
 	#parseValue: ((text: string) => number) | undefined;
@@ -356,6 +359,7 @@ export abstract class SonicValueElement extends SonicFormElement {
 	readonly #watchers = new Set<() => void>();
 
 	attributeChangedCallback(name: string): void {
+		this.#mapping = undefined;
 		this.#positions = parseNumberList(this.getAttribute('positions'));
 		if (name === 'value') {
 			if (this.#isHeld()) {
@@ -368,7 +372,7 @@ export abstract class SonicValueElement extends SonicFormElement {
 		if (name === 'disabled' && this.isDisabled()) this.#endHolds();
 
 		this.#value = this.mapping().snap(this.#asked ?? this.numberAttribute('value', this.min));
-		if (proportionAttributes.has(name)) this.proportionsChanged();
+		if (proportionAttributes.has(name) && this.isBound()) this.proportionsChanged();
 		this.render();
 	}
 
@@ -551,9 +555,11 @@ export abstract class SonicValueElement extends SonicFormElement {
 	}
 
 	protected mapping(): ValueMapping {
+		if (this.#mapping) return this.#mapping;
+
 		const { detent, midpoint } = this;
 
-		return valueMapping({
+		this.#mapping = valueMapping({
 			...(detent === undefined ? {} : { detent }),
 			...(this.#positions ? { positions: this.#positions } : {}),
 			max: this.max,
@@ -564,6 +570,8 @@ export abstract class SonicValueElement extends SonicFormElement {
 			step: this.step,
 			taper: this.taper,
 		});
+
+		return this.#mapping;
 	}
 
 	protected originValue(): number {
@@ -583,13 +591,7 @@ export abstract class SonicValueElement extends SonicFormElement {
 	}
 
 	protected render(): void {
-		this.draw();
-		this.#renderScale();
-		this.toggleState(
-			'at-origin',
-			!this.isWrapping() && this.#value === this.mapping().snap(this.originValue()),
-		);
-		this.#renderAria(this.focusTarget(), this.controlOrientation());
+		if (this.isBound()) this.#renderControl();
 		for (const listener of this.#watchers) listener();
 	}
 
@@ -622,7 +624,7 @@ export abstract class SonicValueElement extends SonicFormElement {
 		if (value !== undefined && !Number.isFinite(value)) return;
 
 		this.#modulationValue = value;
-		this.#writeModulationProportion(control, prefix);
+		if (this.isBound()) this.#writeModulationProportion(control, prefix);
 	}
 
 	protected writeProportions(
@@ -816,11 +818,11 @@ export abstract class SonicValueElement extends SonicFormElement {
 
 		const [low, high] = this.mapping().bounds;
 
-		control.setAttribute('role', this.controlRole());
-		control.setAttribute('aria-valuemin', String(low));
-		control.setAttribute('aria-valuemax', String(high));
-		control.setAttribute('aria-valuenow', String(this.#value));
-		if (orientation) control.setAttribute('aria-orientation', orientation);
+		writeAttribute(control, 'role', this.controlRole());
+		writeAttribute(control, 'aria-valuemin', String(low));
+		writeAttribute(control, 'aria-valuemax', String(high));
+		writeAttribute(control, 'aria-valuenow', String(this.#value));
+		if (orientation) writeAttribute(control, 'aria-orientation', orientation);
 		writeAttribute(
 			control,
 			'aria-valuetext',
@@ -831,15 +833,21 @@ export abstract class SonicValueElement extends SonicFormElement {
 		this.#renderReadout();
 	}
 
-	#renderDisabled(control: HTMLElement): void {
-		if (this.isDisabled()) {
-			control.setAttribute('aria-disabled', 'true');
-			control.removeAttribute('tabindex');
-			return;
-		}
+	#renderControl(): void {
+		this.draw();
+		this.#renderScale();
+		this.toggleState(
+			'at-origin',
+			!this.isWrapping() && this.#value === this.mapping().snap(this.originValue()),
+		);
+		this.#renderAria(this.focusTarget(), this.controlOrientation());
+	}
 
-		control.removeAttribute('aria-disabled');
-		control.setAttribute('tabindex', '0');
+	#renderDisabled(control: HTMLElement): void {
+		const isDisabled = this.isDisabled();
+
+		writeAttribute(control, 'aria-disabled', isDisabled ? 'true' : undefined);
+		writeAttribute(control, 'tabindex', isDisabled ? undefined : '0');
 	}
 
 	#renderDragReveal(drag: ValueDrag): void {

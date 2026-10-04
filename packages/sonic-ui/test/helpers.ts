@@ -23,6 +23,10 @@ export function mountDial(attributes: string): { control: HTMLElement; dial: Son
 	return { control, dial: host };
 }
 
+export function drawnMarkup(control: Element | null): string | undefined {
+	return control?.outerHTML.replaceAll(/sonic-(entry|readout)-\d+/g, 'sonic-$1');
+}
+
 export function nextTask(): Promise<unknown> {
 	return new Promise((resolve) => setTimeout(resolve, 0));
 }

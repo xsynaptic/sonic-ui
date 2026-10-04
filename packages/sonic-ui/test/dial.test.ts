@@ -5,7 +5,7 @@ import type { SonicDial } from '#elements/dial.ts';
 import '#define/dial.ts';
 import { formatPercent, parsePercent } from '#lib/percent.ts';
 
-import { mountDial, pressKey, recordEvents } from './helpers.ts';
+import { drawnMarkup, mountDial, pressKey, recordEvents } from './helpers.ts';
 
 vi.hoisted(() => {
 	Object.defineProperty(navigator, 'platform', { value: 'MacIntel' });
@@ -38,6 +38,30 @@ test('once the property sets the value, a range change snaps what was asked rath
 
 	dial.setAttribute('max', '200');
 	expect(dial.value).toBe(50);
+});
+
+test('a dial set up before it is appended holds its value, and then draws as one mounted from markup', () => {
+	const dial = document.createElement('sonic-dial');
+
+	dial.setAttribute('value', '42');
+	dial.setAttribute('min', '20');
+	dial.setAttribute('max', '20000');
+	dial.setAttribute('step', '5');
+	dial.setAttribute('taper', 'log');
+	expect(dial.value).toBe(40);
+
+	dial.value = 443;
+	dial.modulationValue = 2000;
+	expect(dial.value).toBe(445);
+
+	document.body.replaceChildren(dial);
+	const appended = drawnMarkup(dial.querySelector('.sonic-dial'));
+	const { control, dial: mounted } = mountDial(
+		'value="443" min="20" max="20000" step="5" taper="log"',
+	);
+
+	mounted.modulationValue = 2000;
+	expect(appended).toBe(drawnMarkup(control));
 });
 
 test('a dial without a value starts at min', () => {
@@ -502,6 +526,24 @@ test('writing the current value leaves the control untouched but still counts as
 
 	expect(dial.value).toBe(100);
 	expect(control.getAttribute('aria-valuemax')).toBe('200');
+});
+
+test('a value write queues a record only for the control attributes it changed, and none for a closed readout', () => {
+	const { dial } = mountDial('value="40" min="20" max="90" step="5" aria-label="Cutoff"');
+	const records: Array<MutationRecord> = [];
+	const observer = new MutationObserver((batch) => {
+		records.push(...batch);
+	});
+
+	observer.observe(dial, { attributes: true, characterData: true, childList: true, subtree: true });
+	dial.value = 55;
+
+	const written = [...records, ...observer.takeRecords()].map(
+		(record) => record.attributeName ?? record.type,
+	);
+
+	observer.disconnect();
+	expect(written.filter((name) => name !== 'style')).toEqual(['aria-valuenow']);
 });
 
 test('a property write renders as its attribute would, and undefined removes the attribute', () => {

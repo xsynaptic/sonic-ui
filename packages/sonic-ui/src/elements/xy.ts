@@ -267,6 +267,8 @@ export class SonicXy extends SonicFormElement {
 
 	#formatValue: ((value: number, axis: FieldAxis) => string) | undefined;
 
+	#mapped: Record<FieldAxis, ValueMapping> | undefined;
+
 	readonly #parts: Record<FieldAxis, HTMLDivElement> = {
 		x: requireChild(this.#xy, '[data-sonic-axis="x"]', HTMLDivElement),
 		y: requireChild(this.#xy, '[data-sonic-axis="y"]', HTMLDivElement),
@@ -284,6 +286,7 @@ export class SonicXy extends SonicFormElement {
 	};
 
 	attributeChangedCallback(name: string): void {
+		this.#mapped = undefined;
 		if (name === 'x' || name === 'y') {
 			if (this.#pointerDrag?.current()) return;
 
@@ -341,6 +344,8 @@ export class SonicXy extends SonicFormElement {
 	}
 
 	protected render(): void {
+		if (!this.isBound()) return;
+
 		const { style } = this.#xy;
 		const mappings = this.#mappings();
 
@@ -517,7 +522,7 @@ export class SonicXy extends SonicFormElement {
 	}
 
 	#keyTo(axis: FieldAxis, key: string): void {
-		const next = this.#mapping(axis).keyTarget(key, this.#values[axis].value);
+		const next = this.#mappings()[axis].keyTarget(key, this.#values[axis].value);
 		const hasMoved = this.#set(axis, next ?? NaN);
 
 		this.#currentAxis = axis;
@@ -544,7 +549,11 @@ export class SonicXy extends SonicFormElement {
 	}
 
 	#mappings(): Record<FieldAxis, ValueMapping> {
-		return { x: this.#mapping('x'), y: this.#mapping('y') };
+		if (this.#mapped) return this.#mapped;
+
+		this.#mapped = { x: this.#mapping('x'), y: this.#mapping('y') };
+
+		return this.#mapped;
 	}
 
 	#refresh(): void {
@@ -571,11 +580,11 @@ export class SonicXy extends SonicFormElement {
 			const isCurrent = axis === this.#currentAxis;
 			const stop = isCurrent ? '0' : '-1';
 
-			part.setAttribute('aria-orientation', orientations[axis]);
-			part.setAttribute('aria-valuemin', String(low));
-			part.setAttribute('aria-valuemax', String(high));
-			part.setAttribute('aria-valuenow', String(this.#values[axis].value));
-			part.setAttribute('aria-valuetext', this.#valueText(axis));
+			writeAttribute(part, 'aria-orientation', orientations[axis]);
+			writeAttribute(part, 'aria-valuemin', String(low));
+			writeAttribute(part, 'aria-valuemax', String(high));
+			writeAttribute(part, 'aria-valuenow', String(this.#values[axis].value));
+			writeAttribute(part, 'aria-valuetext', this.#valueText(axis));
 			this.forwardNaming(part, true);
 			writeAttribute(part, 'aria-hidden', isCurrent ? undefined : 'true');
 			writeAttribute(part, 'aria-disabled', isDisabled ? 'true' : undefined);
@@ -616,7 +625,7 @@ export class SonicXy extends SonicFormElement {
 		if (!Number.isFinite(next)) return false;
 
 		const axisValue = this.#values[axis];
-		const snapped = this.#mapping(axis).snap(next);
+		const snapped = this.#mappings()[axis].snap(next);
 
 		axisValue.asked = snapped;
 		if (snapped === axisValue.value) return false;

@@ -4,7 +4,7 @@ import '#define/xy.ts';
 import { SonicXy } from '#elements/xy.ts';
 import { requireChild } from '#lib/render.ts';
 
-import { pointerAt, pressKey, recordEvents } from './helpers.ts';
+import { drawnMarkup, pointerAt, pressKey, recordEvents } from './helpers.ts';
 
 vi.hoisted(() => {
 	Object.defineProperty(navigator, 'platform', { value: 'Win32' });
@@ -58,10 +58,36 @@ test('each value and origin is drawn at its proportion of its own range, an unse
 	expect([style('x-origin'), style('y-origin')]).toEqual(['0', '0.25']);
 });
 
+test('a pad set up before it is appended holds its values, and then draws as one mounted from markup', () => {
+	const xy = document.createElement('sonic-xy');
+
+	for (const [, name = '', value = ''] of offset.matchAll(/([\w-]+)="([^"]*)"/g)) {
+		xy.setAttribute(name, value);
+	}
+	xy.y = 171;
+	expect([xy.x, xy.y]).toEqual([0, 172]);
+
+	document.body.replaceChildren(xy);
+	const appended = drawnMarkup(xy.querySelector('.sonic-xy'));
+	const { glass, xy: mounted } = mountXy(offset);
+
+	mounted.y = 171;
+	expect(appended).toBe(drawnMarkup(glass));
+});
+
 test('a value waits for its range, and an unset value rests at its own minimum', () => {
 	const { xy } = mountXy('x="150" x-max="200" y-min="10"');
 
 	expect([xy.x, xy.y]).toEqual([150, 10]);
+});
+
+test('a step changed after the first render snaps the next value by it', () => {
+	const { xy } = mountXy(offset);
+
+	xy.setAttribute('x-step', '4');
+	xy.x = 11;
+
+	expect(xy.x).toBe(10);
 });
 
 test('a press on the puck moves nothing until the pointer travels', () => {

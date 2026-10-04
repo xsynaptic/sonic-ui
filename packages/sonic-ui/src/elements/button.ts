@@ -171,13 +171,14 @@ export class SonicButton extends SonicFormElement {
 	}
 
 	protected render(): void {
+		if (!this.isBound()) return;
+
 		const button = this.#button;
 
-		button.disabled = this.isDisabled();
+		writeAttribute(button, 'disabled', this.isDisabled() ? '' : undefined);
 		writeAttribute(button, 'aria-disabled', this.#isSoftDisabled() ? 'true' : undefined);
 		writeAttribute(button, 'aria-busy', this.busy ? 'true' : undefined);
-		button.removeAttribute('aria-pressed');
-		if (this.latching) button.setAttribute('aria-pressed', String(this.pressed));
+		writeAttribute(button, 'aria-pressed', this.latching ? String(this.pressed) : undefined);
 		this.toggleState('pressed', this.pressed);
 		this.forwardNaming(button, true);
 

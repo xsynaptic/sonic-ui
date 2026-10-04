@@ -79,6 +79,14 @@ function proportionOf(handle: HTMLElement, axis: 'x' | 'y'): number {
 	return Number(handle.style.getPropertyValue(`--_sonic-envelope-${axis}`));
 }
 
+function drawn({ envelope, handle }: Rig): Array<null | number | string> {
+	return [
+		proportionOf(handle('decay'), 'x'),
+		proportionOf(handle('decay'), 'y'),
+		requireChild(envelope, '.sonic-envelope-line', SVGElement).getAttribute('d'),
+	];
+}
+
 test("the decay handle moves each dial along that dial's own mapping, a share wide and the graph tall", () => {
 	const { dials, handle } = mountBound();
 
@@ -86,6 +94,27 @@ test("the decay handle moves each dial along that dial's own mapping, a share wi
 
 	expect(dials.decay.value).toBe(662.5);
 	expect(dials.sustain.value).toBe(-18);
+});
+
+test('a decay handle drag draws the line and the handle where its two dials end up, and later writes still draw', () => {
+	const dragged = mountBound();
+
+	drag(dragged.handle('decay'), { x: 25, y: -20 });
+
+	const afterDrag = drawn(dragged);
+
+	dragged.dials.attack.value = 2.5;
+
+	const afterWrite = drawn(dragged);
+	const written = mountBound();
+
+	written.dials.decay.value = 662.5;
+	written.dials.sustain.value = -18;
+	expect(afterDrag).toEqual(drawn(written));
+
+	written.dials.attack.value = 2.5;
+	expect(afterWrite).toEqual(drawn(written));
+	expect(afterWrite).not.toEqual(afterDrag);
 });
 
 test('a handle drag is heard as its dials turning, with one change per dial that moved', () => {

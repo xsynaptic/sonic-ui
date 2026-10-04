@@ -40,6 +40,7 @@ const renderBare = template(
 interface BatPress {
 	hasMoved: boolean;
 	last: number;
+	width: number;
 }
 
 const pressCentreZone = 0.08;
@@ -217,13 +218,15 @@ export class SonicSwitch extends SonicRadioGroupElement {
 	}
 
 	protected override render(): void {
+		if (!this.isBound()) return;
+
 		const group = this.group;
 		const options = this.options();
 
 		if (options.length > 0) {
 			this.#bare.remove();
 			writeAttribute(group, 'role', 'radiogroup');
-			group.dataset.sonicPositionCount = String(options.length);
+			writeAttribute(group, 'data-sonic-position-count', String(options.length));
 			super.render();
 			this.#renderThrow(this.#checkedIndex(options));
 			return;
@@ -235,8 +238,8 @@ export class SonicSwitch extends SonicRadioGroupElement {
 		writeAttribute(group, 'role', undefined);
 		delete group.dataset.sonicPositionCount;
 		if (bare.parentElement !== group) group.append(bare);
-		bare.disabled = this.isDisabled();
-		bare.setAttribute('aria-checked', String(isChecked));
+		writeAttribute(bare, 'disabled', this.isDisabled() ? '' : undefined);
+		writeAttribute(bare, 'aria-checked', String(isChecked));
 		this.forwardNaming(group, false);
 		this.forwardNaming(bare, true);
 		const onSide = this.orientation === 'horizontal' ? 1 : -1;
@@ -268,7 +271,11 @@ export class SonicSwitch extends SonicRadioGroupElement {
 						event.target === this.#bare || this.optionOf(event.target) !== undefined;
 					if (!isOnPosition || this.isDisabled() || !this.#isOnBat(event)) return;
 
-					return { hasMoved: false, last: this.#along(event) };
+					return {
+						hasMoved: false,
+						last: this.#along(event),
+						width: this.#bat.getBoundingClientRect().width,
+					};
 				},
 				lift: (press, event) => {
 					if (!press.hasMoved && !this.isDisabled()) this.#pressBat(event);
@@ -278,7 +285,7 @@ export class SonicSwitch extends SonicRadioGroupElement {
 					if (this.isDisabled()) return;
 
 					const delta = this.#along(event) - press.last;
-					if (Math.abs(delta) < this.#bat.getBoundingClientRect().width / 4) return;
+					if (Math.abs(delta) < press.width / 4) return;
 
 					press.hasMoved = true;
 					press.last = this.#along(event);

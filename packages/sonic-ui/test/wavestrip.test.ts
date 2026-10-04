@@ -134,7 +134,7 @@ test('a mouse over the strip reads out the time under it, or a marker within rea
 
 	wavestrip.formatValue = (seconds) => `${String(seconds)} s`;
 	midPointerAt(control, 'pointermove', { clientX: 75, pointerType: 'touch' });
-	expect(readoutText(control)).toBe('30 s');
+	expect(readoutText(control)).toBe('');
 
 	midPointerAt(control, 'pointermove', { clientX: 75, pointerType: 'mouse' });
 	expect(readoutText(control)).toBe('105 s');
@@ -157,7 +157,7 @@ test.each([
 	wavestrip.formatValue = (seconds) => `${String(seconds)} s`;
 	midPointerAt(control, 'pointermove', { clientX: 75, pointerType: 'mouse', ...init });
 
-	expect(readoutText(control)).toBe('30 s');
+	expect(readoutText(control)).toBe('');
 	expect(control.style.getPropertyValue('--_sonic-wavestrip-readout-at')).toBe('0');
 });
 
@@ -304,14 +304,12 @@ test('Escape dismisses a hovered readout without focus, until the pointer leaves
 	expect(readoutText(control)).toBe('105 s');
 
 	document.body.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'Escape' }));
-	expect(readoutText(control)).toBe('30 s');
-
 	midPointerAt(control, 'pointermove', { clientX: 90, pointerType: 'mouse' });
-	expect(readoutText(control)).toBe('30 s');
+	expect(readoutText(control)).toBe('105 s');
 
 	midPointerAt(control, 'pointerleave', { pointerType: 'mouse' });
-	midPointerAt(control, 'pointermove', { clientX: 75, pointerType: 'mouse' });
-	expect(readoutText(control)).toBe('105 s');
+	midPointerAt(control, 'pointermove', { clientX: 90, pointerType: 'mouse' });
+	expect(readoutText(control)).toBe('120 s');
 });
 
 function scrubKey(target: HTMLElement, type: string, key: string): void {

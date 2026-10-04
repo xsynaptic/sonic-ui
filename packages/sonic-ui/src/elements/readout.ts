@@ -38,7 +38,9 @@ export class Readout {
 		}
 
 		this.#text.hidden = text === undefined;
-		if (text !== undefined) this.#text.textContent = text;
+		if (isOpen && text !== undefined && this.#text.textContent !== text) {
+			this.#text.textContent = text;
+		}
 		this.#toggle(isOpen);
 	}
 

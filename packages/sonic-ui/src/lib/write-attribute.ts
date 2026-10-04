@@ -3,6 +3,7 @@ export function writeAttribute(element: Element, name: string, value: string | u
 		element.removeAttribute(name);
 		return;
 	}
+	if (element.getAttribute(name) === value) return;
 
 	element.setAttribute(name, value);
 }

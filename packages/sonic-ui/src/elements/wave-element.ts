@@ -24,7 +24,7 @@ export abstract class SonicWaveElement<
 			.filter((marker) => Number.isFinite(marker.start))
 			.map((marker) => ({ ...marker }))
 			.toSorted((first, second) => first.start - second.start);
-		this.renderMarkers();
+		if (this.isBound()) this.renderMarkers();
 	}
 
 	protected abstract readonly canvas: HTMLCanvasElement;

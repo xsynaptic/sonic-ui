@@ -57,6 +57,19 @@ function isParent(node: Node): node is Node & ParentNode {
 
 const emptyPath = { fill: '', floor: { from: 0, to: 0 }, stroke: '' };
 
+function stageParts<Stage extends string>(
+	envelope: Element,
+	hook: string,
+	stages: ReadonlyArray<Stage>,
+): Map<Stage, HTMLDivElement> {
+	return new Map(
+		stages.map((stage) => [
+			stage,
+			requireChild(envelope, `.${hook}[data-sonic-stage="${stage}"]`, HTMLDivElement),
+		]),
+	);
+}
+
 const renderEnvelope = template(
 	/* HTML */ `
 		<div class="sonic-envelope" aria-hidden="true">
@@ -174,11 +187,17 @@ export class SonicEnvelope extends SonicElement {
 
 	readonly #envelope = renderEnvelope();
 
+	readonly #curveHandles = stageParts(this.#envelope, 'sonic-envelope-curve', curveStages);
+
 	readonly #fill = requireChild(this.#envelope, '.sonic-envelope-fill', SVGElement);
 
 	readonly #floor = requireChild(this.#envelope, '.sonic-envelope-floor', SVGElement);
 
 	readonly #graph = requireChild(this.#envelope, '.sonic-envelope-graph', SVGElement);
+
+	readonly #handles = stageParts(this.#envelope, 'sonic-envelope-handle', timeStages);
+
+	#isDriving = false;
 
 	readonly #line = requireChild(this.#envelope, '.sonic-envelope-line', SVGElement);
 
@@ -239,7 +258,7 @@ export class SonicEnvelope extends SonicElement {
 
 			const link = linkValue(element);
 			const unwatch = link.watch(() => {
-				this.#draw();
+				if (!this.#isDriving) this.#draw();
 			});
 
 			this.#bindings.set(name, { element, link, unwatch });
@@ -285,18 +304,18 @@ export class SonicEnvelope extends SonicElement {
 		const path = this.#bindings.size === 0 ? emptyPath : adsrPath(shape);
 
 		this.#shape = shape;
-		this.#line.setAttribute('d', path.stroke);
-		this.#fill.setAttribute('d', path.fill);
-		this.#floor.setAttribute('x', String(path.floor.from));
-		this.#floor.setAttribute('width', String(path.floor.to - path.floor.from));
-		for (const stage of timeStages) {
-			this.#drawPoint(`.sonic-envelope-handle[data-sonic-stage="${stage}"]`, {
+		writeAttribute(this.#line, 'd', path.stroke);
+		writeAttribute(this.#fill, 'd', path.fill);
+		writeAttribute(this.#floor, 'x', String(path.floor.from));
+		writeAttribute(this.#floor, 'width', String(path.floor.to - path.floor.from));
+		for (const [stage, part] of this.#handles) {
+			this.#drawPoint(part, {
 				at: shape.handles.find((point) => point.stage === stage),
 				drives: this.#drives(stage),
 			});
 		}
-		for (const stage of curveStages) {
-			this.#drawPoint(`.sonic-envelope-curve[data-sonic-stage="${stage}"]`, {
+		for (const [stage, part] of this.#curveHandles) {
+			this.#drawPoint(part, {
 				at: shape.curveHandles.find((point) => point.stage === stage),
 				drives: this.#curveDrives(stage),
 			});
@@ -304,18 +323,20 @@ export class SonicEnvelope extends SonicElement {
 		this.#renderReadout();
 	}
 
-	#drawPoint(selector: string, point: { at: FieldPoint | undefined; drives: Array<Drive> }): void {
-		const part = requireChild(this.#envelope, selector, HTMLDivElement);
+	#drawPoint(
+		part: HTMLDivElement,
+		point: { at: FieldPoint | undefined; drives: Array<Drive> },
+	): void {
 		const { at, drives } = point;
 
-		part.hidden = !at;
+		writeAttribute(part, 'hidden', at ? undefined : '');
 		if (!at) return;
 
 		const isStill = this.isDisabled() || drives.every(({ binding }) => binding.link.isDisabled());
 
 		part.style.setProperty('--_sonic-envelope-x', String(at.x));
 		part.style.setProperty('--_sonic-envelope-y', String(at.y));
-		part.dataset.sonicAxes = drives.map(({ axis }) => axis).join('');
+		writeAttribute(part, 'data-sonic-axes', drives.map(({ axis }) => axis).join(''));
 		writeAttribute(part, 'data-sonic-disabled', isStill ? '' : undefined);
 	}
 
@@ -370,12 +391,14 @@ export class SonicEnvelope extends SonicElement {
 
 		drag.state = step.state;
 		if (step.state.isEngaged) this.#claim.reveal('drag');
+		this.#isDriving = true;
 		for (const { axis, binding } of drag.drives) {
 			const next = step[axis];
 
 			if (next !== undefined) binding.link.input(next);
 		}
-		this.#renderReadout();
+		this.#isDriving = false;
+		this.#draw();
 	}
 
 	#pressed(

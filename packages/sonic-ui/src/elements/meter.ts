@@ -177,7 +177,8 @@ export class SonicMeter extends SonicElement {
 
 		if (name === 'ballistics') this.#velocity = 0;
 		else if (name === 'value') this.#readValue(now);
-		this.#renderSegments();
+		this.#segments = this.segments;
+		if (name === 'segments') this.#renderSegments();
 		this.#render(now);
 		this.#schedule(now);
 	}
@@ -251,6 +252,8 @@ export class SonicMeter extends SonicElement {
 	}
 
 	#render(now: number): void {
+		if (!this.isBound()) return;
+
 		const meter = this.#meter;
 
 		const origin = this.origin === undefined ? 0 : this.#proportionOf(this.origin);
@@ -279,10 +282,11 @@ export class SonicMeter extends SonicElement {
 	}
 
 	#renderSegments(): void {
-		const meter = this.#meter;
-		const segments = this.segments;
+		if (!this.isBound()) return;
 
-		this.#segments = segments;
+		const meter = this.#meter;
+		const segments = this.#segments;
+
 		this.toggleState('ladder', segments !== undefined);
 		if (!segments) {
 			for (const name of ['count', 'hot-segments', 'clip-segments']) {

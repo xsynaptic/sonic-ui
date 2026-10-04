@@ -2,6 +2,7 @@ import { SonicFormElement } from '#elements/form-element.ts';
 import { copyNode } from '#lib/copy-node.ts';
 import { bindDrag } from '#lib/pointer-drag.ts';
 import { placeChildren } from '#lib/render.ts';
+import { writeAttribute } from '#lib/write-attribute.ts';
 
 // RTL is not mirrored
 const keySteps = new Map([
@@ -12,13 +13,16 @@ const keySteps = new Map([
 ]);
 
 interface Press {
+	boxes: Array<[HTMLButtonElement, DOMRect]>;
 	option: HTMLButtonElement | undefined;
 }
 
-export function isUnder(option: Element, x: number, y: number): boolean {
-	const box = option.getBoundingClientRect();
-
+function isInside(box: DOMRect, x: number, y: number): boolean {
 	return x >= box.left && x < box.right && y >= box.top && y < box.bottom;
+}
+
+export function isUnder(option: Element, x: number, y: number): boolean {
+	return isInside(option.getBoundingClientRect(), x, y);
 }
 
 export function optionValue(option: Element): string | undefined {
@@ -134,14 +138,17 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 	}
 
 	protected render(): void {
+		if (!this.isBound()) return;
+
 		const options = this.options();
 		const checked = options.find((option) => optionValue(option) === this.#value);
 		const focusable = checked ?? options[0];
+		const isDisabled = this.isDisabled();
 
 		for (const option of options) {
-			option.disabled = this.isDisabled();
-			option.setAttribute('aria-checked', String(option === checked));
-			option.tabIndex = option === focusable ? 0 : -1;
+			writeAttribute(option, 'disabled', isDisabled ? '' : undefined);
+			writeAttribute(option, 'aria-checked', String(option === checked));
+			writeAttribute(option, 'tabindex', option === focusable ? '0' : '-1');
 		}
 		this.forwardNaming(this.group, true);
 		// eslint-disable-next-line unicorn/no-null -- `null` submits nothing
@@ -170,9 +177,11 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 					const option = this.optionOf(event.target);
 					if (!option || this.isDisabled() || this.claimPress(option, event)) return;
 
+					const boxes = this.#optionBoxes();
+
 					this.#markPressed(option);
 
-					return { option };
+					return { boxes, option };
 				},
 				lift: (press) => {
 					if (!press.option || this.isDisabled()) return;
@@ -184,9 +193,9 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 					if (group.matches(':focus-within')) option.focus();
 				},
 				move: (press, event) => {
-					press.option = this.options().find((option) =>
-						isUnder(option, event.clientX, event.clientY),
-					);
+					press.option = press.boxes.find(([, box]) =>
+						isInside(box, event.clientX, event.clientY),
+					)?.[0];
 					this.#markPressed(press.option);
 				},
 				release: () => {
@@ -236,6 +245,10 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 		for (const option of this.options()) {
 			option.toggleAttribute('data-sonic-pressed', option === pressed);
 		}
+	}
+
+	#optionBoxes(): Array<[HTMLButtonElement, DOMRect]> {
+		return this.options().map((option) => [option, option.getBoundingClientRect()]);
 	}
 
 	#refocus(focused: HTMLButtonElement, value: string | undefined): void {

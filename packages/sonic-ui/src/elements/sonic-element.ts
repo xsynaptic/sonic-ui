@@ -87,14 +87,14 @@ export abstract class SonicElement extends HTMLElement {
 
 		const connection = new AbortController();
 
+		this.#connection = connection;
 		try {
 			this.connect(connection.signal);
 		} catch (error) {
 			connection.abort();
+			this.#connection = undefined;
 			throw error;
 		}
-
-		this.#connection = connection;
 	}
 
 	connectedMoveCallback(): void {
@@ -181,6 +181,10 @@ export abstract class SonicElement extends HTMLElement {
 	}
 
 	// happy-dom matches `:disabled` on no custom element, and an element not form-associated never matches
+	protected isBound(): boolean {
+		return this.#connection !== undefined;
+	}
+
 	protected isDisabled(): boolean {
 		return this.disabled || this.matches(':disabled');
 	}
@@ -236,21 +240,33 @@ export abstract class SonicElement extends HTMLElement {
 			slots.shown.assign(...slotted.filter((child) => !isCopied(child)), control);
 			slots.kept.assign(...slotted.filter((child) => isCopied(child)));
 		};
+		// Each child is watched, never the control, so a value write wakes nothing
+		const watch = (): void => {
+			observer.disconnect();
+			observer.observe(this, { childList: true });
+			for (const child of this.childNodes) {
+				if (child === control) continue;
+
+				observer.observe(child, {
+					attributes: true,
+					characterData: true,
+					childList: true,
+					subtree: true,
+				});
+			}
+		};
 		const observer = new MutationObserver((records) => {
 			const changes = records.filter((record) => this.#isCopiedChange(record, control, isCopied));
 			if (changes.length === 0) return;
 
-			if (changes.some((record) => record.target === this)) mirror();
-			else mirror(new Set(changes.map((record) => this.#childHolding(record.target))));
+			if (changes.some((record) => record.target === this)) {
+				mirror();
+				watch();
+			} else mirror(new Set(changes.map((record) => this.#childHolding(record.target))));
 		});
 
 		mirror();
-		observer.observe(this, {
-			attributes: true,
-			characterData: true,
-			childList: true,
-			subtree: true,
-		});
+		watch();
 		signal.addEventListener(
 			'abort',
 			() => {
@@ -276,13 +292,14 @@ export abstract class SonicElement extends HTMLElement {
 		return Number.isNaN(value) ? undefined : value;
 	}
 
+	// Never compared; a host attribute set again resets the value a gesture left dirty
 	protected reflect(name: string, value: boolean | null | number | string | undefined): void {
-		if (value === true) {
-			this.setAttribute(name, '');
+		if (typeof value !== 'number' && typeof value !== 'string' && value !== true) {
+			this.removeAttribute(name);
 			return;
 		}
 
-		writeAttribute(this, name, value === false || value === null ? undefined : value?.toString());
+		this.setAttribute(name, value === true ? '' : value.toString());
 	}
 
 	protected toggleState(state: string, isOn: boolean): void {
@@ -360,8 +377,6 @@ export abstract class SonicElement extends HTMLElement {
 		isCopied: (child: Node) => boolean,
 	): boolean {
 		if (record.target === this) {
-			if (record.type === 'attributes') return false;
-
 			return (
 				record.removedNodes.length > 0 || [...record.addedNodes].some((node) => node !== control)
 			);
@@ -369,7 +384,7 @@ export abstract class SonicElement extends HTMLElement {
 
 		const child = this.#childHolding(record.target);
 
-		if (child === undefined || child === control) return false;
+		if (child === undefined) return false;
 
 		return isCopied(child) || (record.type === 'attributes' && record.target === child);
 	}
