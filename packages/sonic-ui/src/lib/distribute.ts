@@ -156,7 +156,7 @@ function byShortfall(
 		return trimFloat(direction * ((exact.get(index) ?? value) - value));
 	};
 
-	return order.toReversed().sort((first, second) => shortfall(second) - shortfall(first));
+	return order.toReversed().toSorted((first, second) => shortfall(second) - shortfall(first));
 }
 
 function stepEach(

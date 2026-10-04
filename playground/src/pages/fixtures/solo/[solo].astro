@@ -13,7 +13,11 @@ export function getStaticPaths() {
 }
 
 const { solo } = Astro.params;
-const { markup, sheets } = solos[solo]!;
+const entry = solos[solo];
+
+if (!entry) throw new Error(`No solo named ${solo}`);
+
+const { markup, sheets } = entry;
 const css = ['material', ...sheets]
 	.map((sheet) => styles[`../../../../../packages/sonic-ui/dist/styles/${sheet}.css`])
 	.join('\n');

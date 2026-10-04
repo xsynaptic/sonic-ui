@@ -32,6 +32,28 @@ export default getConfig([
 			'unicorn/max-nested-calls': ['error', { max: 4 }],
 		},
 	},
+	{
+		rules: {
+			'@typescript-eslint/no-non-null-assertion': 'error',
+			'@typescript-eslint/prefer-nullish-coalescing': 'error',
+			'unicorn/consistent-compound-words': 'error',
+			'unicorn/no-array-sort': 'error',
+			'unicorn/no-invalid-argument-count': 'error',
+			'unicorn/no-top-level-assignment-in-function': 'error',
+		},
+	},
+	{
+		files: ['**/*.test.ts'],
+		rules: {
+			'unicorn/no-top-level-assignment-in-function': 'off',
+		},
+	},
+	{
+		files: ['packages/sonic-ui/src/define.ts'],
+		rules: {
+			'perfectionist/sort-imports': ['error', { sortSideEffects: true, type: 'natural' }],
+		},
+	},
 	// Everything shipped and everything the playground runs is browser code; only config files see Node
 	getBrowserConfig(['packages/sonic-ui/src/**/*', 'playground/src/**/*']),
 	{

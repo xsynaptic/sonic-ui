@@ -1,12 +1,12 @@
+import '#define/button.ts';
 import '#define/dial.ts';
 import '#define/envelope.ts';
-import '#define/button.ts';
-import '#define/switch.ts';
 import '#define/meter.ts';
 import '#define/number.ts';
 import '#define/segmented.ts';
 import '#define/slider.ts';
 import '#define/split.ts';
+import '#define/switch.ts';
 import '#define/waveform.ts';
 import '#define/wavestrip.ts';
 import '#define/xy.ts';

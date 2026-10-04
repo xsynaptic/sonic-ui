@@ -24,6 +24,8 @@
 		"css-token-drift": "error",
 		"css-duplicate-block": "error",
 		"css-broken-reference": "error",
+		"stale-suppressions": "error",
+		"require-suppression-reason": "error",
 	},
 	"health": {
 		// ESLint scores neither cognitive complexity nor a template, so this is the one ceiling on either
