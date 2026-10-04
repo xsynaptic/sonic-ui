@@ -1,16 +1,16 @@
 const noteBySixteenth = new Map([
-	[0, 69],
-	[3, 72],
-	[6, 76],
-	[10, 74],
-	[16, 69],
-	[19, 67],
-	[22, 64],
-	[28, 62],
+	[0, 57],
+	[3, 64],
+	[6, 60],
+	[10, 62],
+	[16, 57],
+	[19, 55],
+	[22, 60],
+	[28, 52],
 ]);
 const sixteenthsPerPhrase = 32;
 const lookahead = 0.12;
-const decay = 0.35;
+const decay = 0.6;
 
 function frequencyOf(note: number): number {
 	return 440 * 2 ** ((note - 69) / 12);
@@ -18,21 +18,25 @@ function frequencyOf(note: number): number {
 
 function pluck(destination: AudioNode, note: number, time: number): void {
 	const { context } = destination;
-	const oscillator = new OscillatorNode(context, {
-		frequency: frequencyOf(note),
-		type: 'sawtooth',
-	});
-	const filter = new BiquadFilterNode(context, { Q: 4, type: 'lowpass' });
+	const frequency = frequencyOf(note);
+	const body = new OscillatorNode(context, { frequency, type: 'triangle' });
+	const edge = new OscillatorNode(context, { detune: 7, frequency, type: 'sawtooth' });
+	const edgeLevel = new GainNode(context, { gain: 0.25 });
+	const filter = new BiquadFilterNode(context, { Q: 1, type: 'lowpass' });
 	const envelope = new GainNode(context, { gain: 0 });
 
-	filter.frequency.setValueAtTime(3200, time);
-	filter.frequency.exponentialRampToValueAtTime(300, time + decay);
+	filter.frequency.setValueAtTime(2400, time);
+	filter.frequency.exponentialRampToValueAtTime(400, time + decay);
 	envelope.gain.setValueAtTime(0, time);
-	envelope.gain.linearRampToValueAtTime(0.2, time + 0.004);
+	envelope.gain.linearRampToValueAtTime(0.3, time + 0.008);
 	envelope.gain.exponentialRampToValueAtTime(0.0001, time + decay);
-	oscillator.connect(filter).connect(envelope).connect(destination);
-	oscillator.start(time);
-	oscillator.stop(time + decay + 0.05);
+	body.connect(filter);
+	edge.connect(edgeLevel).connect(filter);
+	filter.connect(envelope).connect(destination);
+	for (const oscillator of [body, edge]) {
+		oscillator.start(time);
+		oscillator.stop(time + decay + 0.05);
+	}
 }
 
 export function createPlucks(context: AudioContext, destination: AudioNode) {

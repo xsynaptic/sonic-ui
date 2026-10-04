@@ -42,9 +42,6 @@ test('the glass font choice sets the token, and the first option clears it', asy
 
 	await choice.selectOption({ label: 'serif' });
 	expect(await fontOf()).toBe('ui-serif, serif');
-	await expect(page.locator('[data-tuner-output]')).toContainText(
-		'--sonic-glass-font: ui-serif, serif;',
-	);
 
 	await choice.selectOption({ label: 'inherit' });
 	expect(await fontOf()).toBe(inherited);

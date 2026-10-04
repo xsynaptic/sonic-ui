@@ -1,4 +1,5 @@
 ---
+import PanelButton from '#components/replica/panel-button.astro';
 import PanelDial from '#components/replica/panel-dial.astro';
 import PanelSwitch from '#components/replica/panel-switch.astro';
 import EchoHead from '#components/tape-echo/echo-head.astro';
@@ -39,6 +40,13 @@ const cutTicks = {
 			value={45}
 		/>
 		<PanelSwitch id="echo-offset" label="Offset" />
+		<PanelButton
+			data={{ 'data-echo-play': '' }}
+			id="echo-play"
+			isRound={true}
+			label="Play"
+			size="large"
+		/>
 	</div>
 	<EchoHead division="note" head={2} ticks={48} />
 	<PanelDial

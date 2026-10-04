@@ -11,20 +11,24 @@ const buttonClass =
 		<div data-tuner-panel>
 			<InstrumentPanel />
 		</div>
-		<div class="mt-3 flex flex-wrap items-center gap-3">
-			<span class="font-mono text-xs text-text-muted" data-tuner-count></span>
-			<button class={buttonClass} data-tuner-copy type="button">
-				Copy CSS
-			</button>
-			<button class={buttonClass} data-tuner-reset type="button">
-				Reset
-			</button>
-		</div>
-		<pre
-			class="mt-3 max-h-40 overflow-auto bg-surface px-4 py-3 text-[0.8125rem] select-all"
-			data-tuner-output
-			hidden
-		></pre>
+		{import.meta.env.DEV ? (
+			<div data-tuner-tools>
+				<div class="mt-3 flex flex-wrap items-center gap-3">
+					<span class="font-mono text-xs text-text-muted" data-tuner-count />
+					<button class={buttonClass} data-tuner-copy type="button">
+						Copy CSS
+					</button>
+					<button class={buttonClass} data-tuner-reset type="button">
+						Reset
+					</button>
+				</div>
+				<pre
+					class="mt-3 max-h-40 overflow-auto bg-surface px-4 py-3 text-[0.8125rem] select-all"
+					data-tuner-output
+					hidden
+				/>
+			</div>
+		) : undefined}
 	</div>
 	<div class="relative self-stretch">
 		<div class="overflow-y-auto overscroll-contain surface [scrollbar-color:var(--color-line-strong)_transparent] [scrollbar-width:thin] lg:absolute lg:inset-0">

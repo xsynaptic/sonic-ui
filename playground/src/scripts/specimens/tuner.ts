@@ -73,7 +73,17 @@ function collectRows(root: HTMLElement): Array<Row> {
 	return rows;
 }
 
-function render(rows: Array<Row>, count: HTMLElement, output: HTMLElement): void {
+function report(changed: Array<Row>, tools: HTMLElement): void {
+	const count = tools.querySelector('[data-tuner-count]');
+	const output = tools.querySelector<HTMLElement>('[data-tuner-output]');
+	if (!count || !output) return;
+
+	output.textContent = changed.map((row) => `${row.token.token}: ${valueOf(row)};`).join('\n');
+	output.hidden = changed.length === 0;
+	count.textContent = changed.length === 0 ? 'No tokens set' : `${String(changed.length)} set`;
+}
+
+function render(rows: Array<Row>, tools: HTMLElement | null): void {
 	const changed = rows.filter((row) => row.input.value !== row.baseline);
 
 	for (const row of rows) {
@@ -81,9 +91,7 @@ function render(rows: Array<Row>, count: HTMLElement, output: HTMLElement): void
 		if (changed.includes(row)) document.body.style.setProperty(row.token.token, valueOf(row));
 		else document.body.style.removeProperty(row.token.token);
 	}
-	output.textContent = changed.map((row) => `${row.token.token}: ${valueOf(row)};`).join('\n');
-	output.hidden = changed.length === 0;
-	count.textContent = changed.length === 0 ? 'No tokens set' : `${String(changed.length)} set`;
+	if (tools) report(changed, tools);
 }
 
 function rebase(rows: Array<Row>, reader: Reader): void {
@@ -99,13 +107,10 @@ function rebase(rows: Array<Row>, reader: Reader): void {
 }
 
 function bindTuner(root: HTMLElement, reader: Reader): void {
-	const count = root.querySelector<HTMLElement>('[data-tuner-count]');
-	const output = root.querySelector<HTMLElement>('[data-tuner-output]');
-	if (!count || !output) return;
-
+	const tools = root.querySelector<HTMLElement>('[data-tuner-tools]');
 	const rows = collectRows(root);
 	const update = (): void => {
-		render(rows, count, output);
+		render(rows, tools);
 	};
 	const refresh = (): void => {
 		rebase(rows, reader);
@@ -113,12 +118,14 @@ function bindTuner(root: HTMLElement, reader: Reader): void {
 	};
 
 	for (const row of rows) row.input.addEventListener('input', update);
-	root.querySelector('[data-tuner-reset]')?.addEventListener('click', () => {
+	tools?.querySelector('[data-tuner-reset]')?.addEventListener('click', () => {
 		for (const row of rows) row.input.value = row.baseline;
 		update();
 	});
-	root.querySelector('[data-tuner-copy]')?.addEventListener('click', () => {
-		void navigator.clipboard.writeText(output.textContent);
+	tools?.querySelector('[data-tuner-copy]')?.addEventListener('click', () => {
+		void navigator.clipboard.writeText(
+			tools.querySelector('[data-tuner-output]')?.textContent ?? '',
+		);
 	});
 	document.addEventListener('playground-skin', refresh);
 	matchMedia('(forced-colors: active)').addEventListener('change', refresh);

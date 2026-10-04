@@ -25,11 +25,11 @@ import PageHeader from '#components/page-header.astro';
 			open the waveform to watch its peaks arrive.
 		</Fragment>
 	</PageHeader>
-	<div class="flex min-h-80 flex-col overflow-hidden surface">
+	<div class="flex min-h-80 flex-col surface p-3">
 		<div class="flex-1"></div>
 		<section
 			aria-label="Player"
-			class="@container relative border-t border-line bg-ground [--sonic-marker-intro:oklch(72%_0.13_200deg)] [--sonic-dial-size:2rem] [--sonic-button-size:2rem]"
+			class="sonic-panel @container relative [--sonic-marker-intro:oklch(72%_0.13_200deg)] [--sonic-dial-size:2rem] [--sonic-button-size:2rem]"
 			data-web-player
 		>
 			<div class="relative border-b border-line p-2" data-panel hidden>
@@ -52,16 +52,18 @@ import PageHeader from '#components/page-header.astro';
 					</sonic-button>
 				</div>
 			</div>
-			<sonic-slider
-				aria-label="Seek"
-				class="[--sonic-slider-cap-ratio:0] [--sonic-slider-groove-ratio:0.35] [--sonic-slider-length:100%] [--sonic-slider-size:1rem]"
-				data-seek
-				disabled
-				key-step="5"
-				max="1"
-				readout
-				step="0"
-			></sonic-slider>
+			<div class="px-4 pt-3">
+				<sonic-slider
+					aria-label="Seek"
+					class="[--sonic-slider-cap-ratio:0] [--sonic-slider-groove-ratio:0.35] [--sonic-slider-length:100%] [--sonic-slider-size:1rem]"
+					data-seek
+					disabled
+					key-step="5"
+					max="1"
+					readout
+					step="0"
+				></sonic-slider>
+			</div>
 			<div class="flex flex-wrap items-center gap-x-4 gap-y-3 px-4 py-3">
 				<div class="flex items-center gap-1">
 					<sonic-button aria-label="Previous" data-previous soft-disabled>

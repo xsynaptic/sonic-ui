@@ -24,19 +24,19 @@ const sections = [
 	{ id: 'tuner', label: 'Tuner' },
 	{ id: 'dial', label: 'Dial' },
 	{ id: 'slider', label: 'Slider' },
+	{ id: 'number', label: 'Number box' },
 	{ id: 'xy', label: 'XY pad' },
 	{ id: 'envelope', label: 'Envelope' },
-	{ id: 'wavestrip', label: 'Wavestrip' },
-	{ id: 'waveform', label: 'Waveform' },
+	{ id: 'split', label: 'Split' },
 	{ id: 'button', label: 'Button' },
-	{ id: 'led', label: 'LED' },
-	{ id: 'ring', label: 'Ring' },
 	{ id: 'segmented', label: 'Segmented' },
 	{ id: 'switch', label: 'Switch' },
-	{ id: 'number', label: 'Number box' },
-	{ id: 'split', label: 'Split' },
+	{ id: 'led', label: 'LED' },
+	{ id: 'ring', label: 'Ring' },
 	{ id: 'meter', label: 'Meter' },
 	{ id: 'screen', label: 'Screen' },
+	{ id: 'wavestrip', label: 'Wavestrip' },
+	{ id: 'waveform', label: 'Waveform' },
 	{ id: 'panel', label: 'Panel' },
 ];
 ---
@@ -76,26 +76,20 @@ const sections = [
 	<Section id="slider" title="Slider">
 		<SliderSpecimens />
 	</Section>
+	<Section id="number" title="Number box">
+		<NumberSpecimens />
+	</Section>
 	<Section id="xy" title="XY pad">
 		<XySpecimens />
 	</Section>
 	<Section id="envelope" title="Envelope">
 		<EnvelopeSpecimens />
 	</Section>
-	<Section id="wavestrip" title="Wavestrip">
-		<WavestripSpecimens />
-	</Section>
-	<Section id="waveform" title="Waveform">
-		<WaveformSpecimens />
+	<Section id="split" title="Split">
+		<SplitSpecimens />
 	</Section>
 	<Section id="button" title="Button">
 		<ButtonSpecimens />
-	</Section>
-	<Section id="led" title="LED">
-		<LedSpecimens />
-	</Section>
-	<Section id="ring" title="Ring">
-		<RingSpecimens />
 	</Section>
 	<Section id="segmented" title="Segmented">
 		<SegmentedSpecimens />
@@ -103,17 +97,23 @@ const sections = [
 	<Section id="switch" title="Switch">
 		<SwitchSpecimens />
 	</Section>
-	<Section id="number" title="Number box">
-		<NumberSpecimens />
+	<Section id="led" title="LED">
+		<LedSpecimens />
 	</Section>
-	<Section id="split" title="Split">
-		<SplitSpecimens />
+	<Section id="ring" title="Ring">
+		<RingSpecimens />
 	</Section>
 	<Section id="meter" title="Meter">
 		<MeterSpecimens />
 	</Section>
 	<Section id="screen" title="Screen">
 		<ScreenSpecimens />
+	</Section>
+	<Section id="wavestrip" title="Wavestrip">
+		<WavestripSpecimens />
+	</Section>
+	<Section id="waveform" title="Waveform">
+		<WaveformSpecimens />
 	</Section>
 	<Section id="panel" title="Panel">
 		<PanelSpecimens />
