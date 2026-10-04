@@ -160,7 +160,7 @@ The words this library uses for its controls, their parts and their values. Wher
 
 ### Skinning
 
-**Skin**: A stylesheet that restyles every control by setting tokens. The shipped skins are `slate`, `lime`, `ivory`, `flat` and `bare`; `bare` removes the cap and the well so a press control is its legend alone, in the text colour around it. _Avoid_: Theme, preset
+**Skin**: A stylesheet that restyles every control by setting tokens. With no skin a control is bare: no cap and no well, so a press control is its legend alone, in the text colour around it. _Avoid_: Theme, preset
 
 **Token**: A public custom property that a skin may set. _Avoid_: Variable, custom property (that is the mechanism)
 
