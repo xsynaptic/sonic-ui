@@ -6,7 +6,7 @@
 
 Plans in `.claude/tasks/` (gitignored) carry a frontmatter `status`; only `ready` is live work.
 
-Vocabulary: `.claude/context.md` defines each control, part and value term and the words it replaces; read it before naming anything.
+Vocabulary: `.claude/glossary.md` defines each control, part and value term and the words it replaces; read it before naming anything.
 
 ## Public repo
 
@@ -29,6 +29,7 @@ Tokens, hook classes, attributes, events and `:state()` names are the API. Renam
 - A touch outside the part that owns a gesture still scrolls the page.
 - Forced colours: drawn parts opt out and take system colours; the focusable element stays forced so its outline paints.
 - A private value that script or a canvas reads is registered with `@property`; a raw token does not resolve there.
+- A control uses only the children it documents, and puts its control back when removed.
 
 ## Build gotchas
 
