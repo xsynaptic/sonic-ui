@@ -89,7 +89,7 @@
 		"check-types": "tsc --noEmit"
 	},
 	"devDependencies": {
-		"publint": "^0.3.24",
+		"publint": "^0.3.25",
 		"tsdown": "^0.23.0",
 		"typescript": "^6.0.3"
 	}
