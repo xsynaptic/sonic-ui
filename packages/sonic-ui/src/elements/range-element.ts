@@ -4,7 +4,8 @@ import type { TimeSpans } from '#lib/time-spans.ts';
 
 import { SonicFormElement } from '#elements/form-element.ts';
 import { RangeEntry } from '#elements/range-entry.ts';
-import { ReadoutClaim } from '#elements/readout-claim.ts';
+import { ReadoutClaim, revealMs } from '#elements/readout-claim.ts';
+import { Readout } from '#elements/readout.ts';
 import { copyNode } from '#lib/copy-node.ts';
 import { dragThresholdPx, startDrag, stepDrag } from '#lib/drag-step.ts';
 import { focusByPointer } from '#lib/focus-by-pointer.ts';
@@ -41,12 +42,7 @@ interface KeyScrub {
 
 const detentZonePx = 8;
 const fallbackTravelPx = 160;
-const revealMs = 250;
 
-// happy-dom has no popover API
-const canPopover = 'togglePopover' in HTMLElement.prototype;
-
-// A shared anchor name resolves to the last one on the page
 let instanceCount = 0;
 
 const placeAttributes = new Set(['max', 'midpoint', 'min', 'notched', 'taper', 'values']);
@@ -341,7 +337,7 @@ export abstract class SonicRangeElement extends SonicFormElement {
 
 	#parseValue: ((text: string) => number) | undefined;
 
-	#readout: undefined | { bubble: HTMLElement; text: HTMLElement };
+	#readout: undefined | { anchor: HTMLElement; bubble: Readout };
 
 	#scaleMarks: HTMLElement | undefined;
 
@@ -665,13 +661,7 @@ export abstract class SonicRangeElement extends SonicFormElement {
 
 		// Chrome's issues panel flags a form field with no id or name; a `name` would submit it
 		input.id = `sonic-entry-${this.#instance}`;
-		if (bubble) {
-			const anchor = `--sonic-readout-${this.#instance}`;
-
-			this.#readout = { bubble, text: requireChild(bubble, 'span', HTMLElement) };
-			control.style.setProperty('anchor-name', anchor);
-			bubble.style.setProperty('position-anchor', anchor);
-		}
+		if (bubble) this.#readout = { anchor: control, bubble: new Readout(bubble) };
 
 		const entry = new RangeEntry(input, {
 			commit: (text) => {
@@ -896,9 +886,11 @@ export abstract class SonicRangeElement extends SonicFormElement {
 
 		const { isOpen, value } = this.#claim.shown(this.#value, this.readout);
 
-		readout.text.hidden = value === undefined;
-		if (value !== undefined) readout.text.textContent = this.#textFor(value);
-		this.#showReadout(readout.bubble, isOpen);
+		readout.bubble.show({
+			anchor: readout.anchor,
+			isOpen,
+			text: value === undefined ? undefined : this.#textFor(value),
+		});
 	}
 
 	#renderScale(): void {
@@ -933,10 +925,6 @@ export abstract class SonicRangeElement extends SonicFormElement {
 			this.#keyScrub = { fromValue: this.#value, key };
 		}
 		this.input(next);
-	}
-
-	#showReadout(bubble: HTMLElement, isShown: boolean): void {
-		if (canPopover && this.isConnected) bubble.togglePopover(isShown);
 	}
 
 	#springBack(): void {

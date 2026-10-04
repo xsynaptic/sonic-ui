@@ -102,3 +102,26 @@ test('a dismissed hover stays away until the pointer leaves and comes back', () 
 	claim.hover(14);
 	expect(claim.shown(30, true)).toEqual({ isOpen: true, value: 14 });
 });
+
+test('a held press reveals after 250ms as a drag, and a release before then reveals nothing', () => {
+	const onLapse = vi.fn();
+	const claim = new ReadoutClaim(onLapse);
+
+	claim.press(true);
+	vi.advanceTimersByTime(249);
+	expect(claim.isRevealed).toBe(false);
+
+	vi.advanceTimersByTime(1);
+	expect(claim.isRevealed).toBe(true);
+	expect(onLapse).toHaveBeenCalledOnce();
+
+	claim.press(false);
+	expect(claim.isRevealed).toBe(false);
+	expect(onLapse).toHaveBeenCalledTimes(2);
+
+	claim.press(true);
+	claim.press(false);
+	vi.runAllTimers();
+	expect(claim.isRevealed).toBe(false);
+	expect(onLapse).toHaveBeenCalledTimes(3);
+});

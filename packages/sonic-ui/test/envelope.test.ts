@@ -1,4 +1,4 @@
-import { expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vitest';
 
 import '#define/dial.ts';
 import '#define/envelope.ts';
@@ -7,6 +7,10 @@ import { SonicEnvelope } from '#elements/envelope.ts';
 import { requireChild } from '#lib/render.ts';
 
 import { pointerAt } from './helpers.ts';
+
+afterEach(() => {
+	vi.useRealTimers();
+});
 
 type Stage = 'attack' | 'decay' | 'release' | 'sustain';
 
@@ -181,4 +185,47 @@ test("the attack's dot bends its curve dial and no time dial, upward for a quick
 	expect(rig.dials.attack.value).toBe(1.5);
 	expect(placeOf(dot, 'y')).toBeGreaterThan(before);
 	expect(rig.events).toEqual(['input bend', 'change bend']);
+});
+
+test("the readout carries the held part's dials, x then y, in each dial's own format", () => {
+	const { dials, envelope, handle } = mount(
+		`<div id="knobs">${dialMarkup}<sonic-dial id="bend" min="-8" max="8" step="0.25" value="2"></sonic-dial></div>
+		<sonic-envelope ${bound} decay-curve="bend" readout></sonic-envelope>`,
+	);
+	const text = requireChild(envelope, '.sonic-envelope-readout > span', HTMLSpanElement);
+	const dot = requireChild(envelope, '.sonic-envelope-dot[data-sonic-stage="decay"]', HTMLElement);
+
+	vi.useFakeTimers();
+	dials.decay.formatValue = (value) => `${String(value)} ms`;
+	dials.sustain.formatValue = (value) => `${String(value)} dB`;
+
+	pointerAt(handle('decay'), 'pointerdown', { clientX: 100, clientY: 100 });
+	pointerAt(handle('decay'), 'pointermove', { clientX: 125, clientY: 80 });
+	expect(text.textContent).toBe('662.5 ms, -18 dB');
+
+	pointerAt(handle('decay'), 'pointerup', { clientX: 125, clientY: 80 });
+	pointerAt(handle('attack'), 'pointerdown', { clientX: 100, clientY: 100 });
+	vi.advanceTimersByTime(250);
+	expect(text.textContent).toBe('1.5');
+
+	pointerAt(handle('attack'), 'pointerup', { clientX: 100, clientY: 100 });
+	pointerAt(dot, 'pointerdown', { clientX: 100, clientY: 100 });
+	pointerAt(dot, 'pointermove', { clientX: 100, clientY: 90 });
+	expect(text.textContent).toBe('3.5');
+});
+
+test('the readout is anchored to the held part alone', () => {
+	const { envelope, handle } = mount(
+		`<div id="knobs">${dialMarkup}</div><sonic-envelope ${bound} readout></sonic-envelope>`,
+	);
+	const bubble = requireChild(envelope, '.sonic-envelope-readout', HTMLElement);
+	const anchors = (): Array<string> =>
+		['attack', 'decay'].map((stage) => handle(stage).style.getPropertyValue('anchor-name'));
+
+	drag(handle('decay'), { x: 25, y: -20 });
+	expect(anchors()).toEqual(['', bubble.style.getPropertyValue('position-anchor')]);
+
+	drag(handle('attack'), { x: 25, y: 0 });
+	expect(anchors()).toEqual([bubble.style.getPropertyValue('position-anchor'), '']);
+	expect(bubble.style.getPropertyValue('position-anchor')).toMatch(/^--sonic-readout-\d+$/);
 });

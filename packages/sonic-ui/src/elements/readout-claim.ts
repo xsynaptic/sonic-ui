@@ -1,9 +1,13 @@
 const keyRevealMs = 1000;
 
+export const revealMs = 250;
+
 export class ReadoutClaim {
 	get isRevealed(): boolean {
 		return this.#isDragging || this.#keyTimer !== undefined;
 	}
+
+	#holdTimer: ReturnType<typeof setTimeout> | undefined;
 
 	#hover: number | undefined;
 
@@ -25,6 +29,7 @@ export class ReadoutClaim {
 		if (by === 'drag') {
 			const wasDragging = this.#isDragging;
 
+			clearTimeout(this.#holdTimer);
 			this.#isDragging = false;
 
 			return wasDragging;
@@ -59,6 +64,19 @@ export class ReadoutClaim {
 		if (this.#isDismissed || this.#isEditing || this.isRevealed) return;
 
 		this.#hover = value;
+	}
+
+	press(isDown: boolean): void {
+		this.conceal('drag');
+		if (!isDown) {
+			this.#onLapse();
+			return;
+		}
+
+		this.#holdTimer = setTimeout(() => {
+			this.reveal('drag');
+			this.#onLapse();
+		}, revealMs);
 	}
 
 	reveal(by: 'drag' | 'keys'): void {

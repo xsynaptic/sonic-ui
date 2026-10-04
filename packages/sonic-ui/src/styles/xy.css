@@ -122,15 +122,15 @@
 		--_sonic-xy-star-glow: transparent;
 
 		position: absolute;
-		inset: auto auto var(--_sonic-xy-inset) var(--_sonic-xy-inset);
+		inset: auto auto
+			calc(var(--_sonic-xy-inset) + var(--_sonic-xy-y, 0) * var(--_sonic-xy-travel-y))
+			calc(var(--_sonic-xy-inset) + var(--_sonic-xy-x, 0) * var(--_sonic-xy-travel-x));
 		inline-size: var(--_sonic-xy-puck);
 		block-size: var(--_sonic-xy-puck);
 		cursor: var(--_sonic-xy-cursor);
 		border-radius: 50%;
 		box-shadow: var(--_sonic-focus-shadow);
 		filter: drop-shadow(0 0 calc(0.1 * var(--_sonic-xy-puck)) var(--_sonic-xy-star-glow));
-		translate: calc(var(--_sonic-xy-x, 0) * var(--_sonic-xy-travel-x))
-			calc(var(--_sonic-xy-y, 0) * var(--_sonic-xy-travel-y) * -1);
 		transition:
 			box-shadow 120ms ease-out,
 			filter 120ms ease-out;

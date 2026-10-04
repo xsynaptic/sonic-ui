@@ -3,6 +3,8 @@ import type { PointerDrag } from '#lib/pointer-drag.ts';
 import type { RangeScale, RangeSpec } from '#lib/range-scale.ts';
 
 import { SonicFormElement } from '#elements/form-element.ts';
+import { ReadoutClaim } from '#elements/readout-claim.ts';
+import { Readout } from '#elements/readout.ts';
 import { dragThresholdPx } from '#lib/drag-step.ts';
 import { focusByPointer } from '#lib/focus-by-pointer.ts';
 import { clampUnit } from '#lib/math.ts';
@@ -63,6 +65,7 @@ const renderXy = template(
 					aria-hidden="true"
 				></div>
 			</div>
+			<div class="sonic-xy-readout" aria-hidden="true" popover="manual"><span></span></div>
 		</div>
 	`,
 	HTMLDivElement,
@@ -72,6 +75,7 @@ export class SonicXy extends SonicFormElement {
 	static override readonly observedAttributes = [
 		...SonicFormElement.observedAttributes,
 		'name',
+		'readout',
 		'x',
 		'x-label',
 		'x-max',
@@ -97,6 +101,14 @@ export class SonicXy extends SonicFormElement {
 	set formatValue(format: ((value: number, axis: PlaneAxis) => string) | undefined) {
 		this.#formatValue = format;
 		this.render();
+	}
+
+	get readout(): boolean {
+		return this.hasAttribute('readout');
+	}
+
+	set readout(isEnabled: boolean) {
+		this.reflect('readout', isEnabled);
 	}
 
 	get x(): number {
@@ -243,6 +255,10 @@ export class SonicXy extends SonicFormElement {
 		this.reflect('y-taper', curve);
 	}
 
+	readonly #claim = new ReadoutClaim(() => {
+		this.#renderReadout();
+	});
+
 	#currentAxis: PlaneAxis = 'x';
 
 	readonly #xy = renderXy();
@@ -259,6 +275,8 @@ export class SonicXy extends SonicFormElement {
 	#pointerDrag: PointerDrag<XyDrag> | undefined;
 
 	readonly #puck = requireChild(this.#xy, '.sonic-xy-puck', HTMLDivElement);
+
+	readonly #readout = new Readout(requireChild(this.#xy, '.sonic-xy-readout', HTMLDivElement));
 
 	readonly #values: Record<PlaneAxis, AxisValue> = {
 		x: { isDirty: false, value: 0 },
@@ -278,6 +296,7 @@ export class SonicXy extends SonicFormElement {
 
 	override connectedCallback(): void {
 		this.upgradeProperties(
+			'readout',
 			'xDefault',
 			'xLabel',
 			'xMax',
@@ -334,6 +353,7 @@ export class SonicXy extends SonicFormElement {
 		}
 		this.#renderAria();
 		this.#renderForm();
+		this.#renderReadout();
 	}
 
 	protected restoreState(state: string): void {
@@ -357,18 +377,31 @@ export class SonicXy extends SonicFormElement {
 				if (this.isDisabled() || event.defaultPrevented) return;
 
 				const move = keyMoves.get(event.key);
-
-				if (move) {
-					event.preventDefault();
-					this.#keyTo(...move);
-					return;
-				}
-				if (!resetKeys.has(event.key) || !this.#hasDefault()) return;
+				if (!move && !(resetKeys.has(event.key) && this.#hasDefault())) return;
 
 				event.preventDefault();
-				this.#reset();
+				if (move) this.#keyTo(...move);
+				else this.#reset();
+				this.#claim.reveal('keys');
+				this.#renderReadout();
 			},
 			{ signal },
+		);
+		xy.addEventListener(
+			'focusout',
+			(event) => {
+				// A key on the other axis moves focus between the two parts
+				if (event.relatedTarget instanceof Node && xy.contains(event.relatedTarget)) return;
+				if (this.#claim.conceal('keys')) this.#renderReadout();
+			},
+			{ signal },
+		);
+		signal.addEventListener(
+			'abort',
+			() => {
+				this.#claim.conceal('keys');
+			},
+			{ once: true },
 		);
 	}
 
@@ -401,9 +434,11 @@ export class SonicXy extends SonicFormElement {
 					const step = stepPlaneDrag(this.#scales(), drag.state, pointerMove(event));
 
 					drag.state = step.state;
-					this.#input(step);
+					if (step.state.isEngaged) this.#claim.reveal('drag');
+					if (!this.#input(step)) this.#renderReadout();
 				},
 				release: (drag) => {
+					this.#claim.press(false);
 					if (this.x === drag.from.x && this.y === drag.from.y) return;
 
 					this.dispatchEvent(new Event('change', { bubbles: true }));
@@ -437,6 +472,7 @@ export class SonicXy extends SonicFormElement {
 		const isOnPuck = event.target instanceof Node && this.#puck.contains(event.target);
 
 		if (!isOnPuck) this.#input({ x: scales.x.valueAt(pressed.x), y: scales.y.valueAt(pressed.y) });
+		this.#claim.press(true);
 
 		const start = (axis: PlaneAxis) => ({
 			from: this.#values[axis].value,
@@ -538,6 +574,14 @@ export class SonicXy extends SonicFormElement {
 		entries.set(`${name}.x`, String(x));
 		entries.set(`${name}.y`, String(y));
 		this.writeFormValue(entries, state);
+	}
+
+	#renderReadout(): void {
+		this.#readout.show({
+			anchor: this.#puck,
+			isOpen: this.#claim.isRevealed && this.readout,
+			text: this.#valueText('x'),
+		});
 	}
 
 	#reset(): void {

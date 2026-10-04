@@ -268,3 +268,17 @@ test('a second pointer leaves the drag alone, and the drag still ends with chang
 	expect([xy.x, xy.y]).toEqual([10, 160]);
 	expect(events).toEqual(['input', 'input', 'change']);
 });
+
+test('the readout names both axes, x first, each through its own label and format', () => {
+	const pad = mountXy(`${offset} readout x-label="Cutoff"`);
+	const text = requireChild(pad.parent, '.sonic-xy-readout > span', HTMLSpanElement);
+
+	pad.xy.formatValue = (value, axis) =>
+		axis === 'x' ? `${String(value)} Hz` : `${String(value)}%`;
+	pressKey(partOf(pad, 'x'), 'ArrowUp');
+	expect(text.textContent).toBe('Cutoff 0 Hz, Y 152%');
+
+	pointerAt(pad.puck, 'pointerdown', { clientX: 60, clientY: 80 });
+	pointerAt(pad.puck, 'pointermove', { clientX: 80, clientY: 80 });
+	expect(text.textContent).toBe('Cutoff 10 Hz, Y 152%');
+});

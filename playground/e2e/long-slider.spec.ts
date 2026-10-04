@@ -2,7 +2,6 @@ import type { Page } from '@playwright/test';
 
 import { expect, test } from '@playwright/test';
 
-// The readout's rise on opening would shift its box mid-measure
 test.use({ reducedMotion: 'reduce' });
 
 async function readoutOffset(page: Page, id: string): Promise<{ above: number; across: number }> {

@@ -1,6 +1,5 @@
 import { expect, test } from '@playwright/test';
 
-// The readout's rise on opening would shift its box mid-measure
 test.use({ reducedMotion: 'reduce' });
 
 test('the readout opens above a dial in a filtered bar with room below it', async ({ page }) => {

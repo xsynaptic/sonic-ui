@@ -4,6 +4,8 @@ import type { PlaneAxis, PlaneDragState, PlanePoint, PlaneScales } from '#lib/pl
 import type { PointerDrag } from '#lib/pointer-drag.ts';
 
 import { linkRange, SonicRangeElement } from '#elements/range-element.ts';
+import { ReadoutClaim } from '#elements/readout-claim.ts';
+import { Readout } from '#elements/readout.ts';
 import { SonicElement } from '#elements/sonic-element.ts';
 import { adsrPath, adsrShape, adsrStages, timeStages } from '#lib/adsr-shape.ts';
 import { dragThresholdPx } from '#lib/drag-step.ts';
@@ -35,6 +37,7 @@ interface Drive {
 interface HandleDrag {
 	drives: Array<Drive & { from: number }>;
 	isFlipped: boolean;
+	part: HTMLElement;
 	state: PlaneDragState;
 }
 
@@ -67,13 +70,18 @@ const renderEnvelope = template(
 			<div class="sonic-envelope-dot" data-sonic-stage="attack" hidden></div>
 			<div class="sonic-envelope-dot" data-sonic-stage="decay" hidden></div>
 			<div class="sonic-envelope-dot" data-sonic-stage="release" hidden></div>
+			<div class="sonic-envelope-readout" popover="manual"><span></span></div>
 		</div>
 	`,
 	HTMLDivElement,
 );
 
 export class SonicEnvelope extends SonicElement {
-	static override readonly observedAttributes = [...SonicElement.observedAttributes, ...bindable];
+	static override readonly observedAttributes = [
+		...SonicElement.observedAttributes,
+		...bindable,
+		'readout',
+	];
 
 	get attack(): string {
 		return this.getAttribute('attack') ?? '';
@@ -123,6 +131,14 @@ export class SonicEnvelope extends SonicElement {
 		this.reflect('hold', id);
 	}
 
+	get readout(): boolean {
+		return this.hasAttribute('readout');
+	}
+
+	set readout(isOn: boolean) {
+		this.reflect('readout', isOn);
+	}
+
 	get release(): string {
 		return this.getAttribute('release') ?? '';
 	}
@@ -149,6 +165,10 @@ export class SonicEnvelope extends SonicElement {
 
 	readonly #bindings = new Map<string, Binding>();
 
+	readonly #claim = new ReadoutClaim(() => {
+		this.#renderReadout();
+	});
+
 	readonly #envelope = renderEnvelope();
 
 	readonly #fill = requireChild(this.#envelope, '.sonic-envelope-fill', SVGElement);
@@ -158,6 +178,10 @@ export class SonicEnvelope extends SonicElement {
 	readonly #line = requireChild(this.#envelope, '.sonic-envelope-line', SVGElement);
 
 	#pointerDrag: PointerDrag<HandleDrag> | undefined;
+
+	readonly #readout = new Readout(
+		requireChild(this.#envelope, '.sonic-envelope-readout', HTMLDivElement),
+	);
 
 	#shape: AdsrShape = adsrShape({});
 
@@ -175,10 +199,11 @@ export class SonicEnvelope extends SonicElement {
 			return;
 		}
 		if (bindableNames.has(name)) this.#bind();
+		else this.#renderReadout();
 	}
 
 	override connectedCallback(): void {
-		this.upgradeProperties(...adsrStages, 'attackCurve', 'decayCurve', 'releaseCurve');
+		this.upgradeProperties(...adsrStages, 'attackCurve', 'decayCurve', 'readout', 'releaseCurve');
 		super.connectedCallback();
 	}
 
@@ -229,6 +254,7 @@ export class SonicEnvelope extends SonicElement {
 					this.#moveDrag(drag, event);
 				},
 				release: (drag) => {
+					this.#claim.press(false);
 					for (const { binding, from } of drag.drives) {
 						if (binding.link.value() === from) continue;
 
@@ -268,6 +294,7 @@ export class SonicEnvelope extends SonicElement {
 				drives: this.#dotDrives(stage),
 			});
 		}
+		this.#renderReadout();
 	}
 
 	#drawPoint(selector: string, point: { at: PlanePoint | undefined; drives: Array<Drive> }): void {
@@ -299,7 +326,9 @@ export class SonicEnvelope extends SonicElement {
 		const pressed = this.#pressed(event);
 		if (!pressed || pressed.drives.length === 0) return undefined;
 
-		const { drives, isFlipped } = pressed;
+		const { drives, isFlipped, part } = pressed;
+
+		this.#claim.press(true);
 		const box = this.#graph.getBoundingClientRect();
 		const travel = { x: Math.max(1, box.width * this.#shape.share), y: Math.max(1, box.height) };
 		const start = (axis: PlaneAxis) => {
@@ -315,6 +344,7 @@ export class SonicEnvelope extends SonicElement {
 		return {
 			drives: drives.map((drive) => ({ ...drive, from: drive.binding.link.value() })),
 			isFlipped,
+			part,
 			state: startPlaneDrag({
 				position: flip(pointerPosition(event), isFlipped),
 				thresholdPx: dragThresholdPx(event.pointerType),
@@ -332,16 +362,18 @@ export class SonicEnvelope extends SonicElement {
 		const step = stepPlaneDrag(scales, drag.state, flip(pointerMove(event), drag.isFlipped));
 
 		drag.state = step.state;
+		if (step.state.isEngaged) this.#claim.reveal('drag');
 		for (const { axis, binding } of drag.drives) {
 			const next = step[axis];
 
 			if (next !== undefined) binding.link.input(next);
 		}
+		this.#renderReadout();
 	}
 
 	#pressed(
 		event: PointerEvent,
-	): (Pick<HandleDrag, 'isFlipped'> & { drives: Array<Drive> }) | undefined {
+	): (Pick<HandleDrag, 'isFlipped' | 'part'> & { drives: Array<Drive> }) | undefined {
 		const part =
 			event.target instanceof Element
 				? event.target.closest<HTMLElement>('.sonic-envelope-handle, .sonic-envelope-dot')
@@ -355,6 +387,7 @@ export class SonicEnvelope extends SonicElement {
 		return {
 			drives: drives.filter(({ binding }) => !binding.link.isDisabled()),
 			isFlipped: isDot && stage === 'attack',
+			part,
 		};
 	}
 
@@ -381,6 +414,21 @@ export class SonicEnvelope extends SonicElement {
 		arrives(() => {
 			this.#waiting.delete(key);
 			if (this.#signal) this.#bind();
+		});
+	}
+
+	#renderReadout(): void {
+		const drag = this.#pointerDrag?.current();
+
+		if (!drag) {
+			this.#readout.close();
+			return;
+		}
+
+		this.#readout.show({
+			anchor: drag.part,
+			isOpen: this.#claim.isRevealed && this.readout,
+			text: drag.drives.map(({ binding }) => binding.element.valueText).join(', '),
 		});
 	}
 

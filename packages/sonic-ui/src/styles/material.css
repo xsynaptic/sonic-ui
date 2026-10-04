@@ -21,6 +21,7 @@
 		.sonic-dial,
 		.sonic-dial-readout,
 		.sonic-envelope,
+		.sonic-envelope-readout,
 		.sonic-key,
 		.sonic-led,
 		.sonic-lever,
@@ -36,7 +37,8 @@
 		.sonic-waveform-readout,
 		.sonic-wavestrip,
 		.sonic-wavestrip-readout,
-		.sonic-xy
+		.sonic-xy,
+		.sonic-xy-readout
 	) {
 		--_sonic-unlit: var(--sonic-unlit, oklch(27.4% 0.005 286deg));
 		--_sonic-light-tilt: var(--sonic-light-tilt, 17deg);
@@ -148,8 +150,11 @@
 		--_sonic-detent-zone: var(--sonic-detent-zone, 8px);
 	}
 
-	:is(.sonic-dial, .sonic-slider, .sonic-waveform, .sonic-wavestrip) {
+	:is(.sonic-dial, .sonic-envelope, .sonic-slider, .sonic-waveform, .sonic-wavestrip, .sonic-xy) {
 		--_sonic-readout-size: var(--sonic-readout-size, 1.5rem);
+	}
+
+	:is(.sonic-dial, .sonic-slider, .sonic-waveform, .sonic-wavestrip) {
 		--_sonic-lit-off: var(
 			--sonic-dimmed,
 			color-mix(in oklab, var(--_sonic-lit) 50%, var(--_sonic-unlit))
@@ -159,6 +164,7 @@
 	:is(
 		.sonic-dial-readout,
 		.sonic-envelope,
+		.sonic-envelope-readout,
 		.sonic-number,
 		.sonic-screen,
 		.sonic-slider-readout,
@@ -166,7 +172,8 @@
 		.sonic-waveform-readout,
 		.sonic-wavestrip,
 		.sonic-wavestrip-readout,
-		.sonic-xy
+		.sonic-xy,
+		.sonic-xy-readout
 	) {
 		--_sonic-glass: var(--sonic-glass, color-mix(in oklab, var(--_sonic-unlit) 45%, #000));
 		--_sonic-glass-fill: radial-gradient(
@@ -399,9 +406,11 @@
 
 	:is(
 		.sonic-dial-readout,
+		.sonic-envelope-readout,
 		.sonic-slider-readout,
 		.sonic-waveform-readout,
-		.sonic-wavestrip-readout
+		.sonic-wavestrip-readout,
+		.sonic-xy-readout
 	) {
 		--_sonic-unit: calc(var(--_sonic-readout-size) / 32);
 
