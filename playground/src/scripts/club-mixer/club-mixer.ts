@@ -1,10 +1,10 @@
 import {
 	crossfadeGains,
+	SonicButton,
 	SonicDial,
-	SonicKey,
-	SonicLever,
 	SonicMeter,
 	SonicSlider,
+	SonicSwitch,
 } from '@xsynaptic/sonic-ui';
 
 import type { ControlsOf } from '#scripts/find.ts';
@@ -15,11 +15,11 @@ import { bindRun, frameLoop } from '#scripts/frame-loop.ts';
 import { beatMsOf, createTapTempo } from '#scripts/tap-tempo.ts';
 
 const filterSpec = {
-	double: SonicKey,
+	double: SonicButton,
 	frequency: SonicDial,
 	lfoDepth: SonicDial,
-	lfoOn: SonicKey,
-	tap: SonicKey,
+	lfoOn: SonicButton,
+	tap: SonicButton,
 };
 
 interface FilterClock extends ControlsOf<typeof filterSpec> {
@@ -28,7 +28,7 @@ interface FilterClock extends ControlsOf<typeof filterSpec> {
 }
 
 interface Channel {
-	assign: SonicLever;
+	assign: SonicSwitch;
 	fader: SonicSlider;
 	level: SonicDial;
 	meter: SonicMeter;
@@ -62,13 +62,13 @@ function tickClock(clock: FilterClock, time: number): void {
 
 	clock.led.toggleAttribute('data-sonic-lit', phase < 0.5);
 	if (!clock.lfoOn.pressed) {
-		frequency.modulated = undefined;
+		frequency.modulationValue = undefined;
 		return;
 	}
 
 	const swing = 2 ** ((clock.lfoDepth.value / 100) * lfoOctaves * Math.sin(phase * 2 * Math.PI));
 
-	frequency.modulated = frequency.value * swing;
+	frequency.modulationValue = frequency.value * swing;
 }
 
 function tickSignal(desk: Desk, time: number): [number, number] {
@@ -104,7 +104,7 @@ function bindMixer(mixer: Element): void {
 			crossfadeCurve: SonicDial,
 			crossfader: SonicSlider,
 			masterMix: SonicDial,
-			start: SonicKey,
+			start: SonicButton,
 			tempo: SonicDial,
 		},
 		dataHook,
@@ -112,7 +112,7 @@ function bindMixer(mixer: Element): void {
 	const masterMeters = [...mixer.querySelectorAll<SonicMeter>(':scope [data-master-meter]')];
 	const channels = [...mixer.querySelectorAll<HTMLElement>(':scope [data-channel]')].map(
 		(strip): Channel => ({
-			assign: find(strip, ':scope [data-crossfade-assign]', SonicLever),
+			assign: find(strip, ':scope [data-crossfade-assign]', SonicSwitch),
 			fader: find(strip, ':scope [data-channel-fader]', SonicSlider),
 			level: find(strip, ':scope [data-channel-level]', SonicDial),
 			meter: find(strip, ':scope [data-channel-meter]', SonicMeter),
@@ -121,7 +121,7 @@ function bindMixer(mixer: Element): void {
 	const mics = [...mixer.querySelectorAll<HTMLElement>(':scope [data-mic]')].map((strip) => ({
 		fader: find(strip, ':scope [data-channel-fader]', SonicSlider),
 		led: find(strip, ':scope [data-mic-led]', HTMLElement),
-		switch: find(strip, ':scope [data-mic-switch]', SonicLever),
+		switch: find(strip, ':scope [data-mic-switch]', SonicSwitch),
 	}));
 	const desk: Desk = { channels, crossfadeCurve, crossfader, tempo };
 	const clocks = [...mixer.querySelectorAll<HTMLElement>(':scope [data-filter]')].map((section) =>
@@ -150,14 +150,14 @@ function bindMixer(mixer: Element): void {
 			for (const led of [...mics.map((mic) => mic.led), ...clocks.map((clock) => clock.led)]) {
 				delete led.dataset.sonicLit;
 			}
-			for (const clock of clocks) clock.frequency.modulated = undefined;
+			for (const clock of clocks) clock.frequency.modulationValue = undefined;
 		},
 	});
 }
 
 function bindCueActive(mixer: Element): void {
 	const led = find(mixer, ':scope [data-cue-active]', Element);
-	const cues = [...mixer.querySelectorAll<SonicKey>(':scope [data-cue]')];
+	const cues = [...mixer.querySelectorAll<SonicButton>(':scope [data-cue]')];
 
 	mixer.addEventListener('change', () => {
 		led.toggleAttribute(

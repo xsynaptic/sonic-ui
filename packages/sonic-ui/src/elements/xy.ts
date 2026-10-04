@@ -1,18 +1,18 @@
-import type { PlaneAxis, PlaneDragState, PlanePoint } from '#lib/plane.ts';
+import type { FieldAxis, FieldDragState, FieldPoint } from '#lib/field.ts';
 import type { PointerDrag } from '#lib/pointer-drag.ts';
-import type { RangeScale, RangeSpec } from '#lib/range-scale.ts';
+import type { ValueMapping, ValueSpec } from '#lib/value-mapping.ts';
 
 import { SonicFormElement } from '#elements/form-element.ts';
 import { ReadoutClaim } from '#elements/readout-claim.ts';
 import { Readout } from '#elements/readout.ts';
 import { dragThresholdPx } from '#lib/drag-step.ts';
+import { pointerMove, pointerPosition, startFieldDrag, stepFieldDrag } from '#lib/field.ts';
 import { focusByPointer } from '#lib/focus-by-pointer.ts';
-import { clampUnit } from '#lib/math.ts';
+import { clampProportion } from '#lib/math.ts';
 import { isMenuPress, isResetPress } from '#lib/modifier-press.ts';
-import { pointerMove, pointerPosition, startPlaneDrag, stepPlaneDrag } from '#lib/plane.ts';
 import { bindDrag } from '#lib/pointer-drag.ts';
-import { rangeScale, resetKeys } from '#lib/range-scale.ts';
 import { requireChild, template } from '#lib/render.ts';
+import { resetKeys, valueMapping } from '#lib/value-mapping.ts';
 import { writeAttribute } from '#lib/write-attribute.ts';
 
 declare global {
@@ -27,8 +27,8 @@ interface AxisValue {
 }
 
 interface XyDrag {
-	from: PlanePoint;
-	state: PlaneDragState;
+	from: FieldPoint;
+	state: FieldDragState;
 }
 
 interface XyInput {
@@ -38,7 +38,7 @@ interface XyInput {
 
 const axes = ['x', 'y'] as const;
 
-const keyMoves = new Map<string, [PlaneAxis, string]>([
+const keyMoves = new Map<string, [FieldAxis, string]>([
 	['ArrowDown', ['y', 'ArrowDown']],
 	['ArrowLeft', ['x', 'ArrowLeft']],
 	['ArrowRight', ['x', 'ArrowRight']],
@@ -94,11 +94,11 @@ export class SonicXy extends SonicFormElement {
 		'y-taper',
 	];
 
-	get formatValue(): ((value: number, axis: PlaneAxis) => string) | undefined {
+	get formatValue(): ((value: number, axis: FieldAxis) => string) | undefined {
 		return this.#formatValue;
 	}
 
-	set formatValue(format: ((value: number, axis: PlaneAxis) => string) | undefined) {
+	set formatValue(format: ((value: number, axis: FieldAxis) => string) | undefined) {
 		this.#formatValue = format;
 		this.render();
 	}
@@ -175,11 +175,11 @@ export class SonicXy extends SonicFormElement {
 		this.reflect('x-step', value);
 	}
 
-	get xTaper(): RangeSpec['taper'] {
+	get xTaper(): ValueSpec['taper'] {
 		return this.#taper('x');
 	}
 
-	set xTaper(curve: RangeSpec['taper'] | undefined) {
+	set xTaper(curve: undefined | ValueSpec['taper']) {
 		this.reflect('x-taper', curve);
 	}
 
@@ -247,11 +247,11 @@ export class SonicXy extends SonicFormElement {
 		this.reflect('y-step', value);
 	}
 
-	get yTaper(): RangeSpec['taper'] {
+	get yTaper(): ValueSpec['taper'] {
 		return this.#taper('y');
 	}
 
-	set yTaper(curve: RangeSpec['taper'] | undefined) {
+	set yTaper(curve: undefined | ValueSpec['taper']) {
 		this.reflect('y-taper', curve);
 	}
 
@@ -259,15 +259,15 @@ export class SonicXy extends SonicFormElement {
 		this.#renderReadout();
 	});
 
-	#currentAxis: PlaneAxis = 'x';
+	#currentAxis: FieldAxis = 'x';
 
 	readonly #xy = renderXy();
 
 	readonly #field = requireChild(this.#xy, '.sonic-xy-field', HTMLDivElement);
 
-	#formatValue: ((value: number, axis: PlaneAxis) => string) | undefined;
+	#formatValue: ((value: number, axis: FieldAxis) => string) | undefined;
 
-	readonly #parts: Record<PlaneAxis, HTMLDivElement> = {
+	readonly #parts: Record<FieldAxis, HTMLDivElement> = {
 		x: requireChild(this.#xy, '[data-sonic-axis="x"]', HTMLDivElement),
 		y: requireChild(this.#xy, '[data-sonic-axis="y"]', HTMLDivElement),
 	};
@@ -278,7 +278,7 @@ export class SonicXy extends SonicFormElement {
 
 	readonly #readout = new Readout(requireChild(this.#xy, '.sonic-xy-readout', HTMLDivElement));
 
-	readonly #values: Record<PlaneAxis, AxisValue> = {
+	readonly #values: Record<FieldAxis, AxisValue> = {
 		x: { isDirty: false, value: 0 },
 		y: { isDirty: false, value: 0 },
 	};
@@ -342,14 +342,17 @@ export class SonicXy extends SonicFormElement {
 
 	protected render(): void {
 		const { style } = this.#xy;
-		const scales = this.#scales();
+		const mappings = this.#mappings();
 
 		for (const axis of axes) {
-			const scale = scales[axis];
-			const origin = this.optionalNumberAttribute(`${axis}-origin`) ?? scale.bounds[0];
+			const mapping = mappings[axis];
+			const origin = this.optionalNumberAttribute(`${axis}-origin`) ?? mapping.bounds[0];
 
-			style.setProperty(`--_sonic-xy-${axis}`, String(scale.place(this.#values[axis].value)));
-			style.setProperty(`--_sonic-xy-${axis}-origin`, String(scale.place(origin)));
+			style.setProperty(
+				`--_sonic-xy-${axis}`,
+				String(mapping.proportionOf(this.#values[axis].value)),
+			);
+			style.setProperty(`--_sonic-xy-${axis}-origin`, String(mapping.proportionOf(origin)));
 		}
 		this.#renderAria();
 		this.#renderForm();
@@ -363,7 +366,7 @@ export class SonicXy extends SonicFormElement {
 		this.y = y;
 	}
 
-	#axisText(axis: PlaneAxis): string {
+	#axisText(axis: FieldAxis): string {
 		const { value } = this.#values[axis];
 		const label = this.getAttribute(`${axis}-label`) ?? axis.toUpperCase();
 
@@ -431,7 +434,7 @@ export class SonicXy extends SonicFormElement {
 					return;
 				},
 				move: (drag, event) => {
-					const step = stepPlaneDrag(this.#scales(), drag.state, pointerMove(event));
+					const step = stepFieldDrag(this.#mappings(), drag.state, pointerMove(event));
 
 					drag.state = step.state;
 					if (step.state.isEngaged) this.#claim.reveal('drag');
@@ -459,7 +462,7 @@ export class SonicXy extends SonicFormElement {
 		const from = { x: this.x, y: this.y };
 		const field = this.#field.getBoundingClientRect();
 		const puck = this.#puck.getBoundingClientRect();
-		const scales = this.#scales();
+		const mappings = this.#mappings();
 		const travel = {
 			x: Math.max(1, field.width - puck.width),
 			y: Math.max(1, field.height - puck.height),
@@ -471,19 +474,22 @@ export class SonicXy extends SonicFormElement {
 		};
 		const isOnPuck = event.target instanceof Node && this.#puck.contains(event.target);
 
-		if (!isOnPuck) this.#input({ x: scales.x.valueAt(pressed.x), y: scales.y.valueAt(pressed.y) });
+		if (!isOnPuck)
+			this.#input({ x: mappings.x.valueAt(pressed.x), y: mappings.y.valueAt(pressed.y) });
 		this.#claim.press(true);
 
-		const start = (axis: PlaneAxis) => ({
+		const start = (axis: FieldAxis) => ({
 			from: this.#values[axis].value,
-			place: isOnPuck ? scales[axis].place(this.#values[axis].value) : clampUnit(pressed[axis]),
-			scale: scales[axis],
+			mapping: mappings[axis],
+			proportion: isOnPuck
+				? mappings[axis].proportionOf(this.#values[axis].value)
+				: clampProportion(pressed[axis]),
 			travelPx: travel[axis],
 		});
 
 		return {
 			from,
-			state: startPlaneDrag({
+			state: startFieldDrag({
 				position,
 				thresholdPx: dragThresholdPx(event.pointerType),
 				x: start('x'),
@@ -510,8 +516,8 @@ export class SonicXy extends SonicFormElement {
 		return true;
 	}
 
-	#keyTo(axis: PlaneAxis, key: string): void {
-		const next = this.#scale(axis).keyTarget(key, this.#values[axis].value);
+	#keyTo(axis: FieldAxis, key: string): void {
+		const next = this.#mapping(axis).keyTarget(key, this.#values[axis].value);
 		const hasMoved = this.#set(axis, next ?? NaN);
 
 		this.#currentAxis = axis;
@@ -523,27 +529,45 @@ export class SonicXy extends SonicFormElement {
 		this.dispatchEvent(new Event('change', { bubbles: true }));
 	}
 
+	#mapping(axis: FieldAxis): ValueMapping {
+		const midpoint = this.optionalNumberAttribute(`${axis}-midpoint`);
+
+		return valueMapping({
+			max: this.numberAttribute(`${axis}-max`, 100),
+			...(midpoint === undefined ? {} : { midpoint }),
+			isNotched: false,
+			isWrapping: false,
+			min: this.numberAttribute(`${axis}-min`, 0),
+			step: this.numberAttribute(`${axis}-step`, 1),
+			taper: this.#taper(axis),
+		});
+	}
+
+	#mappings(): Record<FieldAxis, ValueMapping> {
+		return { x: this.#mapping('x'), y: this.#mapping('y') };
+	}
+
 	#refresh(): void {
-		const scales = this.#scales();
+		const mappings = this.#mappings();
 
 		for (const axis of axes) {
 			const axisValue = this.#values[axis];
-			const scale = scales[axis];
+			const mapping = mappings[axis];
 
-			axisValue.value = scale.snap(
-				axisValue.isDirty ? axisValue.value : this.numberAttribute(axis, scale.bounds[0]),
+			axisValue.value = mapping.snap(
+				axisValue.isDirty ? axisValue.value : this.numberAttribute(axis, mapping.bounds[0]),
 			);
 		}
 		this.render();
 	}
 
 	#renderAria(): void {
-		const scales = this.#scales();
+		const mappings = this.#mappings();
 		const isDisabled = this.isDisabled();
 
 		for (const axis of axes) {
 			const part = this.#parts[axis];
-			const [low, high] = scales[axis].bounds;
+			const [low, high] = mappings[axis].bounds;
 			const isCurrent = axis === this.#currentAxis;
 			const stop = isCurrent ? '0' : '-1';
 
@@ -569,11 +593,11 @@ export class SonicXy extends SonicFormElement {
 			return;
 		}
 
-		const entries = new FormData();
+		const fields = new FormData();
 
-		entries.set(`${name}.x`, String(x));
-		entries.set(`${name}.y`, String(y));
-		this.writeFormValue(entries, state);
+		fields.set(`${name}.x`, String(x));
+		fields.set(`${name}.y`, String(y));
+		this.writeFormValue(fields, state);
 	}
 
 	#renderReadout(): void {
@@ -588,29 +612,11 @@ export class SonicXy extends SonicFormElement {
 		this.#commit({ x: this.xDefault, y: this.yDefault });
 	}
 
-	#scale(axis: PlaneAxis): RangeScale {
-		const midpoint = this.optionalNumberAttribute(`${axis}-midpoint`);
-
-		return rangeScale({
-			max: this.numberAttribute(`${axis}-max`, 100),
-			...(midpoint === undefined ? {} : { midpoint }),
-			isNotched: false,
-			isWrapping: false,
-			min: this.numberAttribute(`${axis}-min`, 0),
-			step: this.numberAttribute(`${axis}-step`, 1),
-			taper: this.#taper(axis),
-		});
-	}
-
-	#scales(): Record<PlaneAxis, RangeScale> {
-		return { x: this.#scale('x'), y: this.#scale('y') };
-	}
-
-	#set(axis: PlaneAxis, next: number): boolean {
+	#set(axis: FieldAxis, next: number): boolean {
 		if (!Number.isFinite(next)) return false;
 
 		const axisValue = this.#values[axis];
-		const snapped = this.#scale(axis).snap(next);
+		const snapped = this.#mapping(axis).snap(next);
 
 		axisValue.isDirty = true;
 		if (snapped === axisValue.value) return false;
@@ -620,15 +626,15 @@ export class SonicXy extends SonicFormElement {
 		return true;
 	}
 
-	#taper(axis: PlaneAxis): RangeSpec['taper'] {
+	#taper(axis: FieldAxis): ValueSpec['taper'] {
 		return this.getAttribute(`${axis}-taper`) === 'log' ? 'log' : 'linear';
 	}
 
-	#valueText(axis: PlaneAxis): string {
+	#valueText(axis: FieldAxis): string {
 		return `${this.#axisText(axis)}, ${this.#axisText(axis === 'x' ? 'y' : 'x')}`;
 	}
 
-	#write(axis: PlaneAxis, next: number): void {
+	#write(axis: FieldAxis, next: number): void {
 		if (this.#pointerDrag?.current()) return;
 		if (this.#set(axis, next)) this.render();
 	}

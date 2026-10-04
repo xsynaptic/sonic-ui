@@ -63,7 +63,7 @@ test('a horizontal swipe on a horizontal slider moves the value and not the page
 	expect(await page.evaluate(() => window.scrollY)).toBe(scrolled);
 });
 
-test('a swipe on a pad moves both values and never the page', async ({ page }) => {
+test('a swipe on an XY pad moves both values and never the page', async ({ page }) => {
 	await page.goto('/fixtures/');
 
 	const from = await centreInView(page, '#xy .sonic-xy-puck');

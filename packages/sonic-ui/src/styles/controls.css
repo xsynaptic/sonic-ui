@@ -1,12 +1,12 @@
 @import './material.css';
 @import './dial.css';
 @import './envelope.css';
-@import './key.css';
+@import './button.css';
 @import './led.css';
-@import './lever.css';
+@import './switch.css';
 @import './meter.css';
 @import './number.css';
-@import './plate.css';
+@import './panel.css';
 @import './ring.css';
 @import './screen.css';
 @import './segmented.css';

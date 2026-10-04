@@ -1,15 +1,15 @@
-import type { RangeLink } from '#elements/range-element.ts';
-import type { AdsrBends, AdsrPlaces, AdsrShape } from '#lib/adsr-shape.ts';
-import type { PlaneAxis, PlaneDragState, PlanePoint, PlaneScales } from '#lib/plane.ts';
+import type { ValueLink } from '#elements/value-element.ts';
+import type { AdsrCurves, AdsrProportions, AdsrShape } from '#lib/adsr-shape.ts';
+import type { FieldAxis, FieldDragState, FieldMappings, FieldPoint } from '#lib/field.ts';
 import type { PointerDrag } from '#lib/pointer-drag.ts';
 
-import { linkRange, SonicRangeElement } from '#elements/range-element.ts';
 import { ReadoutClaim } from '#elements/readout-claim.ts';
 import { Readout } from '#elements/readout.ts';
 import { SonicElement } from '#elements/sonic-element.ts';
+import { linkValue, SonicValueElement } from '#elements/value-element.ts';
 import { adsrPath, adsrShape, adsrStages, timeStages } from '#lib/adsr-shape.ts';
 import { dragThresholdPx } from '#lib/drag-step.ts';
-import { pointerMove, pointerPosition, startPlaneDrag, stepPlaneDrag } from '#lib/plane.ts';
+import { pointerMove, pointerPosition, startFieldDrag, stepFieldDrag } from '#lib/field.ts';
 import { bindDrag } from '#lib/pointer-drag.ts';
 import { requireChild, template } from '#lib/render.ts';
 import { writeAttribute } from '#lib/write-attribute.ts';
@@ -24,13 +24,13 @@ declare global {
 }
 
 interface Binding {
-	element: SonicRangeElement;
-	link: RangeLink;
+	element: SonicValueElement;
+	link: ValueLink;
 	unwatch: () => void;
 }
 
 interface Drive {
-	axis: PlaneAxis;
+	axis: FieldAxis;
 	binding: Binding;
 }
 
@@ -38,7 +38,7 @@ interface HandleDrag {
 	drives: Array<Drive & { from: number }>;
 	isFlipped: boolean;
 	part: HTMLElement;
-	state: PlaneDragState;
+	state: FieldDragState;
 }
 
 const curveStages = ['attack', 'decay', 'release'] as const;
@@ -47,7 +47,7 @@ const bindable = [...adsrStages, 'attack-curve', 'decay-curve', 'release-curve']
 
 const bindableNames = new Set<string>(bindable);
 
-function flip<Point extends PlanePoint>(point: Point, isFlipped: boolean): Point {
+function flip<Point extends FieldPoint>(point: Point, isFlipped: boolean): Point {
 	return isFlipped ? { ...point, y: -point.y } : point;
 }
 
@@ -67,9 +67,9 @@ const renderEnvelope = template(
 			<div class="sonic-envelope-handle" data-sonic-stage="hold" hidden></div>
 			<div class="sonic-envelope-handle" data-sonic-stage="decay" hidden></div>
 			<div class="sonic-envelope-handle" data-sonic-stage="release" hidden></div>
-			<div class="sonic-envelope-dot" data-sonic-stage="attack" hidden></div>
-			<div class="sonic-envelope-dot" data-sonic-stage="decay" hidden></div>
-			<div class="sonic-envelope-dot" data-sonic-stage="release" hidden></div>
+			<div class="sonic-envelope-curve" data-sonic-stage="attack" hidden></div>
+			<div class="sonic-envelope-curve" data-sonic-stage="decay" hidden></div>
+			<div class="sonic-envelope-curve" data-sonic-stage="release" hidden></div>
 			<div class="sonic-envelope-readout" popover="manual"><span></span></div>
 		</div>
 	`,
@@ -232,7 +232,7 @@ export class SonicEnvelope extends SonicElement {
 			const element = this.#resolve(name);
 			if (!element) continue;
 
-			const link = linkRange(element);
+			const link = linkValue(element);
 			const unwatch = link.watch(() => {
 				this.#draw();
 			});
@@ -269,7 +269,7 @@ export class SonicEnvelope extends SonicElement {
 		);
 	}
 
-	#dotDrives(stage: string): Array<Drive> {
+	#curveDrives(stage: string): Array<Drive> {
 		const binding = this.#bindings.get(`${stage}-curve`);
 
 		return binding ? [{ axis: 'y', binding }] : [];
@@ -289,15 +289,15 @@ export class SonicEnvelope extends SonicElement {
 			});
 		}
 		for (const stage of curveStages) {
-			this.#drawPoint(`.sonic-envelope-dot[data-sonic-stage="${stage}"]`, {
-				at: shape.dots.find((point) => point.stage === stage),
-				drives: this.#dotDrives(stage),
+			this.#drawPoint(`.sonic-envelope-curve[data-sonic-stage="${stage}"]`, {
+				at: shape.curveHandles.find((point) => point.stage === stage),
+				drives: this.#curveDrives(stage),
 			});
 		}
 		this.#renderReadout();
 	}
 
-	#drawPoint(selector: string, point: { at: PlanePoint | undefined; drives: Array<Drive> }): void {
+	#drawPoint(selector: string, point: { at: FieldPoint | undefined; drives: Array<Drive> }): void {
 		const part = requireChild(this.#envelope, selector, HTMLDivElement);
 		const { at, drives } = point;
 
@@ -331,21 +331,21 @@ export class SonicEnvelope extends SonicElement {
 		this.#claim.press(true);
 		const box = this.#graph.getBoundingClientRect();
 		const travel = { x: Math.max(1, box.width * this.#shape.share), y: Math.max(1, box.height) };
-		const start = (axis: PlaneAxis) => {
+		const start = (axis: FieldAxis) => {
 			const link = drives.find((drive) => drive.axis === axis)?.binding.link;
 			if (!link) return;
 
-			const scale = link.scale();
+			const mapping = link.mapping();
 			const from = link.value();
 
-			return { from, place: scale.place(from), scale, travelPx: travel[axis] };
+			return { from, mapping, proportion: mapping.proportionOf(from), travelPx: travel[axis] };
 		};
 
 		return {
 			drives: drives.map((drive) => ({ ...drive, from: drive.binding.link.value() })),
 			isFlipped,
 			part,
-			state: startPlaneDrag({
+			state: startFieldDrag({
 				position: flip(pointerPosition(event), isFlipped),
 				thresholdPx: dragThresholdPx(event.pointerType),
 				x: start('x'),
@@ -355,11 +355,11 @@ export class SonicEnvelope extends SonicElement {
 	}
 
 	#moveDrag(drag: HandleDrag, event: PointerEvent): void {
-		const scales: PlaneScales = {};
+		const mappings: FieldMappings = {};
 
-		for (const { axis, binding } of drag.drives) scales[axis] = binding.link.scale();
+		for (const { axis, binding } of drag.drives) mappings[axis] = binding.link.mapping();
 
-		const step = stepPlaneDrag(scales, drag.state, flip(pointerMove(event), drag.isFlipped));
+		const step = stepFieldDrag(mappings, drag.state, flip(pointerMove(event), drag.isFlipped));
 
 		drag.state = step.state;
 		if (step.state.isEngaged) this.#claim.reveal('drag');
@@ -376,35 +376,35 @@ export class SonicEnvelope extends SonicElement {
 	): (Pick<HandleDrag, 'isFlipped' | 'part'> & { drives: Array<Drive> }) | undefined {
 		const part =
 			event.target instanceof Element
-				? event.target.closest<HTMLElement>('.sonic-envelope-handle, .sonic-envelope-dot')
+				? event.target.closest<HTMLElement>('.sonic-envelope-handle, .sonic-envelope-curve')
 				: undefined;
 		const stage = part?.dataset.sonicStage;
 		if (!part || stage === undefined || this.isDisabled()) return undefined;
 
-		const isDot = part.classList.contains('sonic-envelope-dot');
-		const drives = isDot ? this.#dotDrives(stage) : this.#drives(stage);
+		const isCurveHandle = part.classList.contains('sonic-envelope-curve');
+		const drives = isCurveHandle ? this.#curveDrives(stage) : this.#drives(stage);
 
 		return {
 			drives: drives.filter(({ binding }) => !binding.link.isDisabled()),
-			isFlipped: isDot && stage === 'attack',
+			isFlipped: isCurveHandle && stage === 'attack',
 			part,
 		};
 	}
 
 	#readShape(): AdsrShape {
-		const places: AdsrPlaces = {};
-		const bends: AdsrBends = {};
+		const proportions: AdsrProportions = {};
+		const curves: AdsrCurves = {};
 
 		for (const stage of adsrStages) {
 			const link = this.#bindings.get(stage)?.link;
 
-			places[stage] = link?.scale().place(link.value());
+			proportions[stage] = link?.mapping().proportionOf(link.value());
 		}
 		for (const stage of curveStages) {
-			bends[stage] = this.#bindings.get(`${stage}-curve`)?.link.value();
+			curves[stage] = this.#bindings.get(`${stage}-curve`)?.link.value();
 		}
 
-		return adsrShape(places, bends);
+		return adsrShape(proportions, curves);
 	}
 
 	#rebindOnce(key: unknown, arrives: (rebind: () => void) => void): void {
@@ -432,13 +432,13 @@ export class SonicEnvelope extends SonicElement {
 		});
 	}
 
-	#resolve(name: string): SonicRangeElement | undefined {
+	#resolve(name: string): SonicValueElement | undefined {
 		const id = this.getAttribute(name);
 		const root = this.getRootNode();
 		if (!id || !isParent(root)) return undefined;
 
 		const found = root.querySelector(`#${CSS.escape(id)}`);
-		if (found instanceof SonicRangeElement) return found;
+		if (found instanceof SonicValueElement) return found;
 
 		this.#wait(id, found);
 

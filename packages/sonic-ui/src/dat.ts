@@ -1,8 +1,8 @@
-import type { WaveformData } from '#lib/waveform-buckets.ts';
+import type { WaveformPeaks } from '#lib/waveform-buckets.ts';
 
 import { clamp } from '#lib/math.ts';
 
-export type { WaveformData } from '#lib/waveform-buckets.ts';
+export type { WaveformPeaks } from '#lib/waveform-buckets.ts';
 
 export interface DatHeader {
 	bits: 8 | 16;
@@ -73,7 +73,7 @@ export function readDatSamples(header: DatHeader, body: ArrayBuffer): Int8Array 
 		: new Int16Array(body, 0, Math.floor(body.byteLength / 2));
 }
 
-export function readDatWaveformData(header: DatHeader, body: ArrayBuffer): WaveformData {
+export function readDatPeaks(header: DatHeader, body: ArrayBuffer): WaveformPeaks {
 	return {
 		channels: header.channels,
 		fullScale: header.bits === 8 ? 128 : 32_768,

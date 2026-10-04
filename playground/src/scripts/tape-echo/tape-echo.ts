@@ -1,4 +1,10 @@
-import { SonicDial, SonicKey, SonicMeter, SonicNumber, SonicSegmented } from '@xsynaptic/sonic-ui';
+import {
+	SonicButton,
+	SonicDial,
+	SonicMeter,
+	SonicNumber,
+	SonicSegmented,
+} from '@xsynaptic/sonic-ui';
 
 import type { ControlsOf } from '#scripts/find.ts';
 import type { Echo, EchoParams } from '#scripts/tape-echo/audio.ts';
@@ -30,9 +36,9 @@ const dialSpec = {
 const panelSpec = {
 	bpm: SonicNumber,
 	mode: SonicDial,
-	play: SonicKey,
+	play: SonicButton,
 	style: SonicNumber,
-	tap: SonicKey,
+	tap: SonicButton,
 };
 
 type EchoHead = ControlsOf<typeof headSpec>;
@@ -109,7 +115,7 @@ function setDivision(head: EchoHead, division: Division, bpm: number): void {
 	head.dial.notched = division !== 'time';
 	for (const control of [head.dial, head.number]) {
 		if (division === 'time') {
-			control.values = undefined;
+			control.positions = undefined;
 			control.min = timeRange.min;
 			control.max = timeRange.max;
 			control.taper = 'log';
@@ -118,7 +124,7 @@ function setDivision(head: EchoHead, division: Division, bpm: number): void {
 			continue;
 		}
 
-		control.values = [...divisions[division]];
+		control.positions = [...divisions[division]];
 		applyFormat(control, 'note');
 		control.value = (seconds * 1000 * ticksPerBeat) / beatMsOf(bpm);
 	}
@@ -202,7 +208,7 @@ function createTransport(controls: Controls) {
 
 function bindEcho(panel: Element): void {
 	const controls = readPanel(panel);
-	const { bpm, heads, mode, play, tap: tapKey } = controls;
+	const { bpm, heads, mode, play, tap: tapButton } = controls;
 	const transport = createTransport(controls);
 	const tempo = createTapTempo(bpm.value);
 
@@ -221,8 +227,8 @@ function bindEcho(panel: Element): void {
 		if (head && isDivision(division)) setDivision(head, division, bpm.value);
 		transport.update();
 	});
-	tapKey.addEventListener('change', () => {
-		if (!tapKey.pressed) return;
+	tapButton.addEventListener('change', () => {
+		if (!tapButton.pressed) return;
 
 		const settled = tempo.tap(performance.now());
 

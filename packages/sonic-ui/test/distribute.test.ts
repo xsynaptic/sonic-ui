@@ -1,11 +1,11 @@
 import { expect, test } from 'vitest';
 
-import type { SumMember, SumMode } from '#lib/distribute.ts';
+import type { SplitMember, SplitMode } from '#lib/distribute.ts';
 
-import { distribute, sumLimits } from '#lib/distribute.ts';
+import { distribute, splitLimits } from '#lib/distribute.ts';
 import { clamp } from '#lib/math.ts';
 
-import { scaleOf } from './helpers.ts';
+import { mappingOf } from './helpers.ts';
 
 interface MemberSpec {
 	isFree?: boolean;
@@ -17,7 +17,7 @@ interface MemberSpec {
 function member(
 	value: number,
 	{ isFree = true, max = 100, min = 0, step = 1 }: MemberSpec = {},
-): SumMember {
+): SplitMember {
 	const snap = (next: number): number =>
 		clamp(min + Math.round((next - min) / step) * step, min, max);
 
@@ -31,7 +31,7 @@ function member(
 	};
 }
 
-function members(values: Array<number>, spec: MemberSpec = {}): Array<SumMember> {
+function members(values: Array<number>, spec: MemberSpec = {}): Array<SplitMember> {
 	return values.map((value) => member(value, spec));
 }
 
@@ -97,7 +97,7 @@ test('proportional splits evenly between members that hold nothing', () => {
 
 test.each(['proportional', 'equal', 'cascade'] as const)(
 	'%s keeps a locked member and stops the mover at what the rest can give',
-	(mode: SumMode) => {
+	(mode: SplitMode) => {
 		const snapshot = [member(50), member(30, { isFree: false }), member(20)];
 
 		expect(distribute(snapshot, { mode: mode, total: 100 }, { index: 0, target: 90 })).toEqual([
@@ -107,10 +107,10 @@ test.each(['proportional', 'equal', 'cascade'] as const)(
 );
 
 test('the limits leave out a locked member, and count every minimum', () => {
-	expect(sumLimits([member(50), member(30, { isFree: false }), member(20)], 0, 100)).toEqual([
+	expect(splitLimits([member(50), member(30, { isFree: false }), member(20)], 0, 100)).toEqual([
 		0, 70,
 	]);
-	expect(sumLimits(members([50, 30, 20], { min: 10 }), 0, 100)).toEqual([10, 80]);
+	expect(splitLimits(members([50, 30, 20], { min: 10 }), 0, 100)).toEqual([10, 80]);
 });
 
 test('a locked mover changes nothing', () => {
@@ -203,7 +203,7 @@ test('a move with a direction never lands back where it started while a value th
 });
 
 test('a sibling whose next step lies past its bound is not stepped there, nor counted as able to step', () => {
-	const pinned: SumMember = {
+	const pinned: SplitMember = {
 		...member(10, { max: 10, min: 10 }),
 		stepFrom: (from, direction) => from + direction,
 	};
@@ -227,13 +227,13 @@ test('a lone member cannot move, and its limits pin it where it is', () => {
 	expect(distribute([member(40)], { mode: 'equal', total: 40 }, { index: 0, target: 70 })).toEqual([
 		40,
 	]);
-	expect(sumLimits([member(40)], 0, 40)).toEqual([40, 40]);
+	expect(splitLimits([member(40)], 0, 40)).toEqual([40, 40]);
 });
 
 test('a mover with only locked siblings is pinned to its value', () => {
 	const snapshot = [member(50), member(30, { isFree: false }), member(20, { isFree: false })];
 
-	expect(sumLimits(snapshot, 0, 100)).toEqual([50, 50]);
+	expect(splitLimits(snapshot, 0, 100)).toEqual([50, 50]);
 	expect(distribute(snapshot, { mode: 'equal', total: 100 }, { index: 0, target: 10 })).toEqual([
 		50, 30, 20,
 	]);
@@ -246,14 +246,14 @@ test.each([NaN, Infinity, -Infinity])('a target of %d changes nothing', (target)
 });
 
 test('fractional steps settle a remainder without float residue', () => {
-	const scale = scaleOf({ max: 1, step: 0.1 });
-	const snapshot = [0.4, 0.3, 0.3].map((value): SumMember => ({
+	const mapping = mappingOf({ max: 1, step: 0.1 });
+	const snapshot = [0.4, 0.3, 0.3].map((value): SplitMember => ({
 		isFree: true,
 		max: 1,
 		min: 0,
-		snap: scale.snap,
+		snap: mapping.snap,
 		stepFrom: (from, direction) =>
-			scale.keyTarget(direction > 0 ? 'ArrowRight' : 'ArrowLeft', from) ?? from,
+			mapping.keyTarget(direction > 0 ? 'ArrowRight' : 'ArrowLeft', from) ?? from,
 		value,
 	}));
 
@@ -342,7 +342,7 @@ function exactShares(
 
 function drawCase(random: () => number): {
 	mode: 'equal' | 'proportional';
-	snapshot: Array<SumMember>;
+	snapshot: Array<SplitMember>;
 	step: number;
 	target: number;
 } {
@@ -367,7 +367,7 @@ function drawCase(random: () => number): {
 
 function expectNearShares(
 	rest: Array<number>,
-	siblings: Array<SumMember>,
+	siblings: Array<SplitMember>,
 	near: { exact: Array<number>; label: string; step: number },
 ): void {
 	for (const [at, value] of rest.entries()) {
@@ -397,7 +397,7 @@ test('on one step grid the total holds, bounds hold, and every sibling lands wit
 		);
 		const label = `run ${String(run)}: ${mode} step ${String(step)} to ${String(target)}`;
 
-		expect(moved, label).toBe(clamp(target, ...sumLimits(snapshot, 0, total)));
+		expect(moved, label).toBe(clamp(target, ...splitLimits(snapshot, 0, total)));
 		expect(moved + sum(rest), label).toBe(total);
 		expectNearShares(rest, siblings, { exact, label, step });
 	}

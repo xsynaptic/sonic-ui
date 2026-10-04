@@ -2,14 +2,14 @@
 import Play from '@lucide/astro/icons/play';
 
 import Cell from '#components/specimens/cell.astro';
-import Panel from '#components/specimens/panel.astro';
+import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 import { echoModes } from '#scripts/stop-names.ts';
 
 const levelTicks = [-40, -30, -20, -12, -6, 0, 5];
 const masterStops = Array.from({ length: 11 }, (_stop, index) => index);
 ---
 
-<Panel>
+<SpecimenGrid>
 	<Cell id="dial-volume" label="Volume">
 		<sonic-dial
 			aria-labelledby="dial-volume"
@@ -103,9 +103,9 @@ const masterStops = Array.from({ length: 11 }, (_stop, index) => index);
 			aria-labelledby="dial-loop"
 			data-format="beats"
 			notched
+			positions="0.03125 0.0625 0.125 0.25 0.5 1 2 4 8 16 32"
 			readout
 			value="4"
-			values="0.03125 0.0625 0.125 0.25 0.5 1 2 4 8 16 32"
 		></sonic-dial>
 	</Cell>
 	<Cell id="dial-level" label="Level">
@@ -172,9 +172,9 @@ const masterStops = Array.from({ length: 11 }, (_stop, index) => index);
 		></sonic-dial>
 	</Cell>
 	<Cell id="dial-run" label="Run">
-		<sonic-key aria-labelledby="dial-run" data-run pressed toggle>
+		<sonic-button aria-labelledby="dial-run" data-run latching pressed>
 			<Play aria-hidden="true" />
-		</sonic-key>
+		</sonic-button>
 	</Cell>
 	<Cell id="dial-bypassed" label="Bypassed">
 		<sonic-dial aria-labelledby="dial-bypassed" dimmed value="60"></sonic-dial>
@@ -182,8 +182,8 @@ const masterStops = Array.from({ length: 11 }, (_stop, index) => index);
 	<Cell id="dial-disabled" label="Disabled">
 		<sonic-dial aria-labelledby="dial-disabled" disabled value="60"></sonic-dial>
 	</Cell>
-</Panel>
-<Panel isLarge={true}>
+</SpecimenGrid>
+<SpecimenGrid isLarge={true}>
 	<Cell id="dial-large-volume" label="Volume, large">
 		<sonic-dial
 			aria-labelledby="dial-large-volume"
@@ -237,4 +237,4 @@ const masterStops = Array.from({ length: 11 }, (_stop, index) => index);
 			value="60"
 		></sonic-dial>
 	</Cell>
-</Panel>
+</SpecimenGrid>

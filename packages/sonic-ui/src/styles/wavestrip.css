@@ -92,7 +92,7 @@
 		--_sonic-unit: calc(var(--_sonic-wavestrip-size) / 32);
 		--_sonic-wavestrip-lit: var(--_sonic-lit);
 		--_sonic-marker-size: calc(var(--_sonic-wavestrip-size) * var(--_sonic-wavestrip-marker-ratio));
-		--_sonic-marker-default: var(--sonic-cue, var(--_sonic-ink));
+		--_sonic-marker-default: var(--sonic-marker, var(--_sonic-ink));
 		--_sonic-wavestrip-wave: var(
 			--sonic-wave,
 			color-mix(in oklab, var(--_sonic-ink) 30%, var(--_sonic-unlit))
@@ -136,7 +136,7 @@
 		pointer-events: none;
 	}
 
-	:is(.sonic-wavestrip-marker, .sonic-wavestrip-span) {
+	:is(.sonic-wavestrip-marker, .sonic-wavestrip-region) {
 		--_sonic-marker-colour: var(--_sonic-marker, var(--_sonic-marker-default));
 
 		position: absolute;
@@ -159,7 +159,7 @@
 		box-shadow: 0 0 0 max(1px, 0.5 * var(--_sonic-unit)) var(--_sonic-glass);
 	}
 
-	.sonic-wavestrip-span {
+	.sonic-wavestrip-region {
 		inset: 0 auto 0 calc(var(--_sonic-marker-from, 0) * 100%);
 		box-sizing: border-box;
 		inline-size: calc((var(--_sonic-marker-to, 0) - var(--_sonic-marker-from, 0)) * 100%);
@@ -192,7 +192,7 @@
 			--_sonic-wavestrip-scrub: rgb(from CanvasText r g b / 100%);
 		}
 
-		:is(.sonic-wavestrip-marker, .sonic-wavestrip-span) {
+		:is(.sonic-wavestrip-marker, .sonic-wavestrip-region) {
 			--_sonic-marker-colour: CanvasText;
 
 			forced-color-adjust: none;
@@ -207,7 +207,7 @@
 			box-shadow: 0 0 0 max(1px, 0.5 * var(--_sonic-unit)) Canvas;
 		}
 
-		.sonic-wavestrip-span {
+		.sonic-wavestrip-region {
 			background: none;
 			border-inline-color: var(--_sonic-marker-colour);
 		}

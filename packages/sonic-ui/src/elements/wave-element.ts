@@ -1,6 +1,6 @@
 import type { Surface, SurfaceFrame } from '#lib/canvas-surface.ts';
 
-import { SonicRangeElement } from '#elements/range-element.ts';
+import { SonicValueElement } from '#elements/value-element.ts';
 import { bindSurface } from '#lib/canvas-surface.ts';
 
 interface WaveMarker {
@@ -8,22 +8,22 @@ interface WaveMarker {
 	end?: number;
 	kind?: string;
 	label?: string;
-	value: number;
+	start: number;
 }
 
 export abstract class SonicWaveElement<
 	Colour extends string,
 	Length extends string = never,
-> extends SonicRangeElement {
+> extends SonicValueElement {
 	get markers(): Array<WaveMarker> {
 		return this.#markers.map((marker) => ({ ...marker }));
 	}
 
 	set markers(list: Iterable<WaveMarker> | undefined) {
 		this.#markers = [...(list ?? [])]
-			.filter((marker) => Number.isFinite(marker.value))
+			.filter((marker) => Number.isFinite(marker.start))
 			.map((marker) => ({ ...marker }))
-			.toSorted((first, second) => first.value - second.value);
+			.toSorted((first, second) => first.start - second.start);
 		this.renderMarkers();
 	}
 
@@ -89,12 +89,12 @@ export abstract class SonicWaveElement<
 
 	protected abstract isEmpty(): boolean;
 
-	protected markerPlaces(): Array<[number, number]> {
-		const scale = this.scale();
+	protected markerProportions(): Array<[number, number]> {
+		const mapping = this.mapping();
 
-		return this.#markers.map(({ end, value }) => {
-			const at = scale.place(value);
-			const to = end === undefined ? at : scale.place(end);
+		return this.#markers.map(({ end, start }) => {
+			const at = mapping.proportionOf(start);
+			const to = end === undefined ? at : mapping.proportionOf(end);
 
 			return [Math.min(at, to), Math.max(at, to)];
 		});
@@ -105,14 +105,14 @@ export abstract class SonicWaveElement<
 		frame: SurfaceFrame<Colour, Length>,
 	): void;
 
-	protected override placesChanged(): void {
-		this.renderMarkers();
-	}
-
 	protected playback(): number {
 		const from = this.heldFrom();
 
 		return from === undefined ? this.value : (this.#heldAt ?? from);
+	}
+
+	protected override proportionsChanged(): void {
+		this.renderMarkers();
 	}
 
 	protected renderEmpty(): void {

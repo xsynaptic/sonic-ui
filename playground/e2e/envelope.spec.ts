@@ -40,16 +40,18 @@ test('a drag on the decay handle turns the decay and sustain dials', async ({ is
 	expect(moved?.y).toBeGreaterThan(box.y);
 });
 
-test('a curve dot bends its segment and turns only its curve dial', async ({ isMobile, page }) => {
+test('a curve handle bows its stage and turns only its curve dial', async ({ isMobile, page }) => {
 	test.skip(isMobile, mouseOnly);
 
-	const dot = page.locator('#envelope-curves .sonic-envelope-dot[data-sonic-stage="decay"]');
+	const curveHandle = page.locator(
+		'#envelope-curves .sonic-envelope-curve[data-sonic-stage="decay"]',
+	);
 	const curve = page.getByRole('slider', { name: 'Envelope decay curve' });
 	const line = page.locator('#envelope-curves .sonic-envelope-line');
 	const before = await line.getAttribute('d');
 
-	await expect(page.locator('#envelope-curves .sonic-envelope-dot:not([hidden])')).toHaveCount(2);
-	await drag(page, dot, { x: 0, y: -12 });
+	await expect(page.locator('#envelope-curves .sonic-envelope-curve:not([hidden])')).toHaveCount(2);
+	await drag(page, curveHandle, { x: 0, y: -12 });
 
 	await expect
 		.poll(async () => Number(await curve.getAttribute('aria-valuenow')))

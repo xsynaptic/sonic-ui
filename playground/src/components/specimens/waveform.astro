@@ -1,6 +1,6 @@
 ---
 import Cell from '#components/specimens/cell.astro';
-import Panel from '#components/specimens/panel.astro';
+import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 
 const waveforms = [
 	{ id: 'waveform-playing', isPlaying: true, label: 'Playing', seed: 7 },
@@ -16,7 +16,7 @@ const waveforms = [
 ];
 ---
 
-<Panel isLarge={true}>
+<SpecimenGrid isLarge={true}>
 	{waveforms.map((waveform) => (
 		<Cell id={waveform.id} isWide={true} label={waveform.label}>
 			<sonic-waveform
@@ -34,4 +34,4 @@ const waveforms = [
 			></sonic-waveform>
 		</Cell>
 	))}
-</Panel>
+</SpecimenGrid>

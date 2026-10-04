@@ -1,6 +1,6 @@
-import type { RangeAxis } from '#elements/range-element.ts';
+import type { ValueAxis } from '#elements/value-element.ts';
 
-import { SonicRangeElement } from '#elements/range-element.ts';
+import { SonicValueElement } from '#elements/value-element.ts';
 import { requireChild, template } from '#lib/render.ts';
 
 declare global {
@@ -9,15 +9,15 @@ declare global {
 	}
 }
 
-interface SliderAxis extends RangeAxis {
+interface SliderAxis extends ValueAxis {
 	startPx: number;
 }
 
-function grooveStop(place: number): string {
-	if (place <= 0) return '0%';
-	if (place >= 1) return '100%';
+function grooveStop(proportion: number): string {
+	if (proportion <= 0) return '0%';
+	if (proportion >= 1) return '100%';
 
-	return `calc(${String(place)} * var(--_sonic-slider-travel) + var(--_sonic-slider-groove) / 2)`;
+	return `calc(${String(proportion)} * var(--_sonic-slider-travel) + var(--_sonic-slider-groove) / 2)`;
 }
 
 const renderSlider = template(
@@ -44,9 +44,9 @@ const renderSlider = template(
 	HTMLDivElement,
 );
 
-export class SonicSlider extends SonicRangeElement {
+export class SonicSlider extends SonicValueElement {
 	static override readonly observedAttributes = [
-		...SonicRangeElement.observedAttributes,
+		...SonicValueElement.observedAttributes,
 		'modulation',
 		'orientation',
 		'spring',
@@ -60,20 +60,20 @@ export class SonicSlider extends SonicRangeElement {
 		this.reflect('groove-press', gesture);
 	}
 
-	get modulated(): number | undefined {
-		return this.modulatedValue();
-	}
-
-	set modulated(value: number | undefined) {
-		this.writeModulated(this.#slider, 'slider', value);
-	}
-
 	get modulation(): number {
 		return this.numberAttribute('modulation', 0);
 	}
 
 	set modulation(amount: number | undefined) {
 		this.reflect('modulation', amount);
+	}
+
+	get modulationValue(): number | undefined {
+		return this.readModulationValue();
+	}
+
+	set modulationValue(value: number | undefined) {
+		this.writeModulationValue(this.#slider, 'slider', value);
 	}
 
 	get orientation(): 'horizontal' | 'vertical' {
@@ -95,7 +95,7 @@ export class SonicSlider extends SonicRangeElement {
 	readonly #slider = renderSlider();
 
 	override connectedCallback(): void {
-		this.upgradeProperties('groovePress', 'modulated', 'modulation', 'orientation', 'spring');
+		this.upgradeProperties('groovePress', 'modulationValue', 'modulation', 'orientation', 'spring');
 		super.connectedCallback();
 	}
 
@@ -119,7 +119,7 @@ export class SonicSlider extends SonicRangeElement {
 
 			if (this.groovePress === 'none') return;
 
-			this.input(this.scale().valueAt((axis.position(event) - axis.startPx) / axis.travelPx));
+			this.input(this.mapping().valueAt((axis.position(event) - axis.startPx) / axis.travelPx));
 
 			return axis;
 		});
@@ -130,7 +130,7 @@ export class SonicSlider extends SonicRangeElement {
 	}
 
 	protected draw(): void {
-		this.writePlaces(this.#slider, 'slider', this.modulation);
+		this.writeProportions(this.#slider, 'slider', this.modulation);
 		this.#renderBuffered(this.#slider);
 	}
 
@@ -139,23 +139,23 @@ export class SonicSlider extends SonicRangeElement {
 	}
 
 	protected override springTarget(): number | undefined {
-		return this.spring ? this.restValue() : undefined;
+		return this.spring ? this.originValue() : undefined;
 	}
 
 	#axis(slider: HTMLElement, cap: HTMLElement): SliderAxis {
-		const track = slider.getBoundingClientRect();
+		const box = slider.getBoundingClientRect();
 		const capBox = cap.getBoundingClientRect();
 
 		return this.orientation === 'vertical'
 			? {
 					position: (event) => -event.clientY,
-					startPx: capBox.height / 2 - track.bottom,
-					travelPx: Math.max(1, track.height - capBox.height),
+					startPx: capBox.height / 2 - box.bottom,
+					travelPx: Math.max(1, box.height - capBox.height),
 				}
 			: {
 					position: (event) => event.clientX,
-					startPx: track.left + capBox.width / 2,
-					travelPx: Math.max(1, track.width - capBox.width),
+					startPx: box.left + capBox.width / 2,
+					travelPx: Math.max(1, box.width - capBox.width),
 				};
 	}
 
@@ -163,14 +163,14 @@ export class SonicSlider extends SonicRangeElement {
 		const buffered = this.buffered;
 
 		if (buffered.length === 0) {
-			slider.style.removeProperty('--_sonic-slider-buffered-spans');
+			slider.style.removeProperty('--_sonic-slider-buffered-regions');
 			return;
 		}
 
-		const { place } = this.scale();
+		const { proportionOf } = this.mapping();
 		const stops = buffered.flatMap(([start, end]) => {
-			const from = grooveStop(place(Math.min(start, end)));
-			const to = grooveStop(place(Math.max(start, end)));
+			const from = grooveStop(proportionOf(Math.min(start, end)));
+			const to = grooveStop(proportionOf(Math.max(start, end)));
 
 			return [
 				`transparent ${from}`,
@@ -180,7 +180,7 @@ export class SonicSlider extends SonicRangeElement {
 		});
 
 		slider.style.setProperty(
-			'--_sonic-slider-buffered-spans',
+			'--_sonic-slider-buffered-regions',
 			`linear-gradient(var(--_sonic-slider-toward), ${stops.join(', ')})`,
 		);
 	}

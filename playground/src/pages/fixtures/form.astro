@@ -17,26 +17,26 @@ import '#styles/playground.css';
 			<sonic-number id="tempo" max="300" name="tempo" step="0.5" value="120"></sonic-number>
 			<label class="grid justify-items-center gap-2">
 				<span>Mute</span>
-				<sonic-key id="mute" name="mute" toggle>
+				<sonic-button id="mute" latching name="mute">
 					<span aria-hidden="true">M</span>
-				</sonic-key>
+				</sonic-button>
 			</label>
-			<sonic-key aria-label="Solo" id="solo" name="solo" pressed toggle value="yes">
+			<sonic-button aria-label="Solo" id="solo" latching name="solo" pressed value="yes">
 				S
-			</sonic-key>
-			<sonic-key aria-label="Kick" id="pad" momentary name="pad"></sonic-key>
+			</sonic-button>
+			<sonic-button aria-label="Kick" id="kick" momentary name="kick"></sonic-button>
 			<label for="mode">Mode</label>
 			<sonic-segmented id="mode" name="mode" value="lp">
 				<span data-sonic-value="lp">LP</span>
 				<span data-sonic-value="hp">HP</span>
 			</sonic-segmented>
 			<label for="sync">Sync</label>
-			<sonic-lever id="sync" name="sync"></sonic-lever>
-			<sonic-lever aria-label="Assign" id="assign" name="assign" value="x">
+			<sonic-switch id="sync" name="sync"></sonic-switch>
+			<sonic-switch aria-label="Assign" id="assign" name="assign" value="x">
 				<span data-sonic-value="x">X</span>
 				<span data-sonic-value="off">Off</span>
 				<span data-sonic-value="y">Y</span>
-			</sonic-lever>
+			</sonic-switch>
 			<sonic-dial aria-label="Held" disabled id="held" value="50"></sonic-dial>
 			<sonic-dial id="late" name="late" value="10"></sonic-dial>
 			<fieldset disabled id="rack">

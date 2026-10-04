@@ -38,7 +38,7 @@ function mountXy(attributes: string): Pad {
 const offset =
 	'x="0" x-min="-50" x-max="50" x-step="0.5" y="150" y-min="100" y-max="200" y-step="2"';
 
-test('a press on the glass puts each value at the pointer, on its own scale, with up as more', () => {
+test('a press on the glass puts each value at the pointer, on its own mapping, with up as more', () => {
 	const { glass, xy } = mountXy(
 		'x-min="20" x-max="20000" x-taper="log" y-min="-24" y-max="24" y-step="0.5"',
 	);
@@ -240,7 +240,7 @@ test('Delete returns only the axis that has a default, and passes through with n
 	expect([pad.xy.x, pad.xy.y]).toEqual([60, -6]);
 });
 
-test('a disabled pad takes both parts out of the tab order and ignores keys', () => {
+test('a disabled XY pad takes both parts out of the tab order and ignores keys', () => {
 	const pad = mountXy(`${stepped} disabled`);
 	const x = partOf(pad, 'x');
 

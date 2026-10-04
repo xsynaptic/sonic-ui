@@ -1,0 +1,244 @@
+import type { Hold } from '#lib/hold.ts';
+
+import { SonicFormElement } from '#elements/form-element.ts';
+import { copyNode } from '#lib/copy-node.ts';
+import { bindHold } from '#lib/hold.ts';
+import { placeChildren, requireChild, template } from '#lib/render.ts';
+import { writeAttribute } from '#lib/write-attribute.ts';
+
+declare global {
+	interface HTMLElementTagNameMap {
+		'sonic-button': SonicButton;
+	}
+}
+
+const renderButton = template(
+	/* HTML */ `
+		<button class="sonic-button" type="button"><span class="sonic-button-cap"></span></button>
+	`,
+	HTMLButtonElement,
+);
+
+const holdKeys = new Set([' ', 'Enter']);
+
+export class SonicButton extends SonicFormElement {
+	static override readonly observedAttributes = [
+		...SonicFormElement.observedAttributes,
+		'busy',
+		'momentary',
+		'pressed',
+		'soft-disabled',
+		'latching',
+		'value',
+	];
+
+	get armed(): boolean {
+		return this.hasAttribute('armed');
+	}
+
+	set armed(isArmed: boolean) {
+		this.reflect('armed', isArmed);
+	}
+
+	get busy(): boolean {
+		return this.hasAttribute('busy');
+	}
+
+	set busy(isBusy: boolean) {
+		this.reflect('busy', isBusy);
+	}
+
+	get defaultPressed(): boolean {
+		return this.hasAttribute('pressed');
+	}
+
+	set defaultPressed(isPressed: boolean) {
+		this.reflect('pressed', isPressed);
+	}
+
+	get latching(): boolean {
+		return this.hasAttribute('latching');
+	}
+
+	set latching(isLatching: boolean) {
+		this.reflect('latching', isLatching);
+	}
+
+	get momentary(): boolean {
+		return this.hasAttribute('momentary');
+	}
+
+	set momentary(isMomentary: boolean) {
+		this.reflect('momentary', isMomentary);
+	}
+
+	get pressed(): boolean {
+		return this.#isDirty ? this.#pressed : this.defaultPressed;
+	}
+
+	set pressed(isPressed: boolean | undefined) {
+		this.#isDirty = true;
+		this.#pressed = isPressed === true;
+		this.render();
+	}
+
+	get softDisabled(): boolean {
+		return this.hasAttribute('soft-disabled');
+	}
+
+	set softDisabled(isSoftDisabled: boolean) {
+		this.reflect('soft-disabled', isSoftDisabled);
+	}
+
+	get value(): string {
+		return this.getAttribute('value') ?? 'on';
+	}
+
+	set value(value: string | undefined) {
+		this.reflect('value', value);
+	}
+
+	readonly #button = renderButton();
+
+	#holding: Hold | undefined;
+
+	#isDirty = false;
+
+	#pressed = false;
+
+	attributeChangedCallback(name: string): void {
+		if (name === 'pressed') this.#isDirty = false;
+		if (this.isDisabled() || this.#isSoftDisabled()) this.#holding?.release();
+		this.render();
+	}
+
+	override formResetCallback(): void {
+		this.attributeChangedCallback('pressed');
+	}
+
+	protected override activate(): void {
+		this.#button.click();
+	}
+
+	protected connect(signal: AbortSignal): void {
+		const button = this.#button;
+		const cap = requireChild(button, '.sonic-button-cap', HTMLSpanElement);
+
+		this.upgradeProperties(
+			'armed',
+			'busy',
+			'defaultPressed',
+			'momentary',
+			'softDisabled',
+			'latching',
+			'pressed',
+			'value',
+		);
+		this.mirrorChildren(
+			{
+				control: button,
+				copy: copyNode,
+				place: (copies) => {
+					placeChildren(cap, copies);
+				},
+			},
+			signal,
+		);
+		this.render();
+		this.checkStyles(button, 'button.css');
+
+		button.addEventListener(
+			'click',
+			(event) => {
+				// A native disabled button fires no click at all
+				if (this.#isSoftDisabled()) {
+					event.preventDefault();
+					event.stopImmediatePropagation();
+					return;
+				}
+				if (!this.latching) return;
+
+				this.pressed = !this.pressed;
+				this.dispatchEvent(new Event('change', { bubbles: true }));
+			},
+			{ signal },
+		);
+		this.#bindMomentary(button, signal);
+	}
+
+	protected override focusTarget(): HTMLElement {
+		return this.#button;
+	}
+
+	protected render(): void {
+		const button = this.#button;
+
+		button.disabled = this.isDisabled();
+		writeAttribute(button, 'aria-disabled', this.#isSoftDisabled() ? 'true' : undefined);
+		writeAttribute(button, 'aria-busy', this.busy ? 'true' : undefined);
+		button.removeAttribute('aria-pressed');
+		if (this.latching) button.setAttribute('aria-pressed', String(this.pressed));
+		this.toggleState('pressed', this.pressed);
+		this.forwardNaming(button, true);
+
+		// eslint-disable-next-line unicorn/no-null -- `null` submits nothing
+		const submitted = this.latching && this.pressed ? this.value : null;
+
+		this.writeFormValue(submitted, String(this.pressed));
+	}
+
+	protected restoreState(state: string): void {
+		if (this.latching) this.pressed = state === 'true';
+	}
+
+	#bindMomentary(button: HTMLButtonElement, signal: AbortSignal): void {
+		const holding = bindHold(
+			button,
+			{
+				canHold: () => !this.isDisabled() && !this.#isSoftDisabled(),
+				leave: 'blur',
+				onHold: () => {
+					this.#press(true);
+				},
+				onRelease: () => {
+					this.#press(false);
+				},
+			},
+			signal,
+		);
+
+		this.#holding = holding;
+		button.addEventListener(
+			'pointerdown',
+			(event) => {
+				if (event.button !== 0 || !this.#isMomentary()) return;
+
+				button.setPointerCapture(event.pointerId);
+				holding.hold(event.pointerId);
+			},
+			{ signal },
+		);
+		button.addEventListener(
+			'keydown',
+			(event) => {
+				if (event.repeat || !holdKeys.has(event.key) || !this.#isMomentary()) return;
+
+				holding.hold(event.key);
+			},
+			{ signal },
+		);
+	}
+
+	#isMomentary(): boolean {
+		return this.momentary && !this.latching;
+	}
+
+	#isSoftDisabled(): boolean {
+		return this.softDisabled && !this.isDisabled();
+	}
+
+	#press(isPressed: boolean): void {
+		this.pressed = isPressed;
+		this.dispatchEvent(new Event('change', { bubbles: true }));
+	}
+}

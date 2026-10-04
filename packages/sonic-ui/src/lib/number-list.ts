@@ -1,7 +1,7 @@
 export function parseNumberList(text: null | string): Array<number> | undefined {
 	if (text === null) return undefined;
 
-	const entries = [
+	const numbers = [
 		...new Set(
 			text
 				.split(/[\s,]+/)
@@ -11,14 +11,14 @@ export function parseNumberList(text: null | string): Array<number> | undefined 
 		),
 	].toSorted((first, second) => first - second);
 
-	return entries.length >= 2 ? entries : undefined;
+	return numbers.length >= 2 ? numbers : undefined;
 }
 
-export function nearestEntry(entries: ReadonlyArray<number>, value: number): number {
-	let nearest = entries[0] ?? value;
+export function nearestPosition(positions: ReadonlyArray<number>, value: number): number {
+	let nearest = positions[0] ?? value;
 
-	for (const entry of entries) {
-		if (Math.abs(entry - value) < Math.abs(nearest - value)) nearest = entry;
+	for (const position of positions) {
+		if (Math.abs(position - value) < Math.abs(nearest - value)) nearest = position;
 	}
 
 	return nearest;

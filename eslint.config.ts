@@ -59,7 +59,7 @@ export default getConfig([
 		rules: {
 			'astro/jsx-a11y/label-has-associated-control': [
 				'error',
-				{ controlComponents: ['sonic-dial', 'sonic-key', 'sonic-segmented', 'sonic-slider'] },
+				{ controlComponents: ['sonic-dial', 'sonic-button', 'sonic-segmented', 'sonic-slider'] },
 			],
 		},
 	},

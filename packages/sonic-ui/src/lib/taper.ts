@@ -1,16 +1,16 @@
-import { clampUnit } from '#lib/math.ts';
+import { clampProportion } from '#lib/math.ts';
 
 export interface Taper {
-	place: (value: number) => number;
-	valueAt: (place: number) => number;
+	proportionOf: (value: number) => number;
+	valueAt: (proportion: number) => number;
 }
 
 export function linearTaper(min: number, max: number): Taper {
 	const range = max - min;
 
 	return {
-		place: (value) => (range > 0 ? clampUnit((value - min) / range) : 0),
-		valueAt: (place) => min + clampUnit(place) * range,
+		proportionOf: (value) => (range > 0 ? clampProportion((value - min) / range) : 0),
+		valueAt: (proportion) => min + clampProportion(proportion) * range,
 	};
 }
 
@@ -20,13 +20,13 @@ export function logTaper(min: number, max: number): Taper | undefined {
 	const span = Math.log(max / min);
 
 	return {
-		place: (value) => clampUnit(Math.log(Math.max(min, value) / min) / span),
-		valueAt: (place) => {
-			const unit = clampUnit(place);
-			if (unit === 0) return min;
-			if (unit === 1) return max;
+		proportionOf: (value) => clampProportion(Math.log(Math.max(min, value) / min) / span),
+		valueAt: (proportion) => {
+			const clamped = clampProportion(proportion);
+			if (clamped === 0) return min;
+			if (clamped === 1) return max;
 
-			return min * Math.exp(unit * span);
+			return min * Math.exp(clamped * span);
 		},
 	};
 }
@@ -34,34 +34,35 @@ export function logTaper(min: number, max: number): Taper | undefined {
 // JUCE's skew: a power curve through `midpoint` at half the travel
 export function skewTaper(min: number, max: number, midpoint: number): Taper | undefined {
 	const range = max - min;
-	const proportion = (midpoint - min) / range;
+	const midpointProportion = (midpoint - min) / range;
 
-	if (proportion === 0.5 || !(proportion > 0 && proportion < 1)) return undefined;
+	if (midpointProportion === 0.5 || !(midpointProportion > 0 && midpointProportion < 1))
+		return undefined;
 
-	const skew = Math.log(0.5) / Math.log(proportion);
+	const skew = Math.log(0.5) / Math.log(midpointProportion);
 
 	return {
-		place: (value) => clampUnit((value - min) / range) ** skew,
-		valueAt: (place) => min + range * clampUnit(place) ** (1 / skew),
+		proportionOf: (value) => clampProportion((value - min) / range) ** skew,
+		valueAt: (proportion) => min + range * clampProportion(proportion) ** (1 / skew),
 	};
 }
 
-export function listTaper(entries: ReadonlyArray<number>): Taper {
-	const last = entries.length - 1;
+export function listTaper(positions: ReadonlyArray<number>): Taper {
+	const last = positions.length - 1;
 
 	return {
-		place: (value) => {
+		proportionOf: (value) => {
 			if (Number.isNaN(value)) return NaN;
 
-			const above = entries.findIndex((entry) => entry >= value);
+			const above = positions.findIndex((position) => position >= value);
 			if (above === -1) return 1;
 
-			const high = entries[above];
-			const low = entries[above - 1];
+			const high = positions[above];
+			const low = positions[above - 1];
 			if (high === undefined || low === undefined) return 0;
 
 			return (above - 1 + (value - low) / (high - low)) / last;
 		},
-		valueAt: (place) => entries[Math.round(clampUnit(place) * last)] ?? NaN,
+		valueAt: (proportion) => positions[Math.round(clampProportion(proportion) * last)] ?? NaN,
 	};
 }

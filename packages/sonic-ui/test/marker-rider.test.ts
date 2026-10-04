@@ -14,28 +14,28 @@ const view: RiderView = {
 
 const early: RiderView = { ...view, playheadSeconds: 5 };
 
-function labels(...places: Array<[number, number]>): Array<RiderLabel> {
-	return places.map(([value, widthPx]) => ({
+function labels(...starts: Array<[number, number]>): Array<RiderLabel> {
+	return starts.map(([start, widthPx]) => ({
 		isDimmed: false,
-		text: `At ${String(value)}`,
-		value,
+		start,
+		text: `At ${String(start)}`,
 		widthPx,
 	}));
 }
 
 test('the parked label is the last marker at or before the playhead; none parks before the first', () => {
-	const cues = labels([5, 40], [20, 40], [30, 40]);
+	const markers = labels([5, 40], [20, 40], [30, 40]);
 
-	expect(layoutRider(cues, view).parked?.index).toBe(1);
-	expect(layoutRider(cues, view).arriving?.index).toBe(2);
-	expect(layoutRider(cues, { ...view, playheadSeconds: 4 }).parked).toBeUndefined();
-	expect(layoutRider(cues, { ...view, playheadSeconds: 4 }).arriving?.index).toBe(0);
+	expect(layoutRider(markers, view).parked?.index).toBe(1);
+	expect(layoutRider(markers, view).arriving?.index).toBe(2);
+	expect(layoutRider(markers, { ...view, playheadSeconds: 4 }).parked).toBeUndefined();
+	expect(layoutRider(markers, { ...view, playheadSeconds: 4 }).arriving?.index).toBe(0);
 });
 
 test('the arriving label follows its line at fractional x across a third of a pixel', () => {
-	const cues = labels([10, 40], [30.5, 40]);
-	const before = layoutRider(cues, view).arriving?.x ?? NaN;
-	const after = layoutRider(cues, { ...view, startSeconds: 1 / 30 }).arriving?.x ?? NaN;
+	const markers = labels([10, 40], [30.5, 40]);
+	const before = layoutRider(markers, view).arriving?.x ?? NaN;
+	const after = layoutRider(markers, { ...view, startSeconds: 1 / 30 }).arriving?.x ?? NaN;
 
 	expect(before).toBeCloseTo(313);
 	expect(before - after).toBeCloseTo(1 / 3);
@@ -50,11 +50,13 @@ test('the clip starts when the arriving label meets the parked label, not its li
 });
 
 test('the parked label fades as the next line closes on the playhead', () => {
-	const cues = labels([5, 40], [30, 40]);
+	const markers = labels([5, 40], [30, 40]);
 
-	expect(layoutRider(cues, view).parked?.opacity).toBe(1);
-	expect(layoutRider(cues, { ...view, playheadSeconds: 25 }).parked?.opacity).toBeCloseTo(0.5);
-	expect(layoutRider(cues, { ...view, playheadSeconds: 29.9 }).parked?.opacity).toBeCloseTo(0.01);
+	expect(layoutRider(markers, view).parked?.opacity).toBe(1);
+	expect(layoutRider(markers, { ...view, playheadSeconds: 25 }).parked?.opacity).toBeCloseTo(0.5);
+	expect(layoutRider(markers, { ...view, playheadSeconds: 29.9 }).parked?.opacity).toBeCloseTo(
+		0.01,
+	);
 });
 
 test('the far edge cuts a label, and one starting past it does not arrive', () => {
@@ -82,8 +84,8 @@ function mountRider(): {
 	});
 
 	rider.measure([
-		{ isDimmed: false, text: 'Intro', value: 1 },
-		{ isDimmed: true, text: 'Drop', value: 10.9 },
+		{ isDimmed: false, start: 1, text: 'Intro' },
+		{ isDimmed: true, start: 10.9, text: 'Drop' },
 	]);
 
 	const [parked, arriving] = control.querySelectorAll<HTMLElement>('.sonic-test-label');
@@ -149,8 +151,8 @@ test('labels measured out of order park and arrive in order of time', () => {
 	const { arriving, control, parked, rider } = mountRider();
 
 	rider.measure([
-		{ isDimmed: true, text: 'Drop', value: 10.9 },
-		{ isDimmed: false, text: 'Intro', value: 1 },
+		{ isDimmed: true, start: 10.9, text: 'Drop' },
+		{ isDimmed: false, start: 1, text: 'Intro' },
 	]);
 	rider.place(early);
 
@@ -167,7 +169,7 @@ test('a parked label fades by the written opacity, and clears it once whole agai
 	rider.place({ ...early, playheadSeconds: 1.9 });
 	expect(parked.style.opacity).toBe('0.900');
 
-	rider.measure([{ isDimmed: false, text: 'Intro', value: 1 }]);
+	rider.measure([{ isDimmed: false, start: 1, text: 'Intro' }]);
 	rider.place(early);
 	expect(parked.style.opacity).toBe('');
 });

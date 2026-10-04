@@ -28,7 +28,7 @@ import Layout from '#components/layout.astro';
 		<div class="flex-1"></div>
 		<section
 			aria-label="Player"
-			class="@container relative border-t border-black bg-zinc-950 [--sonic-cue-intro:oklch(72%_0.13_200deg)] [--sonic-dial-size:2rem] [--sonic-key-size:2rem]"
+			class="@container relative border-t border-black bg-zinc-950 [--sonic-marker-intro:oklch(72%_0.13_200deg)] [--sonic-dial-size:2rem] [--sonic-button-size:2rem]"
 			data-web-player
 		>
 			<div class="relative border-b border-zinc-800 p-2" data-panel hidden>
@@ -42,13 +42,13 @@ import Layout from '#components/layout.astro';
 					readout
 					step="0"
 				></sonic-waveform>
-				<div class="absolute top-4 right-4 flex gap-1 [--sonic-key-size:1.5rem]">
-					<sonic-key aria-label="Zoom out" data-zoom="-1">
+				<div class="absolute top-4 right-4 flex gap-1 [--sonic-button-size:1.5rem]">
+					<sonic-button aria-label="Zoom out" data-zoom="-1">
 						<ZoomOut aria-hidden="true" />
-					</sonic-key>
-					<sonic-key aria-label="Zoom in" data-zoom="1">
+					</sonic-button>
+					<sonic-button aria-label="Zoom in" data-zoom="1">
 						<ZoomIn aria-hidden="true" />
-					</sonic-key>
+					</sonic-button>
 				</div>
 			</div>
 			<sonic-slider
@@ -63,27 +63,27 @@ import Layout from '#components/layout.astro';
 			></sonic-slider>
 			<div class="flex flex-wrap items-center gap-x-4 gap-y-3 px-4 py-3">
 				<div class="flex items-center gap-1">
-					<sonic-key aria-label="Previous" data-previous soft-disabled>
+					<sonic-button aria-label="Previous" data-previous soft-disabled>
 						<SkipBack aria-hidden="true" />
-					</sonic-key>
-					<sonic-key aria-label="Back 10 seconds" data-seek-by="-10" disabled>
+					</sonic-button>
+					<sonic-button aria-label="Back 10 seconds" data-seek-by="-10" disabled>
 						<RotateCcw aria-hidden="true" />
-					</sonic-key>
-					<sonic-key
+					</sonic-button>
+					<sonic-button
 						aria-label="Play"
-						class="[--sonic-key-face-radius-ratio:0.5] [--sonic-key-radius-ratio:0.5] [--sonic-key-size:2.5rem]"
+						class="[--sonic-button-face-radius-ratio:0.5] [--sonic-button-radius-ratio:0.5] [--sonic-button-size:2.5rem]"
 						data-play
-						toggle
+						latching
 					>
-						<Play aria-hidden="true" data-sonic-when="off" />
-						<Pause aria-hidden="true" data-sonic-when="on" />
-					</sonic-key>
-					<sonic-key aria-label="Forward 10 seconds" data-seek-by="10" disabled>
+						<Play aria-hidden="true" data-sonic-when="released" />
+						<Pause aria-hidden="true" data-sonic-when="pressed" />
+					</sonic-button>
+					<sonic-button aria-label="Forward 10 seconds" data-seek-by="10" disabled>
 						<RotateCw aria-hidden="true" />
-					</sonic-key>
-					<sonic-key aria-label="Next" data-next soft-disabled>
+					</sonic-button>
+					<sonic-button aria-label="Next" data-next soft-disabled>
 						<SkipForward aria-hidden="true" />
-					</sonic-key>
+					</sonic-button>
 				</div>
 				<div class="flex min-w-40 flex-1 items-center gap-3">
 					<div class="grid min-w-0 flex-1 leading-tight">
@@ -106,14 +106,14 @@ import Layout from '#components/layout.astro';
 					<span data-sonic-value="1.5">1.5×</span>
 					<span data-sonic-value="2">2×</span>
 				</sonic-segmented>
-				<sonic-key aria-label="Waveform panel" data-panel-toggle disabled toggle>
+				<sonic-button aria-label="Waveform panel" data-panel-button disabled latching>
 					<AudioWaveform aria-hidden="true" />
-				</sonic-key>
+				</sonic-button>
 				<div class="flex items-center gap-2">
-					<sonic-key aria-label="Mute" data-mute toggle>
-						<Volume2 aria-hidden="true" data-sonic-when="off" />
-						<VolumeX aria-hidden="true" data-sonic-when="on" />
-					</sonic-key>
+					<sonic-button aria-label="Mute" data-mute latching>
+						<Volume2 aria-hidden="true" data-sonic-when="released" />
+						<VolumeX aria-hidden="true" data-sonic-when="pressed" />
+					</sonic-button>
 					<sonic-dial
 						aria-label="Volume"
 						data-volume

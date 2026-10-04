@@ -1,9 +1,9 @@
-import type { RangeScale } from '#lib/range-scale.ts';
+import type { ValueMapping } from '#lib/value-mapping.ts';
 
-import { clampUnit, wrapUnit } from '#lib/math.ts';
+import { clampProportion, wrapProportion } from '#lib/math.ts';
 
 interface DetentHold {
-	place: number;
+	proportion: number;
 	slack: number | undefined;
 	value: number;
 	zone: number;
@@ -13,7 +13,7 @@ export interface DragState {
 	detent?: DetentHold;
 	isEngaged: boolean;
 	lastPosition: number;
-	rawPlace: number;
+	rawProportion: number;
 	startPosition: number;
 	thresholdPx: number;
 	travelPx: number;
@@ -28,8 +28,8 @@ export interface DragMove {
 interface DragStart {
 	detent?: { value: number; zone: number };
 	from: number;
-	place: number;
 	position: number;
+	proportion: number;
 	thresholdPx: number;
 	travelPx: number;
 }
@@ -39,7 +39,7 @@ interface DragStep {
 	value: number | undefined;
 }
 
-const fineScale = 0.1;
+const fineFactor = 0.1;
 const mouseDragThresholdPx = 3;
 const touchDragThresholdPx = 7;
 
@@ -47,53 +47,55 @@ export function dragThresholdPx(pointerType: string): number {
 	return pointerType === 'touch' ? touchDragThresholdPx : mouseDragThresholdPx;
 }
 
-function isAcross(from: number, to: number, place: number): boolean {
-	return from !== place && (from - place) * (to - place) <= 0;
+function isAcross(from: number, to: number, proportion: number): boolean {
+	return from !== proportion && (from - proportion) * (to - proportion) <= 0;
 }
 
 function passDetent(
 	hold: DetentHold,
 	from: number,
 	to: number,
-): { place: number | undefined; slack: number | undefined } {
-	if (hold.slack === undefined && !isAcross(from, to, hold.place)) {
-		return { place: to, slack: undefined };
+): { proportion: number | undefined; slack: number | undefined } {
+	if (hold.slack === undefined && !isAcross(from, to, hold.proportion)) {
+		return { proportion: to, slack: undefined };
 	}
 
-	const slack = (hold.slack ?? 0) + to - hold.place;
+	const slack = (hold.slack ?? 0) + to - hold.proportion;
 
-	if (Math.abs(slack) <= hold.zone) return { place: undefined, slack };
+	if (Math.abs(slack) <= hold.zone) return { proportion: undefined, slack };
 
-	return { place: hold.place + slack - Math.sign(slack) * hold.zone, slack: undefined };
+	return { proportion: hold.proportion + slack - Math.sign(slack) * hold.zone, slack: undefined };
 }
 
 function nearestTurn(hold: DetentHold, from: number): DetentHold {
-	return { ...hold, place: hold.place + Math.round(from - hold.place) };
+	return { ...hold, proportion: hold.proportion + Math.round(from - hold.proportion) };
 }
 
-function land(scale: RangeScale, state: DragState, place: number): DragStep {
-	const rawPlace = scale.isWrapping ? wrapUnit(place) : clampUnit(place);
+function land(mapping: ValueMapping, state: DragState, proportion: number): DragStep {
+	const rawProportion = mapping.isWrapping
+		? wrapProportion(proportion)
+		: clampProportion(proportion);
 
 	return {
-		state: { ...state, rawPlace },
-		value: scale.snap(scale.valueAt(rawPlace)),
+		state: { ...state, rawProportion },
+		value: mapping.snap(mapping.valueAt(rawProportion)),
 	};
 }
 
-export function startDrag(scale: RangeScale, start: DragStart): DragState {
-	const { detent: wanted, from, place, position, ...fixed } = start;
+export function startDrag(mapping: ValueMapping, start: DragStart): DragState {
+	const { detent: wanted, from, position, proportion, ...fixed } = start;
 	const state = {
 		...fixed,
 		isEngaged: false,
 		lastPosition: position,
-		rawPlace: place,
+		rawProportion: proportion,
 		startPosition: position,
 	};
 	if (!wanted) return state;
 
-	const value = scale.snap(wanted.value);
+	const value = mapping.snap(wanted.value);
 	const detent = {
-		place: scale.place(value),
+		proportion: mapping.proportionOf(value),
 		slack: value === from ? 0 : undefined,
 		value,
 		zone: wanted.zone,
@@ -102,7 +104,7 @@ export function startDrag(scale: RangeScale, start: DragStart): DragState {
 	return { ...state, detent };
 }
 
-export function stepDrag(scale: RangeScale, state: DragState, move: DragMove): DragStep {
+export function stepDrag(mapping: ValueMapping, state: DragState, move: DragMove): DragStep {
 	const isEngaged =
 		state.isEngaged ||
 		move.isOutside ||
@@ -110,18 +112,18 @@ export function stepDrag(scale: RangeScale, state: DragState, move: DragMove): D
 
 	if (!isEngaged) return { state, value: undefined };
 
-	const pace = move.isFine ? fineScale : 1;
-	const to = state.rawPlace + ((move.position - state.lastPosition) / state.travelPx) * pace;
+	const pace = move.isFine ? fineFactor : 1;
+	const to = state.rawProportion + ((move.position - state.lastPosition) / state.travelPx) * pace;
 	const moved = { ...state, isEngaged: true, lastPosition: move.position };
 	const { detent } = state;
-	if (!detent) return land(scale, moved, to);
+	if (!detent) return land(mapping, moved, to);
 
-	const near = scale.isWrapping ? nearestTurn(detent, state.rawPlace) : detent;
-	const passed = passDetent(near, state.rawPlace, to);
+	const near = mapping.isWrapping ? nearestTurn(detent, state.rawProportion) : detent;
+	const passed = passDetent(near, state.rawProportion, to);
 	const held = { ...moved, detent: { ...detent, slack: passed.slack } };
-	if (passed.place === undefined) {
-		return { state: { ...held, rawPlace: detent.place }, value: detent.value };
+	if (passed.proportion === undefined) {
+		return { state: { ...held, rawProportion: detent.proportion }, value: detent.value };
 	}
 
-	return land(scale, held, passed.place);
+	return land(mapping, held, passed.proportion);
 }

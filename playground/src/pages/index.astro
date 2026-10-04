@@ -1,18 +1,18 @@
 ---
 import Layout from '#components/layout.astro';
+import ButtonSpecimens from '#components/specimens/button.astro';
 import DialSpecimens from '#components/specimens/dial.astro';
 import EnvelopeSpecimens from '#components/specimens/envelope.astro';
-import KeySpecimens from '#components/specimens/key.astro';
 import LedSpecimens from '#components/specimens/led.astro';
-import LeverSpecimens from '#components/specimens/lever.astro';
 import MeterSpecimens from '#components/specimens/meter.astro';
 import NumberSpecimens from '#components/specimens/number.astro';
-import PlateSpecimens from '#components/specimens/plate.astro';
+import PanelSpecimens from '#components/specimens/panel.astro';
 import RingSpecimens from '#components/specimens/ring.astro';
 import ScreenSpecimens from '#components/specimens/screen.astro';
 import Section from '#components/specimens/section.astro';
+import SegmentedSpecimens from '#components/specimens/segmented.astro';
 import SliderSpecimens from '#components/specimens/slider.astro';
-import SumSpecimens from '#components/specimens/sum.astro';
+import SplitSpecimens from '#components/specimens/split.astro';
 import SwitchSpecimens from '#components/specimens/switch.astro';
 import Tuner from '#components/specimens/tuner.astro';
 import WaveformSpecimens from '#components/specimens/waveform.astro';
@@ -25,25 +25,25 @@ const sections = [
 	{ id: 'slider', label: 'Slider' },
 	{ id: 'xy', label: 'XY pad' },
 	{ id: 'envelope', label: 'Envelope' },
-	{ id: 'wavestrip', label: 'Wave strip' },
+	{ id: 'wavestrip', label: 'Wavestrip' },
 	{ id: 'waveform', label: 'Waveform' },
-	{ id: 'key', label: 'Key' },
+	{ id: 'button', label: 'Button' },
 	{ id: 'led', label: 'LED' },
 	{ id: 'ring', label: 'Ring' },
+	{ id: 'segmented', label: 'Segmented' },
 	{ id: 'switch', label: 'Switch' },
-	{ id: 'lever', label: 'Lever' },
-	{ id: 'number', label: 'Number' },
-	{ id: 'sum', label: 'Linked sum' },
+	{ id: 'number', label: 'Number box' },
+	{ id: 'split', label: 'Split' },
 	{ id: 'meter', label: 'Meter' },
 	{ id: 'screen', label: 'Screen' },
-	{ id: 'plate', label: 'Plate' },
+	{ id: 'panel', label: 'Panel' },
 ];
 ---
 
 <Layout sections={sections} title="sonic-ui">
 	<header class="mb-8 max-w-2xl">
 		<p class="text-sm leading-relaxed text-zinc-400">
-			Native custom elements for audio interfaces, skinned with CSS custom properties.
+			Native custom elements for audio interfaces, skinned with tokens (CSS custom properties).
 		</p>
 		<pre class="mt-3 inline-block bg-zinc-900 px-3 py-2 font-mono text-[0.8125rem] text-zinc-300">pnpm add @xsynaptic/sonic-ui</pre>
 	</header>
@@ -62,14 +62,14 @@ const sections = [
 	<Section id="envelope" title="Envelope">
 		<EnvelopeSpecimens />
 	</Section>
-	<Section id="wavestrip" title="Wave strip">
+	<Section id="wavestrip" title="Wavestrip">
 		<WavestripSpecimens />
 	</Section>
 	<Section id="waveform" title="Waveform">
 		<WaveformSpecimens />
 	</Section>
-	<Section id="key" title="Key">
-		<KeySpecimens />
+	<Section id="button" title="Button">
+		<ButtonSpecimens />
 	</Section>
 	<Section id="led" title="LED">
 		<LedSpecimens />
@@ -77,17 +77,17 @@ const sections = [
 	<Section id="ring" title="Ring">
 		<RingSpecimens />
 	</Section>
+	<Section id="segmented" title="Segmented">
+		<SegmentedSpecimens />
+	</Section>
 	<Section id="switch" title="Switch">
 		<SwitchSpecimens />
 	</Section>
-	<Section id="lever" title="Lever">
-		<LeverSpecimens />
-	</Section>
-	<Section id="number" title="Number">
+	<Section id="number" title="Number box">
 		<NumberSpecimens />
 	</Section>
-	<Section id="sum" title="Linked sum">
-		<SumSpecimens />
+	<Section id="split" title="Split">
+		<SplitSpecimens />
 	</Section>
 	<Section id="meter" title="Meter">
 		<MeterSpecimens />
@@ -95,15 +95,15 @@ const sections = [
 	<Section id="screen" title="Screen">
 		<ScreenSpecimens />
 	</Section>
-	<Section id="plate" title="Plate">
-		<PlateSpecimens />
+	<Section id="panel" title="Panel">
+		<PanelSpecimens />
 	</Section>
 	<Fragment slot="scripts">
 		<script>
 			import '#scripts/specimens/motion.ts';
 			import '#scripts/specimens/pad.ts';
 			import '#scripts/specimens/screen-follow.ts';
-			import '#scripts/specimens/sum.ts';
+			import '#scripts/specimens/split.ts';
 			import '#scripts/buffered.ts';
 			import '#scripts/samples.ts';
 			import '#scripts/markers.ts';

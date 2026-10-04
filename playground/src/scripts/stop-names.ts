@@ -3,8 +3,8 @@ export function defineStops<Value extends string>(
 ) {
 	return {
 		labels: stops.map((stop) => stop.label),
+		positions: stops.map((_stop, index) => String(index)).join(' '),
 		valueAt: (index: number): undefined | Value => stops[index]?.value,
-		values: stops.map((_stop, index) => String(index)).join(' '),
 	};
 }
 

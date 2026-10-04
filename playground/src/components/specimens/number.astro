@@ -1,9 +1,9 @@
 ---
 import Cell from '#components/specimens/cell.astro';
-import Panel from '#components/specimens/panel.astro';
+import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 ---
 
-<Panel>
+<SpecimenGrid>
 	<Cell id="number-tempo" isWide={true} label="Tempo">
 		<sonic-number
 			aria-labelledby="number-tempo"
@@ -44,8 +44,8 @@ import Panel from '#components/specimens/panel.astro';
 			aria-labelledby="number-loop"
 			class="font-mono"
 			data-format="beats"
+			positions="0.03125 0.0625 0.125 0.25 0.5 1 2 4 8 16 32"
 			value="4"
-			values="0.03125 0.0625 0.125 0.25 0.5 1 2 4 8 16 32"
 		></sonic-number>
 	</Cell>
 	<Cell id="number-note" isWide={true} label="Note">
@@ -53,8 +53,8 @@ import Panel from '#components/specimens/panel.astro';
 			aria-labelledby="number-note"
 			class="font-mono"
 			data-format="note"
+			positions="3 6 8 12 16 18 24 32 36 48 64 72 96 144 192"
 			value="48"
-			values="3 6 8 12 16 18 24 32 36 48 64 72 96 144 192"
 		></sonic-number>
 	</Cell>
 	<Cell id="number-disabled" isWide={true} label="Disabled">
@@ -66,8 +66,8 @@ import Panel from '#components/specimens/panel.astro';
 			value="60"
 		></sonic-number>
 	</Cell>
-</Panel>
-<Panel isLarge={true}>
+</SpecimenGrid>
+<SpecimenGrid isLarge={true}>
 	<Cell id="number-large-tempo" isWide={true} label="Tempo, large">
 		<sonic-number
 			aria-labelledby="number-large-tempo"
@@ -80,4 +80,4 @@ import Panel from '#components/specimens/panel.astro';
 			value="120"
 		></sonic-number>
 	</Cell>
-</Panel>
+</SpecimenGrid>

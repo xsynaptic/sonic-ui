@@ -8,35 +8,31 @@ const icon = '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 4l14 8-14 
 
 // `warns` names the sheet a case leaves out, which its markup needs
 export const solos: Record<string, Solo> = {
+	button: {
+		markup: `<sonic-button aria-label="Mute" pressed latching>${icon}</sonic-button>`,
+		sheets: ['button'],
+	},
+	'button-led': {
+		markup:
+			'<sonic-button aria-label="Power" pressed latching><span class="sonic-led"></span></sonic-button>',
+		sheets: ['button', 'led'],
+	},
 	dial: { markup: '<sonic-dial aria-label="Level" value="50"></sonic-dial>', sheets: ['dial'] },
 	envelope: {
 		markup: '<sonic-envelope aria-label="Shape"></sonic-envelope>',
 		sheets: ['envelope'],
 	},
-	key: {
-		markup: `<sonic-key aria-label="Mute" pressed toggle>${icon}</sonic-key>`,
-		sheets: ['key'],
-	},
-	'key-led': {
-		markup:
-			'<sonic-key aria-label="Power" pressed toggle><span class="sonic-led"></span></sonic-key>',
-		sheets: ['key', 'led'],
-	},
 	led: { markup: '<span class="sonic-led" data-sonic-lit></span>', sheets: ['led'] },
-	lever: {
-		markup:
-			'<sonic-lever aria-label="Talk" value="off"><span data-sonic-value="off">Off</span><span data-sonic-value="on">On</span></sonic-lever>',
-		sheets: ['lever'],
-	},
 	meter: { markup: '<sonic-meter max="0" min="-60"></sonic-meter>', sheets: ['meter'] },
-	'no-key': {
-		markup: `<span class="sonic-ring"><sonic-key aria-label="Loop" toggle>${icon}</sonic-key></span>`,
+	'no-button': {
+		markup: `<span class="sonic-ring"><sonic-button aria-label="Loop" latching>${icon}</sonic-button></span>`,
 		sheets: ['ring'],
-		warns: 'key.css',
+		warns: 'button.css',
 	},
 	'no-led': {
-		markup: '<sonic-key aria-label="Power" toggle><span class="sonic-led"></span></sonic-key>',
-		sheets: ['key'],
+		markup:
+			'<sonic-button aria-label="Power" latching><span class="sonic-led"></span></sonic-button>',
+		sheets: ['button'],
 		warns: 'led.css',
 	},
 	'no-led-slider': {
@@ -50,19 +46,19 @@ export const solos: Record<string, Solo> = {
 			'<sonic-number aria-label="Tempo" max="300" min="20" step="0.5" value="120"></sonic-number>',
 		sheets: ['number'],
 	},
-	plate: {
+	panel: {
 		markup:
-			'<section aria-label="Plate" class="sonic-plate"><h2 class="sonic-plate-title">Plate</h2></section>',
-		sheets: ['plate'],
+			'<section aria-label="Panel" class="sonic-panel"><h2 class="sonic-panel-title">Panel</h2></section>',
+		sheets: ['panel'],
 	},
 	ring: {
 		markup:
 			'<span aria-label="Import" aria-valuenow="40" class="sonic-ring" role="progressbar" style="--sonic-ring-to: 0.4"></span>',
 		sheets: ['ring'],
 	},
-	'ring-key': {
-		markup: `<span class="sonic-ring" style="--sonic-ring-to: 0.5"><sonic-key aria-label="Loop" pressed toggle>${icon}</sonic-key></span>`,
-		sheets: ['key', 'ring'],
+	'ring-button': {
+		markup: `<span class="sonic-ring" style="--sonic-ring-to: 0.5"><sonic-button aria-label="Loop" pressed latching>${icon}</sonic-button></span>`,
+		sheets: ['button', 'ring'],
 	},
 	screen: { markup: '<div class="sonic-screen">440 Hz</div>', sheets: ['screen'] },
 	segmented: {
@@ -73,6 +69,11 @@ export const solos: Record<string, Solo> = {
 	slider: {
 		markup: '<sonic-slider aria-label="Send" step="5" value="35"></sonic-slider>',
 		sheets: ['slider'],
+	},
+	switch: {
+		markup:
+			'<sonic-switch aria-label="Talk" value="off"><span data-sonic-value="off">Off</span><span data-sonic-value="on">On</span></sonic-switch>',
+		sheets: ['switch'],
 	},
 	waveform: {
 		markup: '<sonic-waveform aria-label="Detail" max="300" value="150"></sonic-waveform>',

@@ -1,6 +1,6 @@
 ---
 import Cell from '#components/specimens/cell.astro';
-import Panel from '#components/specimens/panel.astro';
+import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 
 const strips = [
 	{ id: 'wavestrip-default', label: 'Default', seed: 1 },
@@ -12,7 +12,7 @@ const strips = [
 ];
 ---
 
-<Panel isLarge={true}>
+<SpecimenGrid isLarge={true}>
 	{strips.map((strip) => (
 		<Cell id={strip.id} isWide={true} label={strip.label}>
 			<sonic-wavestrip
@@ -31,4 +31,4 @@ const strips = [
 			></sonic-wavestrip>
 		</Cell>
 	))}
-</Panel>
+</SpecimenGrid>

@@ -1,7 +1,7 @@
 ---
-import { meterLights } from '#components/club-mixer/meter-lights.ts';
+import { meterSegments } from '#components/club-mixer/meter-segments.ts';
 import Label from '#components/replica/label.astro';
-import PanelKey from '#components/replica/panel-key.astro';
+import PanelButton from '#components/replica/panel-button.astro';
 import Pot from '#components/replica/pot.astro';
 
 const mixes = [
@@ -15,9 +15,9 @@ const sources = [
 	{ id: 'aux-2', label: 'Aux 2' },
 ];
 const sides = ['left', 'right'];
-const plateClass = 'sonic-plate flex flex-col items-center gap-3 p-3 [--sonic-plate-depth:0px]';
+const panelClass = 'sonic-panel flex flex-col items-center gap-3 p-3 [--sonic-panel-depth:0px]';
 const titleClass =
-	'sonic-plate-title self-stretch font-mono text-[0.625rem] font-bold tracking-widest text-zinc-300 uppercase';
+	'sonic-panel-title self-stretch font-mono text-[0.625rem] font-bold tracking-widest text-zinc-300 uppercase';
 ---
 
 <div class="flex flex-col items-center gap-4 border-s border-zinc-800 ps-3">
@@ -35,7 +35,7 @@ const titleClass =
 			step={0.5}
 			value={125}
 		/>
-		<PanelKey
+		<PanelButton
 			data={{ 'data-start': '' }}
 			id="master-start"
 			isRound={true}
@@ -43,11 +43,11 @@ const titleClass =
 			size="large"
 		/>
 	</div>
-	<div class={plateClass}>
+	<div class={panelClass}>
 		<div aria-label="Master" class="flex flex-col items-center gap-3" role="group">
 			<div class="flex gap-1">
 				{sides.map(() => (
-					<sonic-meter data-master-meter lights={meterLights}></sonic-meter>
+					<sonic-meter data-master-meter segments={meterSegments}></sonic-meter>
 				))}
 			</div>
 			<span class={titleClass}>Master</span>
@@ -67,7 +67,7 @@ const titleClass =
 		</div>
 		<div aria-label="Booth" class="flex flex-col items-center gap-3" role="group">
 			<span class={titleClass}>Booth</span>
-			<PanelKey hasLed={false} id="booth-mono" label="Mono" />
+			<PanelButton hasLed={false} id="booth-mono" label="Mono" />
 			<Pot
 				id="booth-level"
 				isNumbered={true}
@@ -78,7 +78,7 @@ const titleClass =
 				step={0.5}
 				value={4}
 			/>
-			<PanelKey id="booth-mute" label="Mute" />
+			<PanelButton id="booth-mute" label="Mute" />
 		</div>
 		<div aria-label="Monitor" class="flex flex-col items-center gap-3" role="group">
 			<span class={titleClass}>Monitor</span>
@@ -88,7 +88,7 @@ const titleClass =
 			</div>
 			<div class="grid grid-cols-2 gap-x-2 gap-y-2.5">
 				{sources.map((source) => (
-					<PanelKey id={`monitor-${source.id}`} label={source.label} />
+					<PanelButton id={`monitor-${source.id}`} label={source.label} />
 				))}
 			</div>
 			<Pot

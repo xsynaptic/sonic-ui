@@ -10,22 +10,22 @@ const drawnParts = [
 	'.sonic-dial-ring',
 	'#locked .sonic-dial-modulation',
 	'.sonic-dial-cap',
-	'.sonic-dial-pointer::before',
+	'.sonic-dial-indicator::before',
 	'.sonic-slider-groove',
 	'#fader .sonic-slider-modulation',
 	'.sonic-slider-cap',
 	'#wavestrip .sonic-wavestrip-marker',
 	'#waveform .sonic-waveform-playhead',
-	'.sonic-key-cap',
+	'.sonic-button-cap',
 	'.sonic-segmented-cap',
 	'.sonic-meter-segments',
-	'.sonic-meter-level',
+	'.sonic-meter-bar',
 	'.sonic-meter-clip',
-	'#ladder .sonic-meter-level',
-	'#legend .sonic-scale-tick',
-	'#talk .sonic-lever-bushing',
-	'#talk .sonic-lever-bat::before',
-	'#talk .sonic-lever-bat::after',
+	'#ladder .sonic-meter-bar',
+	'#scaled .sonic-scale-tick',
+	'#talk .sonic-switch-bushing',
+	'#talk .sonic-switch-bat::before',
+	'#talk .sonic-switch-bat::after',
 	'#xy .sonic-xy-field::before',
 	'#xy .sonic-xy-field::after',
 	'#xy .sonic-xy-puck::before',
@@ -68,9 +68,9 @@ const focusable = [
 	'.sonic-wavestrip',
 	'.sonic-waveform',
 	'.sonic-number',
-	'.sonic-key',
-	'.sonic-segmented-segment',
-	'.sonic-lever-position',
+	'.sonic-button',
+	'.sonic-segmented-option',
+	'.sonic-switch-position',
 	'.sonic-xy-axis',
 ];
 
@@ -122,25 +122,25 @@ test('a hovered or latched cap keeps to system colours', async ({ page }) => {
 		await systemColour(page, 'ButtonFace'),
 		await systemColour(page, 'Highlight'),
 	];
-	const key = page.locator('#mute .sonic-key');
+	const button = page.locator('#mute .sonic-button');
 
 	await page.locator('#level .sonic-dial').hover();
 	const dial = await paintOf(page, '#level .sonic-dial-cap');
 
-	await key.hover();
-	const hovered = await paintOf(page, '#mute .sonic-key-cap');
+	await button.hover();
+	const hovered = await paintOf(page, '#mute .sonic-button-cap');
 
-	await key.click();
-	const latched = await paintOf(page, '#mute .sonic-key-cap');
-	const segment = await paintOf(page, '#mode [aria-checked="true"] .sonic-segmented-cap');
+	await button.click();
+	const latched = await paintOf(page, '#mute .sonic-button-cap');
+	const option = await paintOf(page, '#mode [aria-checked="true"] .sonic-segmented-cap');
 
 	const transparentDrop = expect.stringMatching(/^(rgba\(0, 0, 0, 0\)|transparent)/);
 
-	expect({ dial, hovered, latched, segment }).toEqual({
+	expect({ dial, hovered, latched, option }).toEqual({
 		dial: { colour: buttonFace, drop: transparentDrop, image: 'none' },
 		hovered: { colour: buttonFace, drop: transparentDrop, image: 'none' },
 		latched: { colour: highlight, drop: transparentDrop, image: 'none' },
-		segment: { colour: highlight, drop: transparentDrop, image: 'none' },
+		option: { colour: highlight, drop: transparentDrop, image: 'none' },
 	});
 });
 
@@ -149,18 +149,20 @@ test('a disabled latched cap inks in the colour its grey fill is drawn against',
 }) => {
 	const buttonFace = await systemColour(page, 'ButtonFace');
 
-	await page.locator('#mute .sonic-key').click();
+	await page.locator('#mute .sonic-button').click();
 	await page.evaluate(() => {
 		for (const id of ['mute', 'mode'])
 			document.querySelector(`#${id}`)?.setAttribute('disabled', '');
 	});
 
 	const inks = await page.evaluate(() =>
-		['#mute .sonic-key-cap', '#mode [aria-checked="true"] .sonic-segmented-cap'].map((selector) => {
-			const cap = document.querySelector(selector);
+		['#mute .sonic-button-cap', '#mode [aria-checked="true"] .sonic-segmented-cap'].map(
+			(selector) => {
+				const cap = document.querySelector(selector);
 
-			return cap ? getComputedStyle(cap).color : 'missing';
-		}),
+				return cap ? getComputedStyle(cap).color : 'missing';
+			},
+		),
 	);
 
 	expect(inks).toEqual([buttonFace, buttonFace]);
@@ -185,20 +187,20 @@ test('the number box edges its glass and inks its digits, grey when disabled', a
 	expect(await read()).toEqual({ border: canvasText, digits: grayText });
 });
 
-test('a legend prints in CanvasText and rules its ticks in ButtonText', async ({ page }) => {
+test('a scale prints in CanvasText and rules its ticks in ButtonText', async ({ page }) => {
 	const [buttonText, canvasText] = [
 		await systemColour(page, 'ButtonText'),
 		await systemColour(page, 'CanvasText'),
 	];
-	const legend = await page.locator('#legend .sonic-slider-scale').evaluate((scale) => ({
+	const printed = await page.locator('#scaled .sonic-slider-scale').evaluate((scale) => ({
 		label: getComputedStyle(scale.querySelector('.sonic-scale-label') ?? scale).color,
 		tick: getComputedStyle(scale.querySelector('.sonic-scale-tick') ?? scale).backgroundColor,
 	}));
 
-	expect(legend).toEqual({ label: canvasText, tick: buttonText });
+	expect(printed).toEqual({ label: canvasText, tick: buttonText });
 });
 
-test('an endless dial lights its segment in Highlight', async ({ page }) => {
+test('an endless dial lights its dot in Highlight', async ({ page }) => {
 	const highlight = await systemColour(page, 'Highlight');
 	const ring = await paintOf(page, '#phase .sonic-dial-ring');
 
@@ -242,7 +244,7 @@ test('a live modulation paints its tick in CanvasText', async ({ page }) => {
 
 	for (const id of ['modulated', 'modulated-slider']) {
 		await page.locator(`#${id}`).evaluate((element) => {
-			Object.assign(element, { modulated: 95 });
+			Object.assign(element, { modulationValue: 95 });
 		});
 	}
 
@@ -266,42 +268,42 @@ test('a live modulation paints its tick in CanvasText', async ({ page }) => {
 	expect(slider.paint).toContain(canvasText);
 });
 
-test('a ring paints its arc in system colours and leaves the key inside it forced', async ({
+test('a ring paints its arc in system colours and leaves the button inside it forced', async ({
 	page,
 }) => {
 	const [grayText, highlight] = [
 		await systemColour(page, 'GrayText'),
 		await systemColour(page, 'Highlight'),
 	];
-	const arc = await page.locator('#ring-key').evaluate((ring) => {
+	const arc = await page.locator('#ring-button').evaluate((ring) => {
 		const style = getComputedStyle(ring, '::before');
 
 		return { adjust: style.forcedColorAdjust, image: style.backgroundImage };
 	});
-	const key = await page
-		.locator('#ring-key .sonic-key')
+	const button = await page
+		.locator('#ring-button .sonic-button')
 		.evaluate((element) => getComputedStyle(element).forcedColorAdjust);
 
 	expect(arc.adjust).toBe('none');
 	expect(arc.image).toContain(grayText);
 	expect(arc.image).toContain(highlight);
-	expect(key).toBe('auto');
+	expect(button).toBe('auto');
 });
 
-test('a lever draws its bat in CanvasText and a plate keeps its edge', async ({ page }) => {
+test('a switch draws its bat in CanvasText and a panel keeps its edge', async ({ page }) => {
 	const canvasText = await systemColour(page, 'CanvasText');
 	const ball = await page
-		.locator('#talk .sonic-lever-bat')
+		.locator('#talk .sonic-switch-bat')
 		.evaluate((element) => getComputedStyle(element, '::after').backgroundColor);
-	const plate = await page
-		.locator('#plate')
+	const panel = await page
+		.locator('#panel')
 		.evaluate((element) => getComputedStyle(element).borderTopColor);
 
 	expect(ball).toBe(canvasText);
-	expect(plate).toBe(canvasText);
+	expect(panel).toBe(canvasText);
 });
 
-test('a wave strip plays in opaque Highlight', async ({ page }) => {
+test('a wavestrip plays in opaque Highlight', async ({ page }) => {
 	const canvas = page.locator('#wavestrip canvas');
 
 	await canvas.scrollIntoViewIfNeeded();
@@ -332,7 +334,7 @@ test('a waveform paints its wave in opaque CanvasText', async ({ page }) => {
 	}).toPass();
 });
 
-test('a pad draws its crosshair lit in Highlight over GrayText, grey throughout when disabled', async ({
+test('an XY pad draws its crosshair lit in Highlight over GrayText, grey throughout when disabled', async ({
 	page,
 }) => {
 	const [grayText, highlight] = [
@@ -354,7 +356,7 @@ test('a pad draws its crosshair lit in Highlight over GrayText, grey throughout 
 	expect(locked.lit).not.toContain(highlight);
 });
 
-test("a pad's focused part paints its outline outside the puck", async ({ page }) => {
+test("an XY pad's focused part paints its outline outside the puck", async ({ page }) => {
 	const part = page.locator('#xy [data-sonic-axis="x"]');
 
 	await part.scrollIntoViewIfNeeded();
@@ -387,7 +389,7 @@ test('an envelope strokes its line in Highlight and drops its fill', async ({ pa
 	expect(graph).toEqual({ adjust: 'none', fill: 'none', stroke: highlight });
 });
 
-test('a curve dot fills in CanvasText, and the puck is a CanvasText star', async ({ page }) => {
+test('a curve handle fills in CanvasText, and the puck is a CanvasText star', async ({ page }) => {
 	const text = await systemColour(page, 'CanvasText');
 	const paintOfPoint = (selector: string) =>
 		page.locator(selector).evaluate((element) => {
@@ -402,6 +404,6 @@ test('a curve dot fills in CanvasText, and the puck is a CanvasText star', async
 			.evaluate((element) => getComputedStyle(element, '::before').backgroundColor),
 	).toBe(text);
 	expect(
-		await paintOfPoint('#envelope-curves .sonic-envelope-dot[data-sonic-stage="decay"]'),
+		await paintOfPoint('#envelope-curves .sonic-envelope-curve[data-sonic-stage="decay"]'),
 	).toEqual({ fill: text, ring: text });
 });

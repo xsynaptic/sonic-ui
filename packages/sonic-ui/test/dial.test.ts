@@ -85,7 +85,7 @@ test.each([
 	['value="80" modulation="50"', '0.8', '1'],
 	['value="20" modulation="-50"', '0', '0.2'],
 	['value="40" modulation="25"', '0.4', '0.65'],
-])('%s lights the modulation from %s to %s', (attributes, from, to) => {
+])('%s draws the modulation from %s to %s', (attributes, from, to) => {
 	const { control } = mountDial(attributes);
 
 	expect(control.style.getPropertyValue('--_sonic-dial-modulation-from')).toBe(from);
@@ -160,20 +160,20 @@ test('formatValue writes the value text, and unsetting it clears it', () => {
 	expect(control.hasAttribute('aria-valuetext')).toBe(false);
 });
 
-test('formatValueText speaks apart from formatValue, which the entry keeps, and falls back to it when unset', () => {
+test('formatSpokenValue speaks apart from formatValue, which the entry keeps, and falls back to it when unset', () => {
 	const { control, dial } = mountDial('max="300" step="0" value="65"');
 	const entry = entryOf(control);
 
 	dial.formatValue = (value) =>
 		`${String(Math.floor(value / 60))}:${String(value % 60).padStart(2, '0')}`;
 	dial.parseValue = Number;
-	dial.formatValueText = (value) => `${String(value)} seconds`;
+	dial.formatSpokenValue = (value) => `${String(value)} seconds`;
 	expect(control.getAttribute('aria-valuetext')).toBe('65 seconds');
 
-	dial.formatValueText = undefined;
+	dial.formatSpokenValue = undefined;
 	expect(control.getAttribute('aria-valuetext')).toBe('1:05');
 
-	dial.formatValueText = (value) => `${String(value)} seconds`;
+	dial.formatSpokenValue = (value) => `${String(value)} seconds`;
 	press(control);
 	press(control);
 	expect(entry.value).toBe('1:05');
@@ -185,7 +185,7 @@ test('valueText follows input in the shown format, not the spoken one', () => {
 	const listening = new AbortController();
 
 	dial.formatValue = (value) => `${String(value)} dB`;
-	dial.formatValueText = (value) => `${String(value)} decibels`;
+	dial.formatSpokenValue = (value) => `${String(value)} decibels`;
 	document.body.addEventListener(
 		'input',
 		() => {
@@ -519,7 +519,7 @@ test('a property write renders as its attribute would, and undefined removes the
 	expect(dial.value).toBe(100);
 
 	dial.notched = true;
-	expect(control.style.getPropertyValue('--_sonic-dial-positions')).toBe('101');
+	expect(control.style.getPropertyValue('--_sonic-dial-position-count')).toBe('101');
 
 	dial.notched = false;
 	expect(dial.hasAttribute('notched')).toBe(false);
@@ -537,11 +537,11 @@ test('an unset origin reads undefined, so writing it back leaves it following mi
 	expect(control.style.getPropertyValue('--_sonic-dial-origin')).toBe('0');
 });
 
-test('double-press reads type while unset, and type is a valid value', () => {
+test('double-press reads entry while unset, and entry is a valid value', () => {
 	const { control, dial } = mountDial('default="50" double-press="reset" value="80"');
 
-	dial.doublePress = dial.doublePress === 'reset' ? 'type' : 'reset';
-	expect(dial.getAttribute('double-press')).toBe('type');
+	dial.doublePress = dial.doublePress === 'reset' ? 'entry' : 'reset';
+	expect(dial.getAttribute('double-press')).toBe('entry');
 
 	press(control);
 	press(control);
@@ -617,56 +617,56 @@ describe('an endless dial from 10 to 370 in steps of 7.5', () => {
 	});
 });
 
-const modulatedPlace = '--_sonic-dial-modulated';
+const modulationValueProperty = '--_sonic-dial-modulation-value';
 
-test('modulated is placed along the range, clamped to its ends', () => {
+test('the modulation value sits at its proportion, clamped to the ends', () => {
 	const { control, dial } = mountDial('min="20" max="120" value="40"');
 
-	dial.modulated = 95;
-	expect(control.style.getPropertyValue(modulatedPlace)).toBe('0.75');
+	dial.modulationValue = 95;
+	expect(control.style.getPropertyValue(modulationValueProperty)).toBe('0.75');
 
-	dial.modulated = 500;
-	expect(control.style.getPropertyValue(modulatedPlace)).toBe('1');
+	dial.modulationValue = 500;
+	expect(control.style.getPropertyValue(modulationValueProperty)).toBe('1');
 });
 
-test('modulated follows a taper', () => {
+test('the modulation value follows a taper', () => {
 	const { control, dial } = mountDial('min="20" max="20000" taper="log" value="200"');
 
-	dial.modulated = 632.5;
+	dial.modulationValue = 632.5;
 
-	expect(Number(control.style.getPropertyValue(modulatedPlace))).toBeCloseTo(0.5, 3);
+	expect(Number(control.style.getPropertyValue(modulationValueProperty))).toBeCloseTo(0.5, 3);
 });
 
-test('modulated moves neither the value nor its ARIA, and reports nothing', () => {
+test('the modulation value moves neither the value nor its ARIA, and reports nothing', () => {
 	const { control, dial } = mountDial('min="20" max="120" value="40"');
 	const events = recordEvents(document.body);
 
-	dial.modulated = 95;
+	dial.modulationValue = 95;
 
 	expect(events).toEqual([]);
 	expect(dial.value).toBe(40);
-	expect(dial.modulated).toBe(95);
+	expect(dial.modulationValue).toBe(95);
 	expect(control.getAttribute('aria-valuenow')).toBe('40');
 });
 
-test('undefined clears modulated, NaN is ignored, and a range change re-places it', () => {
+test('undefined clears the modulation value, NaN is ignored, and a change of bounds moves it', () => {
 	const { control, dial } = mountDial('min="20" max="120" value="40"');
 
-	dial.modulated = 95;
-	dial.modulated = NaN;
-	expect(control.style.getPropertyValue(modulatedPlace)).toBe('0.75');
+	dial.modulationValue = 95;
+	dial.modulationValue = NaN;
+	expect(control.style.getPropertyValue(modulationValueProperty)).toBe('0.75');
 
 	dial.max = 170;
-	expect(control.style.getPropertyValue(modulatedPlace)).toBe('0.5');
+	expect(control.style.getPropertyValue(modulationValueProperty)).toBe('0.5');
 
-	dial.modulated = undefined;
-	expect(control.style.getPropertyValue(modulatedPlace)).toBe('');
+	dial.modulationValue = undefined;
+	expect(control.style.getPropertyValue(modulationValueProperty)).toBe('');
 });
 
-test('an endless dial places no modulated value', () => {
+test('an endless dial draws no modulation value', () => {
 	const { control, dial } = mountDial('endless min="10" max="370" step="7.5" value="190"');
 
-	dial.modulated = 100;
+	dial.modulationValue = 100;
 
-	expect(control.style.getPropertyValue(modulatedPlace)).toBe('');
+	expect(control.style.getPropertyValue(modulationValueProperty)).toBe('');
 });

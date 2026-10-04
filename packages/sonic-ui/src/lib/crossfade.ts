@@ -1,4 +1,4 @@
-import { clampUnit } from '#lib/math.ts';
+import { clampProportion } from '#lib/math.ts';
 
 interface CrossfadeOptions {
 	law?: 'linear' | 'power';
@@ -17,8 +17,8 @@ function progress(side: number, span: number): number {
 }
 
 export function crossfadeGains(position: number, options: CrossfadeOptions = {}): CrossfadeGains {
-	const at = clampUnit(position);
-	const span = 1 - clampUnit(options.sharpness ?? 0);
+	const at = clampProportion(position);
+	const span = 1 - clampProportion(options.sharpness ?? 0);
 	const gain = (side: number): number => {
 		const reached = progress(side, span);
 

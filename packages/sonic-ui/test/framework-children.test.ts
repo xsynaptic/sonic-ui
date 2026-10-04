@@ -4,7 +4,7 @@ import { act, createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, expect, test } from 'vitest';
 
-import '#define/key.ts';
+import '#define/button.ts';
 import '#define/segmented.ts';
 
 import { nextTask } from './helpers.ts';
@@ -42,10 +42,10 @@ function playKey(isPlaying: boolean, label?: string): ReactNode {
 		key: isPlaying ? 'pause' : 'play',
 	});
 
-	return createElement('sonic-key', { 'aria-label': 'Play' }, icon, label);
+	return createElement('sonic-button', { 'aria-label': 'Play' }, icon, label);
 }
 
-function modeSwitch(values: Array<string>): ReactNode {
+function modeSegmented(values: Array<string>): ReactNode {
 	return createElement(
 		'sonic-segmented',
 		{ 'aria-label': 'Mode', value: 'lp' },
@@ -54,7 +54,7 @@ function modeSwitch(values: Array<string>): ReactNode {
 }
 
 function capOf(): string {
-	const cap = document.querySelector('.sonic-key-cap');
+	const cap = document.querySelector('.sonic-button-cap');
 
 	return [...(cap?.childNodes ?? [])]
 		.map((node) => (node instanceof SVGElement ? node.dataset.icon : node.textContent))
@@ -67,7 +67,7 @@ function segmentValues(): Array<string | undefined> {
 	].map((option) => option.dataset.sonicValue);
 }
 
-test('a key follows React as it swaps its icon and adds, changes and removes a label', async () => {
+test('a button follows React as it swaps its icon and adds, changes and removes a label', async () => {
 	await render(playKey(false));
 	expect(capOf()).toBe('play');
 
@@ -84,17 +84,17 @@ test('a key follows React as it swaps its icon and adds, changes and removes a l
 	expect(capOf()).toBe('pause');
 });
 
-test('a segmented switch follows React as it adds, removes and reorders keyed options', async () => {
-	await render(modeSwitch(['lp', 'bp', 'hp']));
+test('a segmented control follows React as it adds, removes and reorders keyed options', async () => {
+	await render(modeSegmented(['lp', 'bp', 'hp']));
 	expect(segmentValues()).toEqual(['lp', 'bp', 'hp']);
 
-	await render(modeSwitch(['lp', 'bp', 'hp', 'notch']));
+	await render(modeSegmented(['lp', 'bp', 'hp', 'notch']));
 	expect(segmentValues()).toEqual(['lp', 'bp', 'hp', 'notch']);
 
-	await render(modeSwitch(['lp', 'hp', 'notch']));
+	await render(modeSegmented(['lp', 'hp', 'notch']));
 	expect(segmentValues()).toEqual(['lp', 'hp', 'notch']);
 
-	await render(modeSwitch(['notch', 'hp', 'lp']));
+	await render(modeSegmented(['notch', 'hp', 'lp']));
 	expect(segmentValues()).toEqual(['notch', 'hp', 'lp']);
 	expect(document.querySelector('[aria-checked="true"] [data-sonic-value]')?.textContent).toBe(
 		'lp',

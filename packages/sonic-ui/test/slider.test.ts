@@ -19,8 +19,8 @@ function capOf(control: HTMLElement): HTMLElement {
 	return cap;
 }
 
-function layOut(control: HTMLElement, track: DOMRect, capBox: DOMRect): void {
-	vi.spyOn(control, 'getBoundingClientRect').mockReturnValue(track);
+function layOut(control: HTMLElement, box: DOMRect, capBox: DOMRect): void {
+	vi.spyOn(control, 'getBoundingClientRect').mockReturnValue(box);
 	vi.spyOn(capOf(control), 'getBoundingClientRect').mockReturnValue(capBox);
 }
 
@@ -33,17 +33,17 @@ test('orientation follows the attribute', () => {
 	expect(control.getAttribute('aria-orientation')).toBe('vertical');
 });
 
-test('the slider writes its place, origin and notch count, and moving the origin keeps the value', () => {
+test('the slider writes its proportion, origin and position count, and moving the origin keeps the value', () => {
 	const { control, slider } = mountSlider(
 		'min="-50" max="50" step="10" notched origin="0" value="20"',
 	);
 	const style = (name: string): string => control.style.getPropertyValue(`--_sonic-slider-${name}`);
 
-	expect([style('value'), style('origin'), style('positions')]).toEqual(['0.7', '0.5', '11']);
+	expect([style('value'), style('origin'), style('position-count')]).toEqual(['0.7', '0.5', '11']);
 
 	slider.setAttribute('origin', '25');
 	slider.notched = false;
-	expect([style('origin'), style('positions')]).toEqual(['0.75', '']);
+	expect([style('origin'), style('position-count')]).toEqual(['0.75', '']);
 	expect(slider.value).toBe(20);
 });
 
@@ -52,14 +52,14 @@ test.each([
 	['value="30" modulation="-35"', '0.15', '0.5'],
 	['value="70" modulation="40"', '0.9', '1'],
 	['value="-10" modulation="-30"', '0', '0.1'],
-])('%s lights the modulation from %s to %s', (attributes, from, to) => {
+])('%s draws the modulation from %s to %s', (attributes, from, to) => {
 	const { control } = mountSlider(`min="-20" max="80" step="5" ${attributes}`);
 
 	expect(control.style.getPropertyValue('--_sonic-slider-modulation-from')).toBe(from);
 	expect(control.style.getPropertyValue('--_sonic-slider-modulation-to')).toBe(to);
 });
 
-test('a tapered slider places the modulation along its taper', () => {
+test('a tapered slider draws the modulation along its taper', () => {
 	const { control } = mountSlider('min="20" max="20000" taper="log" value="200" modulation="1800"');
 
 	expect(Number(control.style.getPropertyValue('--_sonic-slider-modulation-from'))).toBeCloseTo(
@@ -103,7 +103,7 @@ test('closing the entry restores the orientation with the slider role', () => {
 	expect(control.getAttribute('aria-orientation')).toBe('vertical');
 });
 
-// A 220px track at 100px with a 20px cap leaves 200px of travel, the cap's centre at 110px at the minimum
+// A 220px slider at 100px with a 20px cap leaves 200px of travel, the cap's centre at 110px at the minimum
 test.each([
 	['', 25, 50],
 	['groove-press="none"', 40, 40],
@@ -147,7 +147,7 @@ test('with groove-press="none", the cap still drags', () => {
 	expect(slider.value).toBe(50);
 });
 
-// The track's bottom is 320px down, so the cap's centre sits at 310px at the minimum and travel runs upward
+// The slider's bottom is 320px down, so the cap's centre sits at 310px at the minimum and travel runs upward
 test('a vertical slider jumps to a groove press a quarter up and drags upward', () => {
 	const { control, slider } = mountSlider('orientation="vertical" value="80"');
 
@@ -213,15 +213,15 @@ test('focus() reaches the control', () => {
 	expect(document.activeElement).toBe(control);
 });
 
-// A 220px track at 100px with a 20px cap: 200px of travel, the centre of a -50 to 50 slider at 210px
+// A 220px slider at 100px with a 20px cap: 200px of travel, the centre of a -50 to 50 slider at 210px
 test.each([
 	['origin="0"', 0],
 	['', -50],
 ])(
-	'with spring and %s, letting go reports the bent value, then the spring back to %d',
-	(attributes, rest) => {
+	'with spring and %s, letting go reports the held value, then the spring back to %d',
+	(attributes, origin) => {
 		const { control, slider } = mountSlider(
-			`spring min="-50" max="50" value="${String(rest)}" ${attributes}`,
+			`spring min="-50" max="50" value="${String(origin)}" ${attributes}`,
 		);
 		const events = recordEvents(slider);
 		const values: Array<number> = [];
@@ -230,17 +230,17 @@ test.each([
 			values.push(slider.value);
 		});
 		layOut(control, new DOMRect(100, 0, 220, 40), new DOMRect(0, 0, 20, 40));
-		pointerAt(capOf(control), 'pointerdown', { clientX: 210 + rest * 2 });
-		pointerAt(capOf(control), 'pointermove', { clientX: 250 + rest * 2 });
-		pointerAt(capOf(control), 'pointerup', { clientX: 250 + rest * 2 });
+		pointerAt(capOf(control), 'pointerdown', { clientX: 210 + origin * 2 });
+		pointerAt(capOf(control), 'pointermove', { clientX: 250 + origin * 2 });
+		pointerAt(capOf(control), 'pointerup', { clientX: 250 + origin * 2 });
 
 		expect(events).toEqual(['input', 'change', 'input', 'change']);
-		expect(values).toEqual([rest + 20, rest]);
-		expect(slider.value).toBe(rest);
+		expect(values).toEqual([origin + 20, origin]);
+		expect(slider.value).toBe(origin);
 	},
 );
 
-test('with spring, an arrow bends while held and springs back on keyup, and Enter types nothing', () => {
+test('with spring, an arrow moves it while held and it springs back on keyup, and Enter types nothing', () => {
 	const { control, slider } = mountSlider(
 		'spring min="-50" max="50" step="5" origin="0" value="0"',
 	);
@@ -257,8 +257,8 @@ test('with spring, an arrow bends while held and springs back on keyup, and Ente
 	expect(entry?.hidden).toBe(true);
 });
 
-test('with spring and a value list, the slider springs back to the first entry', () => {
-	const { control, slider } = mountSlider('spring values="-12 -6 0 6" value="-12"');
+test('with spring and a list of positions, the slider springs back to the first position', () => {
+	const { control, slider } = mountSlider('spring positions="-12 -6 0 6" value="-12"');
 
 	pressKey(control, 'ArrowUp');
 	expect(slider.value).toBe(-6);
@@ -268,16 +268,16 @@ test('with spring and a value list, the slider springs back to the first entry',
 });
 
 function bufferedStops(control: HTMLElement): Array<string> {
-	const ranges = control.style.getPropertyValue('--_sonic-slider-buffered-spans');
+	const regions = control.style.getPropertyValue('--_sonic-slider-buffered-regions');
 
 	return [
 		...new Set(
-			[...ranges.matchAll(/(\d+%)|calc\(([\d.]+) \*/g)].map((match) => match[1] ?? match[2] ?? ''),
+			[...regions.matchAll(/(\d+%)|calc\(([\d.]+) \*/g)].map((match) => match[1] ?? match[2] ?? ''),
 		),
 	];
 }
 
-test('buffered pairs light the groove at their places along the travel, sorted', () => {
+test('buffered regions fill the groove at their proportions along the travel, sorted', () => {
 	const { control, slider } = mountSlider('min="10" max="110" value="10"');
 
 	slider.buffered = [
@@ -307,17 +307,17 @@ test('buffered takes TimeRanges as a media element gives them, and undefined cle
 	expect(bufferedStops(control)).toEqual(['0.25', '100%']);
 
 	slider.buffered = undefined;
-	expect(control.style.getPropertyValue('--_sonic-slider-buffered-spans')).toBe('');
+	expect(control.style.getPropertyValue('--_sonic-slider-buffered-regions')).toBe('');
 });
 
-test('modulated places the slider part, and undefined clears it', () => {
+test('the modulation value moves the slider part, and undefined clears it', () => {
 	const { control, slider } = mountSlider('min="20" max="220" value="200"');
 
-	slider.modulated = 70;
-	expect(control.style.getPropertyValue('--_sonic-slider-modulated')).toBe('0.25');
+	slider.modulationValue = 70;
+	expect(control.style.getPropertyValue('--_sonic-slider-modulation-value')).toBe('0.25');
 
-	slider.modulated = undefined;
-	expect(control.style.getPropertyValue('--_sonic-slider-modulated')).toBe('');
+	slider.modulationValue = undefined;
+	expect(control.style.getPropertyValue('--_sonic-slider-modulation-value')).toBe('');
 });
 
 test('a key repeat changes on every repeat', () => {

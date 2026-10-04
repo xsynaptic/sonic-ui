@@ -9,11 +9,11 @@ function silence(pairs: number): { fullScale: number; pairsPerSecond: number; sa
 }
 
 test('a window moved by a third of a bucket keeps every bucket and shifts only x', () => {
-	const data = silence(4000);
+	const peaks = silence(4000);
 	const view = { pixelsPerSecond: 90, width: 200 };
 	const pxPerPair = 90 / pairsPerSecond;
-	const before = waveformBuckets(data, { ...view, startSeconds: 1000 / pairsPerSecond });
-	const after = waveformBuckets(data, {
+	const before = waveformBuckets(peaks, { ...view, startSeconds: 1000 / pairsPerSecond });
+	const after = waveformBuckets(peaks, {
 		...view,
 		startSeconds: (1000 + 2 / 3) / pairsPerSecond,
 	});
@@ -26,7 +26,7 @@ test('a window moved by a third of a bucket keeps every bucket and shifts only x
 	}
 });
 
-test('16-bit and float data of the same shape draw the same heights', () => {
+test('16-bit and float peaks of the same shape draw the same heights', () => {
 	const view = { pixelsPerSecond: pairsPerSecond, startSeconds: 0, width: 4 };
 	const wide = waveformBuckets(
 		{ fullScale: 32_768, pairsPerSecond, samples: new Int16Array([-16_384, 8192, -4096, 32_767]) },
@@ -98,7 +98,7 @@ test('a bucket wholly above zero still reaches the centreline, and one wholly be
 	expect(bucketAt(new Int8Array([-64, -16, -96, -32]), 1)).toMatchObject({ high: 0, low: -0.75 });
 });
 
-test('a bucket across the end of the data folds only the pairs that exist', () => {
+test('a bucket across the end of the peaks folds only the pairs that exist', () => {
 	const samples = new Int8Array([-8, 8, -16, 16, -32, 32, -64, 64, -4, 4]);
 
 	expect(bucketAt(samples, 4, 2)).toMatchObject({ high: 0.03125, low: -0.03125 });

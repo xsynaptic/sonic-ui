@@ -15,7 +15,7 @@ async function mount(markup: string): Promise<HTMLElement> {
 	return host;
 }
 
-function places(host: HTMLElement): Array<number> {
+function scaleProportions(host: HTMLElement): Array<number> {
 	return [
 		...host.querySelectorAll<HTMLElement>(
 			':scope > * > :is(.sonic-dial-scale, .sonic-slider-scale) > *',
@@ -28,29 +28,29 @@ test('a label sits where the taper puts its value', async () => {
 		'<sonic-dial max="2000" midpoint="200"><span data-sonic-value="200">200</span></sonic-dial>',
 	);
 
-	expect(places(skewed)).toEqual([0.5]);
+	expect(scaleProportions(skewed)).toEqual([0.5]);
 
 	const log = await mount(
 		'<sonic-dial min="20" max="20000" taper="log"><span data-sonic-value="632.4555">632</span></sonic-dial>',
 	);
 
-	expect(places(log)[0]).toBeCloseTo(0.5, 5);
+	expect(scaleProportions(log)[0]).toBeCloseTo(0.5, 5);
 });
 
-test('labels on a value list sit by entry, interpolated between entries', async () => {
+test('labels on a list of positions sit by position, interpolated between two', async () => {
 	const dial = await mount(
-		'<sonic-dial values="1 2 4 8 16"><span data-sonic-value="4"></span><span data-sonic-value="3"></span></sonic-dial>',
+		'<sonic-dial positions="1 2 4 8 16"><span data-sonic-value="4"></span><span data-sonic-value="3"></span></sonic-dial>',
 	);
 
-	expect(places(dial)).toEqual([0.5, 0.375]);
+	expect(scaleProportions(dial)).toEqual([0.5, 0.375]);
 });
 
-test('a range change moves the labels already placed', async () => {
+test('a range change moves the labels already drawn', async () => {
 	const dial = await mount('<sonic-dial max="10"><span data-sonic-value="5">5</span></sonic-dial>');
 
 	dial.setAttribute('max', '20');
 
-	expect(places(dial)).toEqual([0.25]);
+	expect(scaleProportions(dial)).toEqual([0.25]);
 });
 
 test('a label appended, edited or removed later is mirrored', async () => {
@@ -62,7 +62,7 @@ test('a label appended, edited or removed later is mirrored', async () => {
 	dial.append(label);
 	await nextTask();
 
-	expect(places(dial)).toEqual([0.75]);
+	expect(scaleProportions(dial)).toEqual([0.75]);
 
 	label.textContent = 'Five';
 	await nextTask();
@@ -72,7 +72,7 @@ test('a label appended, edited or removed later is mirrored', async () => {
 	label.remove();
 	await nextTask();
 
-	expect(places(dial)).toEqual([]);
+	expect(scaleProportions(dial)).toEqual([]);
 });
 
 test('only children with a value are taken into the scale; the rest still render', async () => {
@@ -82,7 +82,7 @@ test('only children with a value are taken into the scale; the rest still render
 	const assigned = dial.shadowRoot?.querySelector('slot')?.assignedNodes() ?? [];
 
 	expect(assigned.map((node) => node.nodeName)).toEqual(['EM', 'DIV']);
-	expect(places(dial)).toEqual([0]);
+	expect(scaleProportions(dial)).toEqual([0]);
 });
 
 test('a mark with nothing to print is a tick, and one holding an icon is a label', async () => {
@@ -96,10 +96,10 @@ test('a mark with nothing to print is a tick, and one holding an icon is a label
 	expect(kinds).toEqual(['sonic-scale-tick', 'sonic-scale-tick', 'sonic-scale-label']);
 });
 
-test('a slider places its labels along the travel by the same taper', async () => {
+test('a slider sets its labels along the travel by the same taper', async () => {
 	const slider = await mount(
 		'<sonic-slider min="-60" max="10" midpoint="-12" orientation="vertical"><span data-sonic-value="-12">−12</span><span data-sonic-value="10">+10</span></sonic-slider>',
 	);
 
-	expect(places(slider)).toEqual([0.5, 1]);
+	expect(scaleProportions(slider)).toEqual([0.5, 1]);
 });

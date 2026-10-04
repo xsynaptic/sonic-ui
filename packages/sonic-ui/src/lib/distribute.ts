@@ -1,6 +1,6 @@
 import { clamp, trimFloat } from '#lib/math.ts';
 
-export interface SumMember {
+export interface SplitMember {
 	isFree: boolean;
 	max: number;
 	min: number;
@@ -9,16 +9,16 @@ export interface SumMember {
 	value: number;
 }
 
-export type SumMode = 'cascade' | 'equal' | 'proportional';
+export type SplitMode = 'cascade' | 'equal' | 'proportional';
 
-interface SumMove {
+interface SplitMove {
 	direction?: -1 | 0 | 1;
 	index: number;
 	target: number;
 }
 
-interface SumRule {
-	mode: SumMode;
+interface SplitRule {
+	mode: SplitMode;
 	total: number;
 }
 
@@ -34,12 +34,12 @@ function sumOf(values: ReadonlyArray<number>): number {
 	return values.reduce((total, value) => total + value, 0);
 }
 
-function others(members: ReadonlyArray<SumMember>, index: number): Array<SumMember> {
+function others(members: ReadonlyArray<SplitMember>, index: number): Array<SplitMember> {
 	return members.filter((_member, at) => at !== index);
 }
 
-export function sumLimits(
-	members: ReadonlyArray<SumMember>,
+export function splitLimits(
+	members: ReadonlyArray<SplitMember>,
 	index: number,
 	total: number,
 ): [number, number] {
@@ -104,7 +104,7 @@ function spreadInOrder(owed: number, pool: ReadonlyArray<Pooled>): Map<number, n
 	return shares;
 }
 
-function poolOrder(members: ReadonlyArray<SumMember>, index: number): Array<number> {
+function poolOrder(members: ReadonlyArray<SplitMember>, index: number): Array<number> {
 	const count = members.length;
 	const start = index + 1;
 
@@ -113,7 +113,7 @@ function poolOrder(members: ReadonlyArray<SumMember>, index: number): Array<numb
 	);
 }
 
-function stepWithin(member: SumMember, from: number, owed: number): number | undefined {
+function stepWithin(member: SplitMember, from: number, owed: number): number | undefined {
 	const next = member.stepFrom(from, owed > 0 ? 1 : -1);
 	const change = trimFloat(next - from);
 	const isInside = next >= member.min && next <= member.max;
@@ -123,7 +123,7 @@ function stepWithin(member: SumMember, from: number, owed: number): number | und
 		: undefined;
 }
 
-function stepToward(member: SumMember, from: number, owed: number): number {
+function stepToward(member: SplitMember, from: number, owed: number): number {
 	let value = from;
 	let remainder = owed;
 
@@ -160,7 +160,7 @@ function byShortfall(
 }
 
 function stepEach(
-	members: ReadonlyArray<SumMember>,
+	members: ReadonlyArray<SplitMember>,
 	values: Array<number>,
 	pass: { neediest: ReadonlyArray<number>; owed: number },
 ): number {
@@ -180,7 +180,7 @@ function stepEach(
 }
 
 function settle(
-	members: ReadonlyArray<SumMember>,
+	members: ReadonlyArray<SplitMember>,
 	values: Array<number>,
 	settling: Settling,
 ): number {
@@ -199,7 +199,7 @@ function settle(
 }
 
 function pooled(
-	members: ReadonlyArray<SumMember>,
+	members: ReadonlyArray<SplitMember>,
 	order: ReadonlyArray<number>,
 	owed: number,
 ): Array<Pooled> {
@@ -213,7 +213,7 @@ function pooled(
 	});
 }
 
-function shares(pool: Array<Pooled>, owed: number, mode: SumMode): Map<number, number> {
+function shares(pool: Array<Pooled>, owed: number, mode: SplitMode): Map<number, number> {
 	if (mode === 'cascade') return spreadInOrder(owed, pool);
 	if (mode === 'equal')
 		return spreadWeighted(
@@ -225,15 +225,15 @@ function shares(pool: Array<Pooled>, owed: number, mode: SumMode): Map<number, n
 }
 
 function landMover(
-	members: ReadonlyArray<SumMember>,
+	members: ReadonlyArray<SplitMember>,
 	values: Array<number>,
-	move: SumMove & { total: number },
+	move: SplitMove & { total: number },
 ): number | undefined {
 	const { index, target, total } = move;
 	const mover = members[index];
 	if (!mover?.isFree || !Number.isFinite(target)) return undefined;
 
-	const next = mover.snap(clamp(target, ...sumLimits(members, index, total)));
+	const next = mover.snap(clamp(target, ...splitLimits(members, index, total)));
 
 	values[index] = next;
 
@@ -241,7 +241,7 @@ function landMover(
 }
 
 function landShares(
-	members: ReadonlyArray<SumMember>,
+	members: ReadonlyArray<SplitMember>,
 	values: Array<number>,
 	spread: ReadonlyMap<number, number>,
 ): Map<number, number> {
@@ -265,9 +265,9 @@ interface Spread {
 }
 
 function spread(
-	members: ReadonlyArray<SumMember>,
-	rule: SumRule,
-	move?: SumMove,
+	members: ReadonlyArray<SplitMember>,
+	rule: SplitRule,
+	move?: SplitMove,
 ): Spread | undefined {
 	const values = members.map(({ value }) => value);
 	const owed = move
@@ -282,7 +282,7 @@ function spread(
 }
 
 function smallestStep(
-	members: ReadonlyArray<SumMember>,
+	members: ReadonlyArray<SplitMember>,
 	{ left, order, values }: Spread,
 ): number | undefined {
 	const steps = order.flatMap((at) => {
@@ -301,7 +301,7 @@ function smallestStep(
 
 // The mover takes what is left on its own grid, or a sibling steps past the total and the mover gives the difference back
 function moverTargets(
-	members: ReadonlyArray<SumMember>,
+	members: ReadonlyArray<SplitMember>,
 	landing: Spread,
 	index: number,
 ): Array<number> {
@@ -319,7 +319,7 @@ function moverTargets(
 
 function nearest(
 	candidates: Array<Array<number>>,
-	move: SumMove,
+	move: SplitMove,
 	from: { landed: number; start: number },
 ): Array<number> | undefined {
 	const { direction = 0, index } = move;
@@ -335,9 +335,9 @@ function nearest(
 }
 
 function close(
-	members: ReadonlyArray<SumMember>,
-	rule: SumRule,
-	held: { landing: Spread; move: SumMove; mover: SumMember },
+	members: ReadonlyArray<SplitMember>,
+	rule: SplitRule,
+	held: { landing: Spread; move: SplitMove; mover: SplitMember },
 ): Array<number> {
 	const { landing, move, mover } = held;
 	const { index } = move;
@@ -356,9 +356,9 @@ function close(
 }
 
 export function distribute(
-	members: ReadonlyArray<SumMember>,
-	rule: SumRule,
-	move?: SumMove,
+	members: ReadonlyArray<SplitMember>,
+	rule: SplitRule,
+	move?: SplitMove,
 ): Array<number> {
 	const landing = spread(members, rule, move);
 	if (!landing) return members.map(({ value }) => value);

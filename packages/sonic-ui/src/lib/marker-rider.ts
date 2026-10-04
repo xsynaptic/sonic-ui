@@ -15,8 +15,8 @@ export interface RiderView extends RiderWindow {
 
 export interface RiderLabel {
 	isDimmed: boolean;
+	start: number;
 	text: string;
-	value: number;
 	widthPx: number;
 }
 
@@ -54,8 +54,8 @@ function parkedPlacement(
 	if (!parked) return undefined;
 
 	const next = labels[index + 1];
-	const x = Math.max(view.insetPx, lineX(parked.value, view) + view.insetPx);
-	const approachPx = next ? lineX(next.value, view) - lineX(view.playheadSeconds, view) : Infinity;
+	const x = Math.max(view.insetPx, lineX(parked.start, view) + view.insetPx);
+	const approachPx = next ? lineX(next.start, view) - lineX(view.playheadSeconds, view) : Infinity;
 
 	return {
 		index,
@@ -72,9 +72,9 @@ function isDrawable(length: number): boolean {
 export function layoutRider(labels: ReadonlyArray<RiderLabel>, view: RiderView): RiderLayout {
 	if (!isDrawable(view.windowSeconds) || !isDrawable(view.widthPx)) return {};
 
-	const parkedIndex = labels.findLastIndex((label) => label.value <= view.playheadSeconds);
+	const parkedIndex = labels.findLastIndex((label) => label.start <= view.playheadSeconds);
 	const next = labels[parkedIndex + 1];
-	const arrivingX = next ? lineX(next.value, view) + view.insetPx : Infinity;
+	const arrivingX = next ? lineX(next.start, view) + view.insetPx : Infinity;
 	const parked = parkedPlacement(labels, parkedIndex, [view, arrivingX]);
 	const arriving: LabelPlacement | undefined =
 		next && arrivingX < view.widthPx
@@ -180,7 +180,7 @@ export function createLabelRider(
 			insetPx = readPxProperty(getComputedStyle(control), insetProperty, 0);
 			measured = labels
 				.map((label, index) => ({ ...label, widthPx: widths[index] ?? 0 }))
-				.toSorted((first, second) => first.value - second.value);
+				.toSorted((first, second) => first.start - second.start);
 		},
 		place: (window) => {
 			const layout = layoutRider(measured, { ...window, insetPx });

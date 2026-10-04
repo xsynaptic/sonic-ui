@@ -18,7 +18,7 @@ test('a stop set keeps each value at its label’s index', () => {
 		'high',
 		undefined,
 	]);
-	expect(stops.values).toBe('0 1 2');
+	expect(stops.positions).toBe('0 1 2');
 });
 
 test('a mode dial shows the label of the value the audio reads', () => {

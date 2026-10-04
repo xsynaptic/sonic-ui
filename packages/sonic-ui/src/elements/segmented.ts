@@ -12,9 +12,9 @@ const renderSegmented = template(
 	HTMLDivElement,
 );
 
-const renderSegment = template(
+const renderOption = template(
 	/* HTML */ `
-		<button class="sonic-segmented-segment" role="radio" type="button">
+		<button class="sonic-segmented-option" role="radio" type="button">
 			<span class="sonic-segmented-cap"></span>
 		</button>
 	`,
@@ -30,6 +30,6 @@ export class SonicSegmented extends SonicRadioGroupElement {
 	}
 
 	protected renderOption(): HTMLButtonElement {
-		return renderSegment();
+		return renderOption();
 	}
 }

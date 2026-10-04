@@ -114,17 +114,17 @@ function tap(control: HTMLElement): void {
 	pointerAt(control, 'pointerup', { clientY: 10 });
 }
 
-test('with press="step", each tap steps to the next entry and wraps past the last', () => {
-	const { control, number } = mountNumber('press="step" values="1 2 4 8" value="4"');
+test('with press="step", each tap steps to the next position and wraps past the last', () => {
+	const { control, number } = mountNumber('press="step" positions="1 2 4 8" value="4"');
 	const events = recordEvents(document.body);
-	const values: Array<number> = [];
+	const landed: Array<number> = [];
 
 	for (let index = 0; index < 3; index += 1) {
 		tap(control);
-		values.push(number.value);
+		landed.push(number.value);
 	}
 
-	expect(values).toEqual([8, 1, 2]);
+	expect(landed).toEqual([8, 1, 2]);
 	expect(events).toEqual(['input', 'change', 'input', 'change', 'input', 'change']);
 	expect(partsOf(control).entry.hidden).toBe(true);
 });
@@ -152,7 +152,7 @@ test('with press="step", a drag moves by the drag alone', () => {
 });
 
 test('without press, a tap leaves the value', () => {
-	const { control, number } = mountNumber('values="1 2 4 8" value="4"');
+	const { control, number } = mountNumber('positions="1 2 4 8" value="4"');
 
 	tap(control);
 

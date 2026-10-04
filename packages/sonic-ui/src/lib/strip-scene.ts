@@ -1,6 +1,6 @@
 import type { SurfaceSize } from '#lib/canvas-surface.ts';
 
-import { clampUnit } from '#lib/math.ts';
+import { clampProportion } from '#lib/math.ts';
 import { resamplePeaks } from '#lib/resample-peaks.ts';
 
 interface BarRect {
@@ -17,15 +17,15 @@ interface BarGrid {
 	radiusRatio: number;
 }
 
-interface SpanState {
+interface RegionState {
 	buffered: ReadonlyArray<[number, number]>;
 	played: number;
 	scrub?: number;
 }
 
-export interface StripSpans {
+export interface StripRegions {
 	key: string;
-	spans: Array<{ from: number; kind: 'buffered' | 'played' | 'scrub'; to: number }>;
+	regions: Array<{ from: number; kind: 'buffered' | 'played' | 'scrub'; to: number }>;
 }
 
 // Whole device pixels, or bars alias unevenly and Skia's CPU raster crawls
@@ -40,7 +40,7 @@ export function stripBars(
 	const count = Math.max(0, Math.floor((size.width + gap) / pitch));
 
 	return resamplePeaks(peaks, count).map((peak, index) => {
-		const height = Math.max(1, Math.round(clampUnit(peak) * size.height));
+		const height = Math.max(1, Math.round(clampProportion(peak) * size.height));
 
 		return {
 			height,
@@ -52,23 +52,24 @@ export function stripBars(
 	});
 }
 
-export function stripSpans(state: SpanState, widthPx: number): StripSpans {
-	const px = (place: number): number => Math.round((Number.isFinite(place) ? place : 0) * widthPx);
+export function stripRegions(state: RegionState, widthPx: number): StripRegions {
+	const px = (proportion: number): number =>
+		Math.round((Number.isFinite(proportion) ? proportion : 0) * widthPx);
 	const buffered = state.buffered
 		.map(([start, end]): [number, number] => [px(start), px(end)])
 		.filter(([start, end]) => end > start);
 	const played = px(state.played);
 	const scrub = state.scrub === undefined ? played : px(state.scrub);
-	const spans: StripSpans['spans'] = buffered.map(([from, to]) => ({
+	const regions: StripRegions['regions'] = buffered.map(([from, to]) => ({
 		from,
 		kind: 'buffered',
 		to,
 	}));
 
-	if (played > 0) spans.push({ from: 0, kind: 'played', to: played });
+	if (played > 0) regions.push({ from: 0, kind: 'played', to: played });
 	if (scrub !== played) {
-		spans.push({ from: Math.min(played, scrub), kind: 'scrub', to: Math.max(played, scrub) });
+		regions.push({ from: Math.min(played, scrub), kind: 'scrub', to: Math.max(played, scrub) });
 	}
 
-	return { key: `${String(played)}:${String(scrub)}:${buffered.join(',')}`, spans };
+	return { key: `${String(played)}:${String(scrub)}:${buffered.join(',')}`, regions };
 }

@@ -42,32 +42,32 @@ function expectGreen([red = 0, green = 0, blue = 0]: Array<number>): void {
 }
 
 for (const name of ['gradient', 'use', 'encoded']) {
-	test(`an icon whose ids repeat later on the page paints in the key and after it: ${name}`, async ({
+	test(`an icon whose ids repeat later on the page paints in the button and after it: ${name}`, async ({
 		page,
 	}) => {
-		expectGreen(await centrePixel(page, page.locator(`#${name} .sonic-key-cap svg`)));
+		expectGreen(await centrePixel(page, page.locator(`#${name} .sonic-button-cap svg`)));
 		expectGreen(await centrePixel(page, page.locator(`#${name}-twin`)));
 	});
 }
 
 test('a style block inside a mirrored icon paints through its prefixed id', async ({ page }) => {
-	expectGreen(await centrePixel(page, page.locator('#styled .sonic-key-cap svg')));
+	expectGreen(await centrePixel(page, page.locator('#styled .sonic-button-cap svg')));
 });
 
 test('a mirrored original takes no room and no pointer', async ({ page }) => {
-	const key = page.locator('#gradient');
-	const original = key.locator(':scope > svg');
+	const button = page.locator('#gradient');
+	const original = button.locator(':scope > svg');
 
 	await expect(original).toBeHidden();
 	expect(await original.evaluate((icon) => getComputedStyle(icon).visibility)).toBe('hidden');
 	expect(
-		await key.evaluate((host) => {
-			const box = host.querySelector('.sonic-key')?.getBoundingClientRect();
-			if (!box) throw new Error('No key');
+		await button.evaluate((host) => {
+			const box = host.querySelector('.sonic-button')?.getBoundingClientRect();
+			if (!box) throw new Error('No button');
 
 			const hit = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2);
 
-			return hit?.closest('.sonic-key') !== null;
+			return hit?.closest('.sonic-button') !== null;
 		}),
 	).toBe(true);
 	expect(
@@ -79,7 +79,7 @@ test('a mirrored original takes no room and no pointer', async ({ page }) => {
 	).toBe(true);
 });
 
-test('keys cloned or written back from their own markup hold one button and still paint', async ({
+test('buttons cloned or written back from their own markup hold one native button and still paint', async ({
 	page,
 }) => {
 	await page.evaluate(() => {
@@ -91,10 +91,10 @@ test('keys cloned or written back from their own markup hold one button and stil
 		main.append(worded.cloneNode(true));
 	});
 
-	await expect(page.locator('sonic-key')).toHaveCount(6);
-	await expect(page.locator('sonic-key button')).toHaveCount(6);
-	await expect(page.locator('#worded .sonic-key-cap').last()).toHaveText('Go');
-	expectGreen(await centrePixel(page, page.locator('#gradient .sonic-key-cap svg')));
+	await expect(page.locator('sonic-button')).toHaveCount(6);
+	await expect(page.locator('sonic-button button')).toHaveCount(6);
+	await expect(page.locator('#worded .sonic-button-cap').last()).toHaveText('Go');
+	expectGreen(await centrePixel(page, page.locator('#gradient .sonic-button-cap svg')));
 });
 
 // Playwright's own tree counts a text node by its parent's style, so this reads the browser's tree

@@ -1,14 +1,14 @@
 import {
 	formatPercent,
 	parsePercent,
+	SonicButton,
 	SonicDial,
-	SonicKey,
 	SonicSegmented,
 	SonicSlider,
 	SonicWaveform,
 	SonicWavestrip,
 } from '@xsynaptic/sonic-ui';
-import { readDatWaveformData } from '@xsynaptic/sonic-ui/dat';
+import { readDatPeaks } from '@xsynaptic/sonic-ui/dat';
 
 import type { ControlsOf } from '#scripts/find.ts';
 import type { StreamState } from '#scripts/web-player/stream.ts';
@@ -21,10 +21,10 @@ import { createStream, tracks } from '#scripts/web-player/stream.ts';
 const barSpec = {
 	artist: HTMLElement,
 	detail: SonicWaveform,
-	next: SonicKey,
-	panelToggle: SonicKey,
-	play: SonicKey,
-	previous: SonicKey,
+	next: SonicButton,
+	panelButton: SonicButton,
+	play: SonicButton,
+	previous: SonicButton,
 	seek: SonicSlider,
 	time: HTMLButtonElement,
 	title: HTMLElement,
@@ -32,8 +32,8 @@ const barSpec = {
 };
 
 interface Bar extends ControlsOf<typeof barSpec> {
-	seekKeys: Array<SonicKey>;
-	zoomKeys: Array<SonicKey>;
+	seekButtons: Array<SonicButton>;
+	zoomButtons: Array<SonicButton>;
 }
 
 const zoomLadder = [30, 45, 70, 105, 160];
@@ -60,10 +60,10 @@ function formatSpokenTime(seconds: number): string {
 	let rest = Math.floor(seconds);
 	const spoken: Array<string> = [];
 
-	for (const [unit, span] of spokenUnits) {
-		const amount = Math.floor(rest / span);
+	for (const [unit, unitSeconds] of spokenUnits) {
+		const amount = Math.floor(rest / unitSeconds);
 
-		rest -= amount * span;
+		rest -= amount * unitSeconds;
 		if (amount > 0) {
 			spoken.push(
 				new Intl.NumberFormat('en', { style: 'unit', unit, unitDisplay: 'long' }).format(amount),
@@ -77,8 +77,8 @@ function formatSpokenTime(seconds: number): string {
 function readBar(root: Element): Bar {
 	return {
 		...readControls(root, barSpec, dataHook),
-		seekKeys: [...root.querySelectorAll<SonicKey>(':scope [data-seek-by]')],
-		zoomKeys: [...root.querySelectorAll<SonicKey>(':scope [data-zoom]')],
+		seekButtons: [...root.querySelectorAll<SonicButton>(':scope [data-seek-by]')],
+		zoomButtons: [...root.querySelectorAll<SonicButton>(':scope [data-zoom]')],
 	};
 }
 
@@ -101,19 +101,19 @@ function renderAvailability(state: StreamState, bar: Bar, zoom: number): void {
 	bar.previous.toggleAttribute('soft-disabled', !state.canPrevious);
 	bar.next.toggleAttribute('soft-disabled', !state.canNext);
 	for (const control of [
-		...bar.seekKeys,
+		...bar.seekButtons,
 		bar.seek,
 		bar.wave,
 		bar.detail,
 		bar.time,
-		bar.panelToggle,
+		bar.panelButton,
 	]) {
 		control.toggleAttribute('disabled', !state.isLoaded);
 	}
-	for (const key of bar.zoomKeys) {
-		const next = zoom + Number(key.dataset.zoom);
+	for (const button of bar.zoomButtons) {
+		const next = zoom + Number(button.dataset.zoom);
 
-		key.toggleAttribute('soft-disabled', next < 0 || next >= zoomLadder.length);
+		button.toggleAttribute('soft-disabled', next < 0 || next >= zoomLadder.length);
 	}
 }
 
@@ -121,7 +121,7 @@ function renderTrack({ samples, track }: StreamState, bar: Bar): void {
 	for (const strip of [bar.seek, bar.wave, bar.detail]) strip.max = track.durationSeconds;
 	for (const strip of [bar.wave, bar.detail]) strip.markers = track.cues;
 	bar.wave.peaks = track.peaks;
-	bar.detail.data = readDatWaveformData(seededHeader, samples.buffer);
+	bar.detail.peaks = readDatPeaks(seededHeader, samples.buffer);
 }
 
 function renderPosition(state: StreamState, bar: Bar): void {
@@ -131,14 +131,14 @@ function renderPosition(state: StreamState, bar: Bar): void {
 	bar.seek.buffered = state.buffered;
 	bar.wave.buffered = state.buffered;
 	if (bar.detail.playing !== isPlaying) bar.detail.playing = isPlaying;
-	if (bar.detail.rate !== state.rate) bar.detail.rate = state.rate;
+	if (bar.detail.playbackRate !== state.rate) bar.detail.playbackRate = state.rate;
 	if (String(state.pending) !== String(bar.detail.pending)) bar.detail.pending = state.pending;
 }
 
 function bindControls(root: Element, stream: ReturnType<typeof createStream>, bar: Bar): void {
 	const { mute, panel, rate, volume } = readControls(
 		root,
-		{ mute: SonicKey, panel: HTMLElement, rate: SonicSegmented, volume: SonicDial },
+		{ mute: SonicButton, panel: HTMLElement, rate: SonicSegmented, volume: SonicDial },
 		dataHook,
 	);
 
@@ -156,9 +156,9 @@ function bindControls(root: Element, stream: ReturnType<typeof createStream>, ba
 	bar.next.addEventListener('click', () => {
 		stream.next();
 	});
-	for (const key of bar.seekKeys) {
-		key.addEventListener('click', () => {
-			stream.seek(stream.state.positionSeconds + Number(key.dataset.seekBy));
+	for (const button of bar.seekButtons) {
+		button.addEventListener('click', () => {
+			stream.seek(stream.state.positionSeconds + Number(button.dataset.seekBy));
 		});
 	}
 	for (const strip of [bar.seek, bar.wave, bar.detail]) {
@@ -166,17 +166,17 @@ function bindControls(root: Element, stream: ReturnType<typeof createStream>, ba
 			stream.seek(strip.value);
 		});
 		strip.formatValue = (seconds) => {
-			const cue = stream.state.track.cues?.findLast((entry) => entry.value <= seconds);
+			const cue = stream.state.track.cues?.findLast((entry) => entry.start <= seconds);
 
 			return cue ? `${formatClock(seconds)} · ${cue.label}` : formatClock(seconds);
 		};
-		strip.formatValueText = formatSpokenTime;
+		strip.formatSpokenValue = formatSpokenTime;
 	}
 	bar.time.addEventListener('click', () => {
 		bar.time.setAttribute('aria-pressed', String(bar.time.getAttribute('aria-pressed') !== 'true'));
 	});
-	bar.panelToggle.addEventListener('change', () => {
-		panel.hidden = !bar.panelToggle.pressed;
+	bar.panelButton.addEventListener('change', () => {
+		panel.hidden = !bar.panelButton.pressed;
 	});
 	rate.addEventListener('change', () => {
 		stream.setRate(Number(rate.value));
@@ -213,13 +213,13 @@ function bindPlayer(root: Element): void {
 	bindControls(root, stream, bar);
 	bar.detail.zoom = zoomLadder[zoom];
 	bar.detail.readTime = () => stream.state.positionSeconds;
-	bar.detail.requestSpan = (fromSeconds, toSeconds) => {
+	bar.detail.requestPeaks = (fromSeconds, toSeconds) => {
 		stream.wantSamples(fromSeconds, toSeconds);
 		loop.wake();
 	};
-	for (const key of bar.zoomKeys) {
-		key.addEventListener('click', () => {
-			zoom = Math.min(Math.max(zoom + Number(key.dataset.zoom), 0), zoomLadder.length - 1);
+	for (const button of bar.zoomButtons) {
+		button.addEventListener('click', () => {
+			zoom = Math.min(Math.max(zoom + Number(button.dataset.zoom), 0), zoomLadder.length - 1);
 			bar.detail.zoom = zoomLadder[zoom];
 		});
 	}

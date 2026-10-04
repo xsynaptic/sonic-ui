@@ -1,25 +1,35 @@
 ---
-interface Props {
-	isLarge?: boolean;
-}
-
-const { isLarge = false } = Astro.props;
+const panels = [
+	{ depth: undefined, id: 'panel-raised', title: 'Raised' },
+	{ depth: '0rem', id: 'panel-printed', title: 'Printed' },
+	{ depth: '-0.125rem', id: 'panel-tray', title: 'Tray' },
+	{ depth: undefined, id: 'panel-tinted', tint: 'rgb(120 160 255 / 8%)', title: 'Tinted' },
+];
 ---
 
-<div
-	class:list={[
-		'rounded-lg border border-zinc-800 bg-zinc-900 p-5 text-zinc-400 shadow-[inset_0_1px_0_rgb(255_255_255/4%)]',
-		{ 'mt-3': isLarge },
-	]}
->
-	<div
-		class:list={[
-			'grid gap-x-4 gap-y-6',
-			isLarge
-				? 'grid-cols-[repeat(auto-fill,minmax(12rem,1fr))]'
-				: 'grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))]',
-		]}
-	>
-		<slot />
-	</div>
+<div class="grid grid-cols-[repeat(auto-fill,minmax(13rem,1fr))] gap-4 rounded-lg border border-zinc-800 bg-zinc-900 p-5 text-zinc-400">
+	{panels.map((panel) => (
+		<section
+			aria-labelledby={panel.id}
+			class="sonic-panel grid gap-3 p-4"
+			style={{ '--sonic-panel': panel.tint, '--sonic-panel-depth': panel.depth }}
+		>
+			<h3
+				class="sonic-panel-title font-mono text-[0.625rem] tracking-[0.14em] uppercase"
+				id={panel.id}
+			>
+				{panel.title}
+			</h3>
+			<div class="flex items-center justify-center gap-4">
+				<sonic-dial aria-label={`${panel.title} level`} value="60"></sonic-dial>
+				<sonic-button aria-label={`${panel.title} on`} latching>
+					<span class="sonic-led"></span>
+				</sonic-button>
+			</div>
+			<hr class="sonic-panel-rule" />
+			<div class="flex justify-center">
+				<sonic-switch aria-label={`${panel.title} sync`}></sonic-switch>
+			</div>
+		</section>
+	))}
 </div>

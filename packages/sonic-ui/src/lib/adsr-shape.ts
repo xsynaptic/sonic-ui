@@ -9,9 +9,9 @@ type AdsrStage = (typeof adsrStages)[number];
 
 type TimeStage = (typeof timeStages)[number];
 
-export type AdsrPlaces = Partial<Record<AdsrStage, number | undefined>>;
+export type AdsrProportions = Partial<Record<AdsrStage, number | undefined>>;
 
-export type AdsrBends = Partial<Record<TimeStage, number | undefined>>;
+export type AdsrCurves = Partial<Record<TimeStage, number | undefined>>;
 
 interface AdsrPoint {
 	x: number;
@@ -23,53 +23,54 @@ interface AdsrHandle extends AdsrPoint {
 }
 
 export interface AdsrShape {
-	dots: Array<AdsrHandle>;
+	curveHandles: Array<AdsrHandle>;
 	handles: Array<AdsrHandle>;
 	points: Array<AdsrPoint>;
 	share: number;
 }
 
-const curveSegments = 24;
+const curveSamples = 24;
 
-function along(from: AdsrPoint, to: AdsrPoint, at: { bend: number; position: number }): AdsrPoint {
+function along(from: AdsrPoint, to: AdsrPoint, at: { curve: number; position: number }): AdsrPoint {
 	return {
 		x: from.x + (to.x - from.x) * at.position,
-		y: from.y + (to.y - from.y) * envelopeCurve(at.position, at.bend),
+		y: from.y + (to.y - from.y) * envelopeCurve(at.position, at.curve),
 	};
 }
 
-function bent(from: AdsrPoint, to: AdsrPoint, bend: number): Array<AdsrPoint> {
-	if (envelopeCurve(0.5, bend) === 0.5) return [];
+function curved(from: AdsrPoint, to: AdsrPoint, curve: number): Array<AdsrPoint> {
+	if (envelopeCurve(0.5, curve) === 0.5) return [];
 
-	return Array.from({ length: curveSegments - 1 }, (_, index) =>
-		along(from, to, { bend, position: (index + 1) / curveSegments }),
+	return Array.from({ length: curveSamples - 1 }, (_, index) =>
+		along(from, to, { curve, position: (index + 1) / curveSamples }),
 	);
 }
 
-function segment(
+function leg(
 	from: AdsrPoint,
 	to: AdsrPoint,
-	bend: number | undefined,
-): { dot: AdsrPoint | undefined; points: Array<AdsrPoint> } {
-	if (bend === undefined) return { dot: undefined, points: [to] };
+	curve: number | undefined,
+): { curveHandle: AdsrPoint | undefined; points: Array<AdsrPoint> } {
+	if (curve === undefined) return { curveHandle: undefined, points: [to] };
 
 	return {
-		dot: along(from, to, { bend, position: 0.5 }),
-		points: [...bent(from, to, bend), to],
+		curveHandle: along(from, to, { curve, position: 0.5 }),
+		points: [...curved(from, to, curve), to],
 	};
 }
 
-function isHandled(places: AdsrPlaces, stage: TimeStage): boolean {
-	const place = stage === 'decay' ? (places.sustain ?? places.decay) : places[stage];
+function isHandled(proportions: AdsrProportions, stage: TimeStage): boolean {
+	const proportion =
+		stage === 'decay' ? (proportions.sustain ?? proportions.decay) : proportions[stage];
 
-	return place !== undefined;
+	return proportion !== undefined;
 }
 
-export function adsrShape(places: AdsrPlaces, bends: AdsrBends = {}): AdsrShape {
-	const sustain = places.sustain ?? 1;
+export function adsrShape(proportions: AdsrProportions, curves: AdsrCurves = {}): AdsrShape {
+	const sustain = proportions.sustain ?? 1;
 	const levels = { attack: 1, decay: sustain, delay: 0, hold: 1, release: 0 };
-	const share = 1 / (timeStages.filter((stage) => places[stage] !== undefined).length + 1);
-	const shape: AdsrShape = { dots: [], handles: [], points: [{ x: 0, y: 0 }], share };
+	const share = 1 / (timeStages.filter((stage) => proportions[stage] !== undefined).length + 1);
+	const shape: AdsrShape = { curveHandles: [], handles: [], points: [{ x: 0, y: 0 }], share };
 	let from = { x: 0, y: 0 };
 
 	for (const stage of timeStages) {
@@ -78,12 +79,12 @@ export function adsrShape(places: AdsrPlaces, bends: AdsrBends = {}): AdsrShape 
 			shape.points.push(from);
 		}
 
-		const to = { x: from.x + (places[stage] ?? 0) * share, y: levels[stage] };
-		const { dot, points } = segment(from, to, bends[stage]);
+		const to = { x: from.x + (proportions[stage] ?? 0) * share, y: levels[stage] };
+		const { curveHandle, points } = leg(from, to, curves[stage]);
 
 		shape.points.push(...points);
-		if (dot) shape.dots.push({ ...dot, stage });
-		if (isHandled(places, stage)) shape.handles.push({ ...to, stage });
+		if (curveHandle) shape.curveHandles.push({ ...curveHandle, stage });
+		if (isHandled(proportions, stage)) shape.handles.push({ ...to, stage });
 		from = to;
 	}
 

@@ -1,13 +1,13 @@
 import { expect, test } from 'vitest';
 
-import { stripBars, stripSpans } from '#lib/strip-scene.ts';
+import { stripBars, stripRegions } from '#lib/strip-scene.ts';
 
 const grid = { gapRatio: 0.33, pitch: 3, radiusRatio: 0.5 };
 
 const level = Array.from({ length: 400 }, () => 0.5);
 
 function edgeKey(played: number, buffered: Array<[number, number]>): string {
-	return stripSpans({ buffered, played: played / 3000 }, 300).key;
+	return stripRegions({ buffered, played: played / 3000 }, 300).key;
 }
 
 // 302 CSS px at DPR 2 is 604 device px: 100 pitches of 6 leave 4, room for one more bar once its gap is dropped
@@ -48,8 +48,8 @@ test('an edge changes the key only once it reaches the next device pixel', () =>
 	);
 });
 
-test('buffered spans fill first, then played from the start, then scrub between played and the drag', () => {
-	const { spans } = stripSpans(
+test('buffered regions fill first, then played from the start, then scrub between played and the drag', () => {
+	const { regions } = stripRegions(
 		{
 			buffered: [
 				[0, 0.5],
@@ -61,16 +61,16 @@ test('buffered spans fill first, then played from the start, then scrub between 
 		100,
 	);
 
-	expect(spans).toEqual([
+	expect(regions).toEqual([
 		{ from: 0, kind: 'buffered', to: 50 },
 		{ from: 0, kind: 'played', to: 25 },
 		{ from: 10, kind: 'scrub', to: 25 },
 	]);
 });
 
-test('nothing played and a scrub on the played edge fill no span', () => {
-	expect(stripSpans({ buffered: [], played: 0 }, 100).spans).toEqual([]);
-	expect(stripSpans({ buffered: [], played: 0.3, scrub: 0.301 }, 100).spans).toEqual([
+test('nothing played and a scrub on the played edge fill no region', () => {
+	expect(stripRegions({ buffered: [], played: 0 }, 100).regions).toEqual([]);
+	expect(stripRegions({ buffered: [], played: 0.3, scrub: 0.301 }, 100).regions).toEqual([
 		{ from: 0, kind: 'played', to: 30 },
 	]);
 });
@@ -96,12 +96,12 @@ test('no peaks, or no room for a bar, draws nothing', () => {
 	expect(stripBars(level, { dpr: 1, height: 48, width: 0 }, grid)).toEqual([]);
 });
 
-test('a played or scrub place that is not a number counts as the start', () => {
-	expect(stripSpans({ buffered: [], played: NaN }, 100).spans).toEqual([]);
-	expect(stripSpans({ buffered: [], played: NaN, scrub: 0.2 }, 100).spans).toEqual([
+test('a played or scrub proportion that is not a number counts as the start', () => {
+	expect(stripRegions({ buffered: [], played: NaN }, 100).regions).toEqual([]);
+	expect(stripRegions({ buffered: [], played: NaN, scrub: 0.2 }, 100).regions).toEqual([
 		{ from: 0, kind: 'scrub', to: 20 },
 	]);
-	expect(stripSpans({ buffered: [], played: 0.3, scrub: NaN }, 100).spans).toEqual([
+	expect(stripRegions({ buffered: [], played: 0.3, scrub: NaN }, 100).regions).toEqual([
 		{ from: 0, kind: 'played', to: 30 },
 		{ from: 0, kind: 'scrub', to: 30 },
 	]);

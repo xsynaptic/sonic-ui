@@ -4,11 +4,11 @@ import Square from '@lucide/astro/icons/square';
 
 import Cell from '#components/specimens/cell.astro';
 import FilterModes from '#components/specimens/filter-modes.astro';
-import MuteKey from '#components/specimens/mute-key.astro';
+import MuteButton from '#components/specimens/mute-button.astro';
 
-const groupClass = 'sonic-plate flex flex-col gap-4 p-4';
+const groupClass = 'sonic-panel flex flex-col gap-4 p-4';
 const titleClass =
-	'sonic-plate-title font-mono text-[0.625rem] tracking-[0.16em] text-zinc-400 uppercase';
+	'sonic-panel-title font-mono text-[0.625rem] tracking-[0.16em] text-zinc-400 uppercase';
 ---
 
 <div
@@ -159,7 +159,7 @@ const titleClass =
 				></sonic-dial>
 			</Cell>
 			<Cell id="panel-mute" label="Mute">
-				<MuteKey isPressed={false} labelledby="panel-mute" />
+				<MuteButton isPressed={false} labelledby="panel-mute" />
 			</Cell>
 			<Cell id="panel-level" label="Level">
 				<sonic-slider
@@ -200,23 +200,23 @@ const titleClass =
 			</Cell>
 			<Cell id="panel-run" label="Run">
 				<span class="sonic-ring [--sonic-ring-size:calc(2rem/0.75)]" data-ring-loop>
-					<sonic-key aria-labelledby="panel-run" data-run pressed toggle>
+					<sonic-button aria-labelledby="panel-run" data-run latching pressed>
 						<span class="sonic-led"></span>
 						<Play aria-hidden="true" />
-					</sonic-key>
+					</sonic-button>
 				</span>
 			</Cell>
 			<Cell id="panel-stop" label="Stop">
-				<sonic-key
+				<sonic-button
 					aria-labelledby="panel-stop"
-					class="[--sonic-key-face-radius-ratio:0.5] [--sonic-key-radius-ratio:0.5]"
+					class="[--sonic-button-face-radius-ratio:0.5] [--sonic-button-radius-ratio:0.5]"
 					data-stop
 				>
 					<Square aria-hidden="true" />
-				</sonic-key>
+				</sonic-button>
 			</Cell>
 			<Cell id="panel-sync" label="Sync">
-				<sonic-lever aria-labelledby="panel-sync"></sonic-lever>
+				<sonic-switch aria-labelledby="panel-sync"></sonic-switch>
 			</Cell>
 			<Cell id="panel-position" label="Position">
 				<sonic-wavestrip

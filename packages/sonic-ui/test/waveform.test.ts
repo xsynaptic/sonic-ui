@@ -97,12 +97,12 @@ test('a frame where nothing moved writes nothing to the ghost', () => {
 	expect(observer.takeRecords()).toEqual([]);
 });
 
-test('requestSpan asks at the current zoom, and not out of view', () => {
+test('requestPeaks asks at the current zoom, and not out of view', () => {
 	const { flushFrames } = installCanvasFakes();
 	const { waveform } = mountWaveform('max="300" step="0" value="100"');
 	const requests: Array<[number, number]> = [];
 
-	waveform.requestSpan = (from, to) => {
+	waveform.requestPeaks = (from, to) => {
 		requests.push([from, to]);
 	};
 	flushFrames();
@@ -127,9 +127,11 @@ test('under reduced motion the playhead pages', () => {
 	expect(playheadAt(control)).toBeCloseTo((6.9 / 7) * 100, 6);
 });
 
-test('rate scales how far a frame carries the playhead past a stale source', () => {
+test('the playback rate sets how far a frame carries the playhead past a stale source', () => {
 	const { flushFrames } = installCanvasFakes({ isReducedMotion: true });
-	const { control, waveform } = mountWaveform('max="300" playing rate="2" step="0" value="7"');
+	const { control, waveform } = mountWaveform(
+		'max="300" playing playback-rate="2" step="0" value="7"',
+	);
 
 	waveform.readTime = () => 7;
 	flushFrames(1000);
@@ -138,12 +140,15 @@ test('rate scales how far a frame carries the playhead past a stale source', () 
 	expect(playheadAt(control)).toBeCloseTo(((0.2 - 0.2 * (1 - 0.94 ** 6)) / 7) * 100, 6);
 });
 
-test.each(['0', '-2', 'fast', 'Infinity'])('a rate of %s falls back to 1', (rate) => {
-	const { waveform } = mountWaveform(`rate="${rate}"`);
+test.each(['0', '-2', 'fast', 'Infinity'])(
+	'a playback rate of %s falls back to 1',
+	(playbackRate) => {
+		const { waveform } = mountWaveform(`playback-rate="${playbackRate}"`);
 
-	expect(waveform.rate).toBe(1);
+		expect(waveform.playbackRate).toBe(1);
 
-	waveform.rate = 1.5;
-	expect(waveform.rate).toBe(1.5);
-	expect(waveform.getAttribute('rate')).toBe('1.5');
-});
+		waveform.playbackRate = 1.5;
+		expect(waveform.playbackRate).toBe(1.5);
+		expect(waveform.getAttribute('playback-rate')).toBe('1.5');
+	},
+);

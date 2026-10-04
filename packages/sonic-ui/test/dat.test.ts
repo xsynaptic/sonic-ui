@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 
-import { datByteRange, readDatHeader, readDatSamples, readDatWaveformData } from '#dat.ts';
+import { datByteRange, readDatHeader, readDatPeaks, readDatSamples } from '#dat.ts';
 
 function bytes(...words: Array<string>): ArrayBuffer {
 	const hex = words.join('');
@@ -79,19 +79,19 @@ test('an 8-bit body reads signed', () => {
 	expect([...samples]).toEqual([-128, 127]);
 });
 
-test('waveform data takes its full scale from the bits and its pairs per second from the rate', () => {
+test('peaks take their full scale from the bits and their pairs per second from the rate', () => {
 	// Version 1, 8-bit, 22050 Hz, 400 samples per pixel; version 2, 16-bit, 44100 Hz, 400, two channels
 	const eight = readDatHeader(bytes('01000000', '01000000', '22560000', '90010000', 'e8030000'));
 	const sixteen = readDatHeader(
 		bytes('02000000', '00000000', '44ac0000', '90010000', 'e8030000', '02000000'),
 	);
 
-	expect(readDatWaveformData(eight, bytes('807f'))).toMatchObject({
+	expect(readDatPeaks(eight, bytes('807f'))).toMatchObject({
 		channels: 1,
 		fullScale: 128,
 		pairsPerSecond: 55.125,
 	});
-	expect(readDatWaveformData(sixteen, bytes(...stereoBody))).toMatchObject({
+	expect(readDatPeaks(sixteen, bytes(...stereoBody))).toMatchObject({
 		channels: 2,
 		fullScale: 32_768,
 		pairsPerSecond: 110.25,

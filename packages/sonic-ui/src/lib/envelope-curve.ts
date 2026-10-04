@@ -1,7 +1,7 @@
-const flatBend = 0.001;
+const flatCurve = 0.001;
 
-export function envelopeCurve(position: number, bend: number): number {
-	if (Math.abs(bend) < flatBend) return position;
+export function envelopeCurve(position: number, curve: number): number {
+	if (Math.abs(curve) < flatCurve) return position;
 
-	return Math.expm1(bend * position) / Math.expm1(bend);
+	return Math.expm1(curve * position) / Math.expm1(curve);
 }

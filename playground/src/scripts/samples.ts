@@ -1,9 +1,9 @@
 import type { SonicWaveform } from '@xsynaptic/sonic-ui';
 
-import { readDatWaveformData } from '@xsynaptic/sonic-ui/dat';
+import { readDatPeaks } from '@xsynaptic/sonic-ui/dat';
 
 import { frameLoop } from '#scripts/frame-loop.ts';
-import { readSpans } from '#scripts/read-spans.ts';
+import { readRegions } from '#scripts/read-regions.ts';
 import { emptySamples, fillSamples, pairsPerSecond, seededHeader } from '#scripts/seeded-dat.ts';
 import { seededPeaks } from '#scripts/seeded-peaks.ts';
 
@@ -28,14 +28,14 @@ function play(waveform: SonicWaveform): void {
 for (const waveform of document.querySelectorAll<SonicWaveform>('sonic-waveform[data-samples]')) {
 	const samples = emptySamples(waveform.max);
 	const peaks = seededPeaks(Number(waveform.dataset.samples));
-	const pending = readSpans(waveform.dataset.pending);
+	const pending = readRegions(waveform.dataset.pending);
 	let from = 0;
 
 	for (const [start, end] of [...pending, [waveform.max, waveform.max] as const]) {
 		fillSamples(samples, peaks, [from, Math.floor(start * pairsPerSecond)]);
 		from = Math.ceil(end * pairsPerSecond);
 	}
-	waveform.data = readDatWaveformData(seededHeader, samples.buffer);
+	waveform.peaks = readDatPeaks(seededHeader, samples.buffer);
 	waveform.pending = pending;
 	if (waveform.playing) play(waveform);
 }

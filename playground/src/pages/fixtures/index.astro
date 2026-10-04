@@ -66,7 +66,7 @@ import '#styles/playground.css';
 		<sonic-slider
 			aria-label="Trim"
 			class="[--sonic-slider-size:3.25rem]"
-			id="legend"
+			id="scaled"
 			max="10"
 			min="-20"
 			orientation="vertical"
@@ -128,19 +128,19 @@ import '#styles/playground.css';
 			></sonic-number>
 			<span id="tempo-label">Tempo</span>
 		</div>
-		<sonic-key aria-label="Mute" id="mute" toggle>
+		<sonic-button aria-label="Mute" id="mute" latching>
 			<Play aria-hidden="true" />
-		</sonic-key>
-		<sonic-key aria-label="Kick" id="pad" momentary></sonic-key>
-		<sonic-key aria-label="Play" busy id="loading">
+		</sonic-button>
+		<sonic-button aria-label="Kick" id="kick" momentary></sonic-button>
+		<sonic-button aria-label="Play" busy id="loading">
 			<Play aria-hidden="true" />
-		</sonic-key>
-		<sonic-key aria-label="Next" id="next">
+		</sonic-button>
+		<sonic-button aria-label="Next" id="next">
 			<Play aria-hidden="true" />
-		</sonic-key>
-		<sonic-key aria-label="Power" id="power" toggle>
+		</sonic-button>
+		<sonic-button aria-label="Power" id="power" latching>
 			<span class="sonic-led"></span>
-		</sonic-key>
+		</sonic-button>
 		<span class="sonic-led" id="led"></span>
 		<span class="sonic-led" data-sonic-lit id="led-lit"></span>
 		<span class="sonic-led" data-sonic-lit="alt" id="led-alt"></span>
@@ -148,26 +148,26 @@ import '#styles/playground.css';
 			<span data-sonic-value="lp">LP</span>
 			<span data-sonic-value="hp">HP</span>
 		</sonic-segmented>
-		<sonic-lever aria-label="Talk" id="talk" value="off">
+		<sonic-switch aria-label="Talk" id="talk" value="off">
 			<span data-sonic-momentary data-sonic-value="duck">
 				Duck
 			</span>
 			<span data-sonic-value="off">Off</span>
 			<span data-sonic-value="on">On</span>
-		</sonic-lever>
-		<sonic-lever aria-label="Sync" id="sync"></sonic-lever>
-		<section aria-label="Plate" class="sonic-plate p-4" id="plate">
-			<h2 class="sonic-plate-title">Plate</h2>
+		</sonic-switch>
+		<sonic-switch aria-label="Sync" id="sync"></sonic-switch>
+		<section aria-label="Panel" class="sonic-panel p-4" id="panel">
+			<h2 class="sonic-panel-title">Panel</h2>
 		</section>
 		<sonic-meter id="meter" max="0" min="-60"></sonic-meter>
-		<sonic-meter id="ladder" lights="-24 -12 -6 -3 0"></sonic-meter>
+		<sonic-meter id="ladder" segments="-24 -12 -6 -3 0"></sonic-meter>
 		<sonic-meter
 			id="correlation"
 			max="1"
 			min="-1"
 			orientation="horizontal"
 			origin="0"
-			scale="linear"
+			value="0"
 		></sonic-meter>
 		<div class="sonic-screen" id="screen">
 			440 Hz
@@ -211,12 +211,12 @@ import '#styles/playground.css';
 		>
 			<span class="sonic-led"></span>
 		</sonic-slider>
-		<sonic-key aria-label="Cue" armed id="armed" toggle>
+		<sonic-button aria-label="Cue" armed id="armed" latching>
 			<Play aria-hidden="true" />
-		</sonic-key>
-		<sonic-key aria-label="Loop" armed id="armed-led" toggle>
+		</sonic-button>
+		<sonic-button aria-label="Loop" armed id="armed-led" latching>
 			<span class="sonic-led"></span>
-		</sonic-key>
+		</sonic-button>
 		<span class="sonic-led" data-sonic-lit="dim" id="led-dim"></span>
 		<span class="sonic-led" data-sonic-lit="hot" id="led-hot"></span>
 		<span class="sonic-led" data-sonic-lit="clip" id="led-clip"></span>
@@ -240,14 +240,14 @@ import '#styles/playground.css';
 		></span>
 		<span
 			class="sonic-ring"
-			id="ring-key"
+			id="ring-button"
 			style="
 
 --sonic-ring-from: 0.25; --sonic-ring-to: 0.5"
 		>
-			<sonic-key aria-label="Loop position" toggle>
+			<sonic-button aria-label="Loop position" latching>
 				<Play aria-hidden="true" />
-			</sonic-key>
+			</sonic-button>
 		</span>
 		<sonic-xy aria-label="Pad" id="xy" x="50" y="50"></sonic-xy>
 		<sonic-xy
@@ -267,7 +267,7 @@ import '#styles/playground.css';
 			y-origin="0"
 			y-step="0.5"
 		></sonic-xy>
-		<sonic-xy aria-label="Locked pad" disabled id="xy-disabled" x="30" y="70"></sonic-xy>
+		<sonic-xy aria-label="Locked XY pad" disabled id="xy-disabled" x="30" y="70"></sonic-xy>
 		<sonic-envelope
 			attack="env-attack"
 			decay="env-decay"
@@ -332,16 +332,16 @@ import '#styles/playground.css';
 			step="0.5"
 			value="3"
 		></sonic-dial>
-		<sonic-sum aria-label="Split" class="grid gap-16" id="sum">
-			<sonic-slider aria-label="Split A" id="sum-a" step="5" value="50"></sonic-slider>
-			<sonic-slider aria-label="Split B" id="sum-b" min="10" step="5" value="30"></sonic-slider>
-			<sonic-slider aria-label="Split C" id="sum-c" step="5" value="20"></sonic-slider>
-		</sonic-sum>
-		<sonic-sum aria-label="Locked split" class="grid gap-16" id="sum-locked">
+		<sonic-split aria-label="Split" class="grid gap-16" id="split">
+			<sonic-slider aria-label="Split A" id="split-a" step="5" value="50"></sonic-slider>
+			<sonic-slider aria-label="Split B" id="split-b" min="10" step="5" value="30"></sonic-slider>
+			<sonic-slider aria-label="Split C" id="split-c" step="5" value="20"></sonic-slider>
+		</sonic-split>
+		<sonic-split aria-label="Locked split" class="grid gap-16" id="split-locked">
 			<sonic-slider aria-label="Locked A" id="locked-a" value="50"></sonic-slider>
 			<sonic-slider aria-label="Locked B" data-sonic-locked id="locked-b" value="30"></sonic-slider>
 			<sonic-slider aria-label="Locked C" id="locked-c" value="20"></sonic-slider>
-		</sonic-sum>
+		</sonic-split>
 	</main>
 	<script>
 		import '@xsynaptic/sonic-ui/define';

@@ -59,7 +59,7 @@ test('a label for the host, or around it, reaches the inner control', async ({ p
 	const bridges = {
 		cutoff: await readBridge(page.locator('#cutoff'), '.sonic-dial'),
 		mode: await readBridge(page.locator('#mode'), '.sonic-segmented'),
-		mute: await readBridge(page.locator('#mute'), '.sonic-key'),
+		mute: await readBridge(page.locator('#mute'), '.sonic-button'),
 		send: await readBridge(page.locator('#send'), '.sonic-slider'),
 		sync: await readBridge(page.locator('#sync'), '[role="switch"]'),
 		tempo: await readBridge(page.locator('#tempo'), '.sonic-number'),
@@ -115,7 +115,7 @@ test('a label added later names the control once it takes focus', async ({ brows
 	if (browserName === 'chromium') expect(await readNames(page)).toContain('slider: Late');
 });
 
-test('a label click focuses the range and the switch, and toggles the key once', async ({
+test('a label click focuses the value control and the segmented control, and presses the button once', async ({
 	page,
 }) => {
 	await page.locator('label[for="cutoff"]').click();
@@ -124,17 +124,17 @@ test('a label click focuses the range and the switch, and toggles the key once',
 	await page.locator('label[for="mode"]').click();
 	await expect(page.locator('#mode [aria-checked="true"]')).toBeFocused();
 
-	const key = page.locator('#mute .sonic-key');
+	const button = page.locator('#mute .sonic-button');
 
 	await page.getByText('Mute', { exact: true }).click();
-	await expect(key).toHaveAttribute('aria-pressed', 'true');
+	await expect(button).toHaveAttribute('aria-pressed', 'true');
 
 	// Inside a wrapping label, Firefox follows a click on the control with one on the host
-	await key.click();
-	await expect(key).toHaveAttribute('aria-pressed', 'false');
+	await button.click();
+	await expect(button).toHaveAttribute('aria-pressed', 'false');
 });
 
-test('the form submits each value, and a pressed toggle only', async ({ page }) => {
+test('the form submits each value, and a latching button only when pressed', async ({ page }) => {
 	expect(await readFormData(page)).toEqual([
 		['cutoff', '40'],
 		['send', '30'],
@@ -149,8 +149,8 @@ test('the form submits each value, and a pressed toggle only', async ({ page }) 
 
 	await page.locator('#cutoff .sonic-dial').press('ArrowUp');
 	await page.locator('#tempo .sonic-number').press('ArrowDown');
-	await page.locator('#mute .sonic-key').click();
-	await page.locator('#solo .sonic-key').click();
+	await page.locator('#mute .sonic-button').click();
+	await page.locator('#solo .sonic-button').click();
 	await page.getByRole('radio', { name: 'HP' }).click();
 	await page.locator('#sync [role="switch"]').click();
 	await page.getByRole('radio', { name: 'Y' }).click();
@@ -171,11 +171,11 @@ test('the form submits each value, and a pressed toggle only', async ({ page }) 
 	]);
 });
 
-test('a reset returns the range and the switch to their value attributes, and keys to pressed', async ({
+test('a reset returns the value control and the segmented control to their value attributes, and buttons to pressed', async ({
 	page,
 }) => {
-	const mute = page.locator('#mute .sonic-key');
-	const solo = page.locator('#solo .sonic-key');
+	const mute = page.locator('#mute .sonic-button');
+	const solo = page.locator('#solo .sonic-button');
 
 	await page.locator('#cutoff .sonic-dial').press('ArrowUp');
 	await page.getByRole('radio', { name: 'HP' }).click();
@@ -197,7 +197,7 @@ test('a reset returns the range and the switch to their value attributes, and ke
 	await expect(page.locator('#touch [data-sonic-axis="y"]')).toHaveAttribute('aria-valuenow', '60');
 });
 
-test('a label click flips a bare lever, and a reset returns both levers to their attributes', async ({
+test('a label click flips a bare switch, and a reset returns both switches to their attributes', async ({
 	page,
 }) => {
 	const sync = page.locator('#sync [role="switch"]');
@@ -275,8 +275,8 @@ test('back navigation restores what each control held, never what another held',
 
 	await page.locator('#cutoff .sonic-dial').press('ArrowUp');
 	await page.locator('#send .sonic-slider').press('ArrowUp');
-	await page.locator('#mute .sonic-key').click();
-	await page.locator('#solo .sonic-key').click();
+	await page.locator('#mute .sonic-button').click();
+	await page.locator('#solo .sonic-button').click();
 	await page.getByRole('radio', { name: 'HP' }).click();
 	await page.goto('/fixtures/docked/');
 	await page.goBack();
@@ -285,9 +285,9 @@ test('back navigation restores what each control held, never what another held',
 	const reads = {
 		cutoff: ['#cutoff .sonic-dial', 'aria-valuenow'],
 		mode: ['#mode [aria-checked="true"] [data-sonic-value]', 'data-sonic-value'],
-		mute: ['#mute .sonic-key', 'aria-pressed'],
+		mute: ['#mute .sonic-button', 'aria-pressed'],
 		send: ['#send .sonic-slider', 'aria-valuenow'],
-		solo: ['#solo .sonic-key', 'aria-pressed'],
+		solo: ['#solo .sonic-button', 'aria-pressed'],
 	} as const;
 	const held = Object.fromEntries(
 		await Promise.all(

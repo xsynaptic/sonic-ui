@@ -73,7 +73,7 @@
 		--_sonic-waveform-wave-edge: color-mix(in oklab, var(--_sonic-waveform-lit) 45%, #000);
 		--_sonic-waveform-grid: var(--_sonic-etch);
 		--_sonic-waveform-hatch: var(--_sonic-etch);
-		--_sonic-waveform-marker: var(--sonic-cue, var(--_sonic-ink));
+		--_sonic-waveform-marker: var(--sonic-marker, var(--_sonic-ink));
 		--_sonic-waveform-label-inset: calc(
 			var(--_sonic-waveform-size) * var(--sonic-waveform-label-inset-ratio, 0.08)
 		);

@@ -14,7 +14,7 @@ const renderMeter = template(
 	/* HTML */ `
 		<div aria-hidden="true" class="sonic-meter">
 			<div class="sonic-meter-segments"></div>
-			<div class="sonic-meter-level"></div>
+			<div class="sonic-meter-bar"></div>
 			<div class="sonic-meter-clip"></div>
 		</div>
 	`,
@@ -38,8 +38,8 @@ function toAmplitude(decibels: number): number {
 }
 
 // A `calc()` rather than a count, so the zone's token stays live
-function lightsBelow(lights: Array<number>, zone: 'clip' | 'hot'): string {
-	const terms = lights.map(
+function segmentsBelow(segments: Array<number>, zone: 'clip' | 'hot'): string {
+	const terms = segments.map(
 		(threshold) => `sign(max(0, var(--_sonic-meter-${zone}-from) - (${String(threshold)})))`,
 	);
 
@@ -50,11 +50,11 @@ export class SonicMeter extends SonicElement {
 	static override readonly observedAttributes = [
 		'ballistics',
 		'disabled',
-		'lights',
 		'max',
 		'min',
 		'origin',
-		'scale',
+		'segments',
+		'value',
 	];
 
 	get ballistics(): (typeof ballisticsModes)[number] {
@@ -74,31 +74,19 @@ export class SonicMeter extends SonicElement {
 	set level(amplitude: number) {
 		if (!Number.isFinite(amplitude)) return;
 
-		const now = performance.now();
-
-		this.#level = amplitude;
-		if (this.scale === 'linear') {
-			this.#peak = Math.max(this.#peak, amplitude);
-			this.#render(now);
-			return;
-		}
-
 		const decibels = toDecibels(amplitude);
 
-		this.#peak = Math.max(this.#peak, decibels);
+		this.#level = amplitude;
 		this.#target = decibels;
+		if (this.#isValueShown) return;
+
+		const now = performance.now();
+
+		this.#peak = Math.max(this.#peak, decibels);
 		if (decibels >= 0) this.#clipAt = now;
 		this.#step(now, 0);
 		this.#render(now);
 		this.#schedule(now);
-	}
-
-	get lights(): Array<number> | undefined {
-		return parseNumberList(this.getAttribute('lights'));
-	}
-
-	set lights(thresholds: Array<number> | undefined) {
-		this.reflect('lights', thresholds?.join(' '));
 	}
 
 	get max(): number {
@@ -138,12 +126,20 @@ export class SonicMeter extends SonicElement {
 		return this.#peak;
 	}
 
-	get scale(): 'db' | 'linear' {
-		return this.getAttribute('scale') === 'linear' ? 'linear' : 'db';
+	get segments(): Array<number> | undefined {
+		return parseNumberList(this.getAttribute('segments'));
 	}
 
-	set scale(scale: 'db' | 'linear' | undefined) {
-		this.reflect('scale', scale);
+	set segments(thresholds: Array<number> | undefined) {
+		this.reflect('segments', thresholds?.join(' '));
+	}
+
+	get value(): number | undefined {
+		return this.optionalNumberAttribute('value');
+	}
+
+	set value(value: number | undefined) {
+		this.reflect('value', value);
 	}
 
 	#bar = -Infinity;
@@ -154,11 +150,11 @@ export class SonicMeter extends SonicElement {
 
 	#frame: number | undefined;
 
+	#isValueShown = false;
+
 	#lastFrame: number | undefined;
 
 	#level = 0;
-
-	#lights: Array<number> | undefined;
 
 	readonly #meter = renderMeter();
 
@@ -168,6 +164,8 @@ export class SonicMeter extends SonicElement {
 
 	#peakHoldAt = -Infinity;
 
+	#segments: Array<number> | undefined;
+
 	#target = -Infinity;
 
 	#velocity = 0;
@@ -176,8 +174,8 @@ export class SonicMeter extends SonicElement {
 		const now = performance.now();
 
 		if (name === 'ballistics') this.#velocity = 0;
-		else if (name === 'scale') this.resetPeak();
-		this.#renderLights();
+		else if (name === 'value') this.#readValue(now);
+		this.#renderSegments();
 		this.#render(now);
 		this.#schedule(now);
 	}
@@ -191,16 +189,16 @@ export class SonicMeter extends SonicElement {
 
 		this.upgradeProperties(
 			'ballistics',
-			'lights',
 			'max',
 			'min',
 			'orientation',
 			'origin',
-			'scale',
+			'segments',
+			'value',
 			'level',
 		);
 		this.appendOnce(this.#meter);
-		this.#renderLights();
+		this.#renderSegments();
 		this.#render(now);
 		this.#schedule(now);
 		this.checkStyles(this.#meter, 'meter.css');
@@ -216,7 +214,7 @@ export class SonicMeter extends SonicElement {
 	}
 
 	#isSettled(now: number): boolean {
-		if (this.scale === 'linear') return true;
+		if (this.#isValueShown) return true;
 		if (now - this.#clipAt < holdMs) return false;
 		if (this.ballistics === 'vu') return this.#bar === this.#target && this.#velocity === 0;
 
@@ -229,54 +227,79 @@ export class SonicMeter extends SonicElement {
 		);
 	}
 
-	#place(level: number): number {
-		const lights = this.#lights;
-		if (lights) return lights.filter((threshold) => threshold <= level).length / lights.length;
+	#proportionOf(level: number): number {
+		const segments = this.#segments;
+		if (segments) {
+			return segments.filter((threshold) => threshold <= level).length / segments.length;
+		}
 
-		return linearTaper(this.min, this.max).place(level);
+		return linearTaper(this.min, this.max).proportionOf(level);
+	}
+
+	#readValue(now: number): void {
+		const value = this.value;
+		const isValueShown = value !== undefined;
+
+		if (isValueShown !== this.#isValueShown) {
+			this.#isValueShown = isValueShown;
+			this.resetPeak();
+			if (!isValueShown) this.#step(now, 0);
+		}
+		if (value !== undefined) this.#peak = Math.max(this.#peak, value);
 	}
 
 	#render(now: number): void {
 		const meter = this.#meter;
 
-		const origin = this.origin === undefined ? 0 : this.#place(this.origin);
+		const origin = this.origin === undefined ? 0 : this.#proportionOf(this.origin);
 
 		meter.style.setProperty('--_sonic-meter-min', String(this.min));
 		meter.style.setProperty('--_sonic-meter-max', String(this.max));
 		meter.style.setProperty('--_sonic-meter-origin', String(origin));
 
-		if (this.disabled || this.scale === 'linear') {
-			const level = this.disabled ? origin : this.#place(this.#level);
-
-			meter.style.setProperty('--_sonic-meter-level', String(level));
-			meter.style.setProperty('--_sonic-meter-peak-hold', '0');
-			meter.style.setProperty('--_sonic-meter-clipped', '0');
+		if (this.disabled) {
+			this.#renderStill(origin);
 			return;
 		}
 
-		const peakHold = this.ballistics === 'vu' ? 0 : this.#place(this.#peakHold);
+		const value = this.value;
 
-		meter.style.setProperty('--_sonic-meter-level', String(this.#place(this.#bar)));
+		if (value !== undefined) {
+			this.#renderStill(this.#proportionOf(value));
+			return;
+		}
+
+		const peakHold = this.ballistics === 'vu' ? 0 : this.#proportionOf(this.#peakHold);
+
+		meter.style.setProperty('--_sonic-meter-bar', String(this.#proportionOf(this.#bar)));
 		meter.style.setProperty('--_sonic-meter-peak-hold', String(peakHold));
 		meter.style.setProperty('--_sonic-meter-clipped', now - this.#clipAt < holdMs ? '1' : '0');
 	}
 
-	#renderLights(): void {
+	#renderSegments(): void {
 		const meter = this.#meter;
-		const lights = this.lights;
+		const segments = this.segments;
 
-		this.#lights = lights;
-		this.toggleState('ladder', lights !== undefined);
-		if (!lights) {
-			for (const name of ['count', 'hot-lights', 'clip-lights']) {
+		this.#segments = segments;
+		this.toggleState('ladder', segments !== undefined);
+		if (!segments) {
+			for (const name of ['count', 'hot-segments', 'clip-segments']) {
 				meter.style.removeProperty(`--_sonic-meter-${name}`);
 			}
 			return;
 		}
 
-		meter.style.setProperty('--_sonic-meter-count', String(lights.length));
-		meter.style.setProperty('--_sonic-meter-hot-lights', lightsBelow(lights, 'hot'));
-		meter.style.setProperty('--_sonic-meter-clip-lights', lightsBelow(lights, 'clip'));
+		meter.style.setProperty('--_sonic-meter-count', String(segments.length));
+		meter.style.setProperty('--_sonic-meter-hot-segments', segmentsBelow(segments, 'hot'));
+		meter.style.setProperty('--_sonic-meter-clip-segments', segmentsBelow(segments, 'clip'));
+	}
+
+	#renderStill(bar: number): void {
+		const { style } = this.#meter;
+
+		style.setProperty('--_sonic-meter-bar', String(bar));
+		style.setProperty('--_sonic-meter-peak-hold', '0');
+		style.setProperty('--_sonic-meter-clipped', '0');
 	}
 
 	#risen(timeConstantMs: number, elapsedMs: number): number {

@@ -2,8 +2,11 @@ import { expect, test } from 'vitest';
 
 import { createTrackingClock } from '#lib/tracking-clock.ts';
 
-function playing(seconds: number, rate = 1): { isPlaying: boolean; rate: number; seconds: number } {
-	return { isPlaying: true, rate, seconds };
+function playing(
+	seconds: number,
+	playbackRate = 1,
+): { isPlaying: boolean; playbackRate: number; seconds: number } {
+	return { isPlaying: true, playbackRate, seconds };
 }
 
 function errorAfter(wallMs: number, frameMs: number): number {
@@ -45,22 +48,25 @@ test('between source reports, frame time runs the position', () => {
 	expect(clock.read(5100, playing(10))).toBeCloseTo(10.1 - 0.1 * (1 - 0.94 ** 6), 9);
 });
 
-test.each([0.5, 2, 3])('a source at rate %d is tracked without lag', (rate) => {
-	const clock = createTrackingClock();
-	let position = clock.read(0, playing(10, rate));
+test.each([0.5, 2, 3])(
+	'a source at a playback rate of %d is tracked without lag',
+	(playbackRate) => {
+		const clock = createTrackingClock();
+		let position = clock.read(0, playing(10, playbackRate));
 
-	for (let frame = 1; frame <= 120; frame += 1) {
-		position = clock.read(frame * 25, playing(10 + frame * 0.025 * rate, rate));
-	}
+		for (let frame = 1; frame <= 120; frame += 1) {
+			position = clock.read(frame * 25, playing(10 + frame * 0.025 * playbackRate, playbackRate));
+		}
 
-	expect(position).toBeCloseTo(10 + 3 * rate, 9);
-});
+		expect(position).toBeCloseTo(10 + 3 * playbackRate, 9);
+	},
+);
 
 test('the gap across a pause is not time played', () => {
 	const clock = createTrackingClock();
 
 	clock.read(0, playing(10));
-	clock.read(16, { isPlaying: false, rate: 1, seconds: 10 });
+	clock.read(16, { isPlaying: false, playbackRate: 1, seconds: 10 });
 
 	expect(clock.read(416, playing(10))).toBe(10);
 });
@@ -86,7 +92,7 @@ test('a pause lands on the source, however small the error', () => {
 
 	clock.read(0, playing(10));
 
-	expect(clock.read(16, { isPlaying: false, rate: 1, seconds: 10.2 })).toBe(10.2);
+	expect(clock.read(16, { isPlaying: false, playbackRate: 1, seconds: 10.2 })).toBe(10.2);
 });
 
 test('a seek back under half a second lands at once', () => {

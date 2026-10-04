@@ -92,7 +92,7 @@ test("a press on the glass brings the puck's centre under the pointer, and a cor
 	expectInside(await boxOf(puck), glass);
 });
 
-test('a disabled pad takes no press and no focus', async ({ isMobile, page }) => {
+test('a disabled XY pad takes no press and no focus', async ({ isMobile, page }) => {
 	test.skip(isMobile, mouseOnly);
 
 	const glass = await boxOf(page.locator('#xy-disabled .sonic-xy'));

@@ -1,0 +1,50 @@
+---
+import Label from '#components/replica/label.astro';
+
+interface Position {
+	isMomentary?: boolean;
+	text: string;
+	value: string;
+}
+
+interface Props {
+	data?: Record<string, string>;
+	id: string;
+	isChecked?: boolean;
+	isHorizontal?: boolean;
+	label: string;
+	positions?: Array<Position>;
+	value?: string;
+}
+
+const {
+	data = {},
+	id,
+	isChecked = false,
+	isHorizontal = false,
+	label,
+	positions = [],
+	value,
+} = Astro.props;
+---
+
+<div class="grid justify-items-center gap-1">
+	<sonic-switch
+		aria-labelledby={id}
+		checked={isChecked ? '' : undefined}
+		class="font-mono tracking-widest text-zinc-400 uppercase [--sonic-switch-font-ratio:0.4] [--sonic-switch-size:1.5rem]"
+		orientation={isHorizontal ? 'horizontal' : undefined}
+		value={value}
+		{...data}
+	>
+		{positions.map((position) => (
+			<span
+				data-sonic-momentary={position.isMomentary ? '' : undefined}
+				data-sonic-value={position.value}
+			>
+				{position.text}
+			</span>
+		))}
+	</sonic-switch>
+	<Label id={id} text={label} />
+</div>

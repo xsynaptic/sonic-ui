@@ -4,11 +4,11 @@ type Marker = SonicWavestrip['markers'][number];
 
 function readMarker(token: string): Marker {
 	const isDimmed = token.endsWith('~');
-	const [place = '', kind] = token.replace(/~$/, '').split(':', 2);
-	const [value = NaN, end] = place.split('..', 2).map(Number);
+	const [times = '', kind] = token.replace(/~$/, '').split(':', 2);
+	const [start = NaN, end] = times.split('..', 2).map(Number);
 
 	return {
-		value,
+		start,
 		...(end === undefined ? {} : { end }),
 		...(kind === undefined ? {} : { kind }),
 		...(isDimmed ? { dimmed: true } : {}),

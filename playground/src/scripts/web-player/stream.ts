@@ -50,12 +50,12 @@ export const tracks: Array<Track> = [
 	{
 		artist: 'A third artist',
 		cues: [
-			{ end: 38, kind: 'intro', label: 'Intro', value: 0 },
-			{ label: 'Low light', value: 38 },
-			{ label: 'Undertow', value: 112 },
-			{ label: 'Glass harbour', value: 196 },
-			{ label: 'Late signal', value: 271 },
-			{ dimmed: true, label: 'Unlisted', value: 344 },
+			{ end: 38, kind: 'intro', label: 'Intro', start: 0 },
+			{ label: 'Low light', start: 38 },
+			{ label: 'Undertow', start: 112 },
+			{ label: 'Glass harbour', start: 196 },
+			{ label: 'Late signal', start: 271 },
+			{ dimmed: true, label: 'Unlisted', start: 344 },
 		],
 		durationSeconds: 390,
 		peaks: seededPeaks(13),

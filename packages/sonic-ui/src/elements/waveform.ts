@@ -1,15 +1,15 @@
-import type { RangeAxis } from '#elements/range-element.ts';
+import type { ValueAxis } from '#elements/value-element.ts';
 import type { SurfaceFrame, SurfaceLook } from '#lib/canvas-surface.ts';
 import type { Drawn, View } from '#lib/frame-timeline.ts';
-import type { TimeSpans } from '#lib/time-spans.ts';
-import type { WaveformData } from '#lib/waveform-buckets.ts';
+import type { TimeRegions } from '#lib/time-regions.ts';
+import type { WaveformPeaks } from '#lib/waveform-buckets.ts';
 
 import { SonicWaveElement } from '#elements/wave-element.ts';
 import { frameTimeline } from '#lib/frame-timeline.ts';
 import { createLabelRider } from '#lib/marker-rider.ts';
 import { clamp } from '#lib/math.ts';
 import { requireChild, template } from '#lib/render.ts';
-import { readSpans } from '#lib/time-spans.ts';
+import { readRegions } from '#lib/time-regions.ts';
 import { createTrackingClock } from '#lib/tracking-clock.ts';
 import { waveformBuckets } from '#lib/waveform-buckets.ts';
 
@@ -142,19 +142,20 @@ function waveFill(context: CanvasRenderingContext2D, scene: Scene): CanvasGradie
 	return gradient;
 }
 
-function paintWave(context: CanvasRenderingContext2D, scene: Scene, data: WaveformData): void {
-	const buckets = waveformBuckets(data, scene);
+function paintWave(context: CanvasRenderingContext2D, scene: Scene, peaks: WaveformPeaks): void {
+	const buckets = waveformBuckets(peaks, scene);
 	const [first] = buckets;
 	if (!first) return;
 
 	const centre = scene.height / 2;
-	const scale = centre * amplitudeMargin;
+	const amplitudePx = centre * amplitudeMargin;
 
 	context.fillStyle = waveFill(context, scene);
 	context.beginPath();
 	context.moveTo(first.x, centre);
-	for (const bucket of buckets) context.lineTo(bucket.x, centre - bucket.high * scale);
-	for (const bucket of buckets.toReversed()) context.lineTo(bucket.x, centre - bucket.low * scale);
+	for (const bucket of buckets) context.lineTo(bucket.x, centre - bucket.high * amplitudePx);
+	for (const bucket of buckets.toReversed())
+		context.lineTo(bucket.x, centre - bucket.low * amplitudePx);
 	context.closePath();
 	context.fill();
 }
@@ -163,16 +164,16 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 	static override readonly observedAttributes = [
 		...SonicWaveElement.observedAttributes,
 		'playing',
-		'rate',
+		'playback-rate',
 		'zoom',
 	];
 
-	get data(): undefined | WaveformData {
-		return this.#data;
+	get peaks(): undefined | WaveformPeaks {
+		return this.#peaks;
 	}
 
-	set data(data: undefined | WaveformData) {
-		this.#data = data;
+	set peaks(peaks: undefined | WaveformPeaks) {
+		this.#peaks = peaks;
 		this.renderEmpty();
 		this.surface()?.invalidate();
 	}
@@ -181,9 +182,19 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 		return this.#pending.map(([start, end]) => [start, end]);
 	}
 
-	set pending(spans: TimeSpans | undefined) {
-		this.#pending = spans ? readSpans(spans) : [];
+	set pending(regions: TimeRegions | undefined) {
+		this.#pending = regions ? readRegions(regions) : [];
 		this.surface()?.invalidate();
+	}
+
+	get playbackRate(): number {
+		const playbackRate = this.numberAttribute('playback-rate', 1);
+
+		return playbackRate > 0 ? playbackRate : 1;
+	}
+
+	set playbackRate(value: number | undefined) {
+		this.reflect('playback-rate', value);
 	}
 
 	get playing(): boolean {
@@ -192,16 +203,6 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 
 	set playing(isPlaying: boolean) {
 		this.reflect('playing', isPlaying);
-	}
-
-	get rate(): number {
-		const rate = this.numberAttribute('rate', 1);
-
-		return rate > 0 ? rate : 1;
-	}
-
-	set rate(value: number | undefined) {
-		this.reflect('rate', value);
 	}
 
 	get readTime(): (() => number | undefined) | undefined {
@@ -213,12 +214,12 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 		this.render();
 	}
 
-	get requestSpan(): ((fromSeconds: number, toSeconds: number) => void) | undefined {
-		return this.#requestSpan;
+	get requestPeaks(): ((fromSeconds: number, toSeconds: number) => void) | undefined {
+		return this.#requestPeaks;
 	}
 
-	set requestSpan(request: ((fromSeconds: number, toSeconds: number) => void) | undefined) {
-		this.#requestSpan = request;
+	set requestPeaks(request: ((fromSeconds: number, toSeconds: number) => void) | undefined) {
+		this.#requestPeaks = request;
 		this.surface()?.invalidate();
 	}
 
@@ -248,8 +249,6 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 
 	readonly #clock = createTrackingClock();
 
-	#data: undefined | WaveformData;
-
 	#drawn: Drawn | undefined;
 
 	readonly #ghost = requireChild(this.control, '.sonic-waveform-ghost', HTMLDivElement);
@@ -258,13 +257,15 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 
 	#paintedKey = '';
 
+	#peaks: undefined | WaveformPeaks;
+
 	#pending: Array<[number, number]> = [];
 
 	readonly #playhead = requireChild(this.control, '.sonic-waveform-playhead', HTMLDivElement);
 
 	#readTime: (() => number | undefined) | undefined;
 
-	#requestSpan: ((fromSeconds: number, toSeconds: number) => void) | undefined;
+	#requestPeaks: ((fromSeconds: number, toSeconds: number) => void) | undefined;
 
 	readonly #rider = createLabelRider(this.control, {
 		className: 'sonic-waveform-label',
@@ -272,7 +273,15 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 	});
 
 	override connectedCallback(): void {
-		this.upgradeProperties('data', 'pending', 'playing', 'rate', 'readTime', 'requestSpan', 'zoom');
+		this.upgradeProperties(
+			'peaks',
+			'pending',
+			'playing',
+			'playbackRate',
+			'readTime',
+			'requestPeaks',
+			'zoom',
+		);
 		super.connectedCallback();
 	}
 
@@ -293,7 +302,7 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 	}
 
 	protected isEmpty(): boolean {
-		return !this.#data || this.#data.samples.length === 0;
+		return !this.#peaks || this.#peaks.samples.length === 0;
 	}
 
 	protected paint(
@@ -304,7 +313,7 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 		const timeline = frameTimeline({
 			clockSeconds: this.#clock.read(frameMs, {
 				isPlaying: this.playing,
-				rate: this.rate,
+				playbackRate: this.playbackRate,
 				seconds: this.#sourceSeconds(),
 			}),
 			frameMs,
@@ -331,34 +340,34 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 		if (isDirty || timeline.paintKey !== this.#paintedKey) {
 			this.#paintedKey = timeline.paintKey;
 			this.#paintScene(context, { ...view, colours: look.colours });
-			if (timeline.wanted) this.#requestSpan?.(...timeline.wanted);
+			if (timeline.wanted) this.#requestPeaks?.(...timeline.wanted);
 		}
 		if (timeline.isMoving) this.surface()?.requestFrame();
 	}
 
 	protected override renderMarkers(): void {
-		const bounds = this.scale().bounds;
+		const bounds = this.mapping().bounds;
 
 		this.#rider.measure(
-			this.markers.flatMap(({ dimmed, label, value }) =>
+			this.markers.flatMap(({ dimmed, label, start }) =>
 				label === undefined || label === ''
 					? []
-					: [{ isDimmed: dimmed === true, text: label, value: clamp(value, ...bounds) }],
+					: [{ isDimmed: dimmed === true, start: clamp(start, ...bounds), text: label }],
 			),
 		);
 		this.surface()?.invalidate();
 	}
 
-	#grab(): RangeAxis {
+	#grab(): ValueAxis {
 		const drawn = this.#drawn ?? { seconds: this.value, startSeconds: this.value };
 
 		this.#grabbed = drawn;
 
-		const scale = this.scale();
-		const [low, high] = scale.bounds;
+		const mapping = this.mapping();
+		const [low, high] = mapping.bounds;
 
 		return {
-			fromPlace: scale.place(drawn.seconds),
+			fromProportion: mapping.proportionOf(drawn.seconds),
 			isKeptOnCancel: true,
 			position: (event) => -event.clientX,
 			travelPx: Math.max(1, (high - low) * this.zoom),
@@ -387,14 +396,14 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 		context.fillStyle = grid;
 		if (to > from) context.fillRect(from, Math.round((height - line) / 2), to - from, line);
 		paintPlaceholders(context, scene);
-		if (this.#data) paintWave(context, scene, this.#data);
+		if (this.#peaks) paintWave(context, scene, this.#peaks);
 		// Scrolling lines sit at fractional x; rounding them judders
 		context.fillStyle = grid;
 		for (const edge of [opening, closing]) context.fillRect(edge - line / 2, 0, line, height);
 		context.fillStyle = marker;
 		for (const marker of this.markers) {
 			context.globalAlpha = marker.dimmed === true ? 0.5 : 1;
-			context.fillRect(x(marker.value) - line / 2, 0, line, height);
+			context.fillRect(x(marker.start) - line / 2, 0, line, height);
 		}
 		context.globalAlpha = 1;
 	}

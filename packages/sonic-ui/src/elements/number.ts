@@ -1,4 +1,4 @@
-import { SonicRangeElement } from '#elements/range-element.ts';
+import { SonicValueElement } from '#elements/value-element.ts';
 import { requireChild, template } from '#lib/render.ts';
 
 declare global {
@@ -24,7 +24,7 @@ const renderNumber = template(
 	HTMLDivElement,
 );
 
-export class SonicNumber extends SonicRangeElement {
+export class SonicNumber extends SonicValueElement {
 	get press(): 'none' | 'step' {
 		return this.getAttribute('press') === 'step' ? 'step' : 'none';
 	}
@@ -69,9 +69,9 @@ export class SonicNumber extends SonicRangeElement {
 	protected override tapTarget(): number | undefined {
 		if (this.press !== 'step') return undefined;
 
-		const scale = this.scale();
-		const next = scale.keyTarget('ArrowUp', this.value);
+		const mapping = this.mapping();
+		const next = mapping.keyTarget('ArrowUp', this.value);
 
-		return next === undefined || next === this.value ? scale.bounds[0] : next;
+		return next === undefined || next === this.value ? mapping.bounds[0] : next;
 	}
 }

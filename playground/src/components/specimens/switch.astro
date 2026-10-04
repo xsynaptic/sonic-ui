@@ -1,44 +1,79 @@
 ---
 import Cell from '#components/specimens/cell.astro';
-import FilterModes from '#components/specimens/filter-modes.astro';
-import Panel from '#components/specimens/panel.astro';
-import TransportModes from '#components/specimens/transport-modes.astro';
+import SpecimenGrid from '#components/specimens/specimen-grid.astro';
+
+const legend = 'font-mono text-zinc-300 uppercase';
 ---
 
-<Panel>
-	<Cell id="switch-filter" isWide={true} label="Filter mode">
-		<sonic-segmented aria-labelledby="switch-filter" class="font-mono" value="lp">
-			<FilterModes hasNotch={true} />
-		</sonic-segmented>
+<SpecimenGrid>
+	<Cell id="switch-sync" label="Sync">
+		<sonic-switch aria-labelledby="switch-sync"></sonic-switch>
 	</Cell>
-	<Cell id="switch-transport" isWide={true} label="Transport">
-		<sonic-segmented aria-labelledby="switch-transport" value="play">
-			<TransportModes />
-		</sonic-segmented>
+	<Cell id="switch-sync-horizontal" label="Sync, horizontal">
+		<sonic-switch
+			aria-labelledby="switch-sync-horizontal"
+			checked
+			orientation="horizontal"
+		></sonic-switch>
 	</Cell>
-	<Cell id="switch-disabled" isWide={true} label="Disabled">
-		<sonic-segmented aria-labelledby="switch-disabled" class="font-mono" disabled value="bp">
-			<FilterModes hasNotch={false} />
-		</sonic-segmented>
+	<Cell id="switch-loop" label="Loop">
+		<sonic-switch aria-labelledby="switch-loop" class={legend} value="pre">
+			<span data-sonic-value="pre">Pre</span>
+			<span data-sonic-value="post">Post</span>
+		</sonic-switch>
 	</Cell>
-</Panel>
-<Panel isLarge={true}>
-	<Cell id="switch-large-filter" isWide={true} label="Filter mode, large">
-		<sonic-segmented
-			aria-labelledby="switch-large-filter"
-			class="font-mono [--sonic-segmented-size:4rem]"
-			value="lp"
+	<Cell id="switch-assign" isWide={true} label="Assign">
+		<sonic-switch
+			aria-labelledby="switch-assign"
+			class={legend}
+			orientation="horizontal"
+			value="off"
 		>
-			<FilterModes hasNotch={true} />
-		</sonic-segmented>
+			<span data-sonic-value="1">1</span>
+			<span data-sonic-value="off">Off</span>
+			<span data-sonic-value="2">2</span>
+		</sonic-switch>
 	</Cell>
-	<Cell id="switch-large-transport" isWide={true} label="Transport, large">
-		<sonic-segmented
-			aria-labelledby="switch-large-transport"
-			class="[--sonic-segmented-size:4rem]"
-			value="play"
+	<Cell id="switch-duck" label="Momentary">
+		<sonic-switch aria-labelledby="switch-duck" class={legend} value="off">
+			<span data-sonic-momentary data-sonic-value="duck">
+				Duck
+			</span>
+			<span data-sonic-value="off">Off</span>
+			<span data-sonic-value="on">On</span>
+		</sonic-switch>
+	</Cell>
+	<Cell id="switch-disabled" label="Disabled">
+		<sonic-switch aria-labelledby="switch-disabled" class={legend} disabled value="post">
+			<span data-sonic-value="pre">Pre</span>
+			<span data-sonic-value="post">Post</span>
+		</sonic-switch>
+	</Cell>
+</SpecimenGrid>
+<SpecimenGrid isLarge={true}>
+	<Cell id="switch-large-assign" isWide={true} label="Assign, large">
+		<sonic-switch
+			aria-labelledby="switch-large-assign"
+			class:list={[legend, '[--sonic-switch-size:4rem]']}
+			orientation="horizontal"
+			value="x"
 		>
-			<TransportModes />
-		</sonic-segmented>
+			<span data-sonic-value="x">X</span>
+			<span data-sonic-value="off">Off</span>
+			<span data-sonic-value="y">Y</span>
+		</sonic-switch>
 	</Cell>
-</Panel>
+	<Cell id="switch-large-duck" isWide={true} label="Momentary, large">
+		<sonic-switch
+			aria-labelledby="switch-large-duck"
+			class:list={[legend, '[--sonic-switch-size:4rem]']}
+			value="on"
+		>
+			<span data-sonic-momentary data-sonic-value="duck">
+				Duck
+			</span>
+			<span data-sonic-value="off">Off</span>
+			<span data-sonic-value="on">On</span>
+		</sonic-switch>
+	</Cell>
+</SpecimenGrid>

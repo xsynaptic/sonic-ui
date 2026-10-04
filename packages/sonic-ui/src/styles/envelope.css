@@ -27,7 +27,7 @@
 		--_sonic-envelope-handle-ratio: var(--sonic-envelope-handle-ratio, 0.14);
 		--_sonic-envelope-handle-stroke-ratio: var(--sonic-envelope-handle-stroke-ratio, 0.025);
 		--_sonic-envelope-line-ratio: var(--sonic-envelope-line-ratio, 0.03);
-		--_sonic-envelope-dot-ratio: var(--sonic-envelope-dot-ratio, 0.08);
+		--_sonic-envelope-curve-ratio: var(--sonic-envelope-curve-ratio, 0.08);
 		--_sonic-unit: calc(var(--_sonic-envelope-size) / 64);
 		--_sonic-envelope-inset: calc(var(--_sonic-envelope-size) * var(--_sonic-envelope-inset-ratio));
 
@@ -59,7 +59,7 @@
 		vector-effect: non-scaling-stroke;
 	}
 
-	:is(.sonic-envelope-handle, .sonic-envelope-dot) {
+	:is(.sonic-envelope-handle, .sonic-envelope-curve) {
 		--_sonic-point-ring: var(--_sonic-glass-text);
 		--_sonic-point-core: var(--_sonic-glass);
 		--_sonic-point-halo: 0 0 transparent;
@@ -99,8 +99,8 @@
 		cursor: grab;
 	}
 
-	.sonic-envelope-dot {
-		--_sonic-point-size: calc(var(--_sonic-envelope-size) * var(--_sonic-envelope-dot-ratio));
+	.sonic-envelope-curve {
+		--_sonic-point-size: calc(var(--_sonic-envelope-size) * var(--_sonic-envelope-curve-ratio));
 		--_sonic-point-core: var(--_sonic-point-ring);
 
 		cursor: ns-resize;
@@ -114,19 +114,19 @@
 		cursor: ns-resize;
 	}
 
-	:is(.sonic-envelope-dot, .sonic-envelope-handle)[data-sonic-disabled] {
+	:is(.sonic-envelope-curve, .sonic-envelope-handle)[data-sonic-disabled] {
 		--_sonic-point-ring: var(--_sonic-unlit);
 
 		cursor: default;
 	}
 
 	@media (hover: hover) {
-		:is(.sonic-envelope-dot, .sonic-envelope-handle):not([data-sonic-disabled]):hover {
+		:is(.sonic-envelope-curve, .sonic-envelope-handle):not([data-sonic-disabled]):hover {
 			--_sonic-point-ring: var(--_sonic-lit);
 		}
 	}
 
-	:is(.sonic-envelope-dot, .sonic-envelope-handle):not([data-sonic-disabled]):active {
+	:is(.sonic-envelope-curve, .sonic-envelope-handle):not([data-sonic-disabled]):active {
 		--_sonic-point-ring: var(--_sonic-lit);
 		--_sonic-point-core: var(--_sonic-lit);
 		--_sonic-point-halo: var(--_sonic-point-held-halo);
@@ -142,7 +142,7 @@
 			forced-color-adjust: none;
 		}
 
-		:is(.sonic-envelope-dot, .sonic-envelope-handle) {
+		:is(.sonic-envelope-curve, .sonic-envelope-handle) {
 			--_sonic-point-ring: CanvasText;
 
 			forced-color-adjust: none;

@@ -7,7 +7,7 @@ type Pixel = [number, number, number, number];
 // Read through a copy, so the control's own canvas is never read back and stays on the GPU
 export async function canvasPixels(
 	canvas: Locator,
-	places: Array<number>,
+	columns: Array<number>,
 	rowFraction = 0.5,
 ): Promise<Array<Pixel>> {
 	return canvas.evaluate(
@@ -35,7 +35,7 @@ export async function canvasPixels(
 				return [red, green, blue, alpha];
 			});
 		},
-		[places, rowFraction] as const,
+		[columns, rowFraction] as const,
 	);
 }
 

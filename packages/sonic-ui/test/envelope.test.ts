@@ -34,7 +34,7 @@ function mount(html: string): Rig {
 	document.body.innerHTML = html;
 
 	const envelope = requireChild(document.body, 'sonic-envelope', SonicEnvelope);
-	const parent = requireChild(document.body, '#knobs', HTMLDivElement);
+	const parent = requireChild(document.body, '#dials', HTMLDivElement);
 	const events: Array<string> = [];
 
 	vi.spyOn(
@@ -64,7 +64,7 @@ function mount(html: string): Rig {
 }
 
 function mountBound(): Rig {
-	return mount(`<div id="knobs">${dialMarkup}</div><sonic-envelope ${bound}></sonic-envelope>`);
+	return mount(`<div id="dials">${dialMarkup}</div><sonic-envelope ${bound}></sonic-envelope>`);
 }
 
 function drag(target: HTMLElement, by: { x: number; y: number }): void {
@@ -75,11 +75,11 @@ function drag(target: HTMLElement, by: { x: number; y: number }): void {
 	pointerAt(target, 'pointerup', to);
 }
 
-function placeOf(handle: HTMLElement, axis: 'x' | 'y'): number {
+function proportionOf(handle: HTMLElement, axis: 'x' | 'y'): number {
 	return Number(handle.style.getPropertyValue(`--_sonic-envelope-${axis}`));
 }
 
-test("the decay handle moves each dial along that dial's own scale, a share wide and the graph tall", () => {
+test("the decay handle moves each dial along that dial's own mapping, a share wide and the graph tall", () => {
 	const { dials, handle } = mountBound();
 
 	drag(handle('decay'), { x: 25, y: -20 });
@@ -110,17 +110,21 @@ test('a scripted write to a dial redraws the line and every handle after it', ()
 	const line = requireChild(envelope, '.sonic-envelope-line', SVGElement);
 	const before = line.getAttribute('d');
 
-	expect([placeOf(handle('decay'), 'x'), placeOf(handle('release'), 'x')]).toEqual([0.25, 0.75]);
+	expect([proportionOf(handle('decay'), 'x'), proportionOf(handle('release'), 'x')]).toEqual([
+		0.25, 0.75,
+	]);
 
 	dials.decay.value = 1100;
 
-	expect([placeOf(handle('decay'), 'x'), placeOf(handle('release'), 'x')]).toEqual([0.375, 0.875]);
+	expect([proportionOf(handle('decay'), 'x'), proportionOf(handle('release'), 'x')]).toEqual([
+		0.375, 0.875,
+	]);
 	expect(line.getAttribute('d')).not.toBe(before);
 });
 
 test('an envelope connected before its dials draws once its attribute is set again, and follows a range change', () => {
 	const { dials, envelope, handle } = mount(
-		`<sonic-envelope attack="attack"></sonic-envelope><div id="knobs">${dialMarkup}</div>`,
+		`<sonic-envelope attack="attack"></sonic-envelope><div id="dials">${dialMarkup}</div>`,
 	);
 	const attack = handle('attack');
 
@@ -128,10 +132,10 @@ test('an envelope connected before its dials draws once its attribute is set aga
 	expect(attack.hidden).toBe(true);
 
 	envelope.attack = 'attack';
-	expect([attack.hidden, placeOf(attack, 'x')]).toEqual([false, 0.25]);
+	expect([attack.hidden, proportionOf(attack, 'x')]).toEqual([false, 0.25]);
 
 	dials.attack.max = 4.5;
-	expect(placeOf(attack, 'x')).toBe(0.125);
+	expect(proportionOf(attack, 'x')).toBe(0.125);
 });
 
 test("a disabled dial's handle does not move it, and the other axis still drags", () => {
@@ -160,40 +164,44 @@ test('a cancelled drag puts both dials back and reports no change', () => {
 	expect(events.filter((event) => event.startsWith('change'))).toEqual([]);
 });
 
-test("the attack's dot bends its curve dial and no time dial, upward for a quicker rise", () => {
+test("the attack's curve handle turns its curve dial and no time dial, upward for a quicker rise", () => {
 	const rig = mount(
-		`<div id="knobs">${dialMarkup}<sonic-dial id="bend" min="-8" max="8" step="0.5" value="2"></sonic-dial></div>
-		<sonic-envelope ${bound} attack-curve="bend"></sonic-envelope>`,
+		`<div id="dials">${dialMarkup}<sonic-dial id="curve" min="-8" max="8" step="0.5" value="2"></sonic-dial></div>
+		<sonic-envelope ${bound} attack-curve="curve"></sonic-envelope>`,
 	);
-	const dot = requireChild(
+	const curveHandle = requireChild(
 		rig.envelope,
-		'.sonic-envelope-dot[data-sonic-stage="attack"]',
+		'.sonic-envelope-curve[data-sonic-stage="attack"]',
 		HTMLDivElement,
 	);
-	const bend = requireChild(document.body, '#bend', SonicDial);
-	const before = placeOf(dot, 'y');
+	const curveDial = requireChild(document.body, '#curve', SonicDial);
+	const before = proportionOf(curveHandle, 'y');
 
-	expect(dot.hidden).toBe(false);
+	expect(curveHandle.hidden).toBe(false);
 	expect(
-		requireChild(rig.envelope, '.sonic-envelope-dot[data-sonic-stage="decay"]', HTMLDivElement)
+		requireChild(rig.envelope, '.sonic-envelope-curve[data-sonic-stage="decay"]', HTMLDivElement)
 			.hidden,
 	).toBe(true);
 
-	drag(dot, { x: 30, y: -25 });
+	drag(curveHandle, { x: 30, y: -25 });
 
-	expect(bend.value).toBe(-2);
+	expect(curveDial.value).toBe(-2);
 	expect(rig.dials.attack.value).toBe(1.5);
-	expect(placeOf(dot, 'y')).toBeGreaterThan(before);
-	expect(rig.events).toEqual(['input bend', 'change bend']);
+	expect(proportionOf(curveHandle, 'y')).toBeGreaterThan(before);
+	expect(rig.events).toEqual(['input curve', 'change curve']);
 });
 
 test("the readout carries the held part's dials, x then y, in each dial's own format", () => {
 	const { dials, envelope, handle } = mount(
-		`<div id="knobs">${dialMarkup}<sonic-dial id="bend" min="-8" max="8" step="0.25" value="2"></sonic-dial></div>
-		<sonic-envelope ${bound} decay-curve="bend" readout></sonic-envelope>`,
+		`<div id="dials">${dialMarkup}<sonic-dial id="curve" min="-8" max="8" step="0.25" value="2"></sonic-dial></div>
+		<sonic-envelope ${bound} decay-curve="curve" readout></sonic-envelope>`,
 	);
 	const text = requireChild(envelope, '.sonic-envelope-readout > span', HTMLSpanElement);
-	const dot = requireChild(envelope, '.sonic-envelope-dot[data-sonic-stage="decay"]', HTMLElement);
+	const curveHandle = requireChild(
+		envelope,
+		'.sonic-envelope-curve[data-sonic-stage="decay"]',
+		HTMLElement,
+	);
 
 	vi.useFakeTimers();
 	dials.decay.formatValue = (value) => `${String(value)} ms`;
@@ -209,14 +217,14 @@ test("the readout carries the held part's dials, x then y, in each dial's own fo
 	expect(text.textContent).toBe('1.5');
 
 	pointerAt(handle('attack'), 'pointerup', { clientX: 100, clientY: 100 });
-	pointerAt(dot, 'pointerdown', { clientX: 100, clientY: 100 });
-	pointerAt(dot, 'pointermove', { clientX: 100, clientY: 90 });
+	pointerAt(curveHandle, 'pointerdown', { clientX: 100, clientY: 100 });
+	pointerAt(curveHandle, 'pointermove', { clientX: 100, clientY: 90 });
 	expect(text.textContent).toBe('3.5');
 });
 
 test('the readout is anchored to the held part alone', () => {
 	const { envelope, handle } = mount(
-		`<div id="knobs">${dialMarkup}</div><sonic-envelope ${bound} readout></sonic-envelope>`,
+		`<div id="dials">${dialMarkup}</div><sonic-envelope ${bound} readout></sonic-envelope>`,
 	);
 	const bubble = requireChild(envelope, '.sonic-envelope-readout', HTMLElement);
 	const anchors = (): Array<string> =>

@@ -1,4 +1,4 @@
-import type { SonicKey } from '@xsynaptic/sonic-ui';
+import type { SonicButton } from '@xsynaptic/sonic-ui';
 
 const maxElapsedSeconds = 0.1;
 
@@ -45,11 +45,11 @@ function isMotionAllowed(): boolean {
 }
 
 export function bindRun(
-	keys: ReadonlyArray<SonicKey>,
+	buttons: ReadonlyArray<SonicButton>,
 	run: { start(): void; stop(): void },
 ): (isRunning: boolean) => void {
 	const setRunning = (isRunning: boolean): void => {
-		for (const key of keys) key.pressed = isRunning;
+		for (const button of buttons) button.pressed = isRunning;
 		if (!isRunning) {
 			run.stop();
 			return;
@@ -58,9 +58,9 @@ export function bindRun(
 		run.start();
 	};
 
-	for (const key of keys) {
-		key.addEventListener('change', () => {
-			setRunning(key.pressed);
+	for (const button of buttons) {
+		button.addEventListener('change', () => {
+			setRunning(button.pressed);
 		});
 	}
 	setRunning(isMotionAllowed());

@@ -1,5 +1,5 @@
 ---
-import { meterLights } from '#components/club-mixer/meter-lights.ts';
+import { meterSegments } from '#components/club-mixer/meter-segments.ts';
 
 interface Props {
 	hasMeter: boolean;
@@ -10,7 +10,7 @@ const { hasMeter, value } = Astro.props;
 ---
 
 <div class="mt-auto flex items-end gap-2 pt-2">
-	{hasMeter ? <sonic-meter data-channel-meter lights={meterLights}></sonic-meter> : undefined}
+	{hasMeter ? <sonic-meter data-channel-meter segments={meterSegments}></sonic-meter> : undefined}
 	<sonic-slider
 		aria-label="Fader"
 		data-channel-fader

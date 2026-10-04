@@ -6,7 +6,7 @@ const catchUpPerFrame = 0.06;
 
 interface ClockSource {
 	isPlaying: boolean;
-	rate: number;
+	playbackRate: number;
 	seconds: number;
 }
 
@@ -34,11 +34,11 @@ export function createTrackingClock(): TrackingClock {
 
 	return {
 		read: (frameMs, source) => {
-			const { isPlaying, rate, seconds } = source;
+			const { isPlaying, playbackRate, seconds } = source;
 			const elapsedSeconds = wasPlaying
 				? Math.max(0, frameMs - (lastFrameMs ?? frameMs)) / 1000
 				: 0;
-			const carried = (positionSeconds ?? seconds) + elapsedSeconds * rate;
+			const carried = (positionSeconds ?? seconds) + elapsedSeconds * playbackRate;
 
 			lastFrameMs = frameMs;
 			wasPlaying = isPlaying;

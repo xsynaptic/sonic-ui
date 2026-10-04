@@ -5,7 +5,7 @@ import { listTaper, logTaper, skewTaper } from '#lib/taper.ts';
 test('a 20 Hz to 20 kHz skew through 1 kHz puts 68 Hz and 5.7 kHz at the quarters', () => {
 	const taper = skewTaper(20, 20_000, 1000);
 
-	expect(taper?.place(1000)).toBeCloseTo(0.5, 12);
+	expect(taper?.proportionOf(1000)).toBeCloseTo(0.5, 12);
 	expect(taper?.valueAt(0.25)).toBeCloseTo(68, 0);
 	expect(taper?.valueAt(0.75)).toBeCloseTo(5700, -2);
 });
@@ -18,8 +18,8 @@ test.each([
 	['skew', skewTaper(0, 2, 0.1)],
 	['log', logTaper(20, 20_000)],
 ])('a %s taper round-trips across the range', (_case, taper) => {
-	for (let place = 0; place <= 1; place += 0.125) {
-		expect(taper?.place(taper.valueAt(place))).toBeCloseTo(place, 12);
+	for (let proportion = 0; proportion <= 1; proportion += 0.125) {
+		expect(taper?.proportionOf(taper.valueAt(proportion))).toBeCloseTo(proportion, 12);
 	}
 });
 
@@ -41,16 +41,16 @@ test.each([
 	expect(logTaper(min, max)).toBeUndefined();
 });
 
-test('a log taper clamps a value or a place outside its range', () => {
+test('a log taper clamps a value or a proportion outside its range', () => {
 	const taper = logTaper(1, 10);
 
-	expect(taper?.place(-1)).toBe(0);
-	expect(taper?.place(15)).toBe(1);
+	expect(taper?.proportionOf(-1)).toBe(0);
+	expect(taper?.proportionOf(15)).toBe(1);
 	expect(taper?.valueAt(-0.1)).toBe(1);
 });
 
 test('a 1 to 2 log taper puts 1.5 at 0.585 of the travel', () => {
-	expect(logTaper(1, 2)?.place(1.5)).toBeCloseTo(0.5849625, 6);
+	expect(logTaper(1, 2)?.proportionOf(1.5)).toBeCloseTo(0.5849625, 6);
 });
 
 test('a skew from a min above zero keeps its ends exact and clamps past them', () => {
@@ -58,8 +58,8 @@ test('a skew from a min above zero keeps its ends exact and clamps past them', (
 
 	expect(taper?.valueAt(0)).toBe(20);
 	expect(taper?.valueAt(1)).toBe(20_000);
-	expect(taper?.place(10)).toBe(0);
-	expect(taper?.place(30_000)).toBe(1);
+	expect(taper?.proportionOf(10)).toBe(0);
+	expect(taper?.proportionOf(30_000)).toBe(1);
 });
 
 test.each([
@@ -68,8 +68,8 @@ test.each([
 	[50, 0.75],
 	[75, 0.875],
 	[150, 1],
-])('a list taper over -10, 0 and 100 places %d at %d', (value, place) => {
-	expect(listTaper([-10, 0, 100]).place(value)).toBe(place);
+])('a list taper over -10, 0 and 100 maps %d to %d', (value, proportion) => {
+	expect(listTaper([-10, 0, 100]).proportionOf(value)).toBe(proportion);
 });
 
 test.each([
@@ -83,6 +83,6 @@ test.each([
 	expect(taper?.valueAt(1)).toBe(max);
 });
 
-test('a list taper has no place for a value that is not a number', () => {
-	expect(listTaper([1, 2, 4]).place(NaN)).toBeNaN();
+test('a list taper has no proportion for a value that is not a number', () => {
+	expect(listTaper([1, 2, 4]).proportionOf(NaN)).toBeNaN();
 });

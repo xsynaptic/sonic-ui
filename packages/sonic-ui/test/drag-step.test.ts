@@ -1,30 +1,36 @@
 import { expect, test } from 'vitest';
 
 import type { DragMove } from '#lib/drag-step.ts';
-import type { RangeSpec } from '#lib/range-scale.ts';
+import type { ValueSpec } from '#lib/value-mapping.ts';
 
 import { startDrag, stepDrag } from '#lib/drag-step.ts';
 
-import { scaleOf } from './helpers.ts';
+import { mappingOf } from './helpers.ts';
 
 interface Drag {
 	detent?: number;
 	from: number;
 	moves: Array<number | (Partial<DragMove> & Pick<DragMove, 'position'>)>;
-	spec?: Partial<RangeSpec>;
+	spec?: Partial<ValueSpec>;
 	thresholdPx?: number;
 }
 
 function drag({ detent, from, moves, spec, thresholdPx = 3 }: Drag): Array<number | undefined> {
-	const scale = scaleOf(spec);
-	const start = { from, place: scale.place(from), position: 0, thresholdPx, travelPx: 160 };
+	const mapping = mappingOf(spec);
+	const start = {
+		from,
+		position: 0,
+		proportion: mapping.proportionOf(from),
+		thresholdPx,
+		travelPx: 160,
+	};
 	let state = startDrag(
-		scale,
+		mapping,
 		detent === undefined ? start : { ...start, detent: { value: detent, zone: 8 / 160 } },
 	);
 
 	return moves.map((move) => {
-		const step = stepDrag(scale, state, {
+		const step = stepDrag(mapping, state, {
 			isFine: false,
 			isOutside: false,
 			...(typeof move === 'number' ? { position: move } : move),
@@ -112,8 +118,8 @@ test.each([
 	expect(drag({ from, moves: [position], spec })).toEqual([expected]);
 });
 
-test('a drag moves by entries evenly along the travel', () => {
-	expect(drag({ from: 0.5, moves: [40, 70], spec: { entries: [0.25, 0.5, 1, 2, 4] } })).toEqual([
+test('a drag moves by positions evenly along the travel', () => {
+	expect(drag({ from: 0.5, moves: [40, 70], spec: { positions: [0.25, 0.5, 1, 2, 4] } })).toEqual([
 		1, 2,
 	]);
 });
@@ -133,7 +139,7 @@ test.each([
 	[10, [-6, -10, -20], [0, 0, 343]],
 	[350, [8, 12, 20], [0, 0, 17]],
 ])(
-	'on an endless scale a drag from %d onto a detent at the seam is held there, then moves on',
+	'on an endless mapping a drag from %d onto a detent at the seam is held there, then moves on',
 	(from, moves, expected) => {
 		const endless = { isWrapping: true, max: 360 };
 

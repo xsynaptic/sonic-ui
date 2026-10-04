@@ -63,8 +63,8 @@ function pendingIn(
 	{ pending, range }: TimelineInput,
 	window: [number, number],
 ): Array<[number, number]> {
-	return pending.flatMap((span) => {
-		const inRange = overlap(span, range);
+	return pending.flatMap((region) => {
+		const inRange = overlap(region, range);
 		const shown = inRange && overlap(inRange, window);
 
 		return shown ? [shown] : [];

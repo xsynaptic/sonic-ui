@@ -23,9 +23,9 @@ function upsample(peaks: ArrayLike<number>, count: number): Array<number> {
 	const last = peaks.length - 1;
 
 	for (let index = 0; index < count; index += 1) {
-		const place = count === 1 ? 0 : (index * last) / (count - 1);
-		const before = Math.floor(place);
-		const weight = place - before;
+		const sourceIndex = count === 1 ? 0 : (index * last) / (count - 1);
+		const before = Math.floor(sourceIndex);
+		const weight = sourceIndex - before;
 
 		resampled.push(
 			(peaks[before] ?? 0) * (1 - weight) + (peaks[Math.min(last, before + 1)] ?? 0) * weight,

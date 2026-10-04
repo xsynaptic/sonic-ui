@@ -45,12 +45,12 @@
 		--_sonic-slider-cap-ratio: var(--sonic-slider-cap-ratio, 0.5);
 		--_sonic-slider-radius-ratio: var(--sonic-slider-radius-ratio, 0.15);
 		--_sonic-slider-bevel-ratio: var(--sonic-slider-bevel-ratio, 0.075);
-		--_sonic-slider-pointer-ratio: var(--sonic-slider-pointer-ratio, 0.07);
+		--_sonic-slider-indicator-ratio: var(--sonic-slider-indicator-ratio, 0.07);
 		--_sonic-slider-scale-ratio: var(--sonic-slider-scale-ratio, 0.4);
 		--_sonic-slider-scale-font-ratio: var(--sonic-slider-scale-font-ratio, 0.18);
 		--_sonic-slider-scale-band: 0px;
-		--_sonic-slider-track: calc(var(--_sonic-slider-size) - var(--_sonic-slider-scale-band));
-		--_sonic-unit: calc(var(--_sonic-slider-track) / 32);
+		--_sonic-slider-breadth: calc(var(--_sonic-slider-size) - var(--_sonic-slider-scale-band));
+		--_sonic-unit: calc(var(--_sonic-slider-breadth) / 32);
 		--_sonic-slider-lit: var(--_sonic-lit);
 		--_sonic-slider-buffered: var(
 			--sonic-buffered,
@@ -59,8 +59,8 @@
 		--_sonic-slider-toward: to right;
 		--_sonic-slider-across: to bottom;
 		--_sonic-slider-cursor: ew-resize;
-		--_sonic-slider-groove: calc(var(--_sonic-slider-track) * var(--_sonic-slider-groove-ratio));
-		--_sonic-slider-cap: calc(var(--_sonic-slider-track) * var(--_sonic-slider-cap-ratio));
+		--_sonic-slider-groove: calc(var(--_sonic-slider-breadth) * var(--_sonic-slider-groove-ratio));
+		--_sonic-slider-cap: calc(var(--_sonic-slider-breadth) * var(--_sonic-slider-cap-ratio));
 		--_sonic-slider-travel: calc(100cqi - var(--_sonic-slider-cap));
 		--_sonic-slider-offset: calc(var(--_sonic-slider-value, 0) * var(--_sonic-slider-travel));
 
@@ -160,10 +160,10 @@
 
 	.sonic-slider-notches {
 		--_sonic-slider-notch-pitch: calc(
-			var(--_sonic-slider-travel) / (var(--_sonic-slider-positions, 2) - 1)
+			var(--_sonic-slider-travel) / (var(--_sonic-slider-position-count, 2) - 1)
 		);
 		--_sonic-slider-notch-lip: calc(
-			var(--_sonic-slider-groove) / 2 + var(--_sonic-slider-track) * 0.1
+			var(--_sonic-slider-groove) / 2 + var(--_sonic-slider-breadth) * 0.1
 		);
 
 		position: absolute;
@@ -247,7 +247,7 @@
 					),
 				transparent 0
 			),
-			var(--_sonic-slider-buffered-spans, none), var(--_sonic-unlit);
+			var(--_sonic-slider-buffered-regions, none), var(--_sonic-unlit);
 		border-radius: calc(var(--_sonic-slider-groove) / 2);
 		box-shadow: var(--_sonic-groove), var(--_sonic-focus-shadow);
 	}
@@ -297,10 +297,13 @@
 	}
 
 	:state(modulated) > .sonic-slider > .sonic-slider-modulation {
-		--_sonic-slider-live-low: min(var(--_sonic-slider-value, 0), var(--_sonic-slider-modulated, 0));
+		--_sonic-slider-live-low: min(
+			var(--_sonic-slider-value, 0),
+			var(--_sonic-slider-modulation-value, 0)
+		);
 		--_sonic-slider-live-high: max(
 			var(--_sonic-slider-value, 0),
-			var(--_sonic-slider-modulated, 0)
+			var(--_sonic-slider-modulation-value, 0)
 		);
 		--_sonic-slider-live-start: calc(
 			(var(--_sonic-slider-live-low) - var(--_sonic-slider-modulation-from, 0)) *
@@ -310,7 +313,7 @@
 			(var(--_sonic-slider-live-high) - var(--_sonic-slider-live-low)) * var(--_sonic-slider-travel)
 		);
 		--_sonic-slider-tick-start: calc(
-			(var(--_sonic-slider-modulated, 0) - var(--_sonic-slider-modulation-from, 0)) *
+			(var(--_sonic-slider-modulation-value, 0) - var(--_sonic-slider-modulation-from, 0)) *
 				var(--_sonic-slider-travel) - var(--_sonic-unit) / 2
 		);
 		--_sonic-slider-tick-overhang: calc(
@@ -361,13 +364,13 @@
 	}
 
 	.sonic-slider-cap {
-		--_sonic-slider-pointer-width: calc(
-			var(--_sonic-slider-track) * var(--_sonic-slider-pointer-ratio)
+		--_sonic-slider-indicator-width: calc(
+			var(--_sonic-slider-breadth) * var(--_sonic-slider-indicator-ratio)
 		);
-		--_sonic-slider-bevel: calc(var(--_sonic-slider-track) * var(--_sonic-slider-bevel-ratio));
-		--_sonic-slider-corner: calc(var(--_sonic-slider-track) * var(--_sonic-slider-radius-ratio));
-		--_sonic-slider-index-inset: calc(
-			var(--_sonic-slider-bevel) + var(--_sonic-slider-track) * 0.1
+		--_sonic-slider-bevel: calc(var(--_sonic-slider-breadth) * var(--_sonic-slider-bevel-ratio));
+		--_sonic-slider-corner: calc(var(--_sonic-slider-breadth) * var(--_sonic-slider-radius-ratio));
+		--_sonic-slider-indicator-inset: calc(
+			var(--_sonic-slider-bevel) + var(--_sonic-slider-breadth) * 0.1
 		);
 
 		position: absolute;
@@ -396,9 +399,10 @@
 		}
 
 		&::after {
-			inset: var(--_sonic-slider-index-inset) calc(50% - var(--_sonic-slider-pointer-width) / 2);
+			inset: var(--_sonic-slider-indicator-inset)
+				calc(50% - var(--_sonic-slider-indicator-width) / 2);
 			background: var(--_sonic-ink);
-			border-radius: calc(var(--_sonic-slider-pointer-width) / 2);
+			border-radius: calc(var(--_sonic-slider-indicator-width) / 2);
 			box-shadow: inset 0 0 calc(0.75 * var(--_sonic-unit)) rgb(0 0 0 / 55%);
 		}
 	}
@@ -410,7 +414,8 @@
 		translate: 0 calc(-1 * var(--_sonic-slider-offset));
 
 		&::after {
-			inset: calc(50% - var(--_sonic-slider-pointer-width) / 2) var(--_sonic-slider-index-inset);
+			inset: calc(50% - var(--_sonic-slider-indicator-width) / 2)
+				var(--_sonic-slider-indicator-inset);
 		}
 	}
 

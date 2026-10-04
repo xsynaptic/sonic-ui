@@ -47,13 +47,13 @@ test('Shift drags at a tenth of the pace', async ({ page }) => {
 });
 
 test('a groove press jumps the slider to the pointer', async ({ page }) => {
-	const track = await page.locator('#send .sonic-slider').boundingBox();
+	const groove = await page.locator('#send .sonic-slider').boundingBox();
 	const cap = await page.locator('#send .sonic-slider-cap').boundingBox();
-	if (!track || !cap) throw new Error('The slider has no box');
+	if (!groove || !cap) throw new Error('The slider has no box');
 
-	const travel = track.width - cap.width;
+	const travel = groove.width - cap.width;
 
-	await page.mouse.click(track.x + cap.width / 2 + travel * 0.75, track.y + track.height / 2);
+	await page.mouse.click(groove.x + cap.width / 2 + travel * 0.75, groove.y + groove.height / 2);
 
 	// Firefox and WebKit round the pointer to whole pixels
 	const slider = page.getByRole('slider', { name: 'Send' });
@@ -65,28 +65,28 @@ test('a groove press jumps the slider to the pointer', async ({ page }) => {
 
 test('groove-press="none" moves the crossfader only by its cap', async ({ page }) => {
 	const slider = page.getByRole('slider', { name: 'Crossfade' });
-	const track = await page.locator('#crossfader .sonic-slider').boundingBox();
+	const groove = await page.locator('#crossfader .sonic-slider').boundingBox();
 	const cap = await page.locator('#crossfader .sonic-slider-cap').boundingBox();
-	if (!track || !cap) throw new Error('The slider has no box');
+	if (!groove || !cap) throw new Error('The slider has no box');
 
-	await page.mouse.click(track.x + track.width - 4, track.y + track.height / 2);
+	await page.mouse.click(groove.x + groove.width - 4, groove.y + groove.height / 2);
 	await expect(slider).toHaveAttribute('aria-valuenow', '20');
 
 	await drag(page, page.locator('#crossfader .sonic-slider-cap'), {
-		x: (track.width - cap.width) / 4,
+		x: (groove.width - cap.width) / 4,
 		y: 0,
 	});
 	await expect(slider).toHaveAttribute('aria-valuenow', '45');
 });
 
 test('a vertical fader drags upward from its cap', async ({ page }) => {
-	const track = await page.locator('#fader .sonic-slider').boundingBox();
+	const groove = await page.locator('#fader .sonic-slider').boundingBox();
 	const cap = await page.locator('#fader .sonic-slider-cap').boundingBox();
-	if (!track || !cap) throw new Error('The slider has no box');
+	if (!groove || !cap) throw new Error('The slider has no box');
 
 	await drag(page, page.locator('#fader .sonic-slider-cap'), {
 		x: 0,
-		y: -(track.height - cap.height) / 4,
+		y: -(groove.height - cap.height) / 4,
 	});
 
 	const slider = page.getByRole('slider', { name: 'Fader' });
@@ -205,7 +205,7 @@ test('a double press on a number box types in place, with no bubble', async ({ p
 	await expect(spinbutton).toHaveAttribute('aria-valuenow', '98');
 });
 
-test('a switch press dragged to another segment latches it, and dragged off latches nothing', async ({
+test('a segmented press dragged to another option latches it, and dragged off latches nothing', async ({
 	page,
 }) => {
 	const lowPass = page.getByRole('radio', { name: 'LP' });

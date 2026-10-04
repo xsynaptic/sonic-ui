@@ -1,6 +1,6 @@
 ---
 import Label from '#components/replica/label.astro';
-import PanelKey from '#components/replica/panel-key.astro';
+import PanelButton from '#components/replica/panel-button.astro';
 import Pot from '#components/replica/pot.astro';
 import { channelCurves } from '#scripts/stop-names.ts';
 
@@ -36,14 +36,14 @@ const passes = [
 		size="medium"
 		value={40}
 	/>
-	<PanelKey
+	<PanelButton
 		data={{ 'data-lfo-on': '' }}
 		id={`${section}-lfo-on`}
 		isPressed={filter === 1}
 		label="LFO on"
 	/>
-	<PanelKey data={{ 'data-double': '' }} id={`${section}-double`} label="×2" />
-	<PanelKey
+	<PanelButton data={{ 'data-double': '' }} id={`${section}-double`} label="×2" />
+	<PanelButton
 		data={{ 'data-tap': '' }}
 		id={`${section}-tap`}
 		isMomentary={true}
@@ -67,10 +67,10 @@ const passes = [
 	>
 		Filter {filter}
 	</span>
-	{filter === 2 ? <PanelKey id={`${section}-link`} label="Link" /> : undefined}
-	<PanelKey id={`${section}-crossfade`} label="To xfade" />
+	{filter === 2 ? <PanelButton id={`${section}-link`} label="Link" /> : undefined}
+	<PanelButton id={`${section}-crossfade`} label="To xfade" />
 	{passes.map((pass, index) => (
-		<PanelKey
+		<PanelButton
 			id={`${section}-${pass.id}`}
 			isPressed={index === 2}
 			isRound={true}
@@ -92,7 +92,7 @@ const passes = [
 		value={2000}
 	/>
 	<div class="mt-auto flex items-end gap-3 pt-2">
-		<PanelKey id={`${section}-on`} isRound={true} label="On" size="large" />
+		<PanelButton id={`${section}-on`} isRound={true} label="On" size="large" />
 		{filter === 1 ? (
 			<Pot
 				data={{ 'data-crossfade-curve': '' }}

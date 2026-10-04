@@ -26,11 +26,11 @@ function applySkin(skin: string): void {
 	document.dispatchEvent(new Event('playground-skin'));
 }
 
-const skinSwitch = document.querySelector<SonicSegmented>('[data-skin-switch]');
+const skinChoice = document.querySelector<SonicSegmented>('[data-skin-choice]');
 
-if (skinSwitch) {
-	skinSwitch.value = readSkin();
-	skinSwitch.addEventListener('change', () => {
-		applySkin(skinSwitch.value);
+if (skinChoice) {
+	skinChoice.value = readSkin();
+	skinChoice.addEventListener('change', () => {
+		applySkin(skinChoice.value);
 	});
 }

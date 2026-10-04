@@ -1,7 +1,7 @@
 import type { SonicDial } from '#elements/dial.ts';
-import type { RangeScale, RangeSpec } from '#lib/range-scale.ts';
+import type { ValueMapping, ValueSpec } from '#lib/value-mapping.ts';
 
-import { rangeScale } from '#lib/range-scale.ts';
+import { valueMapping } from '#lib/value-mapping.ts';
 
 export function mountControl<Tag extends keyof HTMLElementTagNameMap>(
 	tag: Tag,
@@ -51,8 +51,8 @@ export function recordEvents(target: EventTarget): Array<string> {
 	return events;
 }
 
-export function scaleOf(spec: Partial<RangeSpec> = {}): RangeScale {
-	return rangeScale({
+export function mappingOf(spec: Partial<ValueSpec> = {}): ValueMapping {
+	return valueMapping({
 		isNotched: false,
 		isWrapping: false,
 		max: 100,

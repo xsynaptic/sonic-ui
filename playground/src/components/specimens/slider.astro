@@ -1,6 +1,6 @@
 ---
 import Cell from '#components/specimens/cell.astro';
-import Panel from '#components/specimens/panel.astro';
+import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 
 const faderMarks = [
 	[10, '+10'],
@@ -15,7 +15,7 @@ const faderMarks = [
 ] as const;
 ---
 
-<Panel>
+<SpecimenGrid>
 	<Cell id="slider-send" isWide={true} label="Send">
 		<sonic-slider
 			aria-labelledby="slider-send"
@@ -88,9 +88,9 @@ const faderMarks = [
 			value="0"
 		></sonic-slider>
 	</Cell>
-	<Cell id="slider-legend" label="Legend">
+	<Cell id="slider-scale" label="Scale">
 		<sonic-slider
-			aria-labelledby="slider-legend"
+			aria-labelledby="slider-scale"
 			class="[--sonic-slider-length:10rem] [--sonic-slider-size:3.25rem]"
 			data-format="db-kill"
 			default="0"
@@ -164,8 +164,8 @@ const faderMarks = [
 			value="60"
 		></sonic-slider>
 	</Cell>
-</Panel>
-<Panel isLarge={true}>
+</SpecimenGrid>
+<SpecimenGrid isLarge={true}>
 	<Cell id="slider-large-send" isWide={true} label="Send, large">
 		<sonic-slider
 			aria-labelledby="slider-large-send"
@@ -212,4 +212,4 @@ const faderMarks = [
 			value="7"
 		></sonic-slider>
 	</Cell>
-</Panel>
+</SpecimenGrid>

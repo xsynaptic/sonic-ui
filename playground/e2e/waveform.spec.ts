@@ -32,9 +32,9 @@ async function upperRow(canvas: Locator): Promise<string> {
 	const width = await canvas.evaluate((element) =>
 		element instanceof HTMLCanvasElement ? element.width : 0,
 	);
-	const places = Array.from({ length: Math.floor(width / 2) }, (_place, index) => index * 2);
+	const columns = Array.from({ length: Math.floor(width / 2) }, (_column, index) => index * 2);
 
-	return String(await canvasPixels(canvas, places, 0.3));
+	return String(await canvasPixels(canvas, columns, 0.3));
 }
 
 function readPlayhead(waveform: Locator): Promise<string> {
@@ -99,13 +99,13 @@ test('under reduced motion the picture holds still while the playhead crosses it
 	expect(await upperRow(canvas)).toBe(before);
 });
 
-test('the pending state follows a span in the window, and clears when it lands or leaves', async ({
+test('the pending state follows a region in the window, and clears when it lands or leaves', async ({
 	page,
 }) => {
 	const { waveform } = await openWaveform(page);
 	const setPending = async (pending: Array<[number, number]>): Promise<void> => {
-		await waveform.evaluate((element, spans) => {
-			Object.assign(element, { pending: spans });
+		await waveform.evaluate((element, regions) => {
+			Object.assign(element, { pending: regions });
 		}, pending);
 	};
 	const readPending = (): Promise<boolean> => readState(waveform, 'pending');

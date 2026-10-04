@@ -54,7 +54,7 @@
 		box-shadow: var(--_sonic-well);
 	}
 
-	.sonic-segmented-segment {
+	.sonic-segmented-option {
 		display: grid;
 		min-inline-size: calc(var(--_sonic-segmented-size) - 2 * var(--_sonic-segmented-gap));
 		padding: 0;
@@ -69,14 +69,14 @@
 		transition: color 120ms ease-out;
 	}
 
-	.sonic-segmented-segment:where([data-sonic-pressed], :focus-visible:active):not(:disabled),
-	.sonic-segmented-segment[aria-checked='true'] {
+	.sonic-segmented-option:where([data-sonic-pressed], :focus-visible:active):not(:disabled),
+	.sonic-segmented-option[aria-checked='true'] {
 		--_sonic-keycap-shift: calc(var(--_sonic-keycap-depth) / 2);
 		--_sonic-keycap-scale: var(--_sonic-segmented-press-scale);
 		--_sonic-keycap-drop: var(--_sonic-press-drop);
 	}
 
-	.sonic-segmented-segment[aria-checked='true'] {
+	.sonic-segmented-option[aria-checked='true'] {
 		--_sonic-keycap-glow: color-mix(in oklab, var(--_sonic-lit) 22%, transparent);
 
 		color: var(--_sonic-lit);
@@ -84,14 +84,14 @@
 		box-shadow: var(--_sonic-well);
 	}
 
-	.sonic-segmented-segment:disabled {
+	.sonic-segmented-option:disabled {
 		--_sonic-lit: var(--_sonic-lit-disabled);
 
 		color: var(--_sonic-etch);
 		cursor: default;
 	}
 
-	.sonic-segmented-segment:not([aria-checked='true'], :disabled):is(
+	.sonic-segmented-option:not([aria-checked='true'], :disabled):is(
 			:focus-visible,
 			:active,
 			[data-sonic-pressed]
@@ -100,7 +100,7 @@
 	}
 
 	@media (hover: hover) {
-		.sonic-segmented-segment:not([aria-checked='true'], :disabled):hover {
+		.sonic-segmented-option:not([aria-checked='true'], :disabled):hover {
 			color: var(--_sonic-ink-lift);
 		}
 	}
@@ -126,7 +126,7 @@
 		}
 	}
 
-	.sonic-segmented-segment[aria-checked='true'] .sonic-segmented-cap > * {
+	.sonic-segmented-option[aria-checked='true'] .sonic-segmented-cap > * {
 		filter: var(--_sonic-engraving)
 			drop-shadow(0 0 var(--_sonic-unit) color-mix(in oklab, var(--_sonic-lit) 35%, transparent));
 	}
@@ -136,7 +136,7 @@
 			filter: none;
 		}
 
-		.sonic-segmented-segment[aria-checked='true'] {
+		.sonic-segmented-option[aria-checked='true'] {
 			--_sonic-skirt: var(--_sonic-lit);
 			--_sonic-face: var(--_sonic-lit);
 			--_sonic-ink: HighlightText;

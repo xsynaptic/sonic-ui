@@ -1,5 +1,5 @@
 // Interleaved min, max per channel per pair; `fullScale` is 128, 32768 or 1
-export interface WaveformData {
+export interface WaveformPeaks {
 	channels?: number;
 	fullScale: number;
 	pairsPerSecond: number;
@@ -20,9 +20,9 @@ interface BucketView {
 	width: number;
 }
 
-function foldPairs(data: WaveformData, fromPair: number, toPair: number): [number, number] {
-	const { samples } = data;
-	const channels = Math.max(1, data.channels ?? 1);
+function foldPairs(peaks: WaveformPeaks, fromPair: number, toPair: number): [number, number] {
+	const { samples } = peaks;
+	const channels = Math.max(1, peaks.channels ?? 1);
 	const stride = channels * 2;
 	const pairsTotal = Math.floor(samples.length / stride);
 	let low = 0;
@@ -37,12 +37,12 @@ function foldPairs(data: WaveformData, fromPair: number, toPair: number): [numbe
 		}
 	}
 
-	return [low / data.fullScale, high / data.fullScale];
+	return [low / peaks.fullScale, high / peaks.fullScale];
 }
 
 // Keyed to absolute pairs; keyed to the window, the same samples re-bucket every frame and judder
-export function waveformBuckets(data: WaveformData, view: BucketView): Array<WaveformBucket> {
-	const { pairsPerSecond } = data;
+export function waveformBuckets(peaks: WaveformPeaks, view: BucketView): Array<WaveformBucket> {
+	const { pairsPerSecond } = peaks;
 	if (pairsPerSecond <= 0 || view.pixelsPerSecond <= 0) return [];
 
 	const pxPerPair = view.pixelsPerSecond / pairsPerSecond;
@@ -55,7 +55,7 @@ export function waveformBuckets(data: WaveformData, view: BucketView): Array<Wav
 	for (let index = 0; index < count; index += 1) {
 		const fromPair = (first + index) * pairs;
 		const toPair = fromPair + pairs;
-		const [low, high] = foldPairs(data, fromPair, toPair);
+		const [low, high] = foldPairs(peaks, fromPair, toPair);
 
 		buckets.push({ fromPair, high, low, toPair, x: (fromPair - openingPair) * pxPerPair });
 	}

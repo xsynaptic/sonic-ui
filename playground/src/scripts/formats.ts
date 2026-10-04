@@ -68,10 +68,10 @@ function namedStops(names: ReadonlyArray<string>): Format {
 	};
 }
 
-function parseScaled(text: string, unit: RegExp, scale: number): number {
+function parseScaled(text: string, unit: RegExp, factor: number): number {
 	const value = parseNumber(text);
 
-	return unit.test(text) ? value * scale : value;
+	return unit.test(text) ? value * factor : value;
 }
 
 const formats = new Map<string, Format>([

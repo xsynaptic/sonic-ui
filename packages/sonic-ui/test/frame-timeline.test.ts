@@ -42,14 +42,14 @@ test('paged, a held drag carries the page with it and the ghost marks playback',
 	expect(timeline.isMoving).toBe(true);
 });
 
-test('the device ratio scales the pixels, not the seconds a window holds', () => {
+test('the device ratio multiplies the pixels, not the seconds a window holds', () => {
 	const timeline = frameTimeline({ ...base, size: { dpr: 2, height: 192, width: 980 } });
 
 	expect(timeline.view.pixelsPerSecond).toBe(140);
 	expect(timeline.wanted).toEqual([89.5, 110.5]);
 });
 
-test('pending spans clip to the window and the range', () => {
+test('pending regions clip to the window and the range', () => {
 	const timeline = frameTimeline({
 		...base,
 		clockSeconds: 5,
@@ -66,7 +66,7 @@ test('pending spans clip to the window and the range', () => {
 	]);
 });
 
-test('the placeholder travels only while a pending span shows and motion is allowed', () => {
+test('the placeholder travels only while a pending region shows and motion is allowed', () => {
 	const pending: Array<[number, number]> = [[99, 101]];
 	const key = (frameMs: number, isPaged: boolean): string =>
 		frameTimeline({ ...base, frameMs, isPaged, pending }).paintKey;
@@ -78,7 +78,7 @@ test('the placeholder travels only while a pending span shows and motion is allo
 	expect(frameTimeline({ ...base, frameMs: 1250 }).isMoving).toBe(false);
 });
 
-test('the wanted span is the window and one either side, inside the range', () => {
+test('the wanted region is the window and one either side, inside the range', () => {
 	const wanted = (clockSeconds: number, range: [number, number]): unknown =>
 		frameTimeline({ ...base, clockSeconds, range }).wanted;
 

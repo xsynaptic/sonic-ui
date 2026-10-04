@@ -13,7 +13,7 @@ interface Props {
 const { division, head, ticks } = Astro.props;
 
 const id = `echo-head-${String(head)}`;
-const values = divisions[division].join(' ');
+const positions = divisions[division].join(' ');
 ---
 
 <div
@@ -28,9 +28,9 @@ const values = divisions[division].join(' ');
 		data-echo-dial
 		data-format="note"
 		notched
+		positions={positions}
 		readout
 		value={ticks}
-		values={values}
 	></sonic-dial>
 	<sonic-segmented
 		aria-label={`Echo ${String(head)} division`}
@@ -49,7 +49,7 @@ const values = divisions[division].join(' ');
 		class="font-mono [--sonic-number-size:1.5rem]"
 		data-echo-number
 		data-format="note"
+		positions={positions}
 		value={ticks}
-		values={values}
 	></sonic-number>
 </div>

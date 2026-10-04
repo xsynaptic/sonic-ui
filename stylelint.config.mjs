@@ -11,7 +11,7 @@ export default {
 				'selector-disallowed-list': [
 					'/:root/',
 					// Only the pre-upgrade placeholder may name a tag, so a renamed element keeps every look
-					String.raw`/(^|[\s>+~(])sonic-(dial|key|meter|segmented|slider)(?![\w-]|,|[^\s,]*:not\(:defined)/`,
+					String.raw`/(^|[\s>+~(])sonic-(button|dial|meter|segmented|slider)(?![\w-]|,|[^\s,]*:not\(:defined)/`,
 				],
 			},
 		},

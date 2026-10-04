@@ -1,6 +1,6 @@
 ---
 import Cell from '#components/specimens/cell.astro';
-import Panel from '#components/specimens/panel.astro';
+import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 
 const screens = [
 	{ id: 'screen-frequency', label: 'Frequency', text: '440 Hz' },
@@ -9,7 +9,7 @@ const screens = [
 ];
 ---
 
-<Panel>
+<SpecimenGrid>
 	{screens.map((screen) => (
 		<Cell id={screen.id} isWide={true} label={screen.label}>
 			<div aria-labelledby={screen.id} class="sonic-screen font-mono text-sm" role="group">
@@ -17,8 +17,8 @@ const screens = [
 			</div>
 		</Cell>
 	))}
-</Panel>
-<Panel isLarge={true}>
+</SpecimenGrid>
+<SpecimenGrid isLarge={true}>
 	<Cell id="screen-large-frequency" isWide={true} label="Frequency, large">
 		<div
 			aria-labelledby="screen-large-frequency"
@@ -28,4 +28,4 @@ const screens = [
 			440 Hz
 		</div>
 	</Cell>
-</Panel>
+</SpecimenGrid>

@@ -2,15 +2,15 @@
 import Repeat from '@lucide/astro/icons/repeat';
 
 import Cell from '#components/specimens/cell.astro';
-import Panel from '#components/specimens/panel.astro';
+import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 ---
 
-<Panel>
+<SpecimenGrid>
 	<Cell id="ring-loop" label="Loop">
 		<span class="sonic-ring [--sonic-ring-size:calc(2rem/0.75)]" data-ring-loop>
-			<sonic-key aria-labelledby="ring-loop" pressed toggle>
+			<sonic-button aria-labelledby="ring-loop" latching pressed>
 				<Repeat aria-hidden="true" />
-			</sonic-key>
+			</sonic-button>
 		</span>
 	</Cell>
 	<Cell id="ring-span" label="Span">
@@ -20,9 +20,9 @@ import Panel from '#components/specimens/panel.astro';
 
 --sonic-ring-from: 0.25; --sonic-ring-to: 0.6"
 		>
-			<sonic-key aria-labelledby="ring-span" toggle>
+			<sonic-button aria-labelledby="ring-span" latching>
 				<span class="sonic-led"></span>
-			</sonic-key>
+			</sonic-button>
 		</span>
 	</Cell>
 	<Cell id="ring-dial" label="Round a dial">
@@ -56,13 +56,13 @@ import Panel from '#components/specimens/panel.astro';
 			<span class="sonic-led" data-sonic-lit></span>
 		</span>
 	</Cell>
-</Panel>
-<Panel isLarge={true}>
+</SpecimenGrid>
+<SpecimenGrid isLarge={true}>
 	<Cell id="ring-large-loop" label="Loop, large">
 		<span class="sonic-ring [--sonic-ring-size:8rem]" data-ring-loop>
-			<sonic-key aria-labelledby="ring-large-loop" pressed toggle>
+			<sonic-button aria-labelledby="ring-large-loop" latching pressed>
 				<Repeat aria-hidden="true" />
-			</sonic-key>
+			</sonic-button>
 		</span>
 	</Cell>
 	<Cell id="ring-large-progress" label="Progress, large">
@@ -76,4 +76,4 @@ import Panel from '#components/specimens/panel.astro';
 --sonic-ring-to: 0.65"
 		></span>
 	</Cell>
-</Panel>
+</SpecimenGrid>

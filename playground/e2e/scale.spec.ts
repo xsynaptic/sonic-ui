@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 for (const path of ['/', '/club-mixer/', '/fixtures/']) {
-	test(`every legend mark on ${path} lies inside its control`, async ({ page }) => {
+	test(`every scale mark on ${path} lies inside its control`, async ({ page }) => {
 		await page.goto(path);
 
 		const outside = await page.evaluate(() =>

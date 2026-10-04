@@ -16,13 +16,13 @@ interface Rig {
 const adsr: Array<Stage> = ['attack', 'decay', 'sustain', 'release'];
 const curved = ['attack', 'decay', 'release'] as const;
 const values = { attack: 40, decay: 300, delay: 60, hold: 120, release: 700, sustain: 60 };
-const bends = { attack: -3, decay: 3, release: 3 };
+const curveValues = { attack: -3, decay: 3, release: 3 };
 
 const time = { 'data-format': 'milliseconds', max: 2000, midpoint: 200 };
 const level = { 'data-format': 'percent' };
-const bend = { default: 0, max: 8, min: -8, origin: 0, step: 0.1 };
+const curveAttributes = { default: 0, max: 8, min: -8, origin: 0, step: 0.1 };
 
-function knob(id: string, label: string, attributes: Record<string, number | string>) {
+function dial(id: string, label: string, attributes: Record<string, number | string>) {
 	return { attributes: { ...attributes, 'aria-labelledby': `${id}-label`, id }, label };
 }
 
@@ -35,9 +35,9 @@ function build(rig: Rig) {
 			...rig.stages.map((stage) => [stage, `${rig.id}-${stage}`]),
 			...curves.map((stage) => [`${stage}-curve`, `${rig.id}-${stage}-curve`]),
 		]),
-		knobs: [
+		dials: [
 			...rig.stages.map((stage) => ({
-				...knob(`${rig.id}-${stage}`, stage, {
+				...dial(`${rig.id}-${stage}`, stage, {
 					...(stage === 'sustain' ? level : time),
 					...across,
 					value: values[stage],
@@ -45,7 +45,10 @@ function build(rig: Rig) {
 				Tag: rig.control,
 			})),
 			...curves.map((stage) => ({
-				...knob(`${rig.id}-${stage}-curve`, `${stage} curve`, { ...bend, value: bends[stage] }),
+				...dial(`${rig.id}-${stage}-curve`, `${stage} curve`, {
+					...curveAttributes,
+					value: curveValues[stage],
+				}),
 				Tag: 'sonic-dial' as const,
 			})),
 		],
@@ -83,7 +86,7 @@ const panels = rigs.map((rig) => build(rig));
 			</p>
 			<sonic-envelope {...panel.bindings} />
 			<div class="flex flex-wrap justify-center gap-5">
-				{panel.knobs.map(({ attributes, label, Tag }) => (
+				{panel.dials.map(({ attributes, label, Tag }) => (
 					<Cell id={`${attributes.id}-label`} label={label}>
 						<Tag {...attributes} readout />
 					</Cell>

@@ -58,21 +58,21 @@ test('with no release bound the line still drops to the floor, so the fill close
 	expect(fill).toBe(`${stroke}Z`);
 });
 
-test('a bent decay passes through its curve at the middle, where its dot sits', () => {
-	const { dots, points } = adsrShape({ attack: 0, decay: 1, sustain: 0.6 }, { decay: 4 });
+test('a curved decay passes through its curve at the middle, where its curve handle sits', () => {
+	const { curveHandles, points } = adsrShape({ attack: 0, decay: 1, sustain: 0.6 }, { decay: 4 });
 	const middle = points.find(({ x }) => Math.abs(x - 1 / 6) < 1e-9);
 
 	expect(middle?.y).toBeCloseTo(1 - 0.4 * 0.1192, 4);
-	expect(dots).toHaveLength(1);
-	expect(dots[0]).toMatchObject({ stage: 'decay', x: middle?.x, y: middle?.y });
+	expect(curveHandles).toHaveLength(1);
+	expect(curveHandles[0]).toMatchObject({ stage: 'decay', x: middle?.x, y: middle?.y });
 });
 
-test('only a bent segment is sampled, and a rising attack bends the same way a falling decay does', () => {
+test('only a curved leg is sampled, and a rising attack curves the same way a falling decay does', () => {
 	const straight = adsrShape({ attack: 1, release: 1 }, { attack: 0 });
 	const curved = adsrShape({ attack: 1, release: 1 }, { attack: 4 });
 
 	expect(straight.points).toHaveLength(7);
 	expect(curved.points.length).toBeGreaterThan(7);
-	expect(straight.dots[0]?.y).toBe(0.5);
-	expect(curved.dots[0]?.y).toBeCloseTo(0.1192, 4);
+	expect(straight.curveHandles[0]?.y).toBe(0.5);
+	expect(curved.curveHandles[0]?.y).toBeCloseTo(0.1192, 4);
 });

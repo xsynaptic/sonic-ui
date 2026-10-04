@@ -1,0 +1,347 @@
+@property --_sonic-switch-size {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 32px;
+}
+
+@layer sonic {
+	:is(sonic-switch, .sonic-switch) {
+		--_sonic-switch-size: var(--sonic-switch-size, 2rem);
+	}
+
+	:has(> .sonic-switch):not([hidden]) {
+		display: contents;
+	}
+
+	sonic-switch:not(:defined, [hidden]) {
+		display: block;
+		visibility: hidden;
+		flex-shrink: 0;
+		inline-size: var(--_sonic-switch-size);
+		block-size: var(--_sonic-switch-size);
+		overflow: hidden;
+	}
+
+	.sonic-switch {
+		--_sonic-switch-reach-ratio: var(--sonic-switch-reach-ratio, 0.3);
+		--_sonic-switch-bat-ratio: var(--sonic-switch-bat-ratio, 0.36);
+		--_sonic-switch-bushing-ratio: var(--sonic-switch-bushing-ratio, 0.62);
+		--_sonic-switch-font-ratio: var(--sonic-switch-font-ratio, 0.4);
+		--_sonic-unit: calc(var(--_sonic-switch-size) / 32);
+		--_sonic-switch-reach: calc(var(--_sonic-switch-size) * var(--_sonic-switch-reach-ratio));
+		--_sonic-switch-ball: calc(var(--_sonic-switch-size) * var(--_sonic-switch-bat-ratio));
+		--_sonic-switch-shaft: calc(0.5 * var(--_sonic-switch-ball));
+		--_sonic-switch-along-x: 0;
+		--_sonic-switch-along-y: 1;
+		--_sonic-switch-pan: pan-x;
+		--_sonic-switch-metal: color-mix(in oklab, var(--_sonic-cap) 45%, #fff);
+		--_sonic-switch-metal-shade: color-mix(in oklab, var(--_sonic-cap) 80%, #000);
+
+		display: inline-grid;
+		flex-shrink: 0;
+		grid-template: var(--_sonic-switch-size) / var(--_sonic-switch-size);
+		place-items: center;
+		line-height: 1;
+		user-select: none;
+
+		& > * {
+			grid-area: 1 / 1;
+		}
+	}
+
+	[orientation='horizontal'] > .sonic-switch {
+		--_sonic-switch-along-x: 1;
+		--_sonic-switch-along-y: 0;
+		--_sonic-switch-pan: pan-y;
+	}
+
+	.sonic-switch-position {
+		display: grid;
+		place-items: center;
+		place-self: stretch;
+		padding: 0;
+		font: inherit;
+		font-size: calc(var(--_sonic-switch-size) * var(--_sonic-switch-font-ratio));
+		color: inherit;
+		text-transform: inherit;
+		letter-spacing: inherit;
+		touch-action: var(--_sonic-switch-pan);
+		cursor: pointer;
+		background: transparent;
+		border: 0;
+
+		&:disabled {
+			cursor: default;
+		}
+
+		&:focus-visible {
+			outline: 2px solid transparent;
+			outline-offset: -2px;
+		}
+
+		&:has([data-sonic-momentary]) {
+			touch-action: none;
+		}
+	}
+
+	.sonic-switch-label {
+		padding: calc(var(--_sonic-switch-size) * 0.12);
+		white-space: nowrap;
+
+		& svg {
+			display: block;
+			inline-size: 1em;
+			block-size: 1em;
+		}
+	}
+
+	.sonic-switch[data-sonic-position-count] {
+		& > :is(.sonic-switch-bushing, .sonic-switch-bat) {
+			grid-area: 2 / 1 / -2 / 2;
+		}
+
+		& > .sonic-switch-position {
+			grid-template: subgrid / subgrid;
+		}
+	}
+
+	.sonic-switch[data-sonic-position-count='2'] {
+		grid-template:
+			auto repeat(2, calc(var(--_sonic-switch-size) / 2)) auto /
+			minmax(var(--_sonic-switch-size), auto);
+
+		& > .sonic-switch-position {
+			grid-area: 1 / 1 / 3 / 2;
+
+			&:last-child {
+				grid-area: 3 / 1 / 5 / 2;
+
+				& > .sonic-switch-label {
+					grid-row: 2;
+				}
+			}
+		}
+	}
+
+	.sonic-switch[data-sonic-position-count='3'] {
+		grid-template:
+			auto repeat(3, calc(var(--_sonic-switch-size) / 3)) auto /
+			minmax(var(--_sonic-switch-size), auto) auto;
+
+		& > .sonic-switch-position {
+			grid-area: 1 / 1 / 3 / 2;
+
+			&:last-child {
+				grid-area: 4 / 1 / 6 / 2;
+
+				& > .sonic-switch-label {
+					grid-row: 2;
+				}
+			}
+
+			&:nth-child(2 of .sonic-switch-position) {
+				grid-area: 3 / 1 / 4 / 3;
+
+				& > .sonic-switch-label {
+					grid-column: 2;
+				}
+			}
+		}
+	}
+
+	[orientation='horizontal']
+		> .sonic-switch[data-sonic-position-count]
+		> :is(.sonic-switch-bushing, .sonic-switch-bat) {
+		grid-area: 1 / 2 / 2 / -2;
+	}
+
+	[orientation='horizontal'] > .sonic-switch[data-sonic-position-count='2'] {
+		grid-template:
+			minmax(var(--_sonic-switch-size), auto) /
+			auto repeat(2, calc(var(--_sonic-switch-size) / 2)) auto;
+
+		& > .sonic-switch-position {
+			grid-area: 1 / 1 / 2 / 3;
+
+			&:last-child {
+				grid-area: 1 / 3 / 2 / 5;
+
+				& > .sonic-switch-label {
+					grid-area: 1 / 2;
+				}
+			}
+		}
+	}
+
+	[orientation='horizontal'] > .sonic-switch[data-sonic-position-count='3'] {
+		grid-template:
+			minmax(var(--_sonic-switch-size), auto) auto /
+			auto repeat(3, calc(var(--_sonic-switch-size) / 3)) auto;
+
+		& > .sonic-switch-position {
+			grid-area: 1 / 1 / 2 / 3;
+
+			&:last-child {
+				grid-area: 1 / 4 / 2 / 6;
+
+				& > .sonic-switch-label {
+					grid-area: 1 / 2;
+				}
+			}
+
+			&:nth-child(2 of .sonic-switch-position) {
+				grid-area: 1 / 3 / 3 / 4;
+
+				& > .sonic-switch-label {
+					grid-area: 2 / 1;
+				}
+			}
+		}
+	}
+
+	.sonic-switch-bushing {
+		inline-size: calc(var(--_sonic-switch-size) * var(--_sonic-switch-bushing-ratio));
+		aspect-ratio: 1;
+		pointer-events: none;
+		background: radial-gradient(
+			closest-side,
+			color-mix(in oklab, var(--_sonic-cap) 30%, #000) 0 42%,
+			var(--_sonic-switch-metal-shade) 48%,
+			var(--_sonic-cap) 70%,
+			color-mix(in oklab, var(--_sonic-cap) 75%, #fff) 88%,
+			var(--_sonic-switch-metal-shade)
+		);
+		border-radius: 50%;
+		box-shadow:
+			var(--_sonic-rim),
+			calc(1.5 * var(--_sonic-cast-x)) calc(1.5 * var(--_sonic-cast-y)) calc(2 * var(--_sonic-unit))
+				var(--_sonic-drop-shade);
+	}
+
+	.sonic-switch-bat {
+		--_sonic-switch-lean: max(var(--_sonic-switch-at, 0), -1 * var(--_sonic-switch-at, 0));
+		--_sonic-switch-transition:
+			translate 90ms cubic-bezier(0.4, 0, 0.2, 1), inline-size 90ms cubic-bezier(0.4, 0, 0.2, 1),
+			block-size 90ms cubic-bezier(0.4, 0, 0.2, 1),
+			background-position 90ms cubic-bezier(0.4, 0, 0.2, 1);
+		--_sonic-switch-sheen: linear-gradient(
+			var(--_sonic-light-fall),
+			color-mix(in oklab, var(--_sonic-switch-metal) 55%, #fff) 12%,
+			var(--_sonic-switch-metal) 45%,
+			var(--_sonic-switch-metal-shade) 88%
+		);
+		--_sonic-switch-outline: max(0.5px, 0.4 * var(--_sonic-unit));
+		--_sonic-switch-rim: color-mix(in oklab, var(--_sonic-cap) 70%, #000);
+
+		position: relative;
+		z-index: 1;
+		inline-size: var(--_sonic-switch-size);
+		block-size: var(--_sonic-switch-size);
+		pointer-events: none;
+		filter: drop-shadow(var(--_sonic-switch-outline) 0 0 var(--_sonic-switch-rim))
+			drop-shadow(calc(-1 * var(--_sonic-switch-outline)) 0 0 var(--_sonic-switch-rim))
+			drop-shadow(0 var(--_sonic-switch-outline) 0 var(--_sonic-switch-rim))
+			drop-shadow(0 calc(-1 * var(--_sonic-switch-outline)) 0 var(--_sonic-switch-rim))
+			drop-shadow(
+				calc((1 + var(--_sonic-switch-lean)) * var(--_sonic-cast-x))
+					calc((1 + var(--_sonic-switch-lean)) * var(--_sonic-cast-y))
+					calc(1.5 * var(--_sonic-unit)) var(--_sonic-drop-shade)
+			);
+
+		@media (prefers-reduced-motion: reduce) {
+			--_sonic-switch-transition: none;
+		}
+
+		&::before,
+		&::after {
+			position: absolute;
+			inset: 0;
+			margin: auto;
+			content: '';
+			background: var(--_sonic-switch-sheen);
+			background-size: var(--_sonic-switch-size) var(--_sonic-switch-size);
+			border-radius: 999px;
+			transition: var(--_sonic-switch-transition);
+		}
+
+		&::before {
+			--_sonic-switch-shaft-x: calc(
+				var(--_sonic-switch-shaft) + var(--_sonic-switch-along-x) * var(--_sonic-switch-lean) *
+					var(--_sonic-switch-reach)
+			);
+			--_sonic-switch-shaft-y: calc(
+				var(--_sonic-switch-shaft) + var(--_sonic-switch-along-y) * var(--_sonic-switch-lean) *
+					var(--_sonic-switch-reach)
+			);
+
+			inline-size: var(--_sonic-switch-shaft-x);
+			block-size: var(--_sonic-switch-shaft-y);
+			background-position: calc((var(--_sonic-switch-shaft-x) - var(--_sonic-switch-size)) / 2)
+				calc((var(--_sonic-switch-shaft-y) - var(--_sonic-switch-size)) / 2);
+			translate: calc(
+					var(--_sonic-switch-along-x) * var(--_sonic-switch-at, 0) * var(--_sonic-switch-reach) / 2
+				)
+				calc(
+					var(--_sonic-switch-along-y) * var(--_sonic-switch-at, 0) * var(--_sonic-switch-reach) / 2
+				);
+		}
+
+		&::after {
+			inline-size: var(--_sonic-switch-ball);
+			block-size: var(--_sonic-switch-ball);
+			background-position: calc((var(--_sonic-switch-ball) - var(--_sonic-switch-size)) / 2)
+				calc((var(--_sonic-switch-ball) - var(--_sonic-switch-size)) / 2);
+			box-shadow:
+				inset 0 0 calc(1.5 * var(--_sonic-unit)) calc(0.4 * var(--_sonic-unit)) rgb(0 0 0 / 30%),
+				var(--_sonic-focus-shadow);
+			translate: calc(
+					var(--_sonic-switch-along-x) * var(--_sonic-switch-at, 0) * var(--_sonic-switch-reach)
+				)
+				calc(var(--_sonic-switch-along-y) * var(--_sonic-switch-at, 0) * var(--_sonic-switch-reach));
+		}
+	}
+
+	.sonic-switch:has(> .sonic-switch-position:focus-visible) {
+		--_sonic-focus-shadow: var(--_sonic-focus-glow);
+	}
+
+	.sonic-switch:has(> .sonic-switch-position:disabled) {
+		--_sonic-switch-metal: var(--_sonic-etch);
+		--_sonic-switch-metal-shade: var(--_sonic-etch);
+	}
+
+	@media (forced-colors: active) {
+		:is(.sonic-switch-bushing, .sonic-switch-bat) {
+			forced-color-adjust: none;
+		}
+
+		.sonic-switch {
+			--_sonic-switch-metal: CanvasText;
+			--_sonic-switch-metal-shade: CanvasText;
+		}
+
+		.sonic-switch:has(> .sonic-switch-position:disabled) {
+			--_sonic-switch-metal: GrayText;
+			--_sonic-switch-metal-shade: GrayText;
+		}
+
+		.sonic-switch-bushing {
+			background: Canvas;
+			box-shadow: 0 0 0 1px CanvasText;
+		}
+
+		.sonic-switch-bat {
+			filter: none;
+
+			&::before,
+			&::after {
+				background: var(--_sonic-switch-metal);
+				box-shadow: none;
+			}
+		}
+
+		.sonic-switch-position:focus-visible {
+			outline-offset: 2px;
+		}
+	}
+}

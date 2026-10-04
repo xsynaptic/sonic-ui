@@ -1,9 +1,9 @@
 ---
 import Cell from '#components/specimens/cell.astro';
-import Panel from '#components/specimens/panel.astro';
+import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 ---
 
-<Panel isLarge={true}>
+<SpecimenGrid isLarge={true}>
 	<Cell id="xy-plain" label="Plain">
 		<sonic-xy aria-labelledby="xy-plain" x="30" y="60"></sonic-xy>
 	</Cell>
@@ -59,9 +59,9 @@ import Panel from '#components/specimens/panel.astro';
 			y="35"
 		></sonic-xy>
 	</Cell>
-</Panel>
-<Panel isLarge={true}>
+</SpecimenGrid>
+<SpecimenGrid isLarge={true}>
 	<Cell id="xy-large" isWide={true} label="Large">
 		<sonic-xy aria-labelledby="xy-large" class="[--sonic-xy-size:14rem]" x="40" y="70"></sonic-xy>
 	</Cell>
-</Panel>
+</SpecimenGrid>

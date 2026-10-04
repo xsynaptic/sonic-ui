@@ -1,0 +1,72 @@
+---
+import Lock from '@lucide/astro/icons/lock';
+
+import Cell from '#components/specimens/cell.astro';
+import SpecimenGrid from '#components/specimens/specimen-grid.astro';
+
+const sliders = [
+	{ id: 'split-a', label: 'A', value: 50 },
+	{ id: 'split-b', label: 'B', value: 30 },
+	{ id: 'split-c', label: 'C', value: 20 },
+];
+const modes = [
+	['proportional', 'Share'],
+	['equal', 'Equal'],
+	['cascade', 'Next'],
+] as const;
+---
+
+<SpecimenGrid>
+	<div class="col-span-full grid justify-items-center gap-6" data-split-demo>
+		<sonic-segmented aria-label="Mode" class="font-mono" data-split-mode value="proportional">
+			{modes.map(([value, label]) => (
+				<span data-sonic-value={value}>{label}</span>
+			))}
+		</sonic-segmented>
+		<sonic-split aria-label="Three-way split" class="flex gap-8">
+			{sliders.map((slider) => (
+				<div class="grid justify-items-center gap-2">
+					<sonic-slider
+						aria-labelledby={slider.id}
+						class="[--sonic-slider-length:9rem]"
+						orientation="vertical"
+						value={slider.value}
+					></sonic-slider>
+					<span
+						aria-hidden="true"
+						class="sonic-screen font-mono text-xs tabular-nums [--sonic-screen-aspect-ratio:2] [--sonic-screen-size:1.25rem]"
+						data-split-readout
+					>
+						{slider.value}
+					</span>
+					<sonic-button aria-label={`Lock ${slider.label}`} data-split-lock latching>
+						<Lock aria-hidden="true" />
+					</sonic-button>
+					<span
+						class="font-mono text-[0.625rem] tracking-[0.14em] text-zinc-400 uppercase"
+						id={slider.id}
+					>
+						{slider.label}
+					</span>
+				</div>
+			))}
+		</sonic-split>
+	</div>
+</SpecimenGrid>
+<SpecimenGrid isLarge={true}>
+	<sonic-split
+		aria-label="Mixed members"
+		class="col-span-full flex flex-wrap items-end justify-center gap-8"
+		total="150"
+	>
+		<Cell id="split-dial" label="Dial">
+			<sonic-dial aria-labelledby="split-dial" readout value="60"></sonic-dial>
+		</Cell>
+		<Cell id="split-slider" isWide={true} label="Slider">
+			<sonic-slider aria-labelledby="split-slider" readout value="50"></sonic-slider>
+		</Cell>
+		<Cell id="split-number" label="Number">
+			<sonic-number aria-labelledby="split-number" class="font-mono" value="40"></sonic-number>
+		</Cell>
+	</sonic-split>
+</SpecimenGrid>

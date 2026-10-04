@@ -55,10 +55,10 @@
 		--_sonic-lit: var(--_sonic-clip);
 	}
 
-	/* Before the lit rule, which a latched key's LED also matches */
+	/* Before the lit rule, which a latched button's LED also matches */
 	.sonic-led:is(
 		[data-sonic-lit='dim'],
-		:where(:is([armed], [busy]) > .sonic-key:not(:disabled, [aria-disabled='true'])) *
+		:where(:is([armed], [busy]) > .sonic-button:not(:disabled, [aria-disabled='true'])) *
 	) {
 		&::after {
 			background:
@@ -77,12 +77,12 @@
 	.sonic-led:is(
 		[data-sonic-lit]:where(:not([data-sonic-lit='dim'])),
 		:where(
-				.sonic-key[aria-pressed='true'],
-				[momentary]:state(pressed) > .sonic-key,
-				.sonic-segmented-segment[aria-checked='true']
+				.sonic-button[aria-pressed='true'],
+				[momentary]:state(pressed) > .sonic-button,
+				.sonic-segmented-option[aria-checked='true']
 			)
 			*,
-		:where(:state(at-rest):not(:disabled) > .sonic-led)
+		:where(:state(at-origin):not(:disabled) > .sonic-led)
 	) {
 		background:
 			radial-gradient(

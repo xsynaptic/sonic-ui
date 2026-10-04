@@ -139,7 +139,7 @@ test('a mouse over the strip reads out the time under it, or a marker within rea
 	midPointerAt(control, 'pointermove', { clientX: 75, pointerType: 'mouse' });
 	expect(readoutText(control)).toBe('105 s');
 
-	wavestrip.markers = [{ value: 200 }];
+	wavestrip.markers = [{ start: 200 }];
 	midPointerAt(control, 'pointermove', { clientX: 172, pointerType: 'mouse' });
 	expect(readoutText(control)).toBe('200 s');
 });
@@ -175,32 +175,34 @@ test('a max written during a drag keeps the dragged value', () => {
 
 function markerDots(control: HTMLElement): Array<HTMLElement> {
 	return [
-		...control.querySelectorAll<HTMLElement>(':is(.sonic-wavestrip-marker, .sonic-wavestrip-span)'),
+		...control.querySelectorAll<HTMLElement>(
+			':is(.sonic-wavestrip-marker, .sonic-wavestrip-region)',
+		),
 	];
 }
 
-// The reach is 4px, since happy-dom computes no dot size
+// The reach is 4px, since happy-dom computes no marker size
 test.each([
 	[172, 200],
 	[176, 206],
-])('a press at %ipx beside a cue at 170px lands at %d', (clientX, expected) => {
+])('a press at %ipx beside a marker at 170px lands at %d', (clientX, expected) => {
 	installCanvasFakes();
 
 	const { control, wavestrip } = mountWavestrip('min="30" max="330" step="0" value="50"');
 
-	wavestrip.markers = [{ value: 200 }];
+	wavestrip.markers = [{ start: 200 }];
 	midPointerAt(control, 'pointerdown', { clientX });
 
 	expect(wavestrip.value).toBe(expected);
 });
 
-test('a drag from a cue scrubs from the press, and crossing the cue never snaps to it', () => {
+test('a drag from a marker scrubs from the press, and crossing the marker never snaps to it', () => {
 	installCanvasFakes();
 
 	const { control, wavestrip } = mountWavestrip('min="30" max="330" step="0" value="50"');
 	const values: Array<number> = [];
 
-	wavestrip.markers = [{ value: 200 }];
+	wavestrip.markers = [{ start: 200 }];
 	midPointerAt(control, 'pointerdown', { clientX: 172 });
 	for (const clientX of [176, 168]) {
 		midPointerAt(control, 'pointermove', { clientX });
@@ -210,12 +212,12 @@ test('a drag from a cue scrubs from the press, and crossing the cue never snaps 
 	expect(values).toEqual([206, 198]);
 });
 
-test('a marker sits at its place between the bounds', () => {
+test('a marker sits at its proportion between the bounds', () => {
 	installCanvasFakes();
 
 	const { control, wavestrip } = mountWavestrip('min="30" max="330"');
 
-	wavestrip.markers = [{ end: 255, value: 105 }];
+	wavestrip.markers = [{ end: 255, start: 105 }];
 
 	const [dot] = markerDots(control);
 
@@ -228,7 +230,7 @@ test('a value write leaves the marker dots as they were built', () => {
 
 	const { control, wavestrip } = mountWavestrip('max="300" value="10"');
 
-	wavestrip.markers = [{ value: 60 }, { end: 120, kind: 'loop', value: 90 }];
+	wavestrip.markers = [{ start: 60 }, { end: 120, kind: 'loop', start: 90 }];
 
 	const built = markerDots(control);
 	const styles = built.map((dot) => dot.style.cssText);
@@ -248,13 +250,13 @@ test('a kind names its token, and a kind that is not a plain name draws in the d
 	const { control, wavestrip } = mountWavestrip('');
 
 	wavestrip.markers = [
-		{ kind: 'loop', value: 20 },
-		{ kind: 'x);background:red', value: 40 },
+		{ kind: 'loop', start: 20 },
+		{ kind: 'x);background:red', start: 40 },
 	];
 
 	const [loop, hostile] = markerDots(control);
 
-	expect(loop?.style.getPropertyValue('--_sonic-marker')).toContain('--sonic-cue-loop');
+	expect(loop?.style.getPropertyValue('--_sonic-marker')).toContain('--sonic-marker-loop');
 	expect(hostile?.style.getPropertyValue('--_sonic-marker')).toBe('');
 	expect(hostile?.style.cssText).not.toContain('red');
 });

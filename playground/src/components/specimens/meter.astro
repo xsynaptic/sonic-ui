@@ -2,7 +2,7 @@
 import Play from '@lucide/astro/icons/play';
 
 import Cell from '#components/specimens/cell.astro';
-import Panel from '#components/specimens/panel.astro';
+import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 
 const ladder = '-30 -25 -20 -16 -13 -10 -7 -4 0';
 const shortLadder = '-24 -12 -6 -3 0';
@@ -13,7 +13,7 @@ const ballistics = [
 ];
 ---
 
-<Panel>
+<SpecimenGrid>
 	<Cell id="meter-stereo" label="Stereo">
 		<div aria-labelledby="meter-stereo" class="flex gap-1" role="group">
 			<sonic-meter></sonic-meter>
@@ -32,19 +32,19 @@ const ballistics = [
 			class="flex gap-1 [--sonic-meter-clip-from:-4] [--sonic-meter-hot-from:-10]"
 			role="group"
 		>
-			<sonic-meter lights={ladder}></sonic-meter>
-			<sonic-meter lights={ladder}></sonic-meter>
+			<sonic-meter segments={ladder}></sonic-meter>
+			<sonic-meter segments={ladder}></sonic-meter>
 		</div>
 	</Cell>
 	<Cell id="meter-reduction" label="Reduction">
 		<div aria-labelledby="meter-reduction" role="group">
-			<sonic-meter data-demo="reduction" max="0" min="-24" origin="0" scale="linear"></sonic-meter>
+			<sonic-meter data-demo="reduction" max="0" min="-24" origin="0" value="0"></sonic-meter>
 		</div>
 	</Cell>
 	<Cell id="meter-short-ladder" isWide={true} label="Short ladder">
 		<div aria-labelledby="meter-short-ladder" class="grid gap-1" role="group">
-			<sonic-meter lights={shortLadder} orientation="horizontal"></sonic-meter>
-			<sonic-meter lights={shortLadder} orientation="horizontal"></sonic-meter>
+			<sonic-meter orientation="horizontal" segments={shortLadder}></sonic-meter>
+			<sonic-meter orientation="horizontal" segments={shortLadder}></sonic-meter>
 		</div>
 	</Cell>
 	<Cell id="meter-correlation" isWide={true} label="Correlation">
@@ -55,7 +55,7 @@ const ballistics = [
 				min="-1"
 				orientation="horizontal"
 				origin="0"
-				scale="linear"
+				value="0"
 			></sonic-meter>
 		</div>
 	</Cell>
@@ -75,12 +75,12 @@ const ballistics = [
 		>
 			<sonic-meter orientation="horizontal" />
 			<div class="flex gap-2 font-mono text-[0.5rem]">
-				<sonic-key aria-label="Read peak" data-peak-read>
+				<sonic-button aria-label="Read peak" data-peak-read>
 					<span aria-hidden="true">PEAK</span>
-				</sonic-key>
-				<sonic-key aria-label="Reset peak" data-peak-reset>
+				</sonic-button>
+				<sonic-button aria-label="Reset peak" data-peak-reset>
 					<span aria-hidden="true">RST</span>
-				</sonic-key>
+				</sonic-button>
 			</div>
 			<p class="min-h-4 font-mono text-[0.625rem] text-zinc-300">
 				<span role="status" />
@@ -89,12 +89,12 @@ const ballistics = [
 		</div>
 	</Cell>
 	<Cell id="meter-run" label="Run">
-		<sonic-key aria-labelledby="meter-run" data-run pressed toggle>
+		<sonic-button aria-labelledby="meter-run" data-run latching pressed>
 			<Play aria-hidden="true" />
-		</sonic-key>
+		</sonic-button>
 	</Cell>
-</Panel>
-<Panel isLarge={true}>
+</SpecimenGrid>
+<SpecimenGrid isLarge={true}>
 	<Cell id="meter-large-stereo" label="Stereo, large">
 		<div
 			aria-labelledby="meter-large-stereo"
@@ -111,8 +111,8 @@ const ballistics = [
 			class="flex gap-2 [--sonic-meter-clip-from:-4] [--sonic-meter-hot-from:-10] [--sonic-meter-length:16rem] [--sonic-meter-size:1.5rem]"
 			role="group"
 		>
-			<sonic-meter lights={ladder}></sonic-meter>
-			<sonic-meter lights={ladder}></sonic-meter>
+			<sonic-meter segments={ladder}></sonic-meter>
+			<sonic-meter segments={ladder}></sonic-meter>
 		</div>
 	</Cell>
-</Panel>
+</SpecimenGrid>

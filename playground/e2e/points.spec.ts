@@ -4,7 +4,7 @@ import { mouseOnly } from './pointer.ts';
 
 const points = [
 	'#envelope .sonic-envelope-handle[data-sonic-stage="decay"]',
-	'#envelope-curves .sonic-envelope-dot[data-sonic-stage="decay"]',
+	'#envelope-curves .sonic-envelope-curve[data-sonic-stage="decay"]',
 ];
 
 for (const selector of points) {

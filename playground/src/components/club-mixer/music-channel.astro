@@ -1,8 +1,8 @@
 ---
 import ChannelFader from '#components/club-mixer/channel-fader.astro';
 import StripInput from '#components/club-mixer/strip-input.astro';
-import PanelKey from '#components/replica/panel-key.astro';
-import PanelLever from '#components/replica/panel-lever.astro';
+import PanelButton from '#components/replica/panel-button.astro';
+import PanelSwitch from '#components/replica/panel-switch.astro';
 import Pot from '#components/replica/pot.astro';
 
 interface Props {
@@ -57,14 +57,14 @@ const bands = [
 			value={0}
 		/>
 	))}
-	<PanelLever
+	<PanelSwitch
 		id={`${strip}-filter`}
 		isHorizontal={true}
 		label="Filter"
 		positions={filterAssign}
 		value="off"
 	/>
-	<PanelLever
+	<PanelSwitch
 		data={{ 'data-crossfade-assign': '' }}
 		id={`${strip}-crossfade`}
 		isHorizontal={true}
@@ -72,7 +72,13 @@ const bands = [
 		positions={crossfadeAssign}
 		value={side}
 	/>
-	<PanelKey data={{ 'data-cue': '' }} id={`${strip}-cue`} isRound={true} label="Cue" size="large" />
+	<PanelButton
+		data={{ 'data-cue': '' }}
+		id={`${strip}-cue`}
+		isRound={true}
+		label="Cue"
+		size="large"
+	/>
 	<span aria-hidden="true" class="font-mono text-base font-bold text-zinc-300">
 		{channel}
 	</span>

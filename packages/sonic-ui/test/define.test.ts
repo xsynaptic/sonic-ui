@@ -1,12 +1,12 @@
 import { expect, test, vi } from 'vitest';
 
-// Imports the built entries, since tsdown drops a side-effect import unless `sideEffects` lists its source
-test('the define entries register their tags', async () => {
+// Imports the built entry points, since tsdown drops a side-effect import unless `sideEffects` lists its source
+test('the define entry points register their tags', async () => {
 	// @ts-expect-error -- declarations ship in the development tree only
 	await import('../dist/default/define/dial.js');
 
 	expect(customElements.get('sonic-dial')).toBeDefined();
-	expect(customElements.get('sonic-key')).toBeUndefined();
+	expect(customElements.get('sonic-button')).toBeUndefined();
 
 	// @ts-expect-error -- declarations ship in the development tree only
 	await import('../dist/default/define.js');
@@ -14,13 +14,13 @@ test('the define entries register their tags', async () => {
 	for (const tag of [
 		'sonic-dial',
 		'sonic-envelope',
-		'sonic-key',
-		'sonic-lever',
+		'sonic-button',
+		'sonic-switch',
 		'sonic-meter',
 		'sonic-number',
 		'sonic-segmented',
 		'sonic-slider',
-		'sonic-sum',
+		'sonic-split',
 		'sonic-waveform',
 		'sonic-wavestrip',
 		'sonic-xy',
@@ -34,7 +34,7 @@ test('the default tree leaves out the missing-sheet warning', async () => {
 
 	// @ts-expect-error -- declarations ship in the development tree only
 	await import('../dist/default/define.js');
-	document.body.innerHTML = '<sonic-key></sonic-key>';
+	document.body.innerHTML = '<sonic-button></sonic-button>';
 	await new Promise((resolve) => requestAnimationFrame(resolve));
 
 	expect(warn).not.toHaveBeenCalled();

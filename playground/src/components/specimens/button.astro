@@ -1,0 +1,90 @@
+---
+import Play from '@lucide/astro/icons/play';
+import SkipForward from '@lucide/astro/icons/skip-forward';
+
+import Cell from '#components/specimens/cell.astro';
+import MuteButton from '#components/specimens/mute-button.astro';
+import SpecimenGrid from '#components/specimens/specimen-grid.astro';
+
+const drums = ['Kick', 'Snare', 'Hat', 'Clap'];
+const hotCues = ['oklch(76.9% 0.165 70deg)', '#22c55e', '#38bdf8', '#e879f9'];
+---
+
+<SpecimenGrid>
+	<Cell id="button-play" label="Play">
+		<sonic-button aria-labelledby="button-play">
+			<Play aria-hidden="true" />
+		</sonic-button>
+	</Cell>
+	<Cell id="button-mute" label="Mute">
+		<MuteButton isPressed={true} labelledby="button-mute" />
+	</Cell>
+	{drums.map((drum) => (
+		<Cell id={`button-${drum.toLowerCase()}`} label={drum}>
+			<sonic-button aria-labelledby={`button-${drum.toLowerCase()}`} momentary />
+		</Cell>
+	))}
+	<Cell id="button-armed" label="Armed">
+		<sonic-button aria-labelledby="button-armed" armed latching>
+			<Play aria-hidden="true" />
+		</sonic-button>
+	</Cell>
+	<Cell id="button-armed-led" label="Armed, LED">
+		<sonic-button aria-labelledby="button-armed-led" armed latching>
+			<span class="sonic-led"></span>
+		</sonic-button>
+	</Cell>
+	<Cell id="button-hot-cues" isWide={true} label="Hot cues">
+		{hotCues.map((colour, index) => (
+			<sonic-button
+				aria-label={`Hot cue ${String(index + 1)}`}
+				armed
+				class="font-mono text-[0.625rem]"
+				latching
+				pressed={index === 1 || undefined}
+				style={{ '--sonic-lit': colour }}
+			>
+				<span aria-hidden="true">{index + 1}</span>
+			</sonic-button>
+		))}
+	</Cell>
+	<Cell id="button-loading" label="Loading">
+		<sonic-button aria-labelledby="button-loading" busy>
+			<Play aria-hidden="true" />
+		</sonic-button>
+	</Cell>
+	<Cell id="button-next" label="Soft-disabled">
+		<sonic-button aria-labelledby="button-next" soft-disabled>
+			<SkipForward aria-hidden="true" />
+		</sonic-button>
+	</Cell>
+	<Cell id="button-disabled" label="Disabled">
+		<sonic-button aria-labelledby="button-disabled" disabled>
+			<Play aria-hidden="true" />
+		</sonic-button>
+	</Cell>
+</SpecimenGrid>
+<SpecimenGrid isLarge={true}>
+	<Cell id="button-large-play" label="Play, large">
+		<sonic-button aria-labelledby="button-large-play" class="[--sonic-button-size:6rem]">
+			<Play aria-hidden="true" />
+		</sonic-button>
+	</Cell>
+	<Cell id="button-large-mute" label="Mute, large">
+		<div class="[--sonic-button-size:6rem]">
+			<MuteButton isPressed={true} labelledby="button-large-mute" />
+		</div>
+	</Cell>
+	<Cell id="button-large-loading" label="Loading, large">
+		<sonic-button aria-labelledby="button-large-loading" busy class="[--sonic-button-size:6rem]">
+			<Play aria-hidden="true" />
+		</sonic-button>
+	</Cell>
+	<Cell id="button-large-momentary" label="Momentary, large">
+		<sonic-button
+			aria-labelledby="button-large-momentary"
+			class="[--sonic-button-size:6rem]"
+			momentary
+		/>
+	</Cell>
+</SpecimenGrid>

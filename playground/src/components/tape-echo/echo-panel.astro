@@ -1,0 +1,70 @@
+---
+import PanelSwitch from '#components/replica/panel-switch.astro';
+import Pot from '#components/replica/pot.astro';
+import EchoHead from '#components/tape-echo/echo-head.astro';
+
+const cutTicks = {
+	high: [1000, 2000, 5000, 10_000, 20_000],
+	low: [20, 50, 100, 200, 500, 1000, 2000],
+};
+---
+
+<div
+	aria-label="Echo"
+	class="sonic-panel [--sonic-panel-radius:1.5rem] grid grid-cols-3 items-start justify-items-center gap-x-6 gap-y-5 p-4"
+	role="group"
+>
+	<EchoHead division="dot" head={1} ticks={36} />
+	<div class="row-span-2 grid justify-items-center gap-4">
+		<Pot
+			data={{ 'data-echo-mix': '' }}
+			ends={['Dry', 'Wet']}
+			format="percent"
+			id="echo-mix"
+			label="Mix"
+			max={100}
+			min={0}
+			size="large"
+			value={35}
+		/>
+		<Pot
+			data={{ 'data-echo-feedback': '' }}
+			ends={['Min', 'Max']}
+			format="percent"
+			id="echo-feedback"
+			label="Feedback"
+			max={100}
+			min={0}
+			size="large"
+			value={45}
+		/>
+		<PanelSwitch id="echo-offset" label="Offset" />
+	</div>
+	<EchoHead division="note" head={2} ticks={48} />
+	<Pot
+		data={{ 'data-echo-low-cut': '' }}
+		ends={['Min', 'Max']}
+		format="hertz"
+		id="echo-low-cut"
+		label="Low cut"
+		max={2000}
+		min={20}
+		size="large"
+		taper="log"
+		ticks={cutTicks.low}
+		value={120}
+	/>
+	<Pot
+		data={{ 'data-echo-high-cut': '' }}
+		ends={['Min', 'Max']}
+		format="hertz"
+		id="echo-high-cut"
+		label="High cut"
+		max={20_000}
+		min={1000}
+		size="large"
+		taper="log"
+		ticks={cutTicks.high}
+		value={6000}
+	/>
+</div>

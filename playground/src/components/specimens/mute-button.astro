@@ -1,0 +1,18 @@
+---
+import Volume2 from '@lucide/astro/icons/volume-2';
+import VolumeX from '@lucide/astro/icons/volume-x';
+
+interface Props {
+	isPressed: boolean;
+	labelledby: string;
+}
+
+const { isPressed, labelledby } = Astro.props;
+
+// Astro writes `false` as a string, which still sets a boolean attribute
+---
+
+<sonic-button aria-labelledby={labelledby} latching pressed={isPressed ? '' : undefined}>
+	<Volume2 aria-hidden="true" data-sonic-when="released" />
+	<VolumeX aria-hidden="true" data-sonic-when="pressed" />
+</sonic-button>

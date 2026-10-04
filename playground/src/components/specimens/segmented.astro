@@ -1,0 +1,44 @@
+---
+import Cell from '#components/specimens/cell.astro';
+import FilterModes from '#components/specimens/filter-modes.astro';
+import SpecimenGrid from '#components/specimens/specimen-grid.astro';
+import TransportModes from '#components/specimens/transport-modes.astro';
+---
+
+<SpecimenGrid>
+	<Cell id="segmented-filter" isWide={true} label="Filter mode">
+		<sonic-segmented aria-labelledby="segmented-filter" class="font-mono" value="lp">
+			<FilterModes hasNotch={true} />
+		</sonic-segmented>
+	</Cell>
+	<Cell id="segmented-transport" isWide={true} label="Transport">
+		<sonic-segmented aria-labelledby="segmented-transport" value="play">
+			<TransportModes />
+		</sonic-segmented>
+	</Cell>
+	<Cell id="segmented-disabled" isWide={true} label="Disabled">
+		<sonic-segmented aria-labelledby="segmented-disabled" class="font-mono" disabled value="bp">
+			<FilterModes hasNotch={false} />
+		</sonic-segmented>
+	</Cell>
+</SpecimenGrid>
+<SpecimenGrid isLarge={true}>
+	<Cell id="segmented-large-filter" isWide={true} label="Filter mode, large">
+		<sonic-segmented
+			aria-labelledby="segmented-large-filter"
+			class="font-mono [--sonic-segmented-size:4rem]"
+			value="lp"
+		>
+			<FilterModes hasNotch={true} />
+		</sonic-segmented>
+	</Cell>
+	<Cell id="segmented-large-transport" isWide={true} label="Transport, large">
+		<sonic-segmented
+			aria-labelledby="segmented-large-transport"
+			class="[--sonic-segmented-size:4rem]"
+			value="play"
+		>
+			<TransportModes />
+		</sonic-segmented>
+	</Cell>
+</SpecimenGrid>
