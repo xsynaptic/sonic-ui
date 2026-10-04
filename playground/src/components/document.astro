@@ -1,18 +1,32 @@
 ---
+import { Font } from 'astro:assets';
+
 interface Props {
 	bodyClass?: string;
+	description?: string;
+	scheme?: 'dark' | 'light';
+	skin?: string;
 	title: string;
 }
 
-const { bodyClass, title } = Astro.props;
+const { bodyClass, description, scheme, skin, title } = Astro.props;
+
+const favicon = `data:image/svg+xml,${encodeURIComponent(
+	'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><style>circle{fill:#18181b}path{stroke:#fafafa}@media (prefers-color-scheme:dark){circle{fill:#f4f4f5}path{stroke:#18181b}}</style><circle cx="16" cy="16" r="14"/><path d="M16 16 9 7" fill="none" stroke-linecap="round" stroke-width="3.5"/></svg>',
+)}`;
 ---
 
 <!doctype html>
-<html lang="en">
+<html class={skin ? `sonic-skin-${skin}` : undefined} data-scheme={scheme} lang="en">
 	<head>
 		<meta charset="utf-8" />
 		<meta content="width=device-width, initial-scale=1" name="viewport" />
-		<link href="data:," rel="icon" />
+		{description ? <meta content={description} name="description" /> : undefined}
+		<meta content="#f4f4f5" media="(prefers-color-scheme: light)" name="theme-color" />
+		<meta content="#09090b" media="(prefers-color-scheme: dark)" name="theme-color" />
+		<link href={favicon} rel="icon" type="image/svg+xml" />
+		<Font cssVariable="--font-plex-sans" preload={[{ subset: 'latin', weight: 400 }]} />
+		<Font cssVariable="--font-plex-mono" />
 		<title>{title}</title>
 		<slot name="head" />
 	</head>

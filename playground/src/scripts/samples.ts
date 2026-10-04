@@ -16,7 +16,7 @@ function play(waveform: SonicWaveform): void {
 		position = waveform.value;
 	});
 	frameLoop((elapsedSeconds, time) => {
-		position += elapsedSeconds;
+		position += elapsedSeconds * waveform.playbackRate;
 		if (position >= waveform.max) position = waveform.min;
 		if (time - reported < 250) return;
 

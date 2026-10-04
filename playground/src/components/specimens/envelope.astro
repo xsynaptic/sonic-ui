@@ -80,11 +80,11 @@ const panels = rigs.map((rig) => build(rig));
 
 <div class="grid gap-3 lg:grid-cols-2">
 	{panels.map((panel) => (
-		<div class="grid justify-items-center gap-5 rounded-lg border border-zinc-800 bg-zinc-900 p-5 shadow-[inset_0_1px_0_rgb(255_255_255/4%)]">
-			<p class="justify-self-start font-mono text-[0.625rem] tracking-[0.16em] text-zinc-400 uppercase">
+		<div class="grid justify-items-center gap-5 surface p-5">
+			<p class="justify-self-start font-mono text-[0.625rem] tracking-[0.16em] text-text-muted uppercase">
 				{panel.title}
 			</p>
-			<sonic-envelope {...panel.bindings} />
+			<sonic-envelope {...panel.bindings} readout />
 			<div class="flex flex-wrap justify-center gap-5">
 				{panel.dials.map(({ attributes, label, Tag }) => (
 					<Cell id={`${attributes.id}-label`} label={label}>

@@ -36,7 +36,7 @@ const bands = [
 
 <div
 	aria-label={`Channel ${String(channel)}`}
-	class="flex flex-col items-center gap-2.5 border-s border-zinc-800 px-2.5"
+	class="flex flex-col items-center gap-2.5 border-s border-line px-2.5"
 	data-channel={channel}
 	role="group"
 >
@@ -79,7 +79,7 @@ const bands = [
 		label="Cue"
 		size="large"
 	/>
-	<span aria-hidden="true" class="font-mono text-base font-bold text-zinc-300">
+	<span aria-hidden="true" class="font-mono text-base font-bold text-text">
 		{channel}
 	</span>
 	<ChannelFader hasMeter={true} value={fader} />

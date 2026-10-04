@@ -5,11 +5,15 @@ import { expect, test } from '@playwright/test';
 import { centreOf, mouseOnly } from './pointer.ts';
 
 const controls = [
-	{ focused: '#phase .sonic-dial', lit: '#phase .sonic-dial' },
-	{ focused: '#xy .sonic-xy-axis[tabindex="0"]', lit: '#xy .sonic-xy-puck' },
+	{ focused: '#phase .sonic-dial', lit: '#phase .sonic-dial', property: '--_sonic-focus-shadow' },
+	{
+		focused: '#xy .sonic-xy-axis[tabindex="0"]',
+		lit: '#xy .sonic-xy-puck',
+		property: '--_sonic-xy-puck-ring',
+	},
 ];
 
-for (const { focused, lit } of controls) {
+for (const { focused, lit, property } of controls) {
 	test(`a press focuses without the focus glow, and the next key lights it: ${focused}`, async ({
 		isMobile,
 		page,
@@ -21,8 +25,9 @@ for (const { focused, lit } of controls) {
 		const readGlow = () =>
 			page
 				.locator(lit)
-				.evaluate((element) =>
-					getComputedStyle(element).getPropertyValue('--_sonic-focus-shadow').trim(),
+				.evaluate(
+					(element, name) => getComputedStyle(element).getPropertyValue(name).trim(),
+					property,
 				);
 		const rest = await readGlow();
 

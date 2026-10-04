@@ -244,7 +244,7 @@ export const tokenGroups: Array<TokenGroup> = [
 	},
 	{
 		from: '.sonic-number',
-		name: 'Number',
+		name: 'Number box',
 		tokens: [
 			range('size', '--sonic-number-size', [1, 4, 0.125, 'rem']),
 			range('aspect', '--sonic-number-aspect-ratio', [1, 5, 0.1]),

@@ -6,7 +6,6 @@ const markers = '30 60..95:intro 140 150 215 260~';
 
 const strips = [
 	{ id: 'wavestrip-default', label: 'Default', seed: 1 },
-	{ className: 'sonic-skin-lime', id: 'wavestrip-skin', label: 'Skin', seed: 2 },
 	{ id: 'wavestrip-dimmed', isDimmed: true, label: 'Dimmed', seed: 3 },
 	{ id: 'wavestrip-disabled', isDisabled: true, label: 'Disabled', seed: 4 },
 	{ id: 'wavestrip-empty', label: 'Empty' },
@@ -17,6 +16,7 @@ const strips = [
 		markers: '30 32 34 36 60..95:intro 140 142 215 216 217 260~',
 		seed: 6,
 	},
+	{ format: 'seconds', id: 'wavestrip-seconds', label: 'Readout in seconds', seed: 7 },
 ];
 ---
 
@@ -28,6 +28,7 @@ const strips = [
 				cancellable
 				class:list={['[--sonic-wavestrip-length:20rem]', strip.className]}
 				data-buffered="0 150 190 230"
+				data-format={strip.format ?? 'clock'}
 				data-markers={strip.markers ?? markers}
 				data-peaks={strip.seed}
 				dimmed={strip.isDimmed}
@@ -39,4 +40,23 @@ const strips = [
 			></sonic-wavestrip>
 		</Cell>
 	))}
+</SpecimenGrid>
+<SpecimenGrid isLarge={true}>
+	<div class="col-span-full">
+		<Cell id="wavestrip-large" label="Large">
+			<sonic-wavestrip
+				aria-labelledby="wavestrip-large"
+				cancellable
+				class="[--sonic-wavestrip-length:min(48rem,80vw)] [--sonic-wavestrip-marker-ratio:0.14] [--sonic-wavestrip-size:5rem]"
+				data-buffered="0 150 190 230"
+				data-format="clock"
+				data-markers={markers}
+				data-peaks="8"
+				key-step="5"
+				max="300"
+				readout
+				value="120"
+			></sonic-wavestrip>
+		</Cell>
+	</div>
 </SpecimenGrid>

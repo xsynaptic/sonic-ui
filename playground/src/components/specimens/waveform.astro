@@ -1,4 +1,7 @@
 ---
+import ZoomIn from '@lucide/astro/icons/zoom-in';
+import ZoomOut from '@lucide/astro/icons/zoom-out';
+
 import Cell from '#components/specimens/cell.astro';
 import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 
@@ -13,6 +16,8 @@ const waveforms = [
 		label: 'Large labels',
 		seed: 11,
 	},
+	{ id: 'waveform-rate', isPlaying: true, label: 'Double speed', rate: 2, seed: 14 },
+	{ format: 'seconds-tenths', id: 'waveform-seconds', label: 'Readout in seconds', seed: 15 },
 ];
 ---
 
@@ -22,11 +27,13 @@ const waveforms = [
 			<sonic-waveform
 				aria-labelledby={waveform.id}
 				class:list={['[--sonic-waveform-length:20rem]', waveform.className]}
+				data-format={waveform.format ?? 'clock-tenths'}
 				data-markers="146 151.5 158~"
 				data-pending={waveform.pending}
 				data-samples={waveform.seed}
 				key-step="1"
 				max="300"
+				playback-rate={waveform.rate}
 				playing={waveform.isPlaying}
 				readout
 				step="0"
@@ -34,4 +41,29 @@ const waveforms = [
 			></sonic-waveform>
 		</Cell>
 	))}
+	<Cell id="waveform-zoom" isWide={true} label="Zoom">
+		<div class="flex flex-col items-center gap-2 sm:flex-row" data-zoom-specimen>
+			<sonic-waveform
+				aria-labelledby="waveform-zoom"
+				class="[--sonic-waveform-length:20rem]"
+				data-format="clock-tenths"
+				data-markers="146 151.5 158~"
+				data-samples="12"
+				key-step="1"
+				max="300"
+				playing={true}
+				readout
+				step="0"
+				value="150"
+			></sonic-waveform>
+			<div class="flex gap-1 [--sonic-button-size:1.5rem] sm:flex-col">
+				<sonic-button aria-label="Zoom in" data-zoom="1">
+					<ZoomIn aria-hidden="true" />
+				</sonic-button>
+				<sonic-button aria-label="Zoom out" data-zoom="-1">
+					<ZoomOut aria-hidden="true" />
+				</sonic-button>
+			</div>
+		</div>
+	</Cell>
 </SpecimenGrid>

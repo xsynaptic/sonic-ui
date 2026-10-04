@@ -17,10 +17,10 @@ const sources = [
 const sides = ['left', 'right'];
 const panelClass = 'sonic-panel flex flex-col items-center gap-3 p-3 [--sonic-panel-depth:0px]';
 const titleClass =
-	'sonic-panel-title self-stretch font-mono text-[0.625rem] font-bold tracking-widest text-zinc-300 uppercase';
+	'sonic-panel-title self-stretch font-mono text-[0.625rem] font-bold tracking-widest text-text uppercase';
 ---
 
-<div class="flex flex-col items-center gap-4 border-s border-zinc-800 ps-3">
+<div class="flex flex-col items-center gap-4 border-s border-line ps-3">
 	<div aria-label="Tempo" class="flex items-end gap-3" role="group">
 		<PanelDial
 			data={{ 'data-tempo': '' }}

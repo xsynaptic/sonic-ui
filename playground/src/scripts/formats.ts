@@ -1,4 +1,10 @@
-import type { SonicDial, SonicNumber, SonicSlider } from '@xsynaptic/sonic-ui';
+import type {
+	SonicDial,
+	SonicNumber,
+	SonicSlider,
+	SonicWaveform,
+	SonicWavestrip,
+} from '@xsynaptic/sonic-ui';
 
 import { channelCurves, echoModes, filterTypes, tapeStyles } from '#scripts/stop-names.ts';
 
@@ -57,6 +63,21 @@ function formatDecibels(value: number): string {
 	return `${value.toFixed(1).replace('-', '−')} dB`;
 }
 
+function formatClock(seconds: number, digits: number): string {
+	const minutes = Math.floor(seconds / 60);
+	const rest = (seconds - minutes * 60)
+		.toFixed(digits)
+		.padStart(digits === 0 ? 2 : digits + 3, '0');
+
+	return `${String(minutes)}:${rest}`;
+}
+
+function floorTo(seconds: number, digits: number): number {
+	const scale = 10 ** digits;
+
+	return Math.floor(seconds * scale) / scale;
+}
+
 function namedStops(names: ReadonlyArray<string>): Format {
 	return {
 		format: (value) => names[value] ?? String(value),
@@ -78,6 +99,8 @@ const formats = new Map<string, Format>([
 	['beats', { format: formatBeats, parse: parseBeats }],
 	['bpm', { format: (value) => `${value.toFixed(1)} BPM`, parse: parseNumber }],
 	['channel-curve', namedStops(channelCurves.labels)],
+	['clock', { format: (value) => formatClock(floorTo(value, 0), 0) }],
+	['clock-tenths', { format: (value) => formatClock(floorTo(value, 1), 1) }],
 	['db', { format: formatDecibels, parse: parseNumber }],
 	[
 		'db-kill',
@@ -125,6 +148,8 @@ const formats = new Map<string, Format>([
 		},
 	],
 	['percent', { format: (value) => `${String(value)}%`, parse: parseNumber }],
+	['seconds', { format: (value) => `${String(floorTo(value, 0))} s` }],
+	['seconds-tenths', { format: (value) => `${floorTo(value, 1).toFixed(1)} s` }],
 	[
 		'semitones',
 		{
@@ -143,7 +168,7 @@ export function formatterFor(name: string): ((value: number) => string) | undefi
 	return formats.get(name)?.format;
 }
 
-type FormattedControl = SonicDial | SonicNumber | SonicSlider;
+type FormattedControl = SonicDial | SonicNumber | SonicSlider | SonicWaveform | SonicWavestrip;
 
 export function applyFormat(control: FormattedControl, name: string): void {
 	const format = formats.get(name);

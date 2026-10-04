@@ -1,5 +1,6 @@
 ---
 import Layout from '#components/layout.astro';
+import PageHeader from '#components/page-header.astro';
 import ButtonSpecimens from '#components/specimens/button.astro';
 import DialSpecimens from '#components/specimens/dial.astro';
 import EnvelopeSpecimens from '#components/specimens/envelope.astro';
@@ -40,19 +41,24 @@ const sections = [
 ];
 ---
 
-<Layout title="sonic-ui">
-	<header class="mb-8 max-w-2xl">
-		<p class="text-sm leading-relaxed text-zinc-400">
-			Native custom elements for audio interfaces, skinned with tokens (CSS custom properties).
-		</p>
-		<pre class="mt-3 inline-block bg-zinc-900 px-3 py-2 font-mono text-[0.8125rem] text-zinc-300">pnpm add @xsynaptic/sonic-ui</pre>
-	</header>
+<Layout
+	description="Native custom elements for audio interfaces: dials, sliders, meters, waveforms and more, skinned with tokens."
+	title="sonic-ui"
+>
+	<PageHeader title="Specimens">
+		<Fragment slot="lead">
+			Native custom elements for audio interfaces. Every control and display is here to try: drag,
+			press, or focus one and use the keyboard. Pick a skin and a colour scheme above, or set tokens
+			live in the tuner.
+		</Fragment>
+		<pre class="mt-4 inline-block rounded bg-surface px-3 py-2 font-mono text-[0.8125rem] text-text">pnpm add @xsynaptic/sonic-ui</pre>
+	</PageHeader>
 	<nav aria-label="Contents" class="mb-10">
-		<ul class="flex max-w-2xl flex-wrap gap-x-4 gap-y-1 font-mono text-xs">
+		<ul class="flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs">
 			{sections.map((section) => (
 				<li>
 					<a
-						class="inline-flex min-h-6 items-center text-zinc-400 underline-offset-4 hover:text-zinc-100 hover:underline"
+						class="inline-flex min-h-6 items-center text-text-muted underline-offset-4 hover:text-text-strong hover:underline"
 						href={`#${section.id}`}
 					>
 						{section.label}
@@ -118,6 +124,7 @@ const sections = [
 			import '#scripts/specimens/xy.ts';
 			import '#scripts/specimens/screen-follow.ts';
 			import '#scripts/specimens/split.ts';
+			import '#scripts/specimens/zoom.ts';
 			import '#scripts/buffered.ts';
 			import '#scripts/samples.ts';
 			import '#scripts/markers.ts';

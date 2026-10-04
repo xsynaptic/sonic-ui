@@ -12,28 +12,29 @@ import ZoomIn from '@lucide/astro/icons/zoom-in';
 import ZoomOut from '@lucide/astro/icons/zoom-out';
 
 import Layout from '#components/layout.astro';
+import PageHeader from '#components/page-header.astro';
 ---
 
-<Layout title="sonic-ui, web player">
-	<header class="mb-6 max-w-2xl">
-		<h1 class="font-mono text-xs font-bold tracking-[0.12em] text-zinc-200 uppercase">
-			Web player
-		</h1>
-		<p class="mt-3 text-sm leading-relaxed text-zinc-400">
-			A docked player bar on a simulated stream. Seek past the loaded range to see it buffer, and
-			open the waveform panel to watch its chunks land.
-		</p>
-	</header>
-	<div class="flex min-h-80 flex-col overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900">
+<Layout
+	description="A docked player bar on a simulated stream, built from sonic-ui controls."
+	title="Web player, sonic-ui"
+>
+	<PageHeader title="Web player">
+		<Fragment slot="lead">
+			A docked player bar on a simulated stream. Scrub past the loaded range to see it buffer, then
+			open the waveform to watch its peaks arrive.
+		</Fragment>
+	</PageHeader>
+	<div class="flex min-h-80 flex-col overflow-hidden surface">
 		<div class="flex-1"></div>
 		<section
 			aria-label="Player"
-			class="@container relative border-t border-black bg-zinc-950 [--sonic-marker-intro:oklch(72%_0.13_200deg)] [--sonic-dial-size:2rem] [--sonic-button-size:2rem]"
+			class="@container relative border-t border-line bg-ground [--sonic-marker-intro:oklch(72%_0.13_200deg)] [--sonic-dial-size:2rem] [--sonic-button-size:2rem]"
 			data-web-player
 		>
-			<div class="relative border-b border-zinc-800 p-2" data-panel hidden>
+			<div class="relative border-b border-line p-2" data-panel hidden>
 				<sonic-waveform
-					aria-label="Waveform detail"
+					aria-label="Waveform"
 					class="[--sonic-waveform-length:100%] [--sonic-waveform-size:7.5rem]"
 					data-detail
 					disabled
@@ -87,13 +88,13 @@ import Layout from '#components/layout.astro';
 				</div>
 				<div class="flex min-w-40 flex-1 items-center gap-3">
 					<div class="grid min-w-0 flex-1 leading-tight">
-						<p class="truncate text-sm text-zinc-100" data-title></p>
-						<p class="truncate text-xs text-zinc-400" data-artist></p>
+						<p class="truncate text-sm text-text-strong" data-title></p>
+						<p class="truncate text-xs text-text-muted" data-artist></p>
 					</div>
 					<button
 						aria-label="Remaining time"
 						aria-pressed="false"
-						class="sonic-screen cursor-pointer font-mono text-xs tabular-nums [--sonic-screen-aspect-ratio:3] [--sonic-screen-size:1.5rem] [text-shadow:0_0_0.4em_currentColor] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-300 disabled:cursor-default disabled:opacity-60"
+						class="sonic-screen cursor-pointer font-mono text-xs tabular-nums [--sonic-screen-aspect-ratio:3] [--sonic-screen-size:1.5rem] [text-shadow:0_0_0.4em_currentColor] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text disabled:cursor-default disabled:opacity-60"
 						data-time
 						disabled
 						type="button"
@@ -106,7 +107,7 @@ import Layout from '#components/layout.astro';
 					<span data-sonic-value="1.5">1.5×</span>
 					<span data-sonic-value="2">2×</span>
 				</sonic-segmented>
-				<sonic-button aria-label="Waveform panel" data-panel-button disabled latching>
+				<sonic-button aria-label="Show waveform" data-panel-button disabled latching>
 					<AudioWaveform aria-hidden="true" />
 				</sonic-button>
 				<div class="flex items-center gap-2">
@@ -125,7 +126,7 @@ import Layout from '#components/layout.astro';
 				</div>
 				<div class="basis-full">
 					<sonic-wavestrip
-						aria-label="Waveform"
+						aria-label="Wavestrip"
 						cancellable
 						class="[--sonic-wavestrip-length:100%]"
 						data-wave

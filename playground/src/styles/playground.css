@@ -2,8 +2,50 @@
 
 @import 'tailwindcss';
 @import '@xsynaptic/sonic-ui/controls.css';
+@import '@xsynaptic/sonic-ui/skins/amber.css';
 @import '@xsynaptic/sonic-ui/skins/slate.css';
 @import '@xsynaptic/sonic-ui/skins/lime.css';
 @import '@xsynaptic/sonic-ui/skins/ivory.css';
 @import '@xsynaptic/sonic-ui/skins/flat.css';
-@import '@xsynaptic/sonic-ui/skins/bare.css';
+
+@theme inline {
+	--font-sans: var(--font-plex-sans);
+	--font-mono: var(--font-plex-mono);
+}
+
+@theme {
+	--color-ground: light-dark(var(--color-zinc-100), var(--color-zinc-950));
+	--color-surface: light-dark(var(--color-white), var(--color-zinc-900));
+	--color-line: light-dark(var(--color-zinc-300), var(--color-zinc-800));
+	--color-line-strong: light-dark(var(--color-zinc-500), var(--color-zinc-600));
+	--color-text: light-dark(var(--color-zinc-700), var(--color-zinc-300));
+	--color-text-muted: light-dark(var(--color-zinc-600), var(--color-zinc-400));
+	--color-text-strong: light-dark(var(--color-zinc-950), var(--color-zinc-100));
+	--color-danger: light-dark(var(--color-red-700), var(--color-red-300));
+}
+
+@layer base {
+	:root {
+		color-scheme: light dark;
+	}
+
+	:root[data-scheme='light'] {
+		color-scheme: light;
+	}
+
+	:root[data-scheme='dark'] {
+		color-scheme: dark;
+	}
+}
+
+@utility surface {
+	background: var(--color-surface);
+	border: 1px solid var(--color-line);
+	border-radius: var(--radius-lg);
+}
+
+@layer components {
+	.sonic-skin-flat {
+		--sonic-panel: light-dark(oklch(98.5% 0.002 255deg), rgb(255 255 255 / 3%));
+	}
+}

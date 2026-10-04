@@ -83,7 +83,7 @@ function render(rows: Array<Row>, count: HTMLElement, output: HTMLElement): void
 	}
 	output.textContent = changed.map((row) => `${row.token.token}: ${valueOf(row)};`).join('\n');
 	output.hidden = changed.length === 0;
-	count.textContent = changed.length === 0 ? 'Nothing tuned' : `${String(changed.length)} tuned`;
+	count.textContent = changed.length === 0 ? 'No tokens set' : `${String(changed.length)} set`;
 }
 
 function rebase(rows: Array<Row>, reader: Reader): void {

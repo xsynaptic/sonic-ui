@@ -7,7 +7,7 @@ import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 	<Cell id="xy-plain" label="Plain">
 		<sonic-xy aria-labelledby="xy-plain" x="30" y="60"></sonic-xy>
 	</Cell>
-	<Cell id="xy-bipolar" label="Bipolar">
+	<Cell id="xy-bipolar" label="Origin">
 		<sonic-xy
 			aria-labelledby="xy-bipolar"
 			x="20"
@@ -27,6 +27,7 @@ import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 			<sonic-xy
 				aria-labelledby="xy-filter"
 				data-xy-format="hertz db"
+				readout
 				x="1200"
 				x-label="Cutoff"
 				x-max="20000"
@@ -44,6 +45,15 @@ import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 				data-xy-screen
 			></div>
 		</div>
+	</Cell>
+	<Cell id="xy-readout" label="Readout">
+		<sonic-xy
+			aria-labelledby="xy-readout"
+			data-xy-format="percent percent"
+			readout
+			x="55"
+			y="45"
+		></sonic-xy>
 	</Cell>
 	<Cell id="xy-disabled" label="Disabled">
 		<sonic-xy aria-labelledby="xy-disabled" disabled x="70" y="40"></sonic-xy>

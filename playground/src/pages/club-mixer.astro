@@ -5,6 +5,7 @@ import MasterPanel from '#components/club-mixer/master-panel.astro';
 import MicChannel from '#components/club-mixer/mic-channel.astro';
 import MusicChannel from '#components/club-mixer/music-channel.astro';
 import Layout from '#components/layout.astro';
+import PageHeader from '#components/page-header.astro';
 
 const channels = [
 	{ channel: 1, fader: 0, level: 0 },
@@ -14,18 +15,19 @@ const channels = [
 ];
 ---
 
-<Layout title="sonic-ui, club mixer">
-	<header class="mb-6 max-w-2xl">
-		<h1 class="font-mono text-xs font-bold tracking-[0.12em] text-zinc-200 uppercase">
-			Club mixer
-		</h1>
-		<p class="mt-3 text-sm leading-relaxed text-zinc-400">
-			Four channels, two mics, two filters. Start runs a demo signal through the meters.
-		</p>
-	</header>
+<Layout
+	description="A four-channel club mixer built from sonic-ui dials, sliders, switches and meters."
+	title="Club mixer, sonic-ui"
+>
+	<PageHeader title="Club mixer">
+		<Fragment slot="lead">
+			Four music channels, two mic channels and two filters. Press Start to run a demo signal
+			through the meters.
+		</Fragment>
+	</PageHeader>
 	<div class="-mx-4 overflow-x-auto px-4 pb-4 sm:mx-0 sm:px-0">
 		<div
-			class="inline-flex min-w-max items-stretch rounded-lg border border-zinc-800 bg-zinc-900 p-4 shadow-[inset_0_1px_0_rgb(255_255_255/4%)] [--sonic-meter-clip-from:-4] [--sonic-meter-hot-from:-10]"
+			class="inline-flex min-w-max items-stretch surface p-4 [--sonic-meter-clip-from:-4] [--sonic-meter-hot-from:-10]"
 			data-club-mixer
 		>
 			<div class="sonic-panel flex p-1 pb-3 [--sonic-panel-depth:0px]">

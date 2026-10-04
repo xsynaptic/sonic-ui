@@ -402,7 +402,7 @@ test('an envelope strokes its line in Highlight and drops its fill', async ({ pa
 	expect(graph).toEqual({ adjust: 'none', fill: 'none', stroke: highlight });
 });
 
-test('a curve handle fills in CanvasText, and the puck is a CanvasText star', async ({ page }) => {
+test('a curve handle fills in CanvasText, and the puck is a CanvasText disc', async ({ page }) => {
 	const text = await systemColour(page, 'CanvasText');
 	const paintOfPoint = (selector: string) =>
 		page.locator(selector).evaluate((element) => {

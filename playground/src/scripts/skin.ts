@@ -1,14 +1,34 @@
 import type { SonicSegmented } from '@xsynaptic/sonic-ui';
 
-// Shared with the layout's inline script, which applies the skin before first paint
 const skinStorageKey = 'sonic-playground-skin';
+const schemeStorageKey = 'sonic-playground-scheme';
 
-function readSkin(): string {
+function read(key: string, fallback: string): string {
 	try {
-		return localStorage.getItem(skinStorageKey) ?? 'default';
+		return localStorage.getItem(key) ?? fallback;
 	} catch {
-		return 'default';
+		return fallback;
 	}
+}
+
+function store(key: string, value: string): void {
+	try {
+		localStorage.setItem(key, value);
+	} catch {
+		// Private windows can refuse storage
+	}
+}
+
+const homeSchemes: Record<string, string> = {
+	amber: 'dark',
+	flat: 'light',
+	lime: 'dark',
+	slate: 'dark',
+};
+
+function applyScheme(scheme: string): void {
+	if (scheme === 'system') delete document.documentElement.dataset.scheme;
+	else document.documentElement.dataset.scheme = scheme;
 }
 
 function applySkin(skin: string): void {
@@ -18,19 +38,48 @@ function applySkin(skin: string): void {
 		if (name.startsWith('sonic-skin-')) root.classList.remove(name);
 	}
 	if (skin !== 'default') root.classList.add(`sonic-skin-${skin}`);
-	try {
-		localStorage.setItem(skinStorageKey, skin);
-	} catch {
-		// Private windows can refuse storage
-	}
-	document.dispatchEvent(new Event('playground-skin'));
+
+	const scheme = homeSchemes[skin];
+	const choice = document.querySelector<SonicSegmented>('[data-scheme-choice]');
+	if (!scheme || !choice) return;
+
+	choice.value = scheme;
+	applyScheme(scheme);
+	store(schemeStorageKey, scheme);
 }
 
-const skinChoice = document.querySelector<SonicSegmented>('[data-skin-choice]');
+interface Choice {
+	apply: (value: string) => void;
+	fallback: string;
+	key: string;
+	selector: string;
+}
 
-if (skinChoice) {
-	skinChoice.value = readSkin();
-	skinChoice.addEventListener('change', () => {
-		applySkin(skinChoice.value);
+function bindChoice({ apply, fallback, key, selector }: Choice): void {
+	const choice = document.querySelector<SonicSegmented>(selector);
+	if (!choice) return;
+
+	const stored = read(key, fallback);
+
+	choice.value = choice.querySelector(`[data-sonic-value="${CSS.escape(stored)}"]`)
+		? stored
+		: fallback;
+	choice.addEventListener('change', () => {
+		apply(choice.value);
+		store(key, choice.value);
+		document.dispatchEvent(new Event('playground-skin'));
 	});
 }
+
+bindChoice({
+	apply: applySkin,
+	fallback: 'default',
+	key: skinStorageKey,
+	selector: '[data-skin-choice]',
+});
+bindChoice({
+	apply: applyScheme,
+	fallback: 'system',
+	key: schemeStorageKey,
+	selector: '[data-scheme-choice]',
+});

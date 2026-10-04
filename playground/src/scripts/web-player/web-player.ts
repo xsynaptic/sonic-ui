@@ -17,6 +17,7 @@ import { dataHook, readControls } from '#scripts/find.ts';
 import { frameLoop } from '#scripts/frame-loop.ts';
 import { seededHeader } from '#scripts/seeded-dat.ts';
 import { createStream, tracks } from '#scripts/web-player/stream.ts';
+import { bindZoom } from '#scripts/zoom.ts';
 
 const barSpec = {
 	artist: HTMLElement,
@@ -96,7 +97,7 @@ function renderText(state: StreamState, bar: Bar): void {
 	writeText(bar.time, state.isLoaded ? formatClock(shown) : '--:--');
 }
 
-function renderAvailability(state: StreamState, bar: Bar, zoom: number): void {
+function renderAvailability(state: StreamState, bar: Bar): void {
 	bar.play.toggleAttribute('busy', state.isWaiting);
 	bar.previous.toggleAttribute('soft-disabled', !state.canPrevious);
 	bar.next.toggleAttribute('soft-disabled', !state.canNext);
@@ -109,11 +110,6 @@ function renderAvailability(state: StreamState, bar: Bar, zoom: number): void {
 		bar.panelButton,
 	]) {
 		control.toggleAttribute('disabled', !state.isLoaded);
-	}
-	for (const button of bar.zoomButtons) {
-		const next = zoom + Number(button.dataset.zoom);
-
-		button.toggleAttribute('soft-disabled', next < 0 || next >= zoomLadder.length);
 	}
 }
 
@@ -191,7 +187,6 @@ function bindControls(root: Element, stream: ReturnType<typeof createStream>, ba
 function bindPlayer(root: Element): void {
 	const bar = readBar(root);
 	const stream = createStream(tracks);
-	let zoom = 2;
 	let shownSamples: Int8Array | undefined;
 	const loop = frameLoop((elapsedSeconds) => {
 		const { hasLanded, isActive } = stream.tick(elapsedSeconds);
@@ -204,25 +199,19 @@ function bindPlayer(root: Element): void {
 		}
 		if (bar.play.pressed !== state.isPlaying) bar.play.pressed = state.isPlaying;
 		renderText(state, bar);
-		renderAvailability(state, bar, zoom);
+		renderAvailability(state, bar);
 		renderPosition(state, bar);
 
 		return isActive;
 	});
 
 	bindControls(root, stream, bar);
-	bar.detail.zoom = zoomLadder[zoom];
+	bindZoom({ buttons: bar.zoomButtons, ladder: zoomLadder, start: 2, waveform: bar.detail });
 	bar.detail.readTime = () => stream.state.positionSeconds;
 	bar.detail.requestPeaks = (fromSeconds, toSeconds) => {
 		stream.wantSamples(fromSeconds, toSeconds);
 		loop.wake();
 	};
-	for (const button of bar.zoomButtons) {
-		button.addEventListener('click', () => {
-			zoom = Math.min(Math.max(zoom + Number(button.dataset.zoom), 0), zoomLadder.length - 1);
-			bar.detail.zoom = zoomLadder[zoom];
-		});
-	}
 	root.addEventListener('change', loop.wake);
 	root.addEventListener('click', loop.wake);
 	loop.start();

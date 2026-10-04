@@ -159,6 +159,24 @@ const masterStops = Array.from({ length: 11 }, (_stop, index) => index);
 			))}
 		</sonic-dial>
 	</Cell>
+	<Cell id="dial-short-travel" label="Short travel">
+		<sonic-dial
+			aria-labelledby="dial-short-travel"
+			class="[--sonic-dial-travel:48px]"
+			data-format="percent"
+			readout
+			value="50"
+		></sonic-dial>
+	</Cell>
+	<Cell id="dial-long-travel" label="Long travel">
+		<sonic-dial
+			aria-labelledby="dial-long-travel"
+			class="[--sonic-dial-travel:640px]"
+			data-format="percent"
+			readout
+			value="50"
+		></sonic-dial>
+	</Cell>
 	<Cell id="dial-wobble" label="Wobble">
 		<sonic-dial aria-labelledby="dial-wobble" data-lfo="25" readout value="50"></sonic-dial>
 	</Cell>

@@ -43,7 +43,7 @@ const modes = [
 						<Lock aria-hidden="true" />
 					</sonic-button>
 					<span
-						class="font-mono text-[0.625rem] tracking-[0.14em] text-zinc-400 uppercase"
+						class="font-mono text-[0.625rem] tracking-[0.14em] text-text-muted uppercase"
 						id={slider.id}
 					>
 						{slider.label}
@@ -65,7 +65,7 @@ const modes = [
 		<Cell id="split-slider" isWide={true} label="Slider">
 			<sonic-slider aria-labelledby="split-slider" readout value="50"></sonic-slider>
 		</Cell>
-		<Cell id="split-number" label="Number">
+		<Cell id="split-number" label="Number box">
 			<sonic-number aria-labelledby="split-number" class="font-mono" value="40"></sonic-number>
 		</Cell>
 	</sonic-split>
