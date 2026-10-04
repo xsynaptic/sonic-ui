@@ -1,5 +1,6 @@
 import { SonicFormElement } from '#elements/form-element.ts';
 import { copyNode } from '#lib/copy-node.ts';
+import { bindDrag } from '#lib/pointer-drag.ts';
 import { placeChildren } from '#lib/render.ts';
 
 // RTL is not mirrored
@@ -12,7 +13,6 @@ const keySteps = new Map([
 
 interface Press {
 	option: HTMLButtonElement | undefined;
-	pointerId: number;
 }
 
 export function isUnder(option: Element, x: number, y: number): boolean {
@@ -40,8 +40,6 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 	}
 
 	protected abstract readonly group: HTMLElement;
-
-	#press: Press | undefined;
 
 	#value = '';
 
@@ -165,59 +163,37 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 	}
 
 	#bindPress(group: HTMLElement, signal: AbortSignal): void {
-		const isOwn = (event: PointerEvent): boolean => event.pointerId === this.#press?.pointerId;
-		const release = (event: PointerEvent): void => {
-			if (isOwn(event)) this.#hold(undefined);
-		};
+		bindDrag<Press>(
+			group,
+			{
+				grab: (event) => {
+					const option = this.optionOf(event.target);
+					if (!option || this.isDisabled() || this.claimPress(option, event)) return;
 
-		group.addEventListener(
-			'pointerdown',
-			(event) => {
-				const option = this.optionOf(event.target);
-				if (!option || event.button !== 0 || this.isDisabled()) return;
-				if (this.claimPress(option, event)) return;
+					this.#markPressed(option);
 
-				group.setPointerCapture(event.pointerId);
-				this.#hold({ option, pointerId: event.pointerId });
+					return { option };
+				},
+				lift: (press) => {
+					if (!press.option || this.isDisabled()) return;
+
+					const option = this.releaseTarget(press.option);
+					if (!option) return;
+
+					this.select(option);
+					if (group.matches(':focus-within')) option.focus();
+				},
+				move: (press, event) => {
+					press.option = this.options().find((option) =>
+						isUnder(option, event.clientX, event.clientY),
+					);
+					this.#markPressed(press.option);
+				},
+				release: () => {
+					this.#markPressed(undefined);
+				},
 			},
-			{ signal },
-		);
-		group.addEventListener(
-			'pointermove',
-			(event) => {
-				if (!isOwn(event)) return;
-
-				this.#hold({
-					option: this.options().find((option) => isUnder(option, event.clientX, event.clientY)),
-					pointerId: event.pointerId,
-				});
-			},
-			{ signal },
-		);
-		group.addEventListener(
-			'pointerup',
-			(event) => {
-				const pressed = isOwn(event) ? this.#press?.option : undefined;
-
-				release(event);
-				if (!pressed || this.isDisabled()) return;
-
-				const option = this.releaseTarget(pressed);
-				if (!option) return;
-
-				this.select(option);
-				if (group.matches(':focus-within')) option.focus();
-			},
-			{ signal },
-		);
-		group.addEventListener('pointercancel', release, { signal });
-		group.addEventListener('lostpointercapture', release, { signal });
-		signal.addEventListener(
-			'abort',
-			() => {
-				this.#hold(undefined);
-			},
-			{ once: true },
+			signal,
 		);
 	}
 
@@ -241,13 +217,6 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 		if (focused) this.#refocus(focused, focusedValue);
 	}
 
-	#hold(press: Press | undefined): void {
-		this.#press = press;
-		for (const option of this.options()) {
-			option.toggleAttribute('data-sonic-pressed', option === press?.option);
-		}
-	}
-
 	#keyTarget(option: HTMLButtonElement, key: string): HTMLButtonElement | undefined {
 		const options = this.options();
 
@@ -261,6 +230,12 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 		if (this.isWrapping()) return options[(index + options.length) % options.length];
 
 		return options[Math.min(Math.max(index, 0), options.length - 1)];
+	}
+
+	#markPressed(pressed: HTMLButtonElement | undefined): void {
+		for (const option of this.options()) {
+			option.toggleAttribute('data-sonic-pressed', option === pressed);
+		}
 	}
 
 	#refocus(focused: HTMLButtonElement, value: string | undefined): void {

@@ -3,6 +3,7 @@ import type { Hold } from '#lib/hold.ts';
 import { isUnder, optionValue, SonicRadioGroupElement } from '#elements/radio-group.ts';
 import { bindHold } from '#lib/hold.ts';
 import { clamp } from '#lib/math.ts';
+import { bindDrag } from '#lib/pointer-drag.ts';
 import { requireChild, template } from '#lib/render.ts';
 import { writeAttribute } from '#lib/write-attribute.ts';
 
@@ -39,7 +40,6 @@ const renderBare = template(
 interface BatPress {
 	hasMoved: boolean;
 	last: number;
-	pointerId: number;
 }
 
 const pressCentreZone = 0.08;
@@ -103,8 +103,6 @@ export class SonicSwitch extends SonicRadioGroupElement {
 
 	readonly #bat = requireChild(this.group, '.sonic-switch-bat', HTMLSpanElement);
 
-	#batPress: BatPress | undefined;
-
 	#checked = false;
 
 	#holding: Hold | undefined;
@@ -146,7 +144,7 @@ export class SonicSwitch extends SonicRadioGroupElement {
 	}
 
 	protected override claimPress(option: HTMLButtonElement, event: PointerEvent): boolean {
-		if (this.#grabBat(event)) return true;
+		if (this.#isOnBat(event)) return true;
 		if (!this.#isMomentary(option)) return false;
 
 		this.group.setPointerCapture(event.pointerId);
@@ -175,9 +173,8 @@ export class SonicSwitch extends SonicRadioGroupElement {
 		);
 		this.#bare.addEventListener(
 			'pointerdown',
-			(event) => {
+			() => {
 				this.#isClickSwallowed = false;
-				if (event.button === 0 && !this.isDisabled()) this.#grabBat(event);
 			},
 			{ signal },
 		);
@@ -263,52 +260,37 @@ export class SonicSwitch extends SonicRadioGroupElement {
 	}
 
 	#bindBat(group: HTMLElement, signal: AbortSignal): void {
-		const drop = (event: PointerEvent): void => {
-			if (event.pointerId === this.#batPress?.pointerId) this.#batPress = undefined;
-		};
+		bindDrag<BatPress>(
+			group,
+			{
+				grab: (event) => {
+					const isOnPosition =
+						event.target === this.#bare || this.optionOf(event.target) !== undefined;
+					if (!isOnPosition || this.isDisabled() || !this.#isOnBat(event)) return;
 
-		group.addEventListener(
-			'pointermove',
-			(event) => {
-				const press = this.#batPress;
-				if (press?.pointerId !== event.pointerId || this.isDisabled()) return;
+					return { hasMoved: false, last: this.#along(event) };
+				},
+				lift: (press, event) => {
+					if (!press.hasMoved && !this.isDisabled()) this.#pressBat(event);
+					this.#isClickSwallowed = true;
+				},
+				move: (press, event) => {
+					if (this.isDisabled()) return;
 
-				const delta = this.#along(event) - press.last;
-				if (Math.abs(delta) < this.#bat.getBoundingClientRect().width / 4) return;
+					const delta = this.#along(event) - press.last;
+					if (Math.abs(delta) < this.#bat.getBoundingClientRect().width / 4) return;
 
-				press.hasMoved = true;
-				press.last = this.#along(event);
-				this.#throwBy(Math.sign(delta), event.pointerId);
+					press.hasMoved = true;
+					press.last = this.#along(event);
+					this.#throwBy(Math.sign(delta), event.pointerId);
+				},
 			},
-			{ signal },
+			signal,
 		);
-		group.addEventListener(
-			'pointerup',
-			(event) => {
-				const press = this.#batPress;
-				if (press?.pointerId !== event.pointerId) return;
-
-				this.#batPress = undefined;
-				if (!press.hasMoved && !this.isDisabled()) this.#pressBat(event);
-				this.#isClickSwallowed = true;
-			},
-			{ signal },
-		);
-		group.addEventListener('pointercancel', drop, { signal });
-		group.addEventListener('lostpointercapture', drop, { signal });
 	}
 
 	#checkedIndex(options: Array<HTMLButtonElement>): number {
 		return options.findIndex((option) => optionValue(option) === this.value);
-	}
-
-	#grabBat(event: PointerEvent): boolean {
-		if (!isUnder(this.#bat, event.clientX, event.clientY)) return false;
-
-		this.group.setPointerCapture(event.pointerId);
-		this.#batPress = { hasMoved: false, last: this.#along(event), pointerId: event.pointerId };
-
-		return true;
 	}
 
 	#hasSprungFrom(option: HTMLButtonElement | undefined): boolean {
@@ -336,6 +318,10 @@ export class SonicSwitch extends SonicRadioGroupElement {
 			options.length > 1 &&
 			option.querySelector('[data-sonic-value]')?.hasAttribute('data-sonic-momentary') === true
 		);
+	}
+
+	#isOnBat(event: PointerEvent): boolean {
+		return isUnder(this.#bat, event.clientX, event.clientY);
 	}
 
 	#pressBat(event: PointerEvent): void {

@@ -1,4 +1,5 @@
 import type { DragState } from '#lib/drag-step.ts';
+import type { PointerDrag } from '#lib/pointer-drag.ts';
 import type { TimeRegions } from '#lib/time-regions.ts';
 import type { ValueMapping } from '#lib/value-mapping.ts';
 
@@ -12,6 +13,7 @@ import { focusByPointer } from '#lib/focus-by-pointer.ts';
 import { clamp } from '#lib/math.ts';
 import { isMenuPress, isResetPress } from '#lib/modifier-press.ts';
 import { parseNumberList } from '#lib/number-list.ts';
+import { bindDrag } from '#lib/pointer-drag.ts';
 import { readPxProperty } from '#lib/read-px-property.ts';
 import { placeChildren, requireChild } from '#lib/render.ts';
 import { readRegions } from '#lib/time-regions.ts';
@@ -30,7 +32,6 @@ interface ValueDrag extends ValueAxis {
 	fromValue: number;
 	isOutside: boolean;
 	isRevealed: boolean;
-	pointerId: number;
 	revealTimer: ReturnType<typeof setTimeout> | undefined;
 	state: DragState;
 }
@@ -309,8 +310,6 @@ export abstract class SonicValueElement extends SonicFormElement {
 		this.#renderHold();
 	});
 
-	#drag: undefined | ValueDrag;
-
 	#entry: undefined | ValueEntry;
 
 	#escapeWatch: AbortController | undefined;
@@ -335,6 +334,8 @@ export abstract class SonicValueElement extends SonicFormElement {
 
 	#parseValue: ((text: string) => number) | undefined;
 
+	#pointerDrag: PointerDrag<ValueDrag> | undefined;
+
 	#positions: Array<number> | undefined;
 
 	#readout: undefined | { anchor: HTMLElement; bubble: Readout };
@@ -355,11 +356,7 @@ export abstract class SonicValueElement extends SonicFormElement {
 
 			this.#isDirty = false;
 		}
-		if (name === 'disabled' && this.isDisabled()) {
-			this.#entry?.close(false);
-			this.#endDrag();
-			this.#endKeyScrub();
-		}
+		if (name === 'disabled' && this.isDisabled()) this.#endHolds();
 
 		this.#value = this.mapping().snap(
 			this.#isDirty ? this.#value : this.numberAttribute('value', this.min),
@@ -400,91 +397,72 @@ export abstract class SonicValueElement extends SonicFormElement {
 	): void {
 		const entry = this.#bindEntry(control, signal);
 
-		control.addEventListener(
-			'pointerdown',
-			(event) => {
-				if (!this.#canPress(event, entry)) return;
+		this.#pointerDrag = bindDrag<ValueDrag>(
+			control,
+			{
+				cancel: (drag) => {
+					if (drag.isKeptOnCancel !== true) this.input(drag.fromValue);
+				},
+				grab: (event) => {
+					if (isMenuPress(event) || this.isDisabled() || entry.isOpen) return;
 
-				this.#endDrag();
-				this.toggleState('springing', false);
-				// A click listener above makes WebKit send a tap's compatibility mousedown, which blurs the entry a double tap just opened
-				if (event.pointerType === 'touch') event.preventDefault();
-				focusByPointer(control);
-				if (isResetPress(event)) {
-					this.#reset();
-					return;
-				}
+					this.toggleState('springing', false);
+					// A click listener above makes WebKit send a tap's compatibility mousedown, which blurs the entry a double tap just opened
+					if (event.pointerType === 'touch') event.preventDefault();
+					focusByPointer(control);
+					if (isResetPress(event)) {
+						this.#reset();
+						return;
+					}
 
-				const fromValue = this.#value;
-				const axis = grab(event);
-				if (!axis) return;
+					const fromValue = this.#value;
+					const axis = grab(event);
+					if (!axis) return;
 
-				const drag: ValueDrag = {
-					...axis,
-					fromValue,
-					isOutside: false,
-					isRevealed: false,
-					pointerId: event.pointerId,
-					revealTimer: undefined,
-					state: this.#startDrag(control, axis, event),
-				};
+					const drag: ValueDrag = {
+						...axis,
+						fromValue,
+						isOutside: false,
+						isRevealed: false,
+						revealTimer: undefined,
+						state: this.#startDrag(control, axis, event),
+					};
 
-				drag.revealTimer = setTimeout(() => {
-					this.#reveal(drag);
-				}, revealMs);
-				this.#drag = drag;
-				control.setPointerCapture(event.pointerId);
-				this.toggleState('dragging', true);
+					drag.revealTimer = setTimeout(() => {
+						this.#reveal(drag);
+					}, revealMs);
+
+					return drag;
+				},
+				lift: (drag, event) => {
+					const tap = drag.state.isEngaged ? undefined : this.tapTarget();
+
+					if (tap !== undefined) {
+						entry.forgetPress();
+						this.#commit(tap);
+						return;
+					}
+					if (!entry.press(event) || this.springTarget() !== undefined) return;
+
+					if (this.doublePress === 'reset') this.#reset();
+					else entry.open();
+				},
+				move: (drag, event) => {
+					this.#dragTo(drag, event);
+				},
+				release: (drag) => {
+					this.#releaseDrag(drag);
+				},
+				toggle: (isDragging) => {
+					this.toggleState('dragging', isDragging);
+				},
 			},
-			{ signal },
+			signal,
 		);
-		control.addEventListener(
-			'pointermove',
-			(event) => {
-				const drag = this.#drag;
-
-				if (event.pointerId === drag?.pointerId) this.#dragTo(drag, event);
-			},
-			{ signal },
-		);
-
-		const endDrag = (event: PointerEvent): void => {
-			if (event.pointerId === this.#drag?.pointerId) this.#endDrag();
-		};
-
 		control.addEventListener(
 			'pointercancel',
-			(event) => {
-				const drag = this.#drag;
-
-				if (event.pointerId === drag?.pointerId && drag.isKeptOnCancel !== true) {
-					this.input(drag.fromValue);
-				}
-				endDrag(event);
+			() => {
 				entry.forgetPress();
-			},
-			{ signal },
-		);
-		control.addEventListener('lostpointercapture', endDrag, { signal });
-		control.addEventListener(
-			'pointerup',
-			(event) => {
-				const drag = this.#drag;
-				if (event.pointerId !== drag?.pointerId) return;
-
-				this.#endDrag();
-
-				const tap = drag.state.isEngaged ? undefined : this.tapTarget();
-
-				if (tap !== undefined) {
-					entry.forgetPress();
-					this.#commit(tap);
-					return;
-				}
-				if (!entry.press(event) || this.springTarget() !== undefined) return;
-
-				if (this.doublePress === 'reset') this.#reset();
-				else entry.open();
 			},
 			{ signal },
 		);
@@ -492,7 +470,6 @@ export abstract class SonicValueElement extends SonicFormElement {
 		signal.addEventListener(
 			'abort',
 			() => {
-				this.#endDrag();
 				this.#endKeyScrub();
 				this.#concealKeyReveal();
 			},
@@ -529,7 +506,7 @@ export abstract class SonicValueElement extends SonicFormElement {
 	protected abstract override focusTarget(): HTMLElement;
 
 	protected heldFrom(): number | undefined {
-		return this.#drag?.fromValue ?? this.#keyScrub?.fromValue;
+		return this.#dragging()?.fromValue ?? this.#keyScrub?.fromValue;
 	}
 
 	protected heldWrite(_next: number): void {
@@ -723,7 +700,7 @@ export abstract class SonicValueElement extends SonicFormElement {
 				const isMeta = event.key === 'Meta';
 
 				if (isMeta || event.key === this.#keyScrub?.key) this.#endKeyScrub();
-				if (isMeta && this.#drag) return;
+				if (isMeta && this.#dragging()) return;
 				if (isMeta || this.mapping().keyTarget(event.key, this.#value) !== undefined) {
 					this.#springBack();
 				}
@@ -741,12 +718,6 @@ export abstract class SonicValueElement extends SonicFormElement {
 		);
 	}
 
-	#canPress(event: PointerEvent, entry: ValueEntry): boolean {
-		if (event.button !== 0 || isMenuPress(event) || this.isDisabled() || entry.isOpen) return false;
-
-		return !this.#drag || this.#drag.pointerId === event.pointerId;
-	}
-
 	#commit(next: number, direction: -1 | 0 | 1 = 0): void {
 		const landed = Number.isFinite(next) ? (this.#land?.(next, direction) ?? next) : next;
 
@@ -755,6 +726,10 @@ export abstract class SonicValueElement extends SonicFormElement {
 
 	#concealKeyReveal(): void {
 		if (this.#claim.conceal('keys')) this.#renderHold();
+	}
+
+	#dragging(): undefined | ValueDrag {
+		return this.#pointerDrag?.current();
 	}
 
 	#dragTo(drag: ValueDrag, event: PointerEvent): void {
@@ -778,17 +753,10 @@ export abstract class SonicValueElement extends SonicFormElement {
 		this.#renderDragReveal(drag);
 	}
 
-	#endDrag(): void {
-		const drag = this.#drag;
-		if (!drag) return;
-
-		clearTimeout(drag.revealTimer);
-		this.#drag = undefined;
-		this.toggleState('dragging', false);
-		this.#claim.conceal('drag');
-		this.#renderHold();
-		if (this.#value !== drag.fromValue) this.dispatchEvent(new Event('change', { bubbles: true }));
-		this.#springBack();
+	#endHolds(): void {
+		this.#entry?.close(false);
+		this.#pointerDrag?.end();
+		this.#endKeyScrub();
 	}
 
 	#endKeyScrub(): void {
@@ -801,7 +769,7 @@ export abstract class SonicValueElement extends SonicFormElement {
 	}
 
 	#isHeld(): boolean {
-		return this.#drag !== undefined || this.#keyScrub !== undefined;
+		return this.#dragging() !== undefined || this.#keyScrub !== undefined;
 	}
 
 	#keyTarget(key: string): number | undefined {
@@ -818,6 +786,14 @@ export abstract class SonicValueElement extends SonicFormElement {
 
 		this.#endKeyScrub();
 		this.#commit(next, next > this.#value ? 1 : -1);
+	}
+
+	#releaseDrag(drag: ValueDrag): void {
+		clearTimeout(drag.revealTimer);
+		this.#claim.conceal('drag');
+		this.#renderHold();
+		if (this.#value !== drag.fromValue) this.dispatchEvent(new Event('change', { bubbles: true }));
+		this.#springBack();
 	}
 
 	#renderAria(control: HTMLElement, orientation?: 'horizontal' | 'vertical'): void {
@@ -901,7 +877,7 @@ export abstract class SonicValueElement extends SonicFormElement {
 	}
 
 	#reveal(drag: ValueDrag): void {
-		if (drag.isRevealed || this.#drag !== drag) return;
+		if (drag.isRevealed || this.#dragging() !== drag) return;
 
 		drag.isRevealed = true;
 		this.#renderDragReveal(drag);

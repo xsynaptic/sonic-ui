@@ -1,9 +1,10 @@
 interface DragHandlers<Drag> {
-	cancel: (drag: Drag) => void;
+	cancel?: (drag: Drag) => void;
 	grab: (event: PointerEvent) => Drag | undefined;
+	lift?: (drag: Drag, event: PointerEvent) => void;
 	move: (drag: Drag, event: PointerEvent) => void;
-	release: (drag: Drag) => void;
-	toggle: (isDragging: boolean) => void;
+	release?: (drag: Drag) => void;
+	toggle?: (isDragging: boolean) => void;
 }
 
 export interface PointerDrag<Drag> {
@@ -24,8 +25,8 @@ export function bindDrag<Drag>(
 		const { drag } = held;
 
 		held = undefined;
-		handlers.toggle(false);
-		handlers.release(drag);
+		handlers.toggle?.(false);
+		handlers.release?.(drag);
 	};
 	const whileHeld = (
 		type: 'lostpointercapture' | 'pointercancel' | 'pointermove' | 'pointerup',
@@ -52,17 +53,20 @@ export function bindDrag<Drag>(
 
 			held = { drag, pointerId: event.pointerId };
 			target.setPointerCapture(event.pointerId);
-			handlers.toggle(true);
+			handlers.toggle?.(true);
 		},
 		{ signal },
 	);
 	whileHeld('pointermove', handlers.move);
 	whileHeld('pointercancel', (drag) => {
-		handlers.cancel(drag);
+		handlers.cancel?.(drag);
 		end();
 	});
 	whileHeld('lostpointercapture', end);
-	whileHeld('pointerup', end);
+	whileHeld('pointerup', (drag, event) => {
+		end();
+		handlers.lift?.(drag, event);
+	});
 	signal.addEventListener('abort', end, { once: true });
 
 	return { current: () => held?.drag, end };
