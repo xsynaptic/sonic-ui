@@ -46,7 +46,9 @@ Library changes get a changeset (`pnpm changeset`). Until 1.0, keep changesets s
 
 ## Visual checks
 
-`pnpm shot '<selector>'` crops one part on the dev server into a montage across engines, skins, schemes and states; `--pixels x` or `y` prints an edge as numbers instead. A look with a known answer is a spec.
+When a person needs to judge how something looks, show it to them live in the playground and give them the URL.
+
+To check your own work, `pnpm shot '<selector>'` crops one part on the dev server into a montage across engines, skins, schemes and states; `--pixels x` or `y` prints an edge as numbers instead. A look with a known answer is a spec.
 
 ## Tests
 
