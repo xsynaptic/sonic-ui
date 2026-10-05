@@ -1,5 +1,15 @@
 # @xsynaptic/sonic-ui
 
+## 0.10.4
+
+### Patch Changes
+
+- - Value controls: `dragging`, `revealed` and `cancelling` read the states of the same names as properties, so script need not match `:state()`.
+  - Waveform: every promise `requestPeaks` returns repaints as it settles, not only the latest; connecting no longer throws where `document.fonts` is missing.
+  - Wave strip: `--sonic-wavestrip-groove-size`, a length, overrides `--sonic-wavestrip-groove-ratio` so the empty groove keeps its thickness on a `fill` strip.
+  - Waveform: `--sonic-waveform-label-font-size`, a length, overrides `--sonic-waveform-label-font-ratio`; `--sonic-waveform-label-line-height` sets the label's line height.
+  - Wave strip: the marker band holds one part per marker in the order `markers` reads back; the README now lists what the wave controls make public.
+
 ## 0.10.3
 
 ### Patch Changes

@@ -10,7 +10,7 @@
 		"type": "git",
 		"url": "git+https://github.com/xsynaptic/sonic-ui.git"
 	},
-	"packageManager": "pnpm@12.6.0",
+	"packageManager": "pnpm@12.9.1",
 	"engines": {
 		"node": ">=24.0.0"
 	},
