@@ -1,5 +1,14 @@
 # @xsynaptic/sonic-ui
 
+## 0.10.2
+
+### Patch Changes
+
+- - Wave strip: a drag held past the cancel zone stays at its start again; 0.10.1 let it seek.
+  - Value controls: `pointerType` is set by a press's first `input`, and `hoverValue` returns under a still mouse when a key reveal lapses.
+  - Wave strip: marker dots are in the DOM in ascending `start` order, regions apart.
+  - `CHANGELOG.md` ships in the package, and `sonic-hover`, `sonic-reveal` and `sonic-marker` are typed on `addEventListener`.
+
 ## 0.10.1
 
 ### Patch Changes
