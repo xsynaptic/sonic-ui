@@ -41,7 +41,7 @@
 		"@types/react-dom": "^19.3.0",
 		"@xsynaptic/eslint-config": "^6.5.1",
 		"@xsynaptic/stylelint-config": "^1.1.4",
-		"eslint": "^10.11.0",
+		"eslint": "^10.12.0",
 		"eslint-plugin-jsx-a11y": "^6.10.2",
 		"fallow": "^3.31.0",
 		"globals": "^17.13.0",
