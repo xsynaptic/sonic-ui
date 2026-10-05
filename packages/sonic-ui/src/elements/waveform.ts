@@ -10,7 +10,7 @@ import { isKind, writeKind } from '#lib/marker-band.ts';
 import { createLabelRider } from '#lib/marker-rider.ts';
 import { clamp } from '#lib/math.ts';
 import { requireChild, template } from '#lib/render.ts';
-import { readRegions } from '#lib/time-regions.ts';
+import { dueRegions, readRegions } from '#lib/time-regions.ts';
 import { createTrackingClock } from '#lib/tracking-clock.ts';
 import { waveformBuckets } from '#lib/waveform-buckets.ts';
 
@@ -22,14 +22,17 @@ declare global {
 
 type Colour = keyof typeof colours;
 
+type PeaksRequest = (fromSeconds: number, toSeconds: number) => unknown;
+
 interface Scene extends View {
 	colours: SurfaceLook<Colour>['colours'];
 }
 
 const colours = {
+	ends: '--_sonic-waveform-ends',
 	grid: '--_sonic-waveform-grid',
-	hatch: '--_sonic-waveform-hatch',
 	marker: '--_sonic-waveform-marker',
+	placeholder: '--_sonic-waveform-placeholder',
 	wave: '--_sonic-waveform-wave',
 	waveEdge: '--_sonic-waveform-wave-edge',
 } as const;
@@ -100,7 +103,7 @@ function paintHatch(
 		context.lineTo(x + height, 0);
 	}
 	context.lineWidth = Math.max(1, Math.round(dpr));
-	context.strokeStyle = scene.colours.hatch;
+	context.strokeStyle = scene.colours.ends;
 	context.stroke();
 	context.restore();
 }
@@ -128,7 +131,7 @@ function paintPlaceholders(context: CanvasRenderingContext2D, scene: Scene): voi
 		context.lineTo(closing, waveY(closing));
 	}
 	context.lineWidth = Math.max(1, Math.round(dpr));
-	context.strokeStyle = scene.colours.hatch;
+	context.strokeStyle = scene.colours.placeholder;
 	context.stroke();
 }
 
@@ -164,8 +167,10 @@ function paintWave(context: CanvasRenderingContext2D, scene: Scene, peaks: Wavef
 export class SonicWaveform extends SonicWaveElement<Colour> {
 	static override readonly observedAttributes = [
 		...SonicWaveElement.observedAttributes,
+		'pending-delay',
 		'playing',
 		'playback-rate',
+		'reduced-motion',
 		'zoom',
 	];
 
@@ -184,8 +189,26 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 	}
 
 	set pending(regions: TimeRegions | undefined) {
+		const listedMs = this.#pendingListedMs;
+		const nowMs = performance.now();
+
 		this.#pending = regions ? readRegions(regions) : [];
+		this.#pendingListedMs = new Map(
+			this.#pending.map((region) => {
+				const key = region.join(':');
+
+				return [key, listedMs.get(key) ?? nowMs];
+			}),
+		);
 		this.surface()?.invalidate();
+	}
+
+	get pendingDelay(): number {
+		return Math.max(0, this.numberAttribute('pending-delay', 0));
+	}
+
+	set pendingDelay(value: number | undefined) {
+		this.reflect('pending-delay', value);
 	}
 
 	get playbackRate(): number {
@@ -215,12 +238,21 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 		this.render();
 	}
 
-	get requestPeaks(): ((fromSeconds: number, toSeconds: number) => void) | undefined {
+	get reducedMotion(): 'page' | 'scroll' {
+		return this.getAttribute('reduced-motion') === 'scroll' ? 'scroll' : 'page';
+	}
+
+	set reducedMotion(motion: 'page' | 'scroll' | undefined) {
+		this.reflect('reduced-motion', motion);
+	}
+
+	get requestPeaks(): PeaksRequest | undefined {
 		return this.#requestPeaks;
 	}
 
-	set requestPeaks(request: ((fromSeconds: number, toSeconds: number) => void) | undefined) {
+	set requestPeaks(request: PeaksRequest | undefined) {
 		this.#requestPeaks = request;
+		this.#asked = undefined;
 		this.surface()?.invalidate();
 	}
 
@@ -248,6 +280,10 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 
 	protected readonly sheet = 'waveform.css';
 
+	protected readonly sizeProperty = '--_sonic-waveform-size';
+
+	#asked: Promise<unknown> | undefined;
+
 	readonly #clock = createTrackingClock();
 
 	#drawn: Drawn | undefined;
@@ -264,15 +300,18 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 
 	#pending: Array<[number, number]> = [];
 
+	#pendingListedMs = new Map<string, number>();
+
 	readonly #playhead = requireChild(this.control, '.sonic-waveform-playhead', HTMLDivElement);
 
 	#readTime: (() => number | undefined) | undefined;
 
-	#requestPeaks: ((fromSeconds: number, toSeconds: number) => void) | undefined;
+	#requestPeaks: PeaksRequest | undefined;
 
 	readonly #rider = createLabelRider(this.control, {
 		className: 'sonic-waveform-label',
 		colourProperty: '--_sonic-waveform-marker',
+		fadeProperty: '--_sonic-waveform-label-fade',
 		insetProperty: '--_sonic-waveform-label-inset',
 	});
 
@@ -280,9 +319,11 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 		this.upgradeProperties(
 			'peaks',
 			'pending',
+			'pendingDelay',
 			'playing',
 			'playbackRate',
 			'readTime',
+			'reducedMotion',
 			'requestPeaks',
 			'zoom',
 		);
@@ -314,6 +355,7 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 		{ frameMs, isDirty, isRebuilt, look, size }: SurfaceFrame<Colour>,
 	): void {
 		const held = this.#held();
+		const pending = this.#duePending();
 		const timeline = frameTimeline({
 			clockSeconds: this.#clock.read(frameMs, {
 				isPlaying: this.playing,
@@ -322,9 +364,10 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 			}),
 			frameMs,
 			...(held ? { held } : {}),
-			isPaged: look.isReducedMotion,
+			isPaged: look.isReducedMotion && this.reducedMotion === 'page',
 			isPlaying: this.playing,
-			pending: this.#pending,
+			isStill: look.isReducedMotion,
+			pending,
 			range: [this.min, Math.max(this.min, this.max)],
 			size,
 			zoom: this.zoom,
@@ -334,6 +377,7 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 		this.#drawn = { seconds, startSeconds: view.startSeconds };
 		placeLine(this.#playhead, timeline.playheadAt);
 		placeLine(this.#ghost, timeline.ghostAt);
+		this.showCurrentMarker(seconds);
 		this.toggleState('pending', view.pending.length > 0);
 		this.#rider.place({
 			playheadSeconds: seconds,
@@ -344,7 +388,7 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 		if (isDirty || timeline.paintKey !== this.#paintedKey) {
 			this.#paintedKey = timeline.paintKey;
 			this.#paintScene(context, { ...view, colours: look.colours }, isRebuilt);
-			if (timeline.wanted) this.#requestPeaks?.(...timeline.wanted);
+			if (timeline.wanted) this.#ask(timeline.wanted);
 		}
 		if (timeline.isMoving) this.surface()?.requestFrame();
 	}
@@ -367,6 +411,25 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 			),
 		);
 		this.surface()?.rebuild();
+	}
+
+	#ask(wanted: [number, number]): void {
+		const asked = this.#requestPeaks?.(...wanted);
+		if (!(asked instanceof Promise)) return;
+
+		this.#asked = asked;
+		void this.#repaintAfter(asked);
+	}
+
+	#duePending(): Array<[number, number]> {
+		const due = dueRegions(this.#pending, this.#pendingListedMs, [
+			performance.now(),
+			this.pendingDelay,
+		]);
+
+		if (due.length < this.#pending.length) this.surface()?.requestFrame();
+
+		return due;
 	}
 
 	#grab(): ValueAxis {
@@ -412,7 +475,7 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 	#paintScene(context: CanvasRenderingContext2D, scene: Scene, isRebuilt: boolean): void {
 		const { dpr, height, pixelsPerSecond, startSeconds, width } = scene;
 		const x = (seconds: number): number => (seconds - startSeconds) * pixelsPerSecond;
-		const { grid } = scene.colours;
+		const { ends, grid } = scene.colours;
 		const line = Math.max(1, Math.round(dpr));
 		const [opening, closing] = [x(this.min), x(Math.max(this.min, this.max))];
 		const [from, to] = [clamp(opening, 0, width), clamp(closing, 0, width)];
@@ -425,7 +488,7 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 		paintPlaceholders(context, scene);
 		if (this.#peaks) paintWave(context, scene, this.#peaks);
 		// Scrolling lines sit at fractional x; rounding them judders
-		context.fillStyle = grid;
+		context.fillStyle = ends;
 		for (const edge of [opening, closing]) context.fillRect(edge - line / 2, 0, line, height);
 		this.#paintMarkers(context, scene, isRebuilt);
 	}
@@ -448,6 +511,14 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 		for (const probe of probes) probe.remove();
 
 		return new Map(kinds.map((kind, index) => [kind, read[index] ?? '']));
+	}
+
+	async #repaintAfter(asked: Promise<unknown>): Promise<void> {
+		await Promise.allSettled([asked]);
+		if (this.#asked !== asked) return;
+
+		this.#asked = undefined;
+		this.surface()?.invalidate();
 	}
 
 	#sourceSeconds(): number {

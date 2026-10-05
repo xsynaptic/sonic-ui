@@ -398,3 +398,118 @@ test('switching key mid-scrub changes for the first key, then scrubs from there 
 	expect(wavestrip.value).toBe(55);
 	expect(events.slice(4)).toEqual(['input', 'input', 'change']);
 });
+
+function revealTrace(wavestrip: SonicWavestrip): Array<string> {
+	const trace: Array<string> = [];
+
+	for (const type of ['input', 'sonic-reveal']) {
+		document.body.addEventListener(type, () => {
+			trace.push(`${type}:${String(wavestrip.value)}`);
+		});
+	}
+
+	return trace;
+}
+
+test('a touch held still reveals after the hold time, and reports its pointer type until release', () => {
+	vi.useFakeTimers();
+	installCanvasFakes();
+
+	const { control, wavestrip } = mountWavestrip('min="30" max="330" step="0" value="50"');
+
+	midPointerAt(control, 'pointerdown', { clientX: 150, pointerType: 'touch' });
+
+	const trace = revealTrace(wavestrip);
+
+	expect(wavestrip.pointerType).toBe('touch');
+	vi.advanceTimersByTime(249);
+	expect(trace).toEqual([]);
+	vi.advanceTimersByTime(1);
+	expect(trace).toEqual(['sonic-reveal:180']);
+
+	midPointerAt(control, 'pointerup', { clientX: 150, pointerType: 'touch' });
+	expect(trace).toEqual(['sonic-reveal:180', 'sonic-reveal:180']);
+	expect(wavestrip.pointerType).toBeUndefined();
+	vi.useRealTimers();
+});
+
+test('leaving the cancel zone reports the reveal ending after the value returns, and coming back restores it', () => {
+	installCanvasFakes();
+
+	const { control, wavestrip } = mountWavestrip(
+		'cancellable min="30" max="330" step="0" value="50"',
+	);
+
+	midPointerAt(control, 'pointerdown', { clientX: 150 });
+
+	const trace = revealTrace(wavestrip);
+
+	midPointerAt(control, 'pointermove', { clientX: 100 });
+	midPointerAt(control, 'pointermove', { clientX: 100, clientY: -60 });
+	midPointerAt(control, 'pointermove', { clientX: 100 });
+
+	expect(trace).toEqual([
+		'sonic-reveal:180',
+		'input:130',
+		'input:50',
+		'sonic-reveal:50',
+		'input:130',
+		'sonic-reveal:130',
+	]);
+});
+
+test('a pointer that cannot be captured still drags and changes on release', () => {
+	installCanvasFakes();
+
+	const { control, wavestrip } = mountWavestrip('min="30" max="330" step="0" value="50"');
+	const events = recordEvents(document.body);
+
+	vi.spyOn(control, 'setPointerCapture').mockImplementation(() => {
+		throw new DOMException('No active pointer', 'NotFoundError');
+	});
+	midPointerAt(control, 'pointerdown', { clientX: 150, pointerType: 'pen' });
+	expect(wavestrip.pointerType).toBe('pen');
+
+	midPointerAt(control, 'pointermove', { clientX: 100 });
+	midPointerAt(control, 'pointerup', { clientX: 100 });
+
+	expect(wavestrip.value).toBe(130);
+	expect(events.at(-1)).toBe('change');
+});
+
+test('spoken-step rounds aria-valuenow to its multiples and leaves the value alone', () => {
+	installCanvasFakes();
+
+	const { control, wavestrip } = mountWavestrip(
+		'max="300" step="0" spoken-step="0.5" value="61.3"',
+	);
+
+	expect(control.getAttribute('aria-valuenow')).toBe('61.5');
+	expect(wavestrip.value).toBe(61.3);
+
+	wavestrip.spokenStep = undefined;
+	expect(control.getAttribute('aria-valuenow')).toBe('61.3');
+});
+
+test('the current marker follows playback, and reports only when it changes', () => {
+	installCanvasFakes();
+
+	const { wavestrip } = mountWavestrip('max="300" step="0" value="10"');
+	const seen: Array<string | undefined> = [];
+
+	document.body.addEventListener('sonic-marker', () => {
+		seen.push(wavestrip.currentMarker?.label);
+	});
+	wavestrip.markers = [
+		{ label: 'Second', start: 120 },
+		{ label: 'First', start: 30 },
+	];
+	expect(wavestrip.currentMarker).toBeUndefined();
+
+	wavestrip.value = 30;
+	wavestrip.value = 90;
+	wavestrip.value = 200;
+	wavestrip.value = 20;
+
+	expect(seen).toEqual(['First', 'Second', undefined]);
+});

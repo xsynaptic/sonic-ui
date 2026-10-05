@@ -1,5 +1,15 @@
 # @xsynaptic/sonic-ui
 
+## 0.8.0
+
+### Minor Changes
+
+- - Waveform: tokens for the playhead, grid, ends, placeholder, ghost and labels; `reduced-motion="scroll"`, `pending-delay`, and a `requestPeaks` that may return a promise.
+  - Wave controls: `fill`, `currentMarker` with a `sonic-marker` event, a plain groove on an empty wave strip, and a strip readout that stays inside the strip.
+  - Value controls: `:state(revealed)` with a `sonic-reveal` event, `:state(cancelling)`, `pointerType`, `spoken-step`, `--sonic-touch-action` and `--sonic-readout-text`; an empty `formatValue` string hides the readout.
+  - Slider: `scrub` and `--sonic-slider-groove-hover-ratio`. Button: `expanded`, `controls`, `popup`, `legend` and `--sonic-button-busy-delay`.
+  - `WaveMarker` and `TimeRegions` are exported.
+
 ## 0.7.0
 
 ### Minor Changes

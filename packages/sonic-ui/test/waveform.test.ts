@@ -9,7 +9,7 @@ import {
 	FakeResizeObserver,
 	installCanvasFakes,
 } from './canvas-fakes.ts';
-import { mountControl, pointerAt, pressKey, recordEvents } from './helpers.ts';
+import { mountControl, nextTask, pointerAt, pressKey, recordEvents } from './helpers.ts';
 
 afterEach(() => {
 	document.body.replaceChildren();
@@ -173,4 +173,46 @@ test('Enter opens the typed entry and moves focus to it', () => {
 
 	expect(entry?.hidden).toBe(false);
 	expect(document.activeElement).toBe(entry);
+});
+
+test('a promise from requestPeaks repaints and asks again when it settles, either way', async () => {
+	const { flushFrames } = installCanvasFakes();
+	const { waveform } = mountWaveform('max="300" step="0" value="100"');
+	const settles: Array<() => void> = [];
+	let asks = 0;
+
+	waveform.requestPeaks = () => {
+		asks += 1;
+
+		return new Promise<void>((resolve, reject) => {
+			settles.push(asks === 1 ? resolve : reject);
+		});
+	};
+	flushFrames();
+	flushFrames();
+	expect(asks).toBe(1);
+
+	settles[0]?.();
+	await nextTask();
+	flushFrames();
+	expect(asks).toBe(2);
+
+	settles[1]?.();
+	await nextTask();
+	flushFrames();
+	expect(asks).toBe(3);
+});
+
+test('with reduced-motion="scroll" the playhead stays centred under reduced motion', () => {
+	const { flushFrames } = installCanvasFakes({ isReducedMotion: true });
+	const { control, waveform } = mountWaveform(
+		'max="300" reduced-motion="scroll" step="0" value="13.9"',
+	);
+
+	flushFrames();
+	expect(playheadAt(control)).toBeCloseTo(50, 6);
+
+	waveform.reducedMotion = 'page';
+	flushFrames();
+	expect(playheadAt(control)).toBeCloseTo((6.9 / 7) * 100, 6);
 });

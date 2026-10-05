@@ -160,3 +160,38 @@ test('a host tabindex of -1 leaves the tab order, and a press still focuses the 
 	await canvas.click();
 	expect(await holdsFocus()).toBe(true);
 });
+
+test('the playhead, ghost, label, readout and touch tokens each land on their own part', async ({
+	page,
+}) => {
+	await page.goto('/fixtures/');
+
+	const waveform = page.locator('#waveform-tokens');
+	const playhead = waveform.locator('.sonic-waveform-playhead');
+	const label = waveform.locator('.sonic-waveform-label').first();
+
+	await waveform.locator('canvas').scrollIntoViewIfNeeded();
+	await expect(playhead).toHaveCSS('inline-size', '1px');
+	await expect(playhead).toHaveCSS('background-color', 'rgb(255, 0, 0)');
+	await expect(waveform.locator('.sonic-waveform-ghost')).toHaveCSS(
+		'background-color',
+		'rgb(7, 8, 9)',
+	);
+	await expect(label).toHaveText('Intro');
+	await expect(label).toHaveCSS('color', 'rgb(10, 11, 12)');
+	await expect(label).toHaveCSS('background-color', 'rgb(4, 5, 6)');
+	await expect(label).toHaveCSS('font-family', 'monospace');
+	await expect(waveform.locator('.sonic-waveform-readout')).toHaveCSS('color', 'rgb(1, 2, 3)');
+	await expect(waveform.locator('.sonic-waveform')).toHaveCSS('touch-action', 'none');
+});
+
+test('a pending region waits out pending-delay before the placeholder shows', async ({ page }) => {
+	const { waveform } = await openWaveform(page);
+
+	await waveform.evaluate((element) => {
+		element.setAttribute('pending-delay', '300');
+		Object.assign(element, { pending: [[149, 152]] });
+	});
+	expect(await readState(waveform, 'pending')).toBe(false);
+	await expect.poll(() => readState(waveform, 'pending')).toBe(true);
+});

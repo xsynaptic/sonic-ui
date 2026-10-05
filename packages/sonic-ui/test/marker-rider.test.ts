@@ -5,6 +5,7 @@ import type { RiderLabel, RiderView } from '#lib/marker-rider.ts';
 import { createLabelRider, layoutRider } from '#lib/marker-rider.ts';
 
 const view: RiderView = {
+	fadeShare: 0.25,
 	insetPx: 8,
 	playheadSeconds: 20,
 	startSeconds: 0,
@@ -59,6 +60,14 @@ test('the parked label fades as the next line closes on the playhead', () => {
 	);
 });
 
+test('a fade share of 0 keeps the parked label opaque up to the next line', () => {
+	const markers = labels([5, 40], [30, 40]);
+	const opaque = { ...view, fadeShare: 0 };
+
+	expect(layoutRider(markers, { ...opaque, playheadSeconds: 29.9 }).parked?.opacity).toBe(1);
+	expect(layoutRider(markers, { ...view, fadeShare: 0.5 }).parked?.opacity).toBeCloseTo(0.5);
+});
+
 test('the far edge cuts a label, and one starting past it does not arrive', () => {
 	expect(layoutRider(labels([5, 40], [38, 40]), view).arriving?.shownPx).toBe(12);
 	expect(layoutRider(labels([5, 40], [39.5, 40]), view).arriving).toBeUndefined();
@@ -81,6 +90,7 @@ function mountRider(): {
 	const rider = createLabelRider(control, {
 		className: 'sonic-test-label',
 		colourProperty: '--_sonic-test-marker',
+		fadeProperty: '--_sonic-test-fade',
 		insetProperty: '--_sonic-test-inset',
 	});
 

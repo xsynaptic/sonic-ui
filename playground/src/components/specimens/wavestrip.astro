@@ -42,6 +42,24 @@ const strips = [
 	))}
 </SpecimenGrid>
 <SpecimenGrid isLarge={true}>
+	<Cell id="wavestrip-fill" isWide={true} label="Fills its row">
+		<div class="flex h-24 w-80">
+			<sonic-wavestrip
+				aria-labelledby="wavestrip-fill"
+				class="[--sonic-touch-action:none] [--sonic-wavestrip-length:100%]"
+				data-format="clock"
+				data-markers={markers}
+				data-peaks="9"
+				fill
+				key-step="5"
+				max="300"
+				readout
+				spoken-step="1"
+				step="0"
+				value="120"
+			></sonic-wavestrip>
+		</div>
+	</Cell>
 	<div class="col-span-full">
 		<Cell id="wavestrip-large" label="Large">
 			<sonic-wavestrip

@@ -81,6 +81,7 @@
 	/* Before the latched rule too; a button with an LED blinks the LED and keeps its legend */
 	:where([busy]) > .sonic-button:not(:disabled, [aria-disabled='true'], :has(.sonic-led)) {
 		color: color-mix(in oklab, var(--_sonic-lit) 55%, var(--_sonic-ink));
+		transition-delay: var(--sonic-button-busy-delay, 0s);
 	}
 
 	.sonic-button:active:where(:not(:disabled, [aria-disabled='true'])),
@@ -226,12 +227,17 @@
 		display: none;
 	}
 
+	.sonic-button-cap > [data-sonic-hidden] {
+		display: none;
+	}
+
 	[busy]
 		> .sonic-button:not(:disabled, [aria-disabled='true'], :has(.sonic-led))
 		> .sonic-button-cap
 		> *,
 	[busy] > .sonic-button:not(:disabled, [aria-disabled='true']) .sonic-led::after {
-		animation: sonic-button-busy 500ms ease-in-out infinite alternate;
+		animation: sonic-button-busy 500ms ease-in-out var(--sonic-button-busy-delay, 0s) infinite
+			alternate;
 
 		@media (prefers-reduced-motion: reduce) {
 			animation: none;

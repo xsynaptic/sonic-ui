@@ -4,6 +4,7 @@ import { SonicFormElement } from '#elements/form-element.ts';
 import { copyNode } from '#lib/copy-node.ts';
 import { bindHold } from '#lib/hold.ts';
 import { mirrorChildren } from '#lib/mirror-children.ts';
+import { capturePointer } from '#lib/pointer-drag.ts';
 import { placeChildren, requireChild, template } from '#lib/render.ts';
 import { writeAttribute } from '#lib/write-attribute.ts';
 
@@ -22,10 +23,20 @@ const renderButton = template(
 
 const holdKeys = new Set([' ', 'Enter']);
 
+const popupAttributes = {
+	controls: 'aria-controls',
+	expanded: 'aria-expanded',
+	popup: 'aria-haspopup',
+} as const;
+
+const pressWhens = new Set(['pressed', 'released']);
+
 export class SonicButton extends SonicFormElement {
 	static override readonly observedAttributes = [
 		...SonicFormElement.observedAttributes,
+		...Object.keys(popupAttributes),
 		'busy',
+		'legend',
 		'momentary',
 		'pressed',
 		'soft-disabled',
@@ -63,6 +74,14 @@ export class SonicButton extends SonicFormElement {
 
 	set latching(isLatching: boolean) {
 		this.reflect('latching', isLatching);
+	}
+
+	get legend(): string | undefined {
+		return this.getAttribute('legend') ?? undefined;
+	}
+
+	set legend(name: string | undefined) {
+		this.reflect('legend', name);
 	}
 
 	get momentary(): boolean {
@@ -129,6 +148,7 @@ export class SonicButton extends SonicFormElement {
 			'armed',
 			'busy',
 			'defaultPressed',
+			'legend',
 			'momentary',
 			'softDisabled',
 			'latching',
@@ -142,6 +162,7 @@ export class SonicButton extends SonicFormElement {
 				copy: copyNode,
 				place: (copies) => {
 					placeChildren(cap, copies);
+					this.#showLegend();
 				},
 			},
 			signal,
@@ -183,6 +204,8 @@ export class SonicButton extends SonicFormElement {
 		writeAttribute(button, 'aria-pressed', this.latching ? String(this.pressed) : undefined);
 		this.toggleState('pressed', this.pressed);
 		this.forwardNaming(button, true);
+		this.#forwardPopup(button);
+		this.#showLegend();
 
 		// eslint-disable-next-line unicorn/no-null -- `null` submits nothing
 		const submitted = this.latching && this.pressed ? this.value : null;
@@ -216,7 +239,7 @@ export class SonicButton extends SonicFormElement {
 			(event) => {
 				if (event.button !== 0 || !this.#isMomentary()) return;
 
-				button.setPointerCapture(event.pointerId);
+				capturePointer(button, event.pointerId);
 				holding.hold(event.pointerId);
 			},
 			{ signal },
@@ -232,6 +255,12 @@ export class SonicButton extends SonicFormElement {
 		);
 	}
 
+	#forwardPopup(button: HTMLButtonElement): void {
+		for (const [name, aria] of Object.entries(popupAttributes)) {
+			writeAttribute(button, aria, this.getAttribute(name) ?? undefined);
+		}
+	}
+
 	#isMomentary(): boolean {
 		return this.momentary && !this.latching;
 	}
@@ -243,5 +272,17 @@ export class SonicButton extends SonicFormElement {
 	#press(isPressed: boolean): void {
 		this.pressed = isPressed;
 		this.dispatchEvent(new Event('change', { bubbles: true }));
+	}
+
+	#showLegend(): void {
+		const legend = this.legend;
+
+		for (const part of this.#button.querySelectorAll<HTMLElement | SVGElement>(
+			':scope > .sonic-button-cap > [data-sonic-when]',
+		)) {
+			const when = part.dataset.sonicWhen ?? '';
+
+			part.toggleAttribute('data-sonic-hidden', !pressWhens.has(when) && when !== legend);
+		}
 	}
 }

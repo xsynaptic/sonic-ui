@@ -12,6 +12,14 @@ export interface PointerDrag<Drag> {
 	end: () => void;
 }
 
+export function capturePointer(target: HTMLElement, pointerId: number): void {
+	try {
+		target.setPointerCapture(pointerId);
+	} catch {
+		// A synthetic pointer has no id to capture; the gesture carries on uncaptured
+	}
+}
+
 export function bindDrag<Drag>(
 	target: HTMLElement,
 	handlers: DragHandlers<Drag>,
@@ -52,8 +60,8 @@ export function bindDrag<Drag>(
 			if (drag === undefined) return;
 
 			held = { drag, pointerId: event.pointerId };
-			target.setPointerCapture(event.pointerId);
 			handlers.toggle?.(true);
+			capturePointer(target, event.pointerId);
 		},
 		{ signal },
 	);

@@ -11,6 +11,7 @@ interface RiderWindow {
 }
 
 export interface RiderView extends RiderWindow {
+	fadeShare: number;
 	insetPx: number;
 }
 
@@ -42,8 +43,6 @@ interface LabelSlot {
 	x: number;
 }
 
-const fadeShare = 0.25;
-
 function lineX(seconds: number, view: RiderView): number {
 	return ((seconds - view.startSeconds) / view.windowSeconds) * view.widthPx;
 }
@@ -62,7 +61,7 @@ function parkedPlacement(
 
 	return {
 		index,
-		opacity: clamp(approachPx / (view.widthPx * fadeShare), 0, 1),
+		opacity: view.fadeShare > 0 ? clamp(approachPx / (view.widthPx * view.fadeShare), 0, 1) : 1,
 		shownPx: Math.min(parked.widthPx, arrivingX - x, view.widthPx - x),
 		x,
 	};
@@ -168,15 +167,17 @@ export function createLabelRider(
 	options: {
 		className: string;
 		colourProperty: `--_sonic-${string}`;
+		fadeProperty: `--_sonic-${string}`;
 		insetProperty: `--_sonic-${string}`;
 	},
 ): {
 	measure: (labels: ReadonlyArray<Omit<RiderLabel, 'widthPx'>>) => void;
 	place: (window: RiderWindow) => void;
 } {
-	const { className, colourProperty, insetProperty } = options;
+	const { className, colourProperty, fadeProperty, insetProperty } = options;
 	const parked = labelSlot(requireChild(control, `.${className}`, HTMLElement));
 	const arriving = labelSlot(requireChild(control, `.${className} + .${className}`, HTMLElement));
+	let fadeShare = 0.25;
 	let insetPx = 0;
 	let measured: Array<RiderLabel> = [];
 
@@ -188,13 +189,16 @@ export function createLabelRider(
 				labels.map(({ text }) => text),
 			);
 
-			insetPx = readPxProperty(getComputedStyle(control), insetProperty, 0);
+			const styles = getComputedStyle(control);
+
+			fadeShare = readPxProperty(styles, fadeProperty, 0.25);
+			insetPx = readPxProperty(styles, insetProperty, 0);
 			measured = labels
 				.map((label, index) => ({ ...label, widthPx: widths[index] ?? 0 }))
 				.toSorted((first, second) => first.start - second.start);
 		},
 		place: (window) => {
-			const layout = layoutRider(measured, { ...window, insetPx });
+			const layout = layoutRider(measured, { ...window, fadeShare, insetPx });
 
 			writeLabel(parked, [measured, colourProperty], layout.parked);
 			writeLabel(arriving, [measured, colourProperty], layout.arriving);

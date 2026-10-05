@@ -199,6 +199,47 @@ import '#styles/playground.css';
 				value="150"
 			></sonic-waveform>
 		</div>
+		<div class="flex h-24 w-72" id="wavestrip-fill-box">
+			<sonic-wavestrip
+				aria-label="Filled"
+				class="[--sonic-wavestrip-length:100%]"
+				fill
+				id="wavestrip-fill"
+				max="300"
+				value="150"
+			></sonic-wavestrip>
+		</div>
+		<div class="w-72" id="waveform-tokens-box">
+			<sonic-waveform
+				aria-label="Tokens"
+				class="[--sonic-readout-text:rgb(1_2_3)] [--sonic-touch-action:none] [--sonic-waveform-ghost:rgb(7_8_9)] [--sonic-waveform-label-font:monospace] [--sonic-waveform-label-scrim:rgb(4_5_6)] [--sonic-waveform-label:rgb(10_11_12)] [--sonic-waveform-length:100%] [--sonic-waveform-playhead-width:1px] [--sonic-waveform-playhead:rgb(255_0_0)]"
+				data-markers="100=Intro"
+				id="waveform-tokens"
+				max="300"
+				readout
+				step="0"
+				value="150"
+			></sonic-waveform>
+		</div>
+		<sonic-slider
+			aria-label="Seek"
+			class="[--sonic-slider-cap-ratio:0] [--sonic-slider-groove-hover-ratio:0.5] [--sonic-slider-groove-ratio:0.25] [--sonic-slider-length:18rem]"
+			id="seek"
+			key-step="5"
+			max="300"
+			readout
+			scrub
+			step="0"
+			value="60"
+		></sonic-slider>
+		<sonic-button
+			aria-label="Delayed"
+			busy
+			class="[--sonic-button-busy-delay:400ms]"
+			id="loading-delayed"
+		>
+			<Play aria-hidden="true" />
+		</sonic-button>
 		<div class="w-72" id="spectrum-box">
 			<sonic-spectrum
 				class="[--sonic-spectrum-length:100%]"

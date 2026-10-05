@@ -28,6 +28,12 @@
 	initial-value: 0.5;
 }
 
+@property --_sonic-wavestrip-groove-ratio {
+	syntax: '<number>';
+	inherits: true;
+	initial-value: 0.15;
+}
+
 @property --_sonic-wavestrip-wave {
 	syntax: '<color>';
 	inherits: true;
@@ -93,6 +99,7 @@
 		--_sonic-wavestrip-bar-pitch: var(--sonic-wavestrip-bar-pitch, 3px);
 		--_sonic-wavestrip-bar-gap-ratio: var(--sonic-wavestrip-bar-gap-ratio, 0.33);
 		--_sonic-wavestrip-bar-radius-ratio: var(--sonic-wavestrip-bar-radius-ratio, 0.5);
+		--_sonic-wavestrip-groove-ratio: var(--sonic-wavestrip-groove-ratio, 0.15);
 		--_sonic-wavestrip-marker-ratio: var(--sonic-wavestrip-marker-ratio, 0.065);
 		--_sonic-wavestrip-inset: calc(
 			var(--_sonic-wavestrip-size) * var(--sonic-wavestrip-inset-ratio, 0.1)
@@ -118,7 +125,7 @@
 		block-size: var(--_sonic-wavestrip-size);
 		padding: var(--_sonic-wavestrip-inset);
 		container-type: size;
-		touch-action: pan-y;
+		touch-action: var(--sonic-touch-action, pan-y);
 		cursor: ew-resize;
 
 		--_sonic-glass-radius: calc(
@@ -127,6 +134,11 @@
 
 		border-radius: var(--_sonic-glass-radius);
 		box-shadow: var(--_sonic-focus-shadow);
+	}
+
+	[fill] > .sonic-wavestrip,
+	sonic-wavestrip[fill]:not(:defined, [hidden]) {
+		block-size: 100%;
 	}
 
 	[dimmed] > .sonic-wavestrip {
@@ -191,10 +203,16 @@
 			var(--_sonic-wavestrip-inset) + var(--_sonic-wavestrip-readout-at, 0) * 100cqi
 		);
 
-		inset-inline: var(--_sonic-wavestrip-readout-inset)
-			calc(100cqi + 2 * var(--_sonic-wavestrip-inset) - var(--_sonic-wavestrip-readout-inset));
-		justify-self: center;
+		inset-inline: 0;
+		justify-self: start;
 		position-area: block-start center;
+		transform: translateX(
+			clamp(
+				0px,
+				var(--_sonic-wavestrip-readout-inset) - 50%,
+				100cqi + 2 * var(--_sonic-wavestrip-inset) - 100%
+			)
+		);
 	}
 
 	/* Opaque, since a system highlight carries alpha that would blend the bars into the glass */

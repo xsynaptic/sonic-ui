@@ -105,15 +105,113 @@ test('an ink of currentcolor paints the bars from the text colour on the glass',
 	);
 });
 
-test('empty peaks draw only the glass, and set the empty state', async ({ page }) => {
+test('empty peaks draw a plain groove, set the empty state, and a ratio of 0 leaves only the glass', async ({
+	page,
+}) => {
 	const { canvas, wavestrip } = await openWavestrip(page);
+	const { device } = await readWidth(canvas);
+	const middle = Math.floor(device / 2);
 
 	await wavestrip.evaluate((element) => {
 		Object.assign(element, { peaks: [] });
 	});
 
-	await expect.poll(() => alphaAt(canvas, 1)).toBe(0);
+	const alphaNearTop = async (): Promise<number | undefined> => {
+		const [pixel] = await canvasPixels(canvas, [middle], 0.1);
+
+		return pixel?.[3];
+	};
+
+	await expect.poll(alphaNearTop).toBe(0);
+	expect(await alphaAt(canvas, middle)).toBe(255);
 	expect(await readState(wavestrip, 'empty')).toBe(true);
+
+	await wavestrip.evaluate((element) => {
+		element.style.setProperty('--sonic-wavestrip-groove-ratio', '0');
+		element.toggleAttribute('dimmed', true);
+	});
+	await expect.poll(() => alphaAt(canvas, middle)).toBe(0);
+});
+
+test('the readout stays inside the strip at both ends, and an empty string hides it', async ({
+	isMobile,
+	page,
+}) => {
+	test.skip(isMobile, 'Touch shows the readout only once a drag reveals it');
+
+	const { wavestrip } = await openWavestrip(page);
+	const strip = await wavestrip.locator('.sonic-wavestrip').boundingBox();
+	if (!strip) throw new Error('The wavestrip has no box');
+
+	const readout = wavestrip.locator('.sonic-wavestrip-readout');
+	const middle = strip.y + strip.height / 2;
+
+	await wavestrip.evaluate((element) => {
+		Object.assign(element, { formatValue: () => '1:15 A title of some length' });
+	});
+	await page.mouse.move(strip.x + 14, middle);
+	await expect(readout).toBeVisible();
+
+	const atStart = await readout.boundingBox();
+
+	expect(atStart?.x).toBeCloseTo(strip.x, 0);
+
+	await page.mouse.move(strip.x + strip.width - 14, middle);
+
+	const atEnd = await readout.boundingBox();
+
+	expect((atEnd?.x ?? 0) + (atEnd?.width ?? 0)).toBeCloseTo(strip.x + strip.width, 0);
+
+	await wavestrip.evaluate((element) => {
+		Object.assign(element, { formatValue: () => '' });
+	});
+	await page.mouse.move(strip.x + strip.width / 2, middle);
+	await expect(readout).toBeHidden();
+});
+
+test('a cancellable drag past its zone matches cancelling, and revealed only while inside', async ({
+	isMobile,
+	page,
+}) => {
+	test.skip(isMobile, 'The mouse drives this gesture');
+
+	const { wavestrip } = await openWavestrip(page);
+	const strip = await wavestrip.locator('.sonic-wavestrip').boundingBox();
+	if (!strip) throw new Error('The wavestrip has no box');
+
+	const states = async (): Promise<Array<boolean>> => [
+		await readState(wavestrip, 'revealed'),
+		await readState(wavestrip, 'cancelling'),
+	];
+	const x = strip.x + strip.width / 4;
+	const y = strip.y + strip.height / 2;
+
+	await page.mouse.move(x, y);
+	await page.mouse.down();
+	await page.mouse.move(x + 20, y, { steps: 2 });
+	expect(await states()).toEqual([true, false]);
+
+	await page.mouse.move(x + 20, y - strip.height - 80, { steps: 2 });
+	expect(await states()).toEqual([false, true]);
+
+	await page.mouse.up();
+	expect(await states()).toEqual([false, false]);
+});
+
+test('with fill, the strip takes its row and its ratios follow the height', async ({ page }) => {
+	await page.goto('/fixtures/');
+
+	const strip = page.locator('#wavestrip-fill .sonic-wavestrip');
+
+	await strip.scrollIntoViewIfNeeded();
+	await expect(strip).toHaveCSS('block-size', '96px');
+	await expect(strip).toHaveCSS('padding-top', '9.6px');
+
+	await page.locator('#wavestrip-fill-box').evaluate((box) => {
+		box.style.setProperty('height', '48px');
+	});
+	await expect(strip).toHaveCSS('block-size', '48px');
+	await expect(strip).toHaveCSS('padding-top', '4.8px');
 });
 
 test('the hover readout opens over the pointer, and Escape dismisses it', async ({

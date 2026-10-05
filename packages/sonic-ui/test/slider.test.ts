@@ -382,3 +382,44 @@ test.each([
 		expect(events).toEqual([]);
 	},
 );
+
+test('with scrub, a repeating key holds writes as the played edge and changes once on keyup', () => {
+	const { control, slider } = mountSlider('scrub min="10" max="310" key-step="5" value="60"');
+	const events = recordEvents(document.body);
+	const style = (name: string): string => control.style.getPropertyValue(`--_sonic-slider-${name}`);
+	const key = (type: string): void => {
+		control.dispatchEvent(
+			new KeyboardEvent(type, { bubbles: true, key: 'ArrowRight', repeat: true }),
+		);
+	};
+
+	key('keydown');
+	key('keydown');
+	slider.value = 160;
+
+	expect(slider.value).toBe(70);
+	expect(style('played')).toBe('0.5');
+	expect(style('scrub-region')).toContain('var(--_sonic-slider-scrub)');
+	expect(events).toEqual(['input', 'input']);
+
+	key('keyup');
+	expect(events).toEqual(['input', 'input', 'change']);
+	expect([style('played'), style('scrub-region')]).toEqual(['', '']);
+	expect(slider.value).toBe(70);
+});
+
+test('with scrub, a mouse over the groove previews the value under it and a touch does not', () => {
+	const { control, slider } = mountSlider('scrub readout min="10" max="310" step="0" value="60"');
+	const readoutAt = (): string => control.style.getPropertyValue('--_sonic-slider-readout-value');
+
+	layOut(control, new DOMRect(0, 0, 320, 32), new DOMRect(0, 0, 20, 32));
+	pointerAt(control, 'pointermove', { buttons: 0, clientX: 85, pointerType: 'touch' });
+	expect(readoutAt()).toBe('0.16666666666666666');
+
+	pointerAt(control, 'pointermove', { buttons: 0, clientX: 85, pointerType: 'mouse' });
+	expect(readoutAt()).toBe('0.25');
+	expect(slider.value).toBe(60);
+
+	pointerAt(control, 'pointerleave');
+	expect(readoutAt()).toBe('0.16666666666666666');
+});

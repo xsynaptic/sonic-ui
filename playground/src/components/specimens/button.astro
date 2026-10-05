@@ -1,6 +1,10 @@
 ---
+import ListMusic from '@lucide/astro/icons/list-music';
 import Play from '@lucide/astro/icons/play';
 import SkipForward from '@lucide/astro/icons/skip-forward';
+import Volume from '@lucide/astro/icons/volume';
+import Volume1 from '@lucide/astro/icons/volume-1';
+import Volume2 from '@lucide/astro/icons/volume-2';
 
 import Cell from '#components/specimens/cell.astro';
 import MuteButton from '#components/specimens/mute-button.astro';
@@ -60,6 +64,32 @@ const hotCues = ['oklch(76.9% 0.165 70deg)', '#22c55e', '#38bdf8', '#e879f9'];
 	</Cell>
 	<Cell id="button-disabled" label="Disabled">
 		<sonic-button aria-labelledby="button-disabled" disabled>
+			<Play aria-hidden="true" />
+		</sonic-button>
+	</Cell>
+	<Cell id="button-legend" label="Level, by legend">
+		<sonic-button aria-labelledby="button-legend" data-legends="low medium full" legend="low">
+			<Volume aria-hidden="true" data-sonic-when="low" />
+			<Volume1 aria-hidden="true" data-sonic-when="medium" />
+			<Volume2 aria-hidden="true" data-sonic-when="full" />
+		</sonic-button>
+	</Cell>
+	<Cell id="button-popup" label="Opens a popup">
+		<sonic-button
+			aria-labelledby="button-popup"
+			controls="button-popup"
+			expanded="false"
+			popup="dialog"
+		>
+			<ListMusic aria-hidden="true" />
+		</sonic-button>
+	</Cell>
+	<Cell id="button-busy-delay" label="Loading, after 400ms">
+		<sonic-button
+			aria-labelledby="button-busy-delay"
+			busy
+			class="[--sonic-button-busy-delay:400ms]"
+		>
 			<Play aria-hidden="true" />
 		</sonic-button>
 	</Cell>

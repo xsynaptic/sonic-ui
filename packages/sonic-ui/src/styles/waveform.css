@@ -34,10 +34,22 @@
 	initial-value: rgb(96 96 104);
 }
 
-@property --_sonic-waveform-hatch {
+@property --_sonic-waveform-ends {
 	syntax: '<color>';
 	inherits: true;
 	initial-value: rgb(96 96 104);
+}
+
+@property --_sonic-waveform-placeholder {
+	syntax: '<color>';
+	inherits: true;
+	initial-value: rgb(96 96 104);
+}
+
+@property --_sonic-waveform-label-fade {
+	syntax: '<number>';
+	inherits: true;
+	initial-value: 0.25;
 }
 
 @property --_sonic-waveform-marker {
@@ -69,18 +81,21 @@
 			var(--_sonic-waveform-size) * var(--sonic-waveform-inset-ratio, 0.06)
 		);
 		--_sonic-unit: calc(var(--_sonic-waveform-size) / 48);
-		--_sonic-waveform-line: max(1px, var(--_sonic-unit));
+		--_sonic-waveform-line: var(--sonic-waveform-playhead-width, max(1px, var(--_sonic-unit)));
 		--_sonic-waveform-lit: var(--_sonic-lit);
 		--_sonic-waveform-wave: var(--_sonic-waveform-lit);
 		--_sonic-waveform-wave-edge: var(
 			--sonic-waveform-edge,
-			color-mix(in oklab, var(--_sonic-waveform-lit) 45%, #000)
+			color-mix(in oklab, var(--_sonic-waveform-lit) calc(100% - 55% * var(--_sonic-relief)), #000)
 		);
-		--_sonic-waveform-grid: var(--_sonic-etch);
-		--_sonic-waveform-hatch: var(--_sonic-etch);
+		--_sonic-waveform-grid: var(--sonic-waveform-grid, var(--_sonic-etch));
+		--_sonic-waveform-ends: var(--sonic-waveform-ends, var(--_sonic-etch));
+		--_sonic-waveform-placeholder: var(--sonic-waveform-placeholder, var(--_sonic-etch));
 		--_sonic-waveform-marker: var(--sonic-marker, var(--_sonic-ink));
+		--_sonic-waveform-label: var(--sonic-waveform-label, var(--_sonic-waveform-marker));
+		--_sonic-waveform-label-fade: var(--sonic-waveform-label-fade-ratio, 0.25);
 		--_sonic-waveform-label-inset: calc(
-			var(--_sonic-waveform-size) * var(--sonic-waveform-label-inset-ratio, 0.08)
+			var(--_sonic-waveform-size) * var(--sonic-waveform-label-inset-ratio, 0.04)
 		);
 
 		inline-size: var(--_sonic-waveform-length);
@@ -90,7 +105,7 @@
 
 		/* A label riding in from the far side would otherwise widen the page */
 		overflow: hidden;
-		touch-action: pan-y;
+		touch-action: var(--sonic-touch-action, pan-y);
 		cursor: grab;
 
 		--_sonic-glass-radius: calc(
@@ -99,6 +114,11 @@
 
 		border-radius: var(--_sonic-glass-radius);
 		box-shadow: var(--_sonic-focus-shadow);
+	}
+
+	[fill] > .sonic-waveform,
+	sonic-waveform[fill]:not(:defined, [hidden]) {
+		block-size: 100%;
 	}
 
 	:state(dragging) > .sonic-waveform {
@@ -131,31 +151,32 @@
 	}
 
 	.sonic-waveform-playhead {
-		background: var(--_sonic-ink);
+		background: var(--sonic-waveform-playhead, var(--_sonic-ink));
 	}
 
 	.sonic-waveform-ghost {
-		background: var(--_sonic-etch);
+		background: var(--sonic-waveform-ghost, var(--_sonic-etch));
 	}
 
 	.sonic-waveform-label {
 		position: absolute;
 		inset-block-end: calc(var(--_sonic-waveform-inset) + var(--_sonic-waveform-label-inset));
 		inset-inline-start: var(--_sonic-waveform-inset);
+		padding: 0.2em 0.35em;
+		margin: -0.2em -0.35em;
+		font-family: var(--sonic-waveform-label-font, inherit);
 		font-size: calc(var(--_sonic-waveform-size) * var(--sonic-waveform-label-font-ratio, 0.13));
 		line-height: 1;
-		color: var(--_sonic-marker, var(--_sonic-waveform-marker));
+		color: var(--_sonic-marker, var(--_sonic-waveform-label));
 		white-space: nowrap;
 		text-shadow: var(--sonic-waveform-label-shadow, none);
 		pointer-events: none;
+		background: var(--sonic-waveform-label-scrim, none);
+		border-radius: 0.2em;
 	}
 
 	.sonic-waveform-label[data-sonic-dimmed] {
-		color: color-mix(
-			in oklab,
-			var(--_sonic-marker, var(--_sonic-waveform-marker)) 50%,
-			transparent
-		);
+		color: color-mix(in oklab, var(--_sonic-marker, var(--_sonic-waveform-label)) 50%, transparent);
 	}
 
 	/* Opaque, since a system highlight carries alpha that would blend the wave into the glass */
@@ -164,7 +185,8 @@
 			--_sonic-waveform-wave: rgb(from CanvasText r g b / 100%);
 			--_sonic-waveform-wave-edge: rgb(from CanvasText r g b / 100%);
 			--_sonic-waveform-grid: rgb(from GrayText r g b / 100%);
-			--_sonic-waveform-hatch: rgb(from GrayText r g b / 100%);
+			--_sonic-waveform-ends: rgb(from GrayText r g b / 100%);
+			--_sonic-waveform-placeholder: rgb(from GrayText r g b / 100%);
 			--_sonic-waveform-marker: rgb(from CanvasText r g b / 100%);
 		}
 

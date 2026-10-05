@@ -463,3 +463,37 @@ test('a change inside one child leaves the copies of its siblings in place', asy
 	expect(cap?.firstChild).toBe(icon);
 	expect(cap?.querySelector('span')?.className).toBe('is-live');
 });
+
+test('controls, expanded and popup on the host reach the native button as ARIA and follow it', () => {
+	const { button, host } = mountButton('controls="queue" expanded="false" popup="dialog"');
+
+	expect(button.getAttribute('aria-controls')).toBe('queue');
+	expect(button.getAttribute('aria-haspopup')).toBe('dialog');
+
+	host.setAttribute('expanded', 'true');
+	expect(button.getAttribute('aria-expanded')).toBe('true');
+
+	host.removeAttribute('expanded');
+	expect(button.hasAttribute('aria-expanded')).toBe(false);
+});
+
+test('legend shows the child named for it, and leaves pressed and released children to the press', async () => {
+	const { control, host } = mountControl(
+		'sonic-button',
+		'legend="low"',
+		'<svg data-sonic-when="low"></svg><svg data-sonic-when="full"></svg><svg data-sonic-when="pressed"></svg>',
+	);
+	const hidden = (): Array<string | undefined> =>
+		[...control.querySelectorAll<SVGElement>('[data-sonic-hidden]')].map(
+			(part) => part.dataset.sonicWhen,
+		);
+
+	await nextTask();
+	expect(hidden()).toEqual(['full']);
+
+	host.legend = 'full';
+	expect(hidden()).toEqual(['low']);
+
+	host.legend = undefined;
+	expect(hidden()).toEqual(['low', 'full']);
+});

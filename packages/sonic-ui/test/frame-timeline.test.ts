@@ -7,6 +7,7 @@ const base = {
 	frameMs: 0,
 	isPaged: false,
 	isPlaying: false,
+	isStill: false,
 	pending: [],
 	range: [3, 300] as [number, number],
 	size: { dpr: 1, height: 96, width: 490 },
@@ -68,8 +69,8 @@ test('pending regions clip to the window and the range', () => {
 
 test('the placeholder travels only while a pending region shows and motion is allowed', () => {
 	const pending: Array<[number, number]> = [[99, 101]];
-	const key = (frameMs: number, isPaged: boolean): string =>
-		frameTimeline({ ...base, frameMs, isPaged, pending }).paintKey;
+	const key = (frameMs: number, isStill: boolean): string =>
+		frameTimeline({ ...base, frameMs, isStill, pending }).paintKey;
 
 	expect(frameTimeline({ ...base, frameMs: 1250, pending }).view.phase).toBe(0.5);
 	expect(frameTimeline({ ...base, frameMs: 1250, pending }).isMoving).toBe(true);

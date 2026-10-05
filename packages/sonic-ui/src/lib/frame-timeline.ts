@@ -23,6 +23,7 @@ interface TimelineInput {
 	held?: { grabbed: Drawn; seconds: number };
 	isPaged: boolean;
 	isPlaying: boolean;
+	isStill: boolean;
 	pending: ReadonlyArray<[number, number]>;
 	range: [number, number];
 	size: SurfaceSize;
@@ -74,10 +75,10 @@ function pendingIn(
 }
 
 function placeholderPhase(
-	{ frameMs, isPaged }: TimelineInput,
+	{ frameMs, isStill }: TimelineInput,
 	pending: ReadonlyArray<unknown>,
 ): number | undefined {
-	return !isPaged && pending.length > 0 ? frameMs / placeholderPeriodMs : undefined;
+	return !isStill && pending.length > 0 ? frameMs / placeholderPeriodMs : undefined;
 }
 
 export function frameTimeline(input: TimelineInput): Timeline {

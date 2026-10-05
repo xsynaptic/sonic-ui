@@ -12,8 +12,14 @@ import '#styles/playground.css';
 	skin="amber"
 	title="sonic-ui fixtures, docked bar"
 >
-	<main class="min-h-[300vh] p-16">
+	<main class="p-16">
 		<h1>Docked bar</h1>
+		<div class="h-[300vh]"></div>
+		<div class="sticky bottom-40">
+			<div class="relative flex items-start bg-surface/70 p-2 backdrop-blur-sm">
+				<sonic-dial aria-label="Level" id="sticky" readout value="50"></sonic-dial>
+			</div>
+		</div>
 	</main>
 	<footer class="fixed inset-x-0 bottom-0 flex items-start bg-surface/70 px-16 pt-2 pb-20 backdrop-blur-sm">
 		<sonic-dial aria-label="Volume" id="docked" readout value="50"></sonic-dial>

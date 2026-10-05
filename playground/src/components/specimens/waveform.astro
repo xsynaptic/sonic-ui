@@ -10,14 +10,26 @@ const waveforms = [
 	{ id: 'waveform-paused', label: 'Paused', seed: 8 },
 	{ id: 'waveform-pending', label: 'Pending', pending: '151 162', seed: 9 },
 	{ className: '[--sonic-glass-depth:0]', id: 'waveform-flat', label: 'Flat', seed: 10 },
-	{
-		className: '[--sonic-waveform-label-font-ratio:0.18] [--sonic-waveform-label-inset-ratio:0.14]',
-		id: 'waveform-labels',
-		label: 'Large labels',
-		seed: 11,
-	},
 	{ id: 'waveform-rate', isPlaying: true, label: 'Double speed', rate: 2, seed: 14 },
 	{ format: 'seconds-tenths', id: 'waveform-seconds', label: 'Readout in seconds', seed: 15 },
+	{
+		className: [
+			'[--sonic-waveform-playhead-width:1px] [--sonic-waveform-label-fade-ratio:0]',
+			'[--sonic-waveform-label-font:ui-monospace,monospace] [--sonic-waveform-label-font-ratio:0.1]',
+			'[--sonic-waveform-label-scrim:light-dark(rgb(255_255_255/60%),rgb(0_0_0/50%))]',
+		].join(' '),
+		id: 'waveform-tokens',
+		label: 'Thin playhead, label tokens',
+		pending: '153 162',
+		seed: 16,
+	},
+	{
+		id: 'waveform-scroll',
+		isPlaying: true,
+		label: 'Scrolls under reduced motion',
+		motion: 'scroll',
+		seed: 17,
+	},
 ];
 ---
 
@@ -28,7 +40,7 @@ const waveforms = [
 				aria-labelledby={waveform.id}
 				class:list={['[--sonic-waveform-length:20rem]', waveform.className]}
 				data-format={waveform.format ?? 'clock-tenths'}
-				data-markers="146 151.5 158~"
+				data-markers="146=Intro 151.5=Second_track 158=Outro~"
 				data-pending={waveform.pending}
 				data-samples={waveform.seed}
 				key-step="1"
@@ -36,6 +48,7 @@ const waveforms = [
 				playback-rate={waveform.rate}
 				playing={waveform.isPlaying}
 				readout
+				reduced-motion={waveform.motion}
 				step="0"
 				value="150"
 			></sonic-waveform>

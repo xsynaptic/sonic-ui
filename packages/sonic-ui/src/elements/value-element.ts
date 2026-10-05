@@ -8,7 +8,7 @@ import { Readout } from '#elements/readout.ts';
 import { ValueEntry } from '#elements/value-entry.ts';
 import { dragThresholdPx, startDrag, stepDrag } from '#lib/drag-step.ts';
 import { focusByPointer } from '#lib/focus-by-pointer.ts';
-import { clamp, toNumber } from '#lib/math.ts';
+import { clamp, toNumber, trimFloat } from '#lib/math.ts';
 import { isMenuPress, isResetPress } from '#lib/modifier-press.ts';
 import { parseNumberList } from '#lib/number-list.ts';
 import { bindDrag } from '#lib/pointer-drag.ts';
@@ -29,6 +29,7 @@ interface ValueDrag extends ValueAxis {
 	fromValue: number;
 	isOutside: boolean;
 	isRevealed: boolean;
+	pointerType: string;
 	revealTimer: ReturnType<typeof setTimeout> | undefined;
 	state: DragState;
 }
@@ -86,6 +87,7 @@ export abstract class SonicValueElement extends SonicFormElement {
 		'notched',
 		'origin',
 		'readout',
+		'spoken-step',
 		'step',
 		'tabindex',
 		'taper',
@@ -222,6 +224,10 @@ export abstract class SonicValueElement extends SonicFormElement {
 		this.#parseValue = parse;
 	}
 
+	get pointerType(): string | undefined {
+		return this.#dragging()?.pointerType;
+	}
+
 	get positions(): Array<number> | undefined {
 		return parseNumberList(this.getAttribute('positions'));
 	}
@@ -236,6 +242,14 @@ export abstract class SonicValueElement extends SonicFormElement {
 
 	set readout(isShown: boolean) {
 		this.reflect('readout', isShown);
+	}
+
+	get spokenStep(): number | undefined {
+		return this.optionalNumberAttribute('spoken-step');
+	}
+
+	set spokenStep(value: number | undefined) {
+		this.reflect('spoken-step', value);
 	}
 
 	get step(): number {
@@ -292,9 +306,13 @@ export abstract class SonicValueElement extends SonicFormElement {
 
 	#formatValue: ((value: number) => string) | undefined;
 
+	#heldAt: number | undefined;
+
 	readonly #instance = String((instanceCount += 1));
 
 	#isModulated = false;
+
+	#isRevealed = false;
 
 	#keyScrub: KeyScrub | undefined;
 
@@ -348,6 +366,7 @@ export abstract class SonicValueElement extends SonicFormElement {
 			'notched',
 			'origin',
 			'readout',
+			'spokenStep',
 			'step',
 			'taper',
 			'positions',
@@ -395,6 +414,7 @@ export abstract class SonicValueElement extends SonicFormElement {
 						fromValue,
 						isOutside: false,
 						isRevealed: false,
+						pointerType: event.pointerType,
 						revealTimer: undefined,
 						state: this.#startDrag(control, axis, event),
 					};
@@ -464,8 +484,8 @@ export abstract class SonicValueElement extends SonicFormElement {
 		return this.#dragging()?.fromValue ?? this.#keyScrub?.fromValue;
 	}
 
-	protected heldWrite(_next: number): void {
-		// Dropped unless a subclass draws where playback carries on
+	protected heldWrite(next: number): void {
+		this.#heldAt = next;
 	}
 
 	protected holdChanged(): void {
@@ -519,6 +539,12 @@ export abstract class SonicValueElement extends SonicFormElement {
 		return this.origin ?? this.mapping().bounds[0];
 	}
 
+	protected playback(): number {
+		const from = this.heldFrom();
+
+		return from === undefined ? this.#value : (this.#heldAt ?? from);
+	}
+
 	protected previewValue(): number | undefined {
 		return undefined;
 	}
@@ -545,12 +571,9 @@ export abstract class SonicValueElement extends SonicFormElement {
 		if (!readout) return;
 
 		const { isOpen, value } = this.#shown();
+		const text = value === undefined ? undefined : this.#textFor(value);
 
-		readout.bubble.show({
-			anchor: readout.anchor,
-			isOpen,
-			text: value === undefined ? undefined : this.#textFor(value),
-		});
+		readout.bubble.show({ anchor: readout.anchor, isOpen: isOpen && text !== '', text });
 	}
 
 	protected restoreState(state: string): void {
@@ -714,11 +737,15 @@ export abstract class SonicValueElement extends SonicFormElement {
 		if (value === undefined) return;
 
 		if (!wasEngaged) this.#reveal(drag);
-		this.input(isOutside ? drag.fromValue : value);
-		if (isOutside === drag.isOutside) return;
 
-		drag.isOutside = isOutside;
-		this.#renderDragReveal(drag);
+		const isCrossing = isOutside !== drag.isOutside;
+
+		if (isCrossing) {
+			drag.isOutside = isOutside;
+			this.toggleState('cancelling', isOutside);
+		}
+		this.input(isOutside ? drag.fromValue : value);
+		if (isCrossing) this.#renderDragReveal(drag);
 	}
 
 	#endHolds(): void {
@@ -759,7 +786,9 @@ export abstract class SonicValueElement extends SonicFormElement {
 	#releaseDrag(drag: ValueDrag): void {
 		clearTimeout(drag.revealTimer);
 		this.#claim.conceal('drag');
+		this.toggleState('cancelling', false);
 		this.#renderHold();
+		this.#showRevealed(false);
 		if (this.#value !== drag.fromValue) this.dispatchEvent(new Event('change', { bubbles: true }));
 		this.#springBack();
 	}
@@ -778,7 +807,7 @@ export abstract class SonicValueElement extends SonicFormElement {
 		writeAttribute(control, 'role', this.controlRole());
 		writeAttribute(control, 'aria-valuemin', String(low));
 		writeAttribute(control, 'aria-valuemax', String(high));
-		writeAttribute(control, 'aria-valuenow', String(this.#value));
+		writeAttribute(control, 'aria-valuenow', String(this.#spokenNow()));
 		if (orientation) writeAttribute(control, 'aria-orientation', orientation);
 		writeAttribute(
 			control,
@@ -810,12 +839,16 @@ export abstract class SonicValueElement extends SonicFormElement {
 	}
 
 	#renderDragReveal(drag: ValueDrag): void {
-		if (drag.isRevealed && !drag.isOutside) this.#claim.reveal('drag');
+		const isRevealed = drag.isRevealed && !drag.isOutside;
+
+		if (isRevealed) this.#claim.reveal('drag');
 		else this.#claim.conceal('drag');
 		this.#renderHold();
+		this.#showRevealed(isRevealed);
 	}
 
 	#renderHold(): void {
+		if (this.heldFrom() === undefined) this.#heldAt = undefined;
 		this.renderReadout();
 		this.holdChanged();
 	}
@@ -849,6 +882,22 @@ export abstract class SonicValueElement extends SonicFormElement {
 			isOpen: (isRevealed || preview !== undefined) && this.readout,
 			value: preview ?? this.#value,
 		};
+	}
+
+	#showRevealed(isRevealed: boolean): void {
+		if (isRevealed === this.#isRevealed) return;
+
+		this.#isRevealed = isRevealed;
+		this.toggleState('revealed', isRevealed);
+		this.dispatchEvent(new Event('sonic-reveal', { bubbles: true }));
+	}
+
+	#spokenNow(): number {
+		const step = this.spokenStep;
+
+		return step !== undefined && step > 0
+			? trimFloat(Math.round(this.#value / step) * step)
+			: this.#value;
 	}
 
 	#springBack(): void {

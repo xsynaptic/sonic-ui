@@ -52,6 +52,20 @@ export function stripBars(
 	});
 }
 
+export function stripGroove(size: SurfaceSize, ratio: number): BarRect | undefined {
+	if (ratio <= 0) return undefined;
+
+	const height = Math.max(1, Math.round(size.height * ratio));
+
+	return {
+		height,
+		radius: height / 2,
+		width: size.width,
+		x: 0,
+		y: Math.round((size.height - height) / 2),
+	};
+}
+
 export function stripRegions(state: RegionState, widthPx: number): StripRegions {
 	const px = (proportion: number): number =>
 		Math.round((Number.isFinite(proportion) ? proportion : 0) * widthPx);

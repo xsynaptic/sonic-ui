@@ -1,8 +1,11 @@
 import type { ValueAxis } from '#elements/value-element.ts';
+import type { HoverPreview } from '#lib/hover-preview.ts';
 import type { TimeRegions } from '#lib/time-regions.ts';
 
 import { bindScale } from '#elements/scale.ts';
 import { SonicValueElement } from '#elements/value-element.ts';
+import { bindHoverPreview } from '#lib/hover-preview.ts';
+import { clampProportion } from '#lib/math.ts';
 import { requireChild, template } from '#lib/render.ts';
 import { sortedRegions } from '#lib/time-regions.ts';
 
@@ -52,6 +55,7 @@ export class SonicSlider extends SonicValueElement {
 		...SonicValueElement.observedAttributes,
 		'modulation',
 		'orientation',
+		'scrub',
 		'spring',
 	];
 
@@ -97,6 +101,14 @@ export class SonicSlider extends SonicValueElement {
 		this.reflect('orientation', direction);
 	}
 
+	get scrub(): boolean {
+		return this.hasAttribute('scrub');
+	}
+
+	set scrub(isScrubbing: boolean) {
+		this.reflect('scrub', isScrubbing);
+	}
+
 	get spring(): boolean {
 		return this.hasAttribute('spring');
 	}
@@ -107,6 +119,8 @@ export class SonicSlider extends SonicValueElement {
 
 	#buffered: Array<[number, number]> = [];
 
+	#hover: HoverPreview | undefined;
+
 	readonly #slider = renderSlider();
 
 	override connectedCallback(): void {
@@ -116,6 +130,7 @@ export class SonicSlider extends SonicValueElement {
 			'modulationValue',
 			'modulation',
 			'orientation',
+			'scrub',
 			'spring',
 		);
 		super.connectedCallback();
@@ -137,6 +152,28 @@ export class SonicSlider extends SonicValueElement {
 			},
 			{ signal },
 		);
+		this.#hover = bindHoverPreview(
+			slider,
+			{
+				canShow: () => this.scrub && this.readout && this.orientation === 'horizontal',
+				dismiss: () => {
+					this.render();
+				},
+				isTaken: () => this.isEditing() || this.isRevealed(),
+				show: () => {
+					this.renderReadout();
+					this.#placeReadout(slider);
+				},
+				valueAt: (event) => {
+					const axis = this.#axis(slider, cap);
+					const at = clampProportion((axis.position(event) - axis.startPx) / axis.travelPx);
+					const mapping = this.mapping();
+
+					return mapping.snap(mapping.valueAt(at));
+				},
+			},
+			signal,
+		);
 		this.render();
 		this.checkStyles(slider, 'slider.css');
 		this.bindGestures(slider, signal, (event) => {
@@ -156,12 +193,32 @@ export class SonicSlider extends SonicValueElement {
 	}
 
 	protected draw(): void {
+		if (this.isEditing() || this.isRevealed()) this.#hover?.clear();
 		this.writeProportions(this.#slider, 'slider', this.modulation);
 		this.#renderBuffered(this.#slider);
+		this.#renderScrub(this.#slider);
+		this.#placeReadout(this.#slider);
 	}
 
 	protected override focusTarget(): HTMLElement {
 		return this.#slider;
+	}
+
+	protected override heldWrite(next: number): void {
+		super.heldWrite(next);
+		if (this.scrub) this.render();
+	}
+
+	protected override holdChanged(): void {
+		if (this.scrub) this.render();
+	}
+
+	protected override previewValue(): number | undefined {
+		return this.#hover?.value();
+	}
+
+	protected override scrubsKeyRepeat(): boolean {
+		return this.scrub;
 	}
 
 	protected override springTarget(): number | undefined {
@@ -183,6 +240,18 @@ export class SonicSlider extends SonicValueElement {
 					startPx: box.left + capBox.width / 2,
 					travelPx: Math.max(1, box.width - capBox.width),
 				};
+	}
+
+	#placeReadout(slider: HTMLElement): void {
+		if (!this.scrub) {
+			slider.style.removeProperty('--_sonic-slider-readout-value');
+			return;
+		}
+
+		slider.style.setProperty(
+			'--_sonic-slider-readout-value',
+			String(this.mapping().proportionOf(this.readoutValue())),
+		);
 	}
 
 	#renderBuffered(slider: HTMLElement): void {
@@ -208,6 +277,30 @@ export class SonicSlider extends SonicValueElement {
 		slider.style.setProperty(
 			'--_sonic-slider-buffered-regions',
 			`linear-gradient(var(--_sonic-slider-toward), ${stops.join(', ')})`,
+		);
+	}
+
+	#renderScrub(slider: HTMLElement): void {
+		const { style } = slider;
+		const { proportionOf } = this.mapping();
+		const isHeld = this.scrub && this.heldFrom() !== undefined;
+		const played = proportionOf(this.playback());
+		const scrubbed = proportionOf(this.value);
+
+		if (isHeld) style.setProperty('--_sonic-slider-played', String(played));
+		else style.removeProperty('--_sonic-slider-played');
+
+		if (played === scrubbed || !isHeld || !this.isRevealed()) {
+			style.removeProperty('--_sonic-slider-scrub-region');
+			return;
+		}
+
+		const from = grooveStop(Math.min(played, scrubbed));
+		const to = grooveStop(Math.max(played, scrubbed));
+
+		style.setProperty(
+			'--_sonic-slider-scrub-region',
+			`linear-gradient(var(--_sonic-slider-toward), transparent ${from}, var(--_sonic-slider-scrub) ${from} ${to}, transparent ${to})`,
 		);
 	}
 }

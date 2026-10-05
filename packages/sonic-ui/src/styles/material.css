@@ -280,7 +280,7 @@
 				),
 				repeating-linear-gradient(
 					to bottom,
-					rgb(0 0 0 / calc(0.04 * var(--_sonic-glass-texture))) 0
+					rgb(0 0 0 / calc(0.025 * var(--_sonic-glass-texture))) 0
 						calc(var(--_sonic-glass-pitch) / 2),
 					transparent 0 var(--_sonic-glass-pitch)
 				);
@@ -529,7 +529,7 @@
 		font-size: calc(0.5 * var(--_sonic-readout-size));
 		font-variant-numeric: tabular-nums;
 		line-height: 1;
-		color: var(--_sonic-glass-text);
+		color: var(--sonic-readout-text, var(--_sonic-glass-text));
 		white-space: nowrap;
 		pointer-events: none;
 		cursor: default;

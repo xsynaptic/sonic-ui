@@ -1,14 +1,16 @@
 import type { ValueAxis } from '#elements/value-element.ts';
 import type { SurfaceFrame } from '#lib/canvas-surface.ts';
+import type { HoverPreview } from '#lib/hover-preview.ts';
 import type { StripRegions } from '#lib/strip-scene.ts';
 import type { TimeRegions } from '#lib/time-regions.ts';
 
 import { SonicWaveElement } from '#elements/wave-element.ts';
+import { bindHoverPreview } from '#lib/hover-preview.ts';
 import { createMarkerBand } from '#lib/marker-band.ts';
 import { clampProportion } from '#lib/math.ts';
 import { readPxProperty } from '#lib/read-px-property.ts';
 import { requireChild, template } from '#lib/render.ts';
-import { stripBars, stripRegions } from '#lib/strip-scene.ts';
+import { stripBars, stripGroove, stripRegions } from '#lib/strip-scene.ts';
 import { sortedRegions } from '#lib/time-regions.ts';
 
 declare global {
@@ -30,6 +32,7 @@ const colours = {
 
 const lengths = {
 	gapRatio: '--_sonic-wavestrip-bar-gap-ratio',
+	grooveRatio: '--_sonic-wavestrip-groove-ratio',
 	pitch: '--_sonic-wavestrip-bar-pitch',
 	radiusRatio: '--_sonic-wavestrip-bar-radius-ratio',
 } as const;
@@ -114,15 +117,13 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 
 	protected readonly sheet = 'wavestrip.css';
 
+	protected readonly sizeProperty = '--_sonic-wavestrip-size';
+
 	#bars: Path2D | undefined;
 
 	#buffered: Array<[number, number]> = [];
 
-	#escapeWatch: AbortController | undefined;
-
-	#hover: number | undefined;
-
-	#isHoverDismissed = false;
+	#hover: HoverPreview | undefined;
 
 	readonly #markerBand = createMarkerBand(
 		requireChild(this.control, '.sonic-wavestrip-markers', HTMLDivElement),
@@ -139,7 +140,28 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 
 	protected override connect(signal: AbortSignal): void {
 		super.connect(signal);
-		this.#bindHover(this.control, signal);
+		this.#hover = bindHoverPreview(
+			this.control,
+			{
+				canShow: () => this.readout,
+				dismiss: () => {
+					this.render();
+				},
+				isTaken: () => this.isEditing() || this.isRevealed(),
+				show: () => {
+					this.renderReadout();
+					this.#placeReadout();
+				},
+				valueAt: (event) => {
+					const axis = this.#axis();
+					const at = clampProportion((event.clientX - axis.startPx) / axis.travelPx);
+					const mapping = this.mapping();
+
+					return this.#markerAt(event, axis) ?? mapping.snap(mapping.valueAt(at));
+				},
+			},
+			signal,
+		);
 		this.bindGestures(this.control, signal, (event) => this.#grab(event));
 	}
 
@@ -147,8 +169,9 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 		const surface = this.surface();
 
 		// A reveal or typed entry takes the readout from a hover
-		if (this.isEditing() || this.isRevealed()) this.#hover = undefined;
+		if (this.isEditing() || this.isRevealed()) this.#hover?.clear();
 		this.#placeReadout();
+		this.showCurrentMarker(this.playback());
 		if (surface && this.#stripRegions(surface.size.width).key !== this.#paintedKey) {
 			surface.requestFrame();
 		}
@@ -175,7 +198,7 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 	}
 
 	protected override previewValue(): number | undefined {
-		return this.#hover;
+		return this.#hover?.value();
 	}
 
 	protected override renderMarkers(): void {
@@ -198,45 +221,24 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 	}
 
 	#barsFor({ isDirty, look, size }: SurfaceFrame<Colour, Length>): Path2D | undefined {
-		const peaks = this.#peaks;
-		if (!peaks || peaks.length === 0) return undefined;
 		if (!isDirty && this.#bars) return this.#bars;
+
+		const peaks = this.#peaks;
+		const groove = stripGroove(size, look.lengths.grooveRatio);
+		const drawn = groove ? [groove] : [];
+		const bars = peaks && peaks.length > 0 ? stripBars(peaks, size, look.lengths) : drawn;
+
+		this.#bars = undefined;
+		if (bars.length === 0) return undefined;
 
 		const path = new Path2D();
 
-		for (const { height, radius, width, x, y } of stripBars(peaks, size, look.lengths)) {
+		for (const { height, radius, width, x, y } of bars) {
 			path.roundRect(x, y, width, height, radius);
 		}
 		this.#bars = path;
 
 		return path;
-	}
-
-	#bindHover(strip: HTMLElement, signal: AbortSignal): void {
-		strip.addEventListener(
-			'pointermove',
-			(event) => {
-				if (event.pointerType === 'touch' || event.buttons !== 0) return;
-				if (!this.readout) return;
-
-				const axis = this.#axis();
-				const at = clampProportion((event.clientX - axis.startPx) / axis.travelPx);
-				const mapping = this.mapping();
-
-				this.#hoverAt(this.#markerAt(event, axis) ?? mapping.snap(mapping.valueAt(at)));
-				this.#placeReadout();
-			},
-			{ signal },
-		);
-		for (const type of ['pointerdown', 'pointerleave']) {
-			strip.addEventListener(
-				type,
-				() => {
-					this.#hoverAt(undefined);
-				},
-				{ signal },
-			);
-		}
 	}
 
 	#grab(event: PointerEvent): ValueAxis {
@@ -252,13 +254,6 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 		this.input(this.#markerAt(event, axis) ?? this.mapping().valueAt(at));
 
 		return outside ? { ...grabbed, outside } : grabbed;
-	}
-
-	#hoverAt(value: number | undefined): void {
-		if (value === undefined) this.#isHoverDismissed = false;
-		if (!this.#isHoverDismissed && !this.isEditing() && !this.isRevealed()) this.#hover = value;
-		this.renderReadout();
-		this.#watchEscape(value !== undefined);
 	}
 
 	#markerAt(
@@ -303,32 +298,6 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 				...(isScrubbing ? { scrub: proportionOf(this.value) } : {}),
 			},
 			width,
-		);
-	}
-
-	// A hover holds no focus, so the key is heard on the document (WCAG 1.4.13)
-	#watchEscape(isHovered: boolean): void {
-		if (!isHovered) {
-			this.#escapeWatch?.abort();
-			this.#escapeWatch = undefined;
-			return;
-		}
-		if (this.#escapeWatch) return;
-
-		const watch = new AbortController();
-
-		this.#escapeWatch = watch;
-		this.ownerDocument.addEventListener(
-			'keydown',
-			(event) => {
-				if (event.key !== 'Escape' || this.#hover === undefined) return;
-
-				// Stays dismissed until the hover ends, or the next pointer move would bring it straight back
-				this.#hover = undefined;
-				this.#isHoverDismissed = true;
-				this.render();
-			},
-			{ signal: watch.signal },
 		);
 	}
 }

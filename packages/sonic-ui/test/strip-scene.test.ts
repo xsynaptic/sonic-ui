@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 
-import { stripBars, stripRegions } from '#lib/strip-scene.ts';
+import { stripBars, stripGroove, stripRegions } from '#lib/strip-scene.ts';
 
 const grid = { gapRatio: 0.33, pitch: 3, radiusRatio: 0.5 };
 
@@ -105,4 +105,12 @@ test('a played or scrub proportion that is not a number counts as the start', ()
 		{ from: 0, kind: 'played', to: 30 },
 		{ from: 0, kind: 'scrub', to: 30 },
 	]);
+});
+
+test('the empty groove spans the width, centred in whole pixels, and a ratio of 0 draws none', () => {
+	const size = { dpr: 2, height: 97, width: 604 };
+
+	expect(stripGroove(size, 0.15)).toEqual({ height: 15, radius: 7.5, width: 604, x: 0, y: 41 });
+	expect(stripGroove(size, 0.001)?.height).toBe(1);
+	expect(stripGroove(size, 0)).toBeUndefined();
 });
