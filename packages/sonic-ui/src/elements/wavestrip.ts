@@ -1,6 +1,7 @@
 import type { ValueAxis } from '#elements/value-element.ts';
 import type { SurfaceFrame } from '#lib/canvas-surface.ts';
 import type { StripRegions } from '#lib/strip-scene.ts';
+import type { TimeRegions } from '#lib/time-regions.ts';
 
 import { SonicWaveElement } from '#elements/wave-element.ts';
 import { createMarkerBand } from '#lib/marker-band.ts';
@@ -8,6 +9,7 @@ import { clampProportion } from '#lib/math.ts';
 import { readPxProperty } from '#lib/read-px-property.ts';
 import { requireChild, template } from '#lib/render.ts';
 import { stripBars, stripRegions } from '#lib/strip-scene.ts';
+import { sortedRegions } from '#lib/time-regions.ts';
 
 declare global {
 	interface HTMLElementTagNameMap {
@@ -70,6 +72,16 @@ function fillRegion(
 }
 
 export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
+	// fallow-ignore-next-line code-duplication -- one accessor pair per property
+	get buffered(): Array<[number, number]> {
+		return this.#buffered.map(([start, end]) => [start, end]);
+	}
+
+	set buffered(regions: TimeRegions | undefined) {
+		this.#buffered = sortedRegions(regions);
+		this.render();
+	}
+
 	get cancellable(): boolean {
 		return this.hasAttribute('cancellable');
 	}
@@ -104,6 +116,14 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 
 	#bars: Path2D | undefined;
 
+	#buffered: Array<[number, number]> = [];
+
+	#escapeWatch: AbortController | undefined;
+
+	#hover: number | undefined;
+
+	#isHoverDismissed = false;
+
 	readonly #markerBand = createMarkerBand(
 		requireChild(this.control, '.sonic-wavestrip-markers', HTMLDivElement),
 	);
@@ -113,7 +133,7 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 	#peaks: ArrayLike<number> | undefined;
 
 	override connectedCallback(): void {
-		this.upgradeProperties('cancellable', 'peaks');
+		this.upgradeProperties('buffered', 'cancellable', 'peaks');
 		super.connectedCallback();
 	}
 
@@ -126,6 +146,8 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 	protected draw(): void {
 		const surface = this.surface();
 
+		// A reveal or typed entry takes the readout from a hover
+		if (this.isEditing() || this.isRevealed()) this.#hover = undefined;
 		this.#placeReadout();
 		if (surface && this.#stripRegions(surface.size.width).key !== this.#paintedKey) {
 			surface.requestFrame();
@@ -150,6 +172,10 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 		for (const { from, kind, to } of strip.regions) {
 			fillRegion(context, bars, [from, to, look.colours[kind]]);
 		}
+	}
+
+	protected override previewValue(): number | undefined {
+		return this.#hover;
 	}
 
 	protected override renderMarkers(): void {
@@ -197,7 +223,7 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 				const at = clampProportion((event.clientX - axis.startPx) / axis.travelPx);
 				const mapping = this.mapping();
 
-				this.hoverReadout(this.#markerAt(event, axis) ?? mapping.snap(mapping.valueAt(at)));
+				this.#hoverAt(this.#markerAt(event, axis) ?? mapping.snap(mapping.valueAt(at)));
 				this.#placeReadout();
 			},
 			{ signal },
@@ -206,7 +232,7 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 			strip.addEventListener(
 				type,
 				() => {
-					this.hoverReadout(undefined);
+					this.#hoverAt(undefined);
 				},
 				{ signal },
 			);
@@ -226,6 +252,13 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 		this.input(this.#markerAt(event, axis) ?? this.mapping().valueAt(at));
 
 		return outside ? { ...grabbed, outside } : grabbed;
+	}
+
+	#hoverAt(value: number | undefined): void {
+		if (value === undefined) this.#isHoverDismissed = false;
+		if (!this.#isHoverDismissed && !this.isEditing() && !this.isRevealed()) this.#hover = value;
+		this.renderReadout();
+		this.#watchEscape(value !== undefined);
 	}
 
 	#markerAt(
@@ -265,11 +298,37 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 
 		return stripRegions(
 			{
-				buffered: this.buffered.map(([start, end]) => [proportionOf(start), proportionOf(end)]),
+				buffered: this.#buffered.map(([start, end]) => [proportionOf(start), proportionOf(end)]),
 				played: proportionOf(this.playback()),
 				...(isScrubbing ? { scrub: proportionOf(this.value) } : {}),
 			},
 			width,
+		);
+	}
+
+	// A hover holds no focus, so the key is heard on the document (WCAG 1.4.13)
+	#watchEscape(isHovered: boolean): void {
+		if (!isHovered) {
+			this.#escapeWatch?.abort();
+			this.#escapeWatch = undefined;
+			return;
+		}
+		if (this.#escapeWatch) return;
+
+		const watch = new AbortController();
+
+		this.#escapeWatch = watch;
+		this.ownerDocument.addEventListener(
+			'keydown',
+			(event) => {
+				if (event.key !== 'Escape' || this.#hover === undefined) return;
+
+				// Stays dismissed until the hover ends, or the next pointer move would bring it straight back
+				this.#hover = undefined;
+				this.#isHoverDismissed = true;
+				this.render();
+			},
+			{ signal: watch.signal },
 		);
 	}
 }

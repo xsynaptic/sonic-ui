@@ -1,5 +1,6 @@
 import { SonicFormElement } from '#elements/form-element.ts';
 import { copyNode } from '#lib/copy-node.ts';
+import { mirrorChildren } from '#lib/mirror-children.ts';
 import { bindDrag } from '#lib/pointer-drag.ts';
 import { placeChildren } from '#lib/render.ts';
 import { writeAttribute } from '#lib/write-attribute.ts';
@@ -69,7 +70,8 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 		const group = this.group;
 
 		this.upgradeProperties('value');
-		this.mirrorChildren(
+		mirrorChildren(
+			this,
 			{
 				control: group,
 				copy: copyNode,

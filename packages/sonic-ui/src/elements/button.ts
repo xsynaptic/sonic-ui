@@ -3,6 +3,7 @@ import type { Hold } from '#lib/hold.ts';
 import { SonicFormElement } from '#elements/form-element.ts';
 import { copyNode } from '#lib/copy-node.ts';
 import { bindHold } from '#lib/hold.ts';
+import { mirrorChildren } from '#lib/mirror-children.ts';
 import { placeChildren, requireChild, template } from '#lib/render.ts';
 import { writeAttribute } from '#lib/write-attribute.ts';
 
@@ -134,7 +135,8 @@ export class SonicButton extends SonicFormElement {
 			'pressed',
 			'value',
 		);
-		this.mirrorChildren(
+		mirrorChildren(
+			this,
 			{
 				control: button,
 				copy: copyNode,

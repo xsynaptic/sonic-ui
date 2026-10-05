@@ -10,3 +10,7 @@ export function readRegions(regions: TimeRegions): Array<[number, number]> {
 
 	return [...regions].map(([start, end]) => [start, end]);
 }
+
+export function sortedRegions(regions: TimeRegions | undefined): Array<[number, number]> {
+	return regions ? readRegions(regions).toSorted((first, second) => first[0] - second[0]) : [];
+}

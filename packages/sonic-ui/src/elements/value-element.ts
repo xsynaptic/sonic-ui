@@ -1,13 +1,11 @@
 import type { DragState } from '#lib/drag-step.ts';
 import type { PointerDrag } from '#lib/pointer-drag.ts';
-import type { TimeRegions } from '#lib/time-regions.ts';
 import type { ValueMapping } from '#lib/value-mapping.ts';
 
 import { SonicFormElement } from '#elements/form-element.ts';
 import { ReadoutClaim, revealMs } from '#elements/readout-claim.ts';
 import { Readout } from '#elements/readout.ts';
 import { ValueEntry } from '#elements/value-entry.ts';
-import { copyNode } from '#lib/copy-node.ts';
 import { dragThresholdPx, startDrag, stepDrag } from '#lib/drag-step.ts';
 import { focusByPointer } from '#lib/focus-by-pointer.ts';
 import { clamp, toNumber } from '#lib/math.ts';
@@ -15,8 +13,7 @@ import { isMenuPress, isResetPress } from '#lib/modifier-press.ts';
 import { parseNumberList } from '#lib/number-list.ts';
 import { bindDrag } from '#lib/pointer-drag.ts';
 import { readPxProperty } from '#lib/read-px-property.ts';
-import { placeChildren, requireChild } from '#lib/render.ts';
-import { readRegions } from '#lib/time-regions.ts';
+import { requireChild } from '#lib/render.ts';
 import { resetKeys, valueMapping } from '#lib/value-mapping.ts';
 import { writeAttribute } from '#lib/write-attribute.ts';
 
@@ -59,26 +56,6 @@ const roleAttributes = [
 	'tabindex',
 ];
 
-type ScaleMark = HTMLElement | SVGElement;
-
-function scaleValue(mark: ScaleMark): number {
-	const text = mark.dataset.sonicValue?.trim();
-
-	return text ? Number(text) : NaN;
-}
-
-function scaleMark(original: ChildNode): ScaleMark | undefined {
-	const mark = copyNode(original);
-	if (!(mark instanceof HTMLElement || mark instanceof SVGElement)) return undefined;
-	if (!Number.isFinite(scaleValue(mark))) return undefined;
-
-	const isTick = mark.childElementCount === 0 && mark.textContent.trim() === '';
-
-	mark.classList.add(isTick ? 'sonic-scale-tick' : 'sonic-scale-label');
-
-	return mark;
-}
-
 type ValueLanding = (target: number, direction: -1 | 0 | 1) => number;
 
 export interface ValueLink {
@@ -110,6 +87,7 @@ export abstract class SonicValueElement extends SonicFormElement {
 		'origin',
 		'readout',
 		'step',
+		'tabindex',
 		'taper',
 		'value',
 		'positions',
@@ -136,17 +114,6 @@ export abstract class SonicValueElement extends SonicFormElement {
 				};
 			},
 		});
-	}
-
-	get buffered(): Array<[number, number]> {
-		return this.#buffered.map(([start, end]) => [start, end]);
-	}
-
-	set buffered(regions: TimeRegions | undefined) {
-		this.#buffered = regions
-			? readRegions(regions).toSorted((first, second) => first[0] - second[0])
-			: [];
-		this.render();
 	}
 
 	get default(): number | undefined {
@@ -315,15 +282,11 @@ export abstract class SonicValueElement extends SonicFormElement {
 
 	#asked: number | undefined;
 
-	#buffered: Array<[number, number]> = [];
-
 	readonly #claim = new ReadoutClaim(() => {
 		this.#renderHold();
 	});
 
 	#entry: undefined | ValueEntry;
-
-	#escapeWatch: AbortController | undefined;
 
 	#formatSpokenValue: ((value: number) => string) | undefined;
 
@@ -352,8 +315,6 @@ export abstract class SonicValueElement extends SonicFormElement {
 
 	#readout: undefined | { anchor: HTMLElement; bubble: Readout };
 
-	#scaleMarks: HTMLElement | undefined;
-
 	#value = 0;
 
 	readonly #watchers = new Set<() => void>();
@@ -378,7 +339,6 @@ export abstract class SonicValueElement extends SonicFormElement {
 
 	override connectedCallback(): void {
 		this.upgradeProperties(
-			'buffered',
 			'default',
 			'dimmed',
 			'doublePress',
@@ -488,23 +448,6 @@ export abstract class SonicValueElement extends SonicFormElement {
 		);
 	}
 
-	protected bindScale(control: HTMLElement, marks: HTMLElement, signal: AbortSignal): void {
-		this.#scaleMarks = marks;
-		this.mirrorChildren(
-			{
-				control,
-				copy: scaleMark,
-				isCopied: (child) => child instanceof Element && child.matches('[data-sonic-value]'),
-				isPassed: (child) => child instanceof Element && child.matches('.sonic-led'),
-				place: (copies) => {
-					placeChildren(marks, copies);
-					this.#renderScale();
-				},
-			},
-			signal,
-		);
-	}
-
 	protected controlOrientation(): 'horizontal' | 'vertical' | undefined {
 		return undefined;
 	}
@@ -529,12 +472,6 @@ export abstract class SonicValueElement extends SonicFormElement {
 		// Only a subclass draws a hold
 	}
 
-	protected hoverReadout(value: number | undefined): void {
-		this.#claim.hover(value);
-		this.#renderReadout();
-		this.#watchEscape(value !== undefined);
-	}
-
 	protected input(next: number): boolean {
 		const previous = this.#value;
 
@@ -544,6 +481,10 @@ export abstract class SonicValueElement extends SonicFormElement {
 		this.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
 
 		return true;
+	}
+
+	protected isEditing(): boolean {
+		return this.#entry?.isOpen === true;
 	}
 
 	protected isRevealed(): boolean {
@@ -578,6 +519,10 @@ export abstract class SonicValueElement extends SonicFormElement {
 		return this.origin ?? this.mapping().bounds[0];
 	}
 
+	protected previewValue(): number | undefined {
+		return undefined;
+	}
+
 	protected proportionsChanged(): void {
 		// Runs when every proportion moves, never per input
 	}
@@ -587,12 +532,25 @@ export abstract class SonicValueElement extends SonicFormElement {
 	}
 
 	protected readoutValue(): number {
-		return this.#claim.shown(this.#value, this.readout).value ?? this.#value;
+		return this.#shown().value ?? this.#value;
 	}
 
 	protected render(): void {
 		if (this.isBound()) this.#renderControl();
 		for (const listener of this.#watchers) listener();
+	}
+
+	protected renderReadout(): void {
+		const readout = this.#readout;
+		if (!readout) return;
+
+		const { isOpen, value } = this.#shown();
+
+		readout.bubble.show({
+			anchor: readout.anchor,
+			isOpen,
+			text: value === undefined ? undefined : this.#textFor(value),
+		});
 	}
 
 	protected restoreState(state: string): void {
@@ -666,7 +624,6 @@ export abstract class SonicValueElement extends SonicFormElement {
 			// `Number.parseFloat` reads "5 kHz" as 5
 			text: () => (this.#parseValue ? this.valueText : String(this.#value)),
 			toggle: (isOpen) => {
-				this.#claim.edit(isOpen);
 				if (isOpen) this.forwardNaming(input, true);
 				this.toggleState('editing', isOpen);
 				this.render();
@@ -812,7 +769,7 @@ export abstract class SonicValueElement extends SonicFormElement {
 		if (this.#entry?.isOpen) {
 			for (const name of roleAttributes) control.removeAttribute(name);
 			this.forwardNaming(control, false);
-			this.#renderReadout();
+			this.renderReadout();
 			return;
 		}
 
@@ -830,12 +787,11 @@ export abstract class SonicValueElement extends SonicFormElement {
 		);
 		this.forwardNaming(control, true);
 		this.#renderDisabled(control);
-		this.#renderReadout();
+		this.renderReadout();
 	}
 
 	#renderControl(): void {
 		this.draw();
-		this.#renderScale();
 		this.toggleState(
 			'at-origin',
 			!this.isWrapping() && this.#value === this.mapping().snap(this.originValue()),
@@ -847,7 +803,10 @@ export abstract class SonicValueElement extends SonicFormElement {
 		const isDisabled = this.isDisabled();
 
 		writeAttribute(control, 'aria-disabled', isDisabled ? 'true' : undefined);
-		writeAttribute(control, 'tabindex', isDisabled ? undefined : '0');
+		// The host is `display: contents`, so its tab stop is the control's
+		const stop = this.getAttribute('tabindex') === '-1' ? '-1' : '0';
+
+		writeAttribute(control, 'tabindex', isDisabled ? undefined : stop);
 	}
 
 	#renderDragReveal(drag: ValueDrag): void {
@@ -857,36 +816,8 @@ export abstract class SonicValueElement extends SonicFormElement {
 	}
 
 	#renderHold(): void {
-		this.#renderReadout();
+		this.renderReadout();
 		this.holdChanged();
-	}
-
-	#renderReadout(): void {
-		const readout = this.#readout;
-		if (!readout) return;
-
-		const { isOpen, value } = this.#claim.shown(this.#value, this.readout);
-
-		readout.bubble.show({
-			anchor: readout.anchor,
-			isOpen,
-			text: value === undefined ? undefined : this.#textFor(value),
-		});
-	}
-
-	#renderScale(): void {
-		const marks = this.#scaleMarks?.children ?? [];
-		const mapping = this.mapping();
-
-		for (const mark of marks) {
-			if (!(mark instanceof HTMLElement || mark instanceof SVGElement)) continue;
-
-			const at = String(mapping.proportionOf(scaleValue(mark)));
-
-			if (mark.style.getPropertyValue('--_sonic-scale-at') !== at) {
-				mark.style.setProperty('--_sonic-scale-at', at);
-			}
-		}
 	}
 
 	#reset(): void {
@@ -906,6 +837,18 @@ export abstract class SonicValueElement extends SonicFormElement {
 			this.#keyScrub = { fromValue: this.#value, key };
 		}
 		this.input(next);
+	}
+
+	#shown(): { isOpen: boolean; value: number | undefined } {
+		if (this.isEditing()) return { isOpen: true, value: undefined };
+
+		const isRevealed = this.#claim.isRevealed;
+		const preview = isRevealed ? undefined : this.previewValue();
+
+		return {
+			isOpen: (isRevealed || preview !== undefined) && this.readout,
+			value: preview ?? this.#value,
+		};
 	}
 
 	#springBack(): void {
@@ -939,27 +882,6 @@ export abstract class SonicValueElement extends SonicFormElement {
 
 	#textFor(value: number): string {
 		return this.#formatValue?.(value) ?? String(value);
-	}
-
-	// A hover holds no focus, so the key is heard on the document (WCAG 1.4.13)
-	#watchEscape(isHovered: boolean): void {
-		if (!isHovered) {
-			this.#escapeWatch?.abort();
-			this.#escapeWatch = undefined;
-			return;
-		}
-		if (this.#escapeWatch) return;
-
-		const watch = new AbortController();
-
-		this.#escapeWatch = watch;
-		this.ownerDocument.addEventListener(
-			'keydown',
-			(event) => {
-				if (event.key === 'Escape' && this.#claim.dismiss()) this.#renderHold();
-			},
-			{ signal: watch.signal },
-		);
 	}
 
 	#withinLimit(mapping: ValueMapping, state: DragState): DragState {

@@ -312,6 +312,50 @@ test('Escape dismisses a hovered readout without focus, until the pointer leaves
 	expect(readoutText(control)).toBe('120 s');
 });
 
+function readoutAt(control: HTMLElement): string {
+	return control.style.getPropertyValue('--_sonic-wavestrip-readout-at');
+}
+
+test('a key reveal takes the readout from a hover, which returns only when the pointer moves again', () => {
+	installCanvasFakes();
+	vi.useFakeTimers();
+
+	const { control } = mountWavestrip(
+		'readout min="30" max="330" step="0" key-step="30" value="30"',
+	);
+
+	midPointerAt(control, 'pointermove', { clientX: 75, pointerType: 'mouse' });
+	expect(readoutAt(control)).toBe('0.25');
+
+	keyAt(control, 'keydown', false);
+	keyAt(control, 'keyup', false);
+	vi.runAllTimers();
+	vi.useRealTimers();
+	expect(readoutAt(control)).toBe('0.1');
+
+	midPointerAt(control, 'pointermove', { clientX: 150, pointerType: 'mouse' });
+	expect(readoutAt(control)).toBe('0.5');
+});
+
+test('typed entry drops a hover, and a pointer moving while it is open brings none back', () => {
+	installCanvasFakes();
+
+	const { control } = mountWavestrip('readout min="30" max="330" step="0" value="60"');
+	const entry = control.querySelector('input');
+	if (!entry) throw new Error('The wavestrip has no entry');
+
+	midPointerAt(control, 'pointermove', { clientX: 75, pointerType: 'mouse' });
+	control.dispatchEvent(
+		new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'Enter' }),
+	);
+	midPointerAt(control, 'pointermove', { clientX: 150, pointerType: 'mouse' });
+	entry.dispatchEvent(
+		new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'Enter' }),
+	);
+
+	expect(readoutAt(control)).toBe('0.1');
+});
+
 function scrubKey(target: HTMLElement, type: string, key: string): void {
 	target.dispatchEvent(
 		new KeyboardEvent(type, { bubbles: true, cancelable: true, key, repeat: type === 'keydown' }),

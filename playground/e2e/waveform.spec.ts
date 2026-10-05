@@ -130,3 +130,31 @@ test('the pending state follows a region in the window, and clears when it lands
 	await setPending([[250, 260]]);
 	await expect.poll(readPending).toBe(false);
 });
+
+test('a host tabindex of -1 leaves the tab order, and a press still focuses the waveform', async ({
+	isMobile,
+	page,
+}) => {
+	test.skip(isMobile, 'A phone has no Tab key');
+
+	const { canvas, waveform } = await openWaveform(page);
+	const holdsFocus = (): Promise<boolean> =>
+		waveform.evaluate((host) => host.contains(document.activeElement));
+
+	await canvas.click();
+	expect(await holdsFocus()).toBe(true);
+
+	await page.keyboard.press('Shift+Tab');
+	await page.keyboard.press('Tab');
+	expect(await holdsFocus()).toBe(true);
+
+	await waveform.evaluate((host) => {
+		host.setAttribute('tabindex', '-1');
+	});
+	await page.keyboard.press('Shift+Tab');
+	await page.keyboard.press('Tab');
+	expect(await holdsFocus()).toBe(false);
+
+	await canvas.click();
+	expect(await holdsFocus()).toBe(true);
+});

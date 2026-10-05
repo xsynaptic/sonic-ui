@@ -1,7 +1,5 @@
-import type { MirrorSlots } from '#lib/render.ts';
-
 import { toNumber } from '#lib/math.ts';
-import { attachSlots } from '#lib/render.ts';
+import { appendOnce, checkChildren } from '#lib/owned-control.ts';
 import { writeAttribute } from '#lib/write-attribute.ts';
 
 // eslint-disable-next-line unicorn/consistent-boolean-name -- the name bundlers and other kits use
@@ -10,12 +8,6 @@ declare const __DEV__: boolean;
 const namingAttributes = ['aria-describedby', 'aria-label', 'aria-labelledby'];
 
 const checkedSheets = new WeakMap<object, Set<string>>();
-
-const checkedMirrors = new WeakSet<object>();
-
-const checkedChildren = new WeakSet<object>();
-
-const interactive = 'a[href], button, input, select, textarea, [tabindex]';
 
 interface StyleProbe {
 	selector?: string;
@@ -35,28 +27,6 @@ function writeLabelledBy(target: Element, labels: Array<Element>): void {
 	target.ariaLabelledByElements = labels;
 }
 
-function unmirrorable(original: Node): Element | undefined {
-	if (!(original instanceof Element)) return undefined;
-
-	return [original, ...original.querySelectorAll('*')].find(
-		(element) => element.matches(interactive) || element.localName.includes('-'),
-	);
-}
-
-function isContent(child: Node): boolean {
-	if (child instanceof Element) return true;
-
-	return child instanceof Text && child.data.trim() !== '';
-}
-
-interface Mirror {
-	control: Element;
-	copy: (original: ChildNode) => Node | undefined;
-	isCopied?: (child: Node) => boolean;
-	isPassed?: (child: Node) => boolean;
-	place: (copies: Array<Node>) => void;
-}
-
 // eslint-disable-next-line wc/define-tag-after-class-definition -- abstract; only subclasses are defined
 export abstract class SonicElement extends HTMLElement {
 	static readonly observedAttributes = [...namingAttributes, 'disabled'];
@@ -74,8 +44,6 @@ export abstract class SonicElement extends HTMLElement {
 		'attachInternals' in HTMLElement.prototype ? this.attachInternals() : undefined;
 
 	#connection: AbortController | undefined;
-
-	#slots: MirrorSlots | undefined;
 
 	override blur(): void {
 		this.#focused()?.blur();
@@ -192,81 +160,17 @@ export abstract class SonicElement extends HTMLElement {
 	// A morph against server HTML, or a stray `innerHTML`, deletes the control
 	protected keepControl(control: Element, signal: AbortSignal): void {
 		const keep = (): void => {
-			this.#appendOnce(control);
-			this.#checkChildren([...this.childNodes].filter((child) => child !== control));
+			appendOnce(this, control);
+			if (__DEV__)
+				checkChildren(
+					this,
+					[...this.childNodes].filter((child) => child !== control),
+				);
 		};
 		const observer = new MutationObserver(keep);
 
 		keep();
 		observer.observe(this, { childList: true });
-		signal.addEventListener(
-			'abort',
-			() => {
-				observer.disconnect();
-			},
-			{ once: true },
-		);
-	}
-
-	protected mirrorChildren(
-		{ control, copy, isCopied = () => true, isPassed = () => false, place }: Mirror,
-		signal: AbortSignal,
-	): void {
-		const slots = this.#slots ?? attachSlots(this);
-		let copies = new Map<ChildNode, Node | undefined>();
-
-		this.#slots = slots;
-		const mirror = (touched?: Set<Node | undefined>): void => {
-			this.#appendOnce(control);
-
-			const children = [...this.childNodes].filter((child) => child !== control);
-			const slotted = children.filter(
-				(child): child is Element | Text => child instanceof Element || child instanceof Text,
-			);
-			const kept = copies;
-			const originals = children.filter((child) => isCopied(child));
-
-			this.#checkMirrored(originals);
-			this.#checkChildren(children.filter((child) => !isCopied(child) && !isPassed(child)));
-			copies = new Map(
-				originals.map((original) => [
-					original,
-					touched && !touched.has(original) && kept.has(original)
-						? kept.get(original)
-						: copy(original),
-				]),
-			);
-			place([...copies.values()].filter((made) => made !== undefined));
-			slots.shown.assign(...slotted.filter((child) => !isCopied(child)), control);
-			slots.kept.assign(...slotted.filter((child) => isCopied(child)));
-		};
-		// Each child is watched, never the control, so a value write wakes nothing
-		const watch = (): void => {
-			observer.disconnect();
-			observer.observe(this, { childList: true });
-			for (const child of this.childNodes) {
-				if (child === control) continue;
-
-				observer.observe(child, {
-					attributes: true,
-					characterData: true,
-					childList: true,
-					subtree: true,
-				});
-			}
-		};
-		const observer = new MutationObserver((records) => {
-			const changes = records.filter((record) => this.#isCopiedChange(record, control, isCopied));
-			if (changes.length === 0) return;
-
-			if (changes.some((record) => record.target === this)) {
-				mirror();
-				watch();
-			} else mirror(new Set(changes.map((record) => this.#childHolding(record.target))));
-		});
-
-		mirror();
-		watch();
 		signal.addEventListener(
 			'abort',
 			() => {
@@ -319,73 +223,11 @@ export abstract class SonicElement extends HTMLElement {
 		}
 	}
 
-	#appendOnce(control: Element): void {
-		const [hook] = control.classList;
-		const stale = [...this.children].filter(
-			(child) => child !== control && hook !== undefined && child.classList.contains(hook),
-		);
-
-		for (const child of stale) child.remove();
-		if (control.parentNode !== this) this.append(control);
-	}
-
-	#checkChildren(undocumented: Array<Node>): void {
-		if (!__DEV__ || checkedChildren.has(this.constructor)) return;
-
-		const found = undocumented.find((child) => isContent(child));
-		if (!found) return;
-
-		checkedChildren.add(this.constructor);
-		console.warn(
-			`<${this.localName}> uses only the children it documents, so the ${
-				found instanceof Element ? `<${found.localName}>` : 'text'
-			} inside it is unsupported`,
-		);
-	}
-
-	#checkMirrored(originals: Array<Node>): void {
-		if (!__DEV__ || checkedMirrors.has(this.constructor)) return;
-
-		const [found] = originals.flatMap((original) => unmirrorable(original) ?? []);
-		if (!found) return;
-
-		checkedMirrors.add(this.constructor);
-		console.warn(
-			`<${this.localName}> copies its children into the control, so the <${found.localName}> inside it loses its listeners and state; keep mirrored children static`,
-		);
-	}
-
-	#childHolding(node: Node): Node | undefined {
-		let current: Node | null = node;
-
-		while (current && current.parentNode !== this) current = current.parentNode;
-
-		return current ?? undefined;
-	}
-
 	#focused(): HTMLElement | undefined {
 		const root = this.getRootNode();
 		const active =
 			root instanceof ShadowRoot ? root.activeElement : this.ownerDocument.activeElement;
 
 		return active instanceof HTMLElement && this.contains(active) ? active : undefined;
-	}
-
-	#isCopiedChange(
-		record: MutationRecord,
-		control: Element,
-		isCopied: (child: Node) => boolean,
-	): boolean {
-		if (record.target === this) {
-			return (
-				record.removedNodes.length > 0 || [...record.addedNodes].some((node) => node !== control)
-			);
-		}
-
-		const child = this.#childHolding(record.target);
-
-		if (child === undefined) return false;
-
-		return isCopied(child) || (record.type === 'attributes' && record.target === child);
 	}
 }

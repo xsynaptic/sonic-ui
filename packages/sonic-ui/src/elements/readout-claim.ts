@@ -9,13 +9,7 @@ export class ReadoutClaim {
 
 	#holdTimer: ReturnType<typeof setTimeout> | undefined;
 
-	#hover: number | undefined;
-
-	#isDismissed = false;
-
 	#isDragging = false;
-
-	#isEditing = false;
 
 	#keyTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -44,28 +38,6 @@ export class ReadoutClaim {
 		return wasTimed;
 	}
 
-	// Stays dismissed until the hover ends, or the next pointer move would bring it straight back
-	dismiss(): boolean {
-		const wasHovered = this.#hover !== undefined;
-
-		this.#hover = undefined;
-		this.#isDismissed = wasHovered || this.#isDismissed;
-
-		return wasHovered;
-	}
-
-	edit(isOpen: boolean): void {
-		this.#isEditing = isOpen;
-		if (isOpen) this.#hover = undefined;
-	}
-
-	hover(value?: number): void {
-		if (value === undefined) this.#isDismissed = false;
-		if (this.#isDismissed || this.#isEditing || this.isRevealed) return;
-
-		this.#hover = value;
-	}
-
 	press(isDown: boolean): void {
 		this.conceal('drag');
 		if (!isDown) {
@@ -80,7 +52,6 @@ export class ReadoutClaim {
 	}
 
 	reveal(by: 'drag' | 'keys'): void {
-		this.#hover = undefined;
 		if (by === 'drag') {
 			this.#isDragging = true;
 			return;
@@ -91,13 +62,5 @@ export class ReadoutClaim {
 			this.#keyTimer = undefined;
 			this.#onLapse();
 		}, keyRevealMs);
-	}
-
-	shown(current: number, isReadout: boolean): { isOpen: boolean; value: number | undefined } {
-		if (this.#isEditing) return { isOpen: true, value: undefined };
-
-		const isValueShown = this.isRevealed || this.#hover !== undefined;
-
-		return { isOpen: isValueShown && isReadout, value: this.#hover ?? current };
 	}
 }

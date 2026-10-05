@@ -179,7 +179,8 @@
 		.sonic-xy,
 		.sonic-xy-readout
 	) {
-		--_sonic-glass: var(--sonic-glass, color-mix(in oklab, var(--_sonic-unlit) 45%, #000));
+		--_sonic-glass-base: var(--sonic-glass, color-mix(in oklab, var(--_sonic-unlit) 45%, #000));
+		--_sonic-glass: var(--_sonic-glass-base);
 		--_sonic-glass-fill: radial-gradient(
 				closest-side,
 				color-mix(in oklab, var(--_sonic-glass) 88%, #fff),
@@ -455,6 +456,7 @@
 		.sonic-xy-readout
 	) {
 		--_sonic-unit: calc(var(--_sonic-readout-size) / 32);
+		--_sonic-glass: var(--sonic-readout-glass, var(--_sonic-glass-base));
 
 		box-sizing: border-box;
 		place-items: center;
@@ -471,6 +473,7 @@
 		font-variant-numeric: tabular-nums;
 		line-height: 1;
 		color: var(--_sonic-glass-text);
+		white-space: nowrap;
 		pointer-events: none;
 		cursor: default;
 		user-select: none;

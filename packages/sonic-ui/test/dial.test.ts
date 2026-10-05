@@ -464,6 +464,19 @@ test('disabled drops the tab stop, ignores keys, presses and reset, and cancels 
 	expect(control.getAttribute('tabindex')).toBe('0');
 });
 
+test('a host tabindex of -1 takes the control out of the tab order, and disabled still drops the stop', () => {
+	const { control, dial } = mountDial('tabindex="-1" value="50"');
+
+	expect(control.getAttribute('tabindex')).toBe('-1');
+
+	dial.disabled = true;
+	expect(control.hasAttribute('tabindex')).toBe(false);
+
+	dial.disabled = false;
+	dial.removeAttribute('tabindex');
+	expect(control.getAttribute('tabindex')).toBe('0');
+});
+
 test.each(['', 'double-press="reset"'])(
 	'with %s, Enter on the control opens the entry',
 	(attributes) => {

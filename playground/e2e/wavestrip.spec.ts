@@ -145,6 +145,33 @@ test('the hover readout opens over the pointer, and Escape dismisses it', async 
 	await expect(readout).toBeHidden();
 });
 
+test('a long readout stays on one line, on glass of its own colour', async ({ isMobile, page }) => {
+	test.skip(isMobile, 'Touch shows the readout only once a drag reveals it');
+
+	const { canvas, wavestrip } = await openWavestrip(page);
+	const box = await canvas.boundingBox();
+	if (!box) throw new Error('The wavestrip has no box');
+
+	await wavestrip.evaluate((element) => {
+		element.style.setProperty('--sonic-glass', 'transparent');
+		element.style.setProperty('--sonic-readout-glass', 'rgb(10 20 30)');
+		Object.assign(element, { formatValue: () => '1:15 A title far longer than any number' });
+	});
+	await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+
+	const readout = wavestrip.locator('.sonic-wavestrip-readout');
+
+	await expect(readout).toBeVisible();
+
+	const look = await readout.evaluate((bubble) => ({
+		fill: getComputedStyle(bubble).backgroundColor,
+		isOneLine: bubble.scrollHeight <= bubble.clientHeight,
+		strip: getComputedStyle(bubble.parentElement ?? bubble).backgroundColor,
+	}));
+
+	expect(look).toEqual({ fill: 'rgb(10, 20, 30)', isOneLine: true, strip: 'rgba(0, 0, 0, 0)' });
+});
+
 async function pressBy(page: Page, dot: Locator, by: { x: number; y: number }): Promise<void> {
 	const box = await dot.boundingBox();
 	if (!box) throw new Error('The marker has no box');

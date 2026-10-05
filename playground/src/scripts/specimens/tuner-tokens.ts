@@ -69,6 +69,10 @@ export const tokenGroups: Array<TokenGroup> = [
 			}),
 			colour('glass', '--sonic-glass', { from: '.sonic-screen' }),
 			colour('glass text', '--sonic-glass-text', { from: '.sonic-screen' }),
+			colour('readout glass', '--sonic-readout-glass', {
+				from: '.sonic-dial-readout',
+				resolved: '--_sonic-glass',
+			}),
 			{
 				kind: 'choice',
 				label: 'glass font',

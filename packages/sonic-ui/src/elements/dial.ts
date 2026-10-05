@@ -1,3 +1,4 @@
+import { bindScale } from '#elements/scale.ts';
 import { SonicValueElement } from '#elements/value-element.ts';
 import { requireChild, template } from '#lib/render.ts';
 
@@ -75,7 +76,11 @@ export class SonicDial extends SonicValueElement {
 	protected connect(signal: AbortSignal): void {
 		const dial = this.#dial;
 
-		this.bindScale(dial, requireChild(dial, '.sonic-dial-scale', HTMLDivElement), signal);
+		bindScale(
+			this,
+			{ control: dial, marks: requireChild(dial, '.sonic-dial-scale', HTMLDivElement) },
+			signal,
+		);
 		this.render();
 		this.checkStyles(dial, 'dial.css');
 		this.bindGestures(dial, signal, () => ({

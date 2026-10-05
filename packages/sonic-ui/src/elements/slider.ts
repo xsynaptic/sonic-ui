@@ -1,7 +1,10 @@
 import type { ValueAxis } from '#elements/value-element.ts';
+import type { TimeRegions } from '#lib/time-regions.ts';
 
+import { bindScale } from '#elements/scale.ts';
 import { SonicValueElement } from '#elements/value-element.ts';
 import { requireChild, template } from '#lib/render.ts';
+import { sortedRegions } from '#lib/time-regions.ts';
 
 declare global {
 	interface HTMLElementTagNameMap {
@@ -52,6 +55,16 @@ export class SonicSlider extends SonicValueElement {
 		'spring',
 	];
 
+	// fallow-ignore-next-line code-duplication -- one accessor pair per property
+	get buffered(): Array<[number, number]> {
+		return this.#buffered.map(([start, end]) => [start, end]);
+	}
+
+	set buffered(regions: TimeRegions | undefined) {
+		this.#buffered = sortedRegions(regions);
+		this.render();
+	}
+
 	get groovePress(): 'jump' | 'none' {
 		return this.getAttribute('groove-press') === 'none' ? 'none' : 'jump';
 	}
@@ -92,10 +105,19 @@ export class SonicSlider extends SonicValueElement {
 		this.reflect('spring', isSpring);
 	}
 
+	#buffered: Array<[number, number]> = [];
+
 	readonly #slider = renderSlider();
 
 	override connectedCallback(): void {
-		this.upgradeProperties('groovePress', 'modulationValue', 'modulation', 'orientation', 'spring');
+		this.upgradeProperties(
+			'buffered',
+			'groovePress',
+			'modulationValue',
+			'modulation',
+			'orientation',
+			'spring',
+		);
 		super.connectedCallback();
 	}
 
@@ -103,7 +125,11 @@ export class SonicSlider extends SonicValueElement {
 		const slider = this.#slider;
 		const cap = requireChild(slider, '.sonic-slider-cap', HTMLDivElement);
 
-		this.bindScale(slider, requireChild(slider, '.sonic-slider-scale', HTMLDivElement), signal);
+		bindScale(
+			this,
+			{ control: slider, marks: requireChild(slider, '.sonic-slider-scale', HTMLDivElement) },
+			signal,
+		);
 		slider.addEventListener(
 			'transitionend',
 			(event) => {
@@ -160,7 +186,7 @@ export class SonicSlider extends SonicValueElement {
 	}
 
 	#renderBuffered(slider: HTMLElement): void {
-		const buffered = this.buffered;
+		const buffered = this.#buffered;
 
 		if (buffered.length === 0) {
 			slider.style.removeProperty('--_sonic-slider-buffered-regions');
