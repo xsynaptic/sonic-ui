@@ -199,6 +199,14 @@ import '#styles/playground.css';
 				value="150"
 			></sonic-waveform>
 		</div>
+		<div class="w-72" id="spectrum-box">
+			<sonic-spectrum
+				class="[--sonic-spectrum-length:100%]"
+				data-spectrum-spike="300"
+				id="spectrum"
+				sample-rate="44100"
+			></sonic-spectrum>
+		</div>
 		<sonic-slider
 			aria-label="Pitch"
 			default="0"
@@ -351,5 +359,6 @@ import '#styles/playground.css';
 		import '#scripts/samples.ts';
 		import '#scripts/markers.ts';
 		import '#scripts/peaks.ts';
+		import '#scripts/spectrum-frames.ts';
 	</script>
 </Document>

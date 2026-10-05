@@ -33,6 +33,7 @@ interface Bus {
 	master: GainNode;
 	meters: { input: AnalyserNode; output: AnalyserNode };
 	output: GainNode;
+	spectrum: AnalyserNode;
 	wet: GainNode;
 }
 
@@ -118,6 +119,8 @@ function createBus(context: AudioContext): Bus {
 			output: new AnalyserNode(context, { fftSize: 1024 }),
 		},
 		output: new GainNode(context),
+		// Unsmoothed, so the fall on show is the display's own
+		spectrum: new AnalyserNode(context, { fftSize: 4096, smoothingTimeConstant: 0 }),
 		wet: new GainNode(context),
 	};
 	const limiter = new DynamicsCompressorNode(context, {
@@ -133,6 +136,7 @@ function createBus(context: AudioContext): Bus {
 	bus.input.connect(bus.drive);
 	bus.wet.connect(bus.output);
 	bus.output.connect(bus.meters.output);
+	bus.output.connect(bus.spectrum);
 	bus.output.connect(limiter).connect(bus.master).connect(context.destination);
 
 	return bus;
@@ -284,7 +288,13 @@ export function createEcho(context: AudioContext) {
 		glideTo(graph.bus.master.gain, isOn ? 1 : 0);
 	}
 
-	return { fade, input: graph.bus.input, meters: graph.bus.meters, update };
+	return {
+		fade,
+		input: graph.bus.input,
+		meters: graph.bus.meters,
+		spectrum: graph.bus.spectrum,
+		update,
+	};
 }
 
 export type Echo = ReturnType<typeof createEcho>;

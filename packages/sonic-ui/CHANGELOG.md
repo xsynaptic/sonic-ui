@@ -1,5 +1,28 @@
 # @xsynaptic/sonic-ui
 
+## 0.7.0
+
+### Minor Changes
+
+- - `<sonic-spectrum>` draws level against log frequency on glass: set `analyser` to an `AnalyserNode`, or `push()` a frame of decibels per bin. `peak` and `resetPeak()` report the loudest bin.
+  - New tokens: `--sonic-spectrum-size`, `--sonic-spectrum-length`, `--sonic-spectrum-inset-ratio`, `--sonic-spectrum-radius-ratio`, `--sonic-spectrum-hot-from` and `--sonic-spectrum-clip-from`. New hook classes: `sonic-spectrum` and `sonic-spectrum-canvas`.
+
+## 0.6.1
+
+### Patch Changes
+
+- - `--sonic-scale` colours a scale's ticks, and `--sonic-panel-text` the text on a panel.
+  - The number box, waveform, wavestrip and XY pad draw in `--sonic-glass-text`, no longer `--sonic-ink`.
+  - `--sonic-well` also colours the switch's bushing.
+  - The glass warp is gone, and glass with no depth is one flat colour.
+  - The held bracket moves to the hook classes `sonic-xy-bracket` and `sonic-envelope-bracket`.
+- - A readout stays on one line, and `--sonic-readout-glass` colours it.
+  - `buffered` is on the slider and the wave strip only.
+  - `tabindex="-1"` on a value control's host removes its tab stop.
+- - A bare button with no legend draws a faint edge in the text colour; `--sonic-cap-edge: transparent` removes it.
+  - A bare unlit LED is a tint of the text colour, with no bezel.
+  - Bare glass follows the colour scheme and has an edge; glass text follows the glass's lightness.
+
 ## 0.6.0
 
 ### Minor Changes

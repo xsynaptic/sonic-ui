@@ -46,6 +46,8 @@ The words this library uses for its controls, their parts and their values. Wher
 
 **Waveform**: The close-up view of a wave, which scrolls under a fixed playhead. _Avoid_: Detail view, scrolling waveform
 
+**Spectrum**: A display of level against frequency, drawn as one filled shape that rises at once and falls at a set rate. _Avoid_: Analyser (the node that feeds it), FFT, spectrograph
+
 **Wavestrip**: The overview of a whole track, drawn as bars and scrubbed to seek. _Avoid_: Overview waveform, stripe, seek bar
 
 ### Parts
@@ -146,7 +148,11 @@ The words this library uses for its controls, their parts and their values. Wher
 
 **Value** (of a meter): A meter reading given in the meter's own units, shown exactly as given. _Avoid_: Linear scale, raw level
 
-**Ballistics**: How quickly a meter's bar rises and falls, following a metering standard. _Avoid_: Response, smoothing
+**Bin**: One of the evenly spaced frequencies in a frame given to a spectrum, each with a level in decibels. _Avoid_: Band (a filter's), bucket, sample
+
+**Zone**: A stretch of a level display's range with its own colour: lit, then hot, then clip. _Avoid_: Band, region (that is a stretch of a wave), range
+
+**Ballistics**: How quickly a meter's bar or a spectrum's bins rise and fall, following a metering standard. _Avoid_: Response, smoothing
 
 ### Behaviour
 

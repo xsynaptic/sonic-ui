@@ -5,6 +5,7 @@ export { SonicMeter } from '#elements/meter.ts';
 export { SonicNumber } from '#elements/number.ts';
 export { SonicSegmented } from '#elements/segmented.ts';
 export { SonicSlider } from '#elements/slider.ts';
+export { SonicSpectrum } from '#elements/spectrum.ts';
 export { SonicSplit } from '#elements/split.ts';
 export { SonicSwitch } from '#elements/switch.ts';
 export { SonicWaveform } from '#elements/waveform.ts';

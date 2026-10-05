@@ -304,6 +304,31 @@ test('resize hears each new size once, and lengths read their registered propert
 	expect(looks.at(-1)).toEqual({ pitch: 4.5, unset: 0 });
 });
 
+test('numbers read their properties as numbers, and a change to one repaints as a colour does', () => {
+	const { flushFrames } = installCanvasFakes();
+	const canvas = document.createElement('canvas');
+	const looks: Array<Record<'from', number>> = [];
+
+	document.body.replaceChildren(canvas);
+	canvas.style.setProperty('--_sonic-test-from', '-4.5');
+	bindSurface({
+		canvas,
+		colours: { ink: '--_sonic-test-colour' },
+		numbers: { from: '--_sonic-test-from' },
+		paint: (_context, frame) => {
+			looks.push(frame.look.numbers);
+		},
+		signal: new AbortController().signal,
+	});
+	FakeResizeObserver.instances.at(-1)?.report([100, 20], [100, 20]);
+	flushFrames();
+
+	expect(looks.at(-1)).toEqual({ from: -4.5 });
+	expect(canvas.style.getPropertyValue('transition-property')).toBe(
+		'--_sonic-test-colour, --_sonic-test-from',
+	);
+});
+
 test('a ratio change the device box does not show still reaches the frame', () => {
 	const { flushFrames, queries } = installCanvasFakes();
 	const { canvas, frames, resize } = mountSurface();

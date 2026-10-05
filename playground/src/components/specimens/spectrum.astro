@@ -1,0 +1,23 @@
+---
+import Cell from '#components/specimens/cell.astro';
+import SpecimenGrid from '#components/specimens/specimen-grid.astro';
+
+const spectrums = [
+	{ id: 'spectrum-still', label: 'Still frame', shape: 2 },
+	{ id: 'spectrum-hold', isHeld: true, label: 'Peak hold', shape: 3 },
+];
+---
+
+<SpecimenGrid isLarge={true}>
+	{spectrums.map((spectrum) => (
+		<Cell id={spectrum.id} isWide={true} label={spectrum.label}>
+			<div aria-labelledby={spectrum.id} role="group">
+				<sonic-spectrum
+					class="[--sonic-spectrum-length:20rem]"
+					data-spectrum-shape={spectrum.shape}
+					peak-hold={spectrum.isHeld}
+				></sonic-spectrum>
+			</div>
+		</Cell>
+	))}
+</SpecimenGrid>

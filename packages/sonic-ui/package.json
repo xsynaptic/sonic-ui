@@ -1,6 +1,6 @@
 {
 	"name": "@xsynaptic/sonic-ui",
-	"version": "0.6.0",
+	"version": "0.7.0",
 	"description": "Native custom elements for audio interfaces, skinned with CSS custom properties",
 	"keywords": [
 		"custom-elements",
@@ -66,6 +66,7 @@
 		"./screen.css": "./dist/styles/screen.css",
 		"./segmented.css": "./dist/styles/segmented.css",
 		"./slider.css": "./dist/styles/slider.css",
+		"./spectrum.css": "./dist/styles/spectrum.css",
 		"./switch.css": "./dist/styles/switch.css",
 		"./waveform.css": "./dist/styles/waveform.css",
 		"./wavestrip.css": "./dist/styles/wavestrip.css",

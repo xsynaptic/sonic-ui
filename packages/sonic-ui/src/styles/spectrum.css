@@ -1,0 +1,105 @@
+@property --_sonic-spectrum-size {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 96px;
+}
+
+@property --_sonic-spectrum-length {
+	syntax: '<length-percentage>';
+	inherits: true;
+	initial-value: 320px;
+}
+
+@property --_sonic-spectrum-lit {
+	syntax: '<color>';
+	inherits: true;
+	initial-value: rgb(245 158 10);
+}
+
+@property --_sonic-spectrum-hot {
+	syntax: '<color>';
+	inherits: true;
+	initial-value: rgb(250 115 20);
+}
+
+@property --_sonic-spectrum-clip {
+	syntax: '<color>';
+	inherits: true;
+	initial-value: rgb(240 70 70);
+}
+
+@property --_sonic-spectrum-grid {
+	syntax: '<color>';
+	inherits: true;
+	initial-value: rgb(96 96 104);
+}
+
+@property --_sonic-spectrum-hot-from {
+	syntax: '<number>';
+	inherits: true;
+	initial-value: -12;
+}
+
+@property --_sonic-spectrum-clip-from {
+	syntax: '<number>';
+	inherits: true;
+	initial-value: -3;
+}
+
+@layer sonic {
+	:is(sonic-spectrum, .sonic-spectrum) {
+		--_sonic-spectrum-size: var(--sonic-spectrum-size, 6rem);
+		--_sonic-spectrum-length: var(--sonic-spectrum-length, 20rem);
+	}
+
+	:has(> .sonic-spectrum):not([hidden]) {
+		display: contents;
+	}
+
+	sonic-spectrum:not(:defined, [hidden]) {
+		display: block;
+		visibility: hidden;
+		flex-shrink: 0;
+		inline-size: var(--_sonic-spectrum-length);
+		block-size: var(--_sonic-spectrum-size);
+	}
+
+	.sonic-spectrum {
+		--_sonic-unit: calc(var(--_sonic-spectrum-size) / 48);
+		--_sonic-spectrum-lit: var(--_sonic-lit);
+		--_sonic-spectrum-hot: var(--_sonic-hot);
+		--_sonic-spectrum-clip: var(--_sonic-clip);
+		--_sonic-spectrum-grid: color-mix(in oklab, var(--_sonic-glass-text) 20%, transparent);
+		--_sonic-spectrum-hot-from: var(--sonic-spectrum-hot-from, -12);
+		--_sonic-spectrum-clip-from: var(--sonic-spectrum-clip-from, -3);
+
+		inline-size: var(--_sonic-spectrum-length);
+		block-size: var(--_sonic-spectrum-size);
+		padding: calc(var(--_sonic-spectrum-size) * var(--sonic-spectrum-inset-ratio, 0.06));
+
+		/* The canvas's backing size would otherwise feed an intrinsically sized parent */
+		contain: size;
+
+		--_sonic-glass-radius: calc(
+			var(--_sonic-spectrum-size) * var(--sonic-spectrum-radius-ratio, 0.08)
+		);
+
+		border-radius: var(--_sonic-glass-radius);
+	}
+
+	.sonic-spectrum-canvas {
+		display: block;
+		inline-size: 100%;
+		block-size: 100%;
+	}
+
+	/* Opaque, since a system highlight carries alpha that would blend the bars into the glass */
+	@media (forced-colors: active) {
+		.sonic-spectrum {
+			--_sonic-spectrum-lit: rgb(from CanvasText r g b / 100%);
+			--_sonic-spectrum-hot: rgb(from Highlight r g b / 100%);
+			--_sonic-spectrum-clip: rgb(from Highlight r g b / 100%);
+			--_sonic-spectrum-grid: rgb(from GrayText r g b / 100%);
+		}
+	}
+}

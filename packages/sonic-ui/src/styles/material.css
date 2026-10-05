@@ -33,6 +33,7 @@
 		.sonic-segmented,
 		.sonic-slider,
 		.sonic-slider-readout,
+		.sonic-spectrum,
 		.sonic-waveform,
 		.sonic-waveform-readout,
 		.sonic-wavestrip,
@@ -58,6 +59,7 @@
 		.sonic-ring,
 		.sonic-segmented-option,
 		.sonic-slider,
+		.sonic-spectrum,
 		.sonic-waveform,
 		.sonic-wavestrip,
 		.sonic-xy
@@ -92,6 +94,9 @@
 		);
 		--_sonic-lens-glass: var(--sonic-lens, color-mix(in oklab, var(--_sonic-unlit) 60%, #000));
 		--_sonic-lens: var(--_sonic-lens-glint), var(--_sonic-lens-glass);
+	}
+
+	:is(.sonic-led, .sonic-meter, .sonic-spectrum) {
 		--_sonic-hot: var(--sonic-hot, oklch(70.5% 0.187 48deg));
 		--_sonic-clip: var(--sonic-clip, oklch(63.7% 0.208 25deg));
 	}
@@ -176,6 +181,7 @@
 		.sonic-number,
 		.sonic-screen,
 		.sonic-slider-readout,
+		.sonic-spectrum,
 		.sonic-waveform,
 		.sonic-waveform-readout,
 		.sonic-wavestrip,
@@ -227,7 +233,15 @@
 	}
 
 	/* A definite cell, so percentage-sized content fills the glass; a canvas sized to its own box would feed back */
-	:is(.sonic-envelope, .sonic-number, .sonic-screen, .sonic-waveform, .sonic-wavestrip, .sonic-xy) {
+	:is(
+		.sonic-envelope,
+		.sonic-number,
+		.sonic-screen,
+		.sonic-spectrum,
+		.sonic-waveform,
+		.sonic-wavestrip,
+		.sonic-xy
+	) {
 		--_sonic-glass-depth: var(--sonic-glass-depth, var(--_sonic-relief));
 		--_sonic-glass-texture: var(--sonic-glass-texture, var(--_sonic-relief));
 		--_sonic-glass-pitch: max(2px, round(2 * var(--_sonic-unit), 1px));
@@ -313,6 +327,7 @@
 		.sonic-number,
 		.sonic-screen,
 		.sonic-segmented,
+		.sonic-spectrum,
 		.sonic-waveform,
 		.sonic-wavestrip,
 		.sonic-xy

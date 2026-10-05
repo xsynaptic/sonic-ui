@@ -16,10 +16,24 @@ import TonePanel from '#components/tape-echo/tone-panel.astro';
 		</Fragment>
 	</PageHeader>
 	<div class="-mx-4 overflow-x-auto px-4 pb-4 sm:mx-0 sm:px-0" data-tape-echo>
-		<div class="inline-flex min-w-max items-stretch gap-4 surface p-4">
-			<EchoPanel />
-			<TempoPanel />
-			<TonePanel />
+		<div class="inline-grid min-w-max gap-4 surface p-4">
+			<div class="flex items-stretch gap-4">
+				<EchoPanel />
+				<TempoPanel />
+				<TonePanel />
+			</div>
+			<div class="grid grid-cols-[minmax(0,1fr)_9rem] items-center gap-4">
+				<sonic-spectrum
+					class="[--sonic-spectrum-clip-from:-25] [--sonic-spectrum-hot-from:-34] [--sonic-spectrum-length:100%]"
+					data-echo-spectrum
+				></sonic-spectrum>
+				<div class="grid justify-items-center gap-2 font-mono">
+					<sonic-button aria-label="Read peak" class="text-[0.5rem]" data-echo-peak-read>
+						<span aria-hidden="true">PEAK</span>
+					</sonic-button>
+					<p class="min-h-4 text-[0.625rem] text-text" data-echo-peak-status role="status"></p>
+				</div>
+			</div>
 		</div>
 	</div>
 	<Fragment slot="scripts">

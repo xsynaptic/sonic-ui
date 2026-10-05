@@ -8,17 +8,26 @@ export interface SurfaceSize {
 	width: number;
 }
 
-export interface SurfaceLook<Colour extends string, Length extends string = never> {
+export interface SurfaceLook<
+	Colour extends string,
+	Length extends string = never,
+	Numeric extends string = never,
+> {
 	colours: Record<Colour, string>;
 	isReducedMotion: boolean;
 	lengths: Record<Length, number>;
+	numbers: Record<Numeric, number>;
 }
 
-export interface SurfaceFrame<Colour extends string, Length extends string = never> {
+export interface SurfaceFrame<
+	Colour extends string,
+	Length extends string = never,
+	Numeric extends string = never,
+> {
 	frameMs: number;
 	isDirty: boolean;
 	isRebuilt: boolean;
-	look: SurfaceLook<Colour, Length>;
+	look: SurfaceLook<Colour, Length, Numeric>;
 	size: SurfaceSize;
 }
 
@@ -29,11 +38,12 @@ export interface Surface {
 	readonly size: SurfaceSize;
 }
 
-interface SurfaceOptions<Colour extends string, Length extends string> {
+interface SurfaceOptions<Colour extends string, Length extends string, Numeric extends string> {
 	canvas: HTMLCanvasElement;
 	colours: Record<Colour, PrivateProperty>;
 	lengths?: Record<Length, PrivateProperty>;
-	paint: (context: CanvasRenderingContext2D, frame: SurfaceFrame<Colour, Length>) => void;
+	numbers?: Record<Numeric, PrivateProperty>;
+	paint: (context: CanvasRenderingContext2D, frame: SurfaceFrame<Colour, Length, Numeric>) => void;
 	resize?: (size: SurfaceSize) => void;
 	signal: AbortSignal;
 }
@@ -69,7 +79,11 @@ function readEach<Name extends string, Value>(
 	) as Record<Name, Value>;
 }
 
-class CanvasSurface<Colour extends string, Length extends string> implements Surface {
+class CanvasSurface<
+	Colour extends string,
+	Length extends string,
+	Numeric extends string,
+> implements Surface {
 	get size(): SurfaceSize {
 		return this.#size;
 	}
@@ -87,15 +101,15 @@ class CanvasSurface<Colour extends string, Length extends string> implements Sur
 
 	#isVisible = true;
 
-	#look: SurfaceLook<Colour, Length> | undefined;
+	#look: SurfaceLook<Colour, Length, Numeric> | undefined;
 
-	readonly #options: SurfaceOptions<Colour, Length>;
+	readonly #options: SurfaceOptions<Colour, Length, Numeric>;
 
 	readonly #reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 
 	#size: SurfaceSize = { dpr: deviceRatio(), height: 0, width: 0 };
 
-	constructor(options: SurfaceOptions<Colour, Length>) {
+	constructor(options: SurfaceOptions<Colour, Length, Numeric>) {
 		const { canvas, signal } = options;
 
 		this.#options = options;
@@ -145,15 +159,17 @@ class CanvasSurface<Colour extends string, Length extends string> implements Sur
 	}
 
 	#armTransitions(): void {
-		const { style } = this.#options.canvas;
+		const { canvas, colours, numbers = {} } = this.#options;
+		const { style } = canvas;
+		const watched = [...Object.values(colours), ...Object.values(numbers)];
 
-		style.setProperty('transition-property', Object.values(this.#options.colours).join(', '));
+		style.setProperty('transition-property', watched.join(', '));
 		style.setProperty('transition-duration', '0.001ms');
 		style.setProperty('transition-timing-function', 'step-start');
 		style.setProperty('transition-behavior', 'allow-discrete');
 	}
 
-	#current(): { isRebuilt: boolean; look: SurfaceLook<Colour, Length> } {
+	#current(): { isRebuilt: boolean; look: SurfaceLook<Colour, Length, Numeric> } {
 		if (this.#look && !this.#isRebuildWanted) return { isRebuilt: false, look: this.#look };
 
 		return { isRebuilt: true, look: this.#read() };
@@ -245,8 +261,8 @@ class CanvasSurface<Colour extends string, Length extends string> implements Sur
 		);
 	}
 
-	#read(): SurfaceLook<Colour, Length> {
-		const { canvas, colours, lengths = {} } = this.#options;
+	#read(): SurfaceLook<Colour, Length, Numeric> {
+		const { canvas, colours, lengths = {}, numbers = {} } = this.#options;
 		const styles = getComputedStyle(canvas);
 
 		return {
@@ -258,6 +274,9 @@ class CanvasSurface<Colour extends string, Length extends string> implements Sur
 			),
 			isReducedMotion: this.#reducedMotion.matches,
 			lengths: readEach<Length, number>(lengths, (property) => readPxProperty(styles, property, 0)),
+			numbers: readEach<Numeric, number>(numbers, (property) =>
+				readPxProperty(styles, property, 0),
+			),
 		};
 	}
 
@@ -306,8 +325,10 @@ class CanvasSurface<Colour extends string, Length extends string> implements Sur
 	}
 }
 
-export function bindSurface<Colour extends string, Length extends string = never>(
-	options: SurfaceOptions<Colour, Length>,
-): Surface {
+export function bindSurface<
+	Colour extends string,
+	Length extends string = never,
+	Numeric extends string = never,
+>(options: SurfaceOptions<Colour, Length, Numeric>): Surface {
 	return new CanvasSurface(options);
 }

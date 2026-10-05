@@ -2,7 +2,7 @@ import type { Page } from '@playwright/test';
 
 import { expect, test } from '@playwright/test';
 
-import { expectPixel, middleOf, paintedColour, pixelAt } from './canvas-probe.ts';
+import { canvasPixels, expectPixel, middleOf, paintedColour, pixelAt } from './canvas-probe.ts';
 
 // A part paints at all only if it opts out; forced colours drop gradients and force backgrounds to Canvas
 const drawnParts = [
@@ -343,6 +343,23 @@ test('a waveform paints its wave in opaque CanvasText', async ({ page }) => {
 
 	await expect(async () => {
 		expectPixel(await pixelAt(canvas, middle), opaque);
+	}).toPass();
+});
+
+test('a spectrum paints its bars in opaque CanvasText', async ({ page }) => {
+	const canvas = page.locator('#spectrum canvas');
+
+	await canvas.scrollIntoViewIfNeeded();
+
+	const opaque = await paintedColour(
+		canvas,
+		await systemColour(page, 'rgb(from CanvasText r g b / 1)'),
+	);
+
+	await expect(async () => {
+		const [pixel] = await canvasPixels(canvas, [0], 0.9);
+
+		expectPixel(pixel, opaque);
 	}).toPass();
 });
 

@@ -4,6 +4,7 @@ import {
 	SonicMeter,
 	SonicNumber,
 	SonicSegmented,
+	SonicSpectrum,
 } from '@xsynaptic/sonic-ui';
 
 import type { ControlsOf } from '#scripts/find.ts';
@@ -11,7 +12,7 @@ import type { Echo, EchoParams } from '#scripts/tape-echo/audio.ts';
 import type { Division } from '#scripts/tape-echo/divisions.ts';
 
 import { dataHook, find, readControls } from '#scripts/find.ts';
-import { applyFormat } from '#scripts/formats.ts';
+import { applyFormat, formatterFor } from '#scripts/formats.ts';
 import { frameLoop } from '#scripts/frame-loop.ts';
 import { echoModes } from '#scripts/stop-names.ts';
 import { beatMsOf, createTapTempo } from '#scripts/tap-tempo.ts';
@@ -36,7 +37,9 @@ const dialSpec = {
 const panelSpec = {
 	bpm: SonicNumber,
 	mode: SonicDial,
+	peakRead: SonicButton,
 	play: SonicButton,
+	spectrum: SonicSpectrum,
 	style: SonicNumber,
 	tap: SonicButton,
 };
@@ -47,6 +50,7 @@ interface Controls extends ControlsOf<typeof panelSpec> {
 	dials: ControlsOf<typeof dialSpec>;
 	heads: Array<EchoHead>;
 	meters: { input: SonicMeter; output: SonicMeter };
+	peakStatus: HTMLElement;
 	tapLed: HTMLElement;
 }
 
@@ -80,6 +84,7 @@ function readPanel(panel: Element): Controls {
 			{ input: SonicMeter, output: SonicMeter },
 			(name) => `:scope [data-echo-meter="${name}"]`,
 		),
+		peakStatus: find(panel, echoHook('peak-status'), HTMLElement),
 		tapLed: find(controls.tap, ':scope > .sonic-led', HTMLElement),
 	};
 }
@@ -148,7 +153,7 @@ function peakOf(analyser: AnalyserNode, samples: Float32Array<ArrayBuffer>): num
 }
 
 function createTransport(controls: Controls) {
-	const { bpm, meters, tapLed } = controls;
+	const { bpm, meters, spectrum, tapLed } = controls;
 	const samples = new Float32Array(1024);
 	let engine: Engine | undefined;
 	let runs = 0;
@@ -181,6 +186,8 @@ function createTransport(controls: Controls) {
 
 		if (!isRunning) {
 			engine?.echo.fade(false);
+			// An idle page pulls nothing; the bars fall to the floor on their own
+			spectrum.analyser = undefined;
 			delete tapLed.dataset.sonicLit;
 			meters.input.level = 0;
 			meters.output.level = 0;
@@ -195,6 +202,7 @@ function createTransport(controls: Controls) {
 
 		echo.update(paramsOf(controls));
 		echo.fade(true);
+		spectrum.analyser = echo.spectrum;
 		plucks.restart();
 		loop.start();
 	}
@@ -204,6 +212,21 @@ function createTransport(controls: Controls) {
 		run,
 		update: () => engine?.echo.update(paramsOf(controls)),
 	};
+}
+
+// The drawing is hidden from assistive technology, so the reading is spoken on request
+function bindPeakRead({ peakRead, peakStatus, spectrum }: Controls): void {
+	const formatHertz = formatterFor('hertz') ?? String;
+	const formatDecibels = formatterFor('db') ?? String;
+
+	peakRead.addEventListener('click', () => {
+		const peak = spectrum.peak;
+
+		peakStatus.textContent = peak
+			? `Peak ${formatHertz(peak.frequency)}, ${formatDecibels(peak.decibels)}`
+			: 'No signal yet';
+		spectrum.resetPeak();
+	});
 }
 
 function bindEcho(panel: Element): void {
@@ -239,6 +262,7 @@ function bindEcho(panel: Element): void {
 	play.addEventListener('change', () => {
 		void transport.run(play.pressed);
 	});
+	bindPeakRead(controls);
 	dimSecondHead(controls);
 }
 
