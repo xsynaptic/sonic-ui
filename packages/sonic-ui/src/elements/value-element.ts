@@ -421,7 +421,7 @@ export abstract class SonicValueElement extends SonicFormElement {
 		control.addEventListener(
 			'pointerup',
 			(event) => {
-				this.#hover?.at(event);
+				this.#hover?.lift(event);
 			},
 			{ signal },
 		);

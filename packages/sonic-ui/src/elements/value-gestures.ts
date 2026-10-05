@@ -103,15 +103,16 @@ export class ValueGestures {
 					// A click listener above makes WebKit send a tap's compatibility mousedown, which blurs the entry a double tap just opened
 					if (event.pointerType === 'touch') event.preventDefault();
 					focusByPointer(control);
+					this.#pointerType = event.pointerType;
 					if (isResetPress(event)) {
 						this.#reset();
+						this.#pointerType = undefined;
 						return;
 					}
 
 					const fromValue = host.value();
 
 					host.toggleState('dragging', true);
-					this.#pointerType = event.pointerType;
 
 					const axis = grab(event);
 					if (!axis) {
@@ -136,19 +137,9 @@ export class ValueGestures {
 					return drag;
 				},
 				lift: (drag, event) => {
-					const tap = drag.state.isEngaged ? undefined : host.tapTarget();
-
-					if (tap !== undefined) {
-						entry.forgetPress();
-						this.#commit(tap);
-						return;
-					}
-					if (!entry.press(event) || host.springTarget() !== undefined) return;
-
-					const gesture = host.doublePress();
-
-					if (gesture === 'reset') this.#reset();
-					else if (gesture === 'entry') entry.open();
+					this.#pointerType = event.pointerType;
+					this.#lift(drag, event, entry);
+					this.#pointerType = undefined;
 				},
 				move: (drag, event) => {
 					this.#dragTo(drag, event);
@@ -365,17 +356,34 @@ export class ValueGestures {
 		this.#commit(next, next > host.value() ? 1 : -1);
 	}
 
+	#lift(drag: ValueDrag, event: PointerEvent, entry: ValueEntry): void {
+		const host = this.#host;
+		const tap = drag.state.isEngaged ? undefined : host.tapTarget();
+
+		if (tap !== undefined) {
+			entry.forgetPress();
+			this.#commit(tap);
+			return;
+		}
+		if (!entry.press(event) || host.springTarget() !== undefined) return;
+
+		const gesture = host.doublePress();
+
+		if (gesture === 'reset') this.#reset();
+		else if (gesture === 'entry') entry.open();
+	}
+
 	#releaseDrag(drag: ValueDrag): void {
 		const host = this.#host;
 
 		clearTimeout(drag.revealTimer);
-		this.#pointerType = undefined;
 		this.#claim.conceal('drag');
 		host.toggleState('cancelling', false);
 		host.holdChanged();
 		this.#showRevealed();
 		if (host.value() !== drag.fromValue) host.dispatch('change');
 		this.#springBack();
+		this.#pointerType = undefined;
 	}
 
 	#renderDragReveal(drag: ValueDrag): void {

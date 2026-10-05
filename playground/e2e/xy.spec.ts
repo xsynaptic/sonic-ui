@@ -92,6 +92,28 @@ test("a press on the glass brings the puck's centre under the pointer, and a cor
 	expectInside(await boxOf(puck), glass);
 });
 
+test('a press on the glass reports dragging by its first input', async ({ isMobile, page }) => {
+	test.skip(isMobile, mouseOnly);
+
+	const xy = page.locator('#xy');
+	const glass = await boxOf(page.locator('#xy .sonic-xy'));
+
+	await xy.evaluate((element) => {
+		element.addEventListener(
+			'input',
+			() => {
+				element.dataset.pressed = String(element.matches(':state(dragging)'));
+			},
+			{ once: true },
+		);
+	});
+	await page.mouse.move(glass.x + glass.width * 0.3, glass.y + glass.height * 0.25);
+	await page.mouse.down();
+	expect(await xy.getAttribute('data-pressed')).toBe('true');
+
+	await page.mouse.up();
+});
+
 test('a disabled XY pad takes no press and no focus', async ({ isMobile, page }) => {
 	test.skip(isMobile, mouseOnly);
 

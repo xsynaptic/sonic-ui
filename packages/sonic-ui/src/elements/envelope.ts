@@ -148,6 +148,10 @@ export class SonicEnvelope extends SonicElement {
 		this.reflect('hold', id);
 	}
 
+	get pointerType(): string | undefined {
+		return this.#pointerType;
+	}
+
 	get readout(): boolean {
 		return this.hasAttribute('readout');
 	}
@@ -207,6 +211,8 @@ export class SonicEnvelope extends SonicElement {
 	readonly #line = requireChild(this.#envelope, '.sonic-envelope-line', SVGElement);
 
 	#pointerDrag: PointerDrag<HandleDrag> | undefined;
+
+	#pointerType: string | undefined;
 
 	readonly #readout = new Readout(
 		requireChild(this.#envelope, '.sonic-envelope-readout', HTMLDivElement),
@@ -289,6 +295,7 @@ export class SonicEnvelope extends SonicElement {
 
 						binding.element.dispatchEvent(new Event('change', { bubbles: true }));
 					}
+					this.#pointerType = undefined;
 				},
 				toggle: (isDragging) => {
 					this.toggleState('dragging', isDragging);
@@ -376,6 +383,7 @@ export class SonicEnvelope extends SonicElement {
 
 		const { drives, isFlipped, part } = pressed;
 
+		this.#pointerType = event.pointerType;
 		this.#claim.press(true, revealDelay(this.#envelope));
 		this.#held = part;
 		this.#drawBracket();

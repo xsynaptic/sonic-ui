@@ -153,6 +153,30 @@ test('off Apple platforms, a Ctrl-click returns only the axis that has a default
 	expect(events).toEqual(['input', 'change']);
 });
 
+test('a press and a Ctrl-click each report their pointer type through input and change, then drop it', () => {
+	const { glass, parent, xy } = mountXy(`${offset} x-default="25"`);
+	const reported: Array<string> = [];
+
+	for (const type of ['input', 'change']) {
+		parent.addEventListener(type, () => {
+			reported.push(`${type}:${String(xy.pointerType)}`);
+		});
+	}
+	pointerAt(glass, 'pointerdown', { clientX: 200, clientY: 20, pointerType: 'pen' });
+	pointerAt(glass, 'pointerup', { clientX: 200, clientY: 20, pointerType: 'pen' });
+	expect(reported).toEqual(['input:pen', 'change:pen']);
+	expect(xy.pointerType).toBeUndefined();
+
+	pointerAt(glass, 'pointerdown', {
+		clientX: 200,
+		clientY: 20,
+		ctrlKey: true,
+		pointerType: 'mouse',
+	});
+	expect(reported.slice(2)).toEqual(['input:mouse', 'change:mouse']);
+	expect(xy.pointerType).toBeUndefined();
+});
+
 test('off Apple platforms, a press with the Meta key down is an ordinary press', () => {
 	const { glass, xy } = mountXy(`${offset} x-default="25"`);
 

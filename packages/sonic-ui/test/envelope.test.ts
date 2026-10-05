@@ -125,6 +125,21 @@ test('a handle drag is heard as its dials turning, with one change per dial that
 	expect(events).toEqual(['input decay', 'input sustain', 'change decay', 'change sustain']);
 });
 
+test("a handle drag reports its pointer type through its dials' changes, then drops it", () => {
+	const { envelope, handle } = mountBound();
+	const reported: Array<string | undefined> = [];
+
+	document.body.addEventListener('change', () => {
+		reported.push(envelope.pointerType);
+	});
+	pointerAt(handle('decay'), 'pointerdown', { clientX: 100, clientY: 100, pointerType: 'touch' });
+	pointerAt(handle('decay'), 'pointermove', { clientX: 125, clientY: 80 });
+	pointerAt(handle('decay'), 'pointerup', { clientX: 125, clientY: 80 });
+
+	expect(reported).toEqual(['touch', 'touch']);
+	expect(envelope.pointerType).toBeUndefined();
+});
+
 test('a time handle has no level to move', () => {
 	const { dials, events, handle } = mountBound();
 

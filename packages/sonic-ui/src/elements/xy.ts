@@ -101,6 +101,10 @@ export class SonicXy extends SonicFormElement {
 		this.render();
 	}
 
+	get pointerType(): string | undefined {
+		return this.#pointerType;
+	}
+
 	get readout(): boolean {
 		return this.hasAttribute('readout');
 	}
@@ -274,6 +278,8 @@ export class SonicXy extends SonicFormElement {
 
 	#pointerDrag: PointerDrag<XyDrag> | undefined;
 
+	#pointerType: string | undefined;
+
 	readonly #puck = requireChild(this.#xy, '.sonic-xy-puck', HTMLDivElement);
 
 	readonly #readout = new Readout(requireChild(this.#xy, '.sonic-xy-readout', HTMLDivElement));
@@ -430,9 +436,15 @@ export class SonicXy extends SonicFormElement {
 					if (this.isDisabled() || isMenuPress(event)) return;
 
 					focusByPointer(this.focusTarget());
-					if (!isResetPress(event)) return this.#grab(event);
+					this.#pointerType = event.pointerType;
+					if (!isResetPress(event)) {
+						this.toggleState('dragging', true);
+
+						return this.#grab(event);
+					}
 
 					this.#reset();
+					this.#pointerType = undefined;
 
 					return;
 				},
@@ -444,10 +456,11 @@ export class SonicXy extends SonicFormElement {
 					if (!this.#input(step)) this.#renderReadout();
 				},
 				release: (drag) => {
-					this.#claim.press(false);
-					if (this.x === drag.from.x && this.y === drag.from.y) return;
+					const hasMoved = this.x !== drag.from.x || this.y !== drag.from.y;
 
-					this.dispatchEvent(new Event('change', { bubbles: true }));
+					this.#claim.press(false);
+					if (hasMoved) this.dispatchEvent(new Event('change', { bubbles: true }));
+					this.#pointerType = undefined;
 				},
 				toggle: (isDragging) => {
 					this.toggleState('dragging', isDragging);

@@ -8,8 +8,8 @@ interface HoverOptions {
 }
 
 export interface HoverPreview {
-	at: (event: PointerEvent) => void;
 	clear: () => void;
+	lift: (event: PointerEvent) => void;
 	restore: () => void;
 	value: () => number | undefined;
 }
@@ -87,9 +87,18 @@ export function bindHoverPreview(
 	);
 
 	return {
-		at,
 		clear: () => {
 			hold(undefined);
+		},
+		lift: (event) => {
+			const box = target.getBoundingClientRect();
+			const isOver =
+				event.clientX >= box.left &&
+				event.clientX <= box.right &&
+				event.clientY >= box.top &&
+				event.clientY <= box.bottom;
+
+			if (isOver) at(event);
 		},
 		restore: () => {
 			if (under !== undefined) hoverAt(under);

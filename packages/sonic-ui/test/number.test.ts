@@ -127,6 +127,20 @@ test('with press="step", each tap steps to the next position and wraps past the 
 	expect(partsOf(control).entry.hidden).toBe(true);
 });
 
+test('with press="step", a tap reports its pointer type through its change, then drops it', () => {
+	const { control, number } = mountNumber('press="step" positions="1 2 4 8" value="4"');
+	const committedBy: Array<string | undefined> = [];
+
+	document.body.addEventListener('change', () => {
+		committedBy.push(number.pointerType);
+	});
+	pointerAt(control, 'pointerdown', { clientY: 10, pointerType: 'touch' });
+	pointerAt(control, 'pointerup', { clientY: 10, pointerType: 'touch' });
+
+	expect(committedBy).toEqual(['touch']);
+	expect(number.pointerType).toBeUndefined();
+});
+
 test('with press="step" on a stepped range, a tap at the top wraps to the minimum', () => {
 	const { control, number } = mountNumber(
 		'press="step" min="-20" max="80" step="2.5" value="77.5"',

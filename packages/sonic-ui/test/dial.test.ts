@@ -241,6 +241,19 @@ test('on an Apple platform, Cmd-click resets to the default and reports it', () 
 	expect(events).toEqual(['input', 'change']);
 });
 
+test('a reset press reports its pointer type through its change, then drops it', () => {
+	const { control, dial } = mountDial('default="25" value="70"');
+	const committedBy: Array<string | undefined> = [];
+
+	document.body.addEventListener('change', () => {
+		committedBy.push(dial.pointerType);
+	});
+	press(control, { metaKey: true, pointerType: 'mouse' });
+
+	expect(committedBy).toEqual(['mouse']);
+	expect(dial.pointerType).toBeUndefined();
+});
+
 test('on an Apple platform, Ctrl-click is left to the context menu: no reset, tap or drag', () => {
 	const { control, dial } = mountDial('default="25" value="70"');
 	const events = recordEvents(dial);

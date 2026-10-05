@@ -393,6 +393,31 @@ test('a release under a still mouse brings the hovered value back, and a touch r
 	expect(wavestrip.hoverValue).toBeUndefined();
 });
 
+test('a release off the strip leaves the hovered value alone', () => {
+	installCanvasFakes();
+
+	const { control, wavestrip } = mountWavestrip(
+		'cancellable min="30" max="330" step="0" value="30"',
+	);
+	const hovered: Array<number | undefined> = [];
+
+	midPointerAt(control, 'pointerdown', { clientX: 75, pointerType: 'mouse' });
+	document.body.addEventListener('sonic-hover', () => {
+		hovered.push(wavestrip.hoverValue);
+	});
+	midPointerAt(control, 'pointermove', { buttons: 1, clientX: 150, pointerType: 'mouse' });
+	midPointerAt(control, 'pointermove', {
+		buttons: 1,
+		clientX: 150,
+		clientY: 168,
+		pointerType: 'mouse',
+	});
+	midPointerAt(control, 'pointerup', { clientX: 150, clientY: 168, pointerType: 'mouse' });
+
+	expect(wavestrip.value).toBe(30);
+	expect(hovered).toEqual([]);
+});
+
 function readoutAt(control: HTMLElement): string {
 	return control.style.getPropertyValue('--_sonic-wavestrip-readout-at');
 }
@@ -549,6 +574,22 @@ test('a touch held still reveals after the hold time, and reports its pointer ty
 	expect(trace).toEqual(['sonic-reveal:180', 'sonic-reveal:180']);
 	expect(wavestrip.pointerType).toBeUndefined();
 	vi.useRealTimers();
+});
+
+test('a release reports its pointer type through its change, then drops it', () => {
+	installCanvasFakes();
+
+	const { control, wavestrip } = mountWavestrip('min="30" max="330" step="0" value="50"');
+	const committedBy: Array<string | undefined> = [];
+
+	document.body.addEventListener('change', () => {
+		committedBy.push(wavestrip.pointerType);
+	});
+	midPointerAt(control, 'pointerdown', { clientX: 150, pointerType: 'pen' });
+	midPointerAt(control, 'pointerup', { clientX: 150, pointerType: 'pen' });
+
+	expect(committedBy).toEqual(['pen']);
+	expect(wavestrip.pointerType).toBeUndefined();
 });
 
 test('leaving the cancel zone ends the reveal before the value returns, and coming back restores it', () => {
