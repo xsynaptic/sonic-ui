@@ -230,13 +230,16 @@
 		inline-size: calc(var(--_sonic-switch-size) * var(--_sonic-switch-bushing-ratio));
 		aspect-ratio: 1;
 		pointer-events: none;
-		background: radial-gradient(
-			closest-side,
-			color-mix(in oklab, var(--_sonic-cap) calc(100% - 70% * var(--_sonic-relief)), #000) 0 42%,
-			var(--_sonic-switch-bushing-shade) 48%,
-			var(--_sonic-cap) 70%,
-			color-mix(in oklab, var(--_sonic-cap) calc(100% - 25% * var(--_sonic-relief)), #fff) 88%,
-			var(--_sonic-switch-bushing-shade)
+		background: var(
+			--sonic-well,
+			radial-gradient(
+				closest-side,
+				color-mix(in oklab, var(--_sonic-cap) calc(100% - 70% * var(--_sonic-relief)), #000) 0 42%,
+				var(--_sonic-switch-bushing-shade) 48%,
+				var(--_sonic-cap) 70%,
+				color-mix(in oklab, var(--_sonic-cap) calc(100% - 25% * var(--_sonic-relief)), #fff) 88%,
+				var(--_sonic-switch-bushing-shade)
+			)
 		);
 		border-radius: 50%;
 		box-shadow:

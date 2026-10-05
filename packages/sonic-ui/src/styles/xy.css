@@ -119,23 +119,28 @@
 		}
 	}
 
-	.sonic-xy-puck {
-		--_sonic-xy-puck-fill: var(--_sonic-xy-lit);
-		--_sonic-xy-puck-edge: var(--_sonic-xy-puck-fill);
-		--_sonic-xy-puck-bracket: transparent;
-		--_sonic-xy-puck-bracket-scale: 0.6;
-		--_sonic-xy-puck-lift: color-mix(in oklab, var(--_sonic-xy-lit) 85%, #fff);
-		--_sonic-xy-puck-glow: transparent;
-		--_sonic-xy-puck-ring: 0 0 transparent;
-
+	:is(.sonic-xy-bracket, .sonic-xy-puck) {
 		position: absolute;
 		inset: auto auto
 			calc(var(--_sonic-xy-inset) + var(--_sonic-xy-y, 0) * var(--_sonic-xy-travel-y))
 			calc(var(--_sonic-xy-inset) + var(--_sonic-xy-x, 0) * var(--_sonic-xy-travel-x));
 		inline-size: var(--_sonic-xy-puck);
 		block-size: var(--_sonic-xy-puck);
-		cursor: var(--_sonic-xy-cursor);
 		border-radius: 50%;
+	}
+
+	.sonic-xy-bracket {
+		--_sonic-bracket-size: var(--_sonic-xy-puck);
+	}
+
+	.sonic-xy-puck {
+		--_sonic-xy-puck-fill: var(--_sonic-xy-lit);
+		--_sonic-xy-puck-edge: var(--_sonic-xy-puck-fill);
+		--_sonic-xy-puck-lift: color-mix(in oklab, var(--_sonic-xy-lit) 85%, #fff);
+		--_sonic-xy-puck-glow: transparent;
+		--_sonic-xy-puck-ring: 0 0 transparent;
+
+		cursor: var(--_sonic-xy-cursor);
 		filter: drop-shadow(0 0 calc(0.15 * var(--_sonic-xy-puck)) var(--_sonic-xy-puck-glow));
 		transition: filter 120ms ease-out;
 
@@ -152,21 +157,6 @@
 				background-color 120ms ease-out,
 				border-color 120ms ease-out,
 				box-shadow 120ms ease-out;
-		}
-
-		&::after {
-			position: absolute;
-			inset: 4%;
-			pointer-events: none;
-			content: '';
-			border: max(1px, 0.08 * var(--_sonic-xy-puck)) solid var(--_sonic-xy-puck-bracket);
-			border-block-start-color: transparent;
-			border-radius: 50%;
-			rotate: 45deg;
-			scale: var(--_sonic-xy-puck-bracket-scale);
-			transition:
-				border-color 120ms ease-out,
-				scale 120ms ease-out;
 		}
 	}
 
@@ -191,12 +181,6 @@
 			var(--_sonic-xy-lit) calc(45% * var(--_sonic-relief)),
 			transparent
 		);
-		--_sonic-xy-puck-bracket: color-mix(
-			in oklab,
-			var(--_sonic-xy-lit) calc(100% * (1 - var(--_sonic-relief))),
-			transparent
-		);
-		--_sonic-xy-puck-bracket-scale: 1;
 	}
 
 	.sonic-xy-axis {

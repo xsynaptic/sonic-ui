@@ -50,6 +50,25 @@
 		clip-path: inset(calc(-1 * var(--_sonic-envelope-inset)));
 	}
 
+	.sonic-envelope-bracket {
+		--_sonic-point-size: calc(
+			2 * var(--_sonic-envelope-size) * var(--_sonic-envelope-handle-ratio)
+		);
+		--_sonic-bracket-size: var(--_sonic-point-size);
+
+		position: absolute;
+		inset: 0;
+		overflow: clip;
+		pointer-events: none;
+		border-radius: inherit;
+
+		&[data-sonic-part='curve'] {
+			--_sonic-point-size: calc(
+				2 * var(--_sonic-envelope-size) * var(--_sonic-envelope-curve-ratio)
+			);
+		}
+	}
+
 	.sonic-envelope-fill {
 		fill: color-mix(in oklab, var(--_sonic-lit) 18%, transparent);
 	}
@@ -69,15 +88,8 @@
 		vector-effect: non-scaling-stroke;
 	}
 
-	:is(.sonic-envelope-handle, .sonic-envelope-curve) {
-		--_sonic-point-ring: var(--_sonic-lit);
-		--_sonic-point-core: var(--_sonic-lit);
-		--_sonic-point-lift: color-mix(in oklab, var(--_sonic-lit) 85%, #fff);
-		--_sonic-point-edge: max(1px, var(--_sonic-point-stroke, 0px));
-		--_sonic-point-halo: transparent;
-		--_sonic-point-bracket: transparent;
-		--_sonic-point-bracket-scale: 0.6;
-
+	:is(.sonic-envelope-handle, .sonic-envelope-curve),
+	.sonic-envelope-bracket::before {
 		position: absolute;
 		inset: auto auto
 			calc(
@@ -88,6 +100,15 @@
 				var(--_sonic-envelope-inset) + var(--_sonic-envelope-x, 0) *
 					(100cqi - 2 * var(--_sonic-envelope-inset)) - var(--_sonic-point-size) / 2
 			);
+	}
+
+	:is(.sonic-envelope-handle, .sonic-envelope-curve) {
+		--_sonic-point-ring: var(--_sonic-lit);
+		--_sonic-point-core: var(--_sonic-lit);
+		--_sonic-point-lift: color-mix(in oklab, var(--_sonic-lit) 85%, #fff);
+		--_sonic-point-edge: max(1px, var(--_sonic-point-stroke, 0px));
+		--_sonic-point-halo: transparent;
+
 		z-index: 1;
 		box-sizing: border-box;
 		inline-size: var(--_sonic-point-size);
@@ -104,21 +125,6 @@
 			background-color 120ms ease-out,
 			border-color 120ms ease-out,
 			box-shadow 120ms ease-out;
-
-		&::after {
-			position: absolute;
-			inset: calc(-0.4 * var(--_sonic-point-size) - 2 * var(--_sonic-point-edge));
-			pointer-events: none;
-			content: '';
-			border: var(--_sonic-point-edge) solid var(--_sonic-point-bracket);
-			border-block-start-color: transparent;
-			border-radius: 50%;
-			rotate: 45deg;
-			scale: var(--_sonic-point-bracket-scale);
-			transition:
-				border-color 120ms ease-out,
-				scale 120ms ease-out;
-		}
 	}
 
 	.sonic-envelope-handle {
@@ -167,12 +173,6 @@
 			var(--_sonic-lit) calc(50% * var(--_sonic-relief)),
 			transparent
 		);
-		--_sonic-point-bracket: color-mix(
-			in oklab,
-			var(--_sonic-lit) calc(100% * (1 - var(--_sonic-relief))),
-			transparent
-		);
-		--_sonic-point-bracket-scale: 1;
 	}
 
 	@media (forced-colors: active) {

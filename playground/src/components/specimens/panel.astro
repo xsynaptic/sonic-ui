@@ -3,7 +3,13 @@ const panels = [
 	{ depth: undefined, id: 'panel-raised', title: 'Raised' },
 	{ depth: '0rem', id: 'panel-printed', title: 'Printed' },
 	{ depth: '-0.125rem', id: 'panel-tray', title: 'Tray' },
-	{ depth: undefined, id: 'panel-tinted', tint: 'rgb(120 160 255 / 8%)', title: 'Tinted' },
+	{
+		depth: undefined,
+		id: 'panel-tinted',
+		text: 'light-dark(oklch(30% 0.06 255deg), oklch(92% 0.03 255deg))',
+		tint: 'light-dark(oklch(91% 0.045 255deg), oklch(33% 0.07 255deg))',
+		title: 'Tinted',
+	},
 ];
 ---
 
@@ -12,7 +18,11 @@ const panels = [
 		<section
 			aria-labelledby={panel.id}
 			class="sonic-panel grid gap-3 p-4"
-			style={{ '--sonic-panel': panel.tint, '--sonic-panel-depth': panel.depth }}
+			style={{
+				'--sonic-panel': panel.tint,
+				'--sonic-panel-depth': panel.depth,
+				'--sonic-panel-text': panel.text,
+			}}
 		>
 			<h3
 				class="sonic-panel-title font-mono text-[0.625rem] tracking-[0.14em] uppercase"

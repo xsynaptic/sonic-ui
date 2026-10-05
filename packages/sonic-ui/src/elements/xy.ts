@@ -54,6 +54,7 @@ const orientations = { x: 'horizontal', y: 'vertical' } as const;
 const renderXy = template(
 	/* HTML */ `
 		<div class="sonic-xy">
+			<div class="sonic-xy-bracket" aria-hidden="true"></div>
 			<div class="sonic-xy-field" aria-hidden="true"></div>
 			<div class="sonic-xy-puck">
 				<div class="sonic-xy-axis" data-sonic-axis="x" role="slider" tabindex="0"></div>

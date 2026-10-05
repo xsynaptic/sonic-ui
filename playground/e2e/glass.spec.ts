@@ -4,14 +4,13 @@ import { expect, test } from '@playwright/test';
 
 import { mouseOnly } from './pointer.ts';
 
-function readGlass(page: Page): Promise<{ bloom: string; breath: string; warp: string }> {
+function readGlass(page: Page): Promise<{ bloom: string; breath: string }> {
 	return page.locator('#tempo .sonic-number').evaluate((glass) => {
 		const before = getComputedStyle(glass, '::before');
 
 		return {
 			bloom: before.content,
 			breath: before.animationName,
-			warp: getComputedStyle(glass).filter,
 		};
 	});
 }
@@ -32,18 +31,15 @@ test('glass breathes only while hovered, and holds still under reduced motion', 
 	expect(await readGlass(page)).toMatchObject({ breath: 'none' });
 });
 
-test('the texture token at 0 on an ancestor drops the warp and the bloom', async ({ page }) => {
+test('the texture token at 0 on an ancestor drops the bloom', async ({ page }) => {
 	await page.goto('/fixtures/');
-	expect(await readGlass(page)).toMatchObject({ warp: expect.stringContaining('url(') });
-
 	await page.addStyleTag({ content: ':root { --sonic-glass-texture: 0; }' });
 
-	const off = await page.locator('#tempo .sonic-number').evaluate((glass) => ({
-		bloom: getComputedStyle(glass, '::before').opacity,
-		warp: getComputedStyle(glass).filter,
-	}));
+	const bloom = await page
+		.locator('#tempo .sonic-number')
+		.evaluate((glass) => getComputedStyle(glass, '::before').opacity);
 
-	expect(off).toEqual({ bloom: '0', warp: 'none' });
+	expect(bloom).toBe('0');
 });
 
 test('forced colours draw no texture', async ({ page }) => {
@@ -53,7 +49,6 @@ test('forced colours draw no texture', async ({ page }) => {
 	const forced = await readGlass(page);
 
 	expect(forced.bloom).toBe('none');
-	expect(forced.warp).toBe('none');
 });
 
 test('a screen is cut from the glass a number box is, and sizes every edge from its token', async ({
@@ -69,7 +64,6 @@ test('a screen is cut from the glass a number box is, and sizes every edge from 
 				bloom: getComputedStyle(pane, '::before').backgroundImage,
 				fill: `${style.backgroundColor} ${style.backgroundImage}`,
 				ink: style.color,
-				warp: style.filter,
 			};
 		});
 	const readBox = () =>

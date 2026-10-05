@@ -8,7 +8,7 @@
 		--sonic-cap-edge: oklch(72% 0.01 255deg);
 		--sonic-well: var(--sonic-unlit);
 		--sonic-well-lit: var(--sonic-lit);
-		--sonic-bezel: oklch(90% 0.004 255deg);
+		--sonic-bezel: oklch(96% 0.003 255deg);
 		--sonic-lens: var(--sonic-unlit);
 		--sonic-led-lens-ratio: 0.8;
 		--sonic-waveform-edge: var(--sonic-lit);
@@ -19,6 +19,7 @@
 		--sonic-glass-edge: oklch(84% 0.006 255deg);
 		--sonic-glass-texture: 0;
 		--sonic-panel: oklch(98.5% 0.002 255deg);
+		--sonic-panel-text: oklch(27% 0.012 255deg);
 		--sonic-button-depth-ratio: 0;
 		--sonic-segmented-depth-ratio: 0;
 	}

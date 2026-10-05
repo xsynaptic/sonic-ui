@@ -20,7 +20,8 @@
 		--_sonic-panel-radius: var(--sonic-panel-radius, 0.75rem);
 		--_sonic-unit: var(--_sonic-panel-depth);
 
-		background: var(--sonic-panel, rgb(255 255 255 / 3%));
+		color: var(--sonic-panel-text, inherit);
+		background: var(--sonic-panel, color-mix(in oklab, currentcolor 3%, transparent));
 		border: 1px solid var(--_sonic-panel-line);
 		border-radius: var(--_sonic-panel-radius);
 		box-shadow:

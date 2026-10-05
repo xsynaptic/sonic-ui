@@ -73,6 +73,7 @@ function stageParts<Stage extends string>(
 const renderEnvelope = template(
 	/* HTML */ `
 		<div class="sonic-envelope" aria-hidden="true">
+			<div class="sonic-envelope-bracket"></div>
 			<svg class="sonic-envelope-graph" preserveAspectRatio="none" viewBox="0 0 1 1">
 				<path class="sonic-envelope-fill" />
 				<rect class="sonic-envelope-fill sonic-envelope-floor" y="1" />
@@ -181,11 +182,13 @@ export class SonicEnvelope extends SonicElement {
 
 	readonly #bindings = new Map<string, Binding>();
 
+	readonly #envelope = renderEnvelope();
+
+	readonly #bracket = requireChild(this.#envelope, '.sonic-envelope-bracket', HTMLDivElement);
+
 	readonly #claim = new ReadoutClaim(() => {
 		this.#renderReadout();
 	});
-
-	readonly #envelope = renderEnvelope();
 
 	readonly #curveHandles = stageParts(this.#envelope, 'sonic-envelope-curve', curveStages);
 
@@ -196,6 +199,8 @@ export class SonicEnvelope extends SonicElement {
 	readonly #graph = requireChild(this.#envelope, '.sonic-envelope-graph', SVGElement);
 
 	readonly #handles = stageParts(this.#envelope, 'sonic-envelope-handle', timeStages);
+
+	#held: HTMLElement | undefined;
 
 	#isDriving = false;
 
@@ -320,7 +325,22 @@ export class SonicEnvelope extends SonicElement {
 				drives: this.#curveDrives(stage),
 			});
 		}
+		this.#drawBracket();
 		this.#renderReadout();
+	}
+
+	#drawBracket(): void {
+		const part = this.#held;
+		if (!part) return;
+
+		for (const name of ['--_sonic-envelope-x', '--_sonic-envelope-y']) {
+			this.#bracket.style.setProperty(name, part.style.getPropertyValue(name));
+		}
+		writeAttribute(
+			this.#bracket,
+			'data-sonic-part',
+			part.classList.contains('sonic-envelope-curve') ? 'curve' : undefined,
+		);
 	}
 
 	#drawPoint(
@@ -357,6 +377,8 @@ export class SonicEnvelope extends SonicElement {
 		const { drives, isFlipped, part } = pressed;
 
 		this.#claim.press(true);
+		this.#held = part;
+		this.#drawBracket();
 		const box = this.#graph.getBoundingClientRect();
 		const travel = { x: Math.max(1, box.width * this.#shape.share), y: Math.max(1, box.height) };
 		const start = (axis: FieldAxis) => {

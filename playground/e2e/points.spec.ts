@@ -53,15 +53,16 @@ test('a held handle is a hollow ring, and a relief skin gives it a glow, not a b
 	test.skip(isMobile, mouseOnly);
 
 	await page.goto('/fixtures/');
-	await page.addStyleTag({ content: '*, *::after { transition: none !important; }' });
+	await page.addStyleTag({ content: '*, *::before { transition: none !important; }' });
 
 	const handle = page.locator(points[0] ?? '');
 	const read = () =>
 		handle.evaluate((element) => {
 			const style = getComputedStyle(element);
+			const bracket = element.parentElement?.querySelector('.sonic-envelope-bracket');
 
 			return {
-				bracket: getComputedStyle(element, '::after').borderBottomColor,
+				bracket: bracket ? getComputedStyle(bracket, '::before').opacity : '',
 				core: style.backgroundColor,
 				halo: style.boxShadow,
 				ring: style.borderTopColor,
@@ -85,9 +86,9 @@ test('a held handle is a hollow ring, and a relief skin gives it a glow, not a b
 	await page.mouse.up();
 	expect(held.core).not.toBe(held.ring);
 	expect(isClear(held.halo)).toBe(false);
-	expect(isClear(held.bracket)).toBe(true);
+	expect(held.bracket).toBe('0');
 	expect(isClear(heldFlat.halo)).toBe(true);
-	expect(isClear(heldFlat.bracket)).toBe(false);
+	expect(heldFlat.bracket).toBe('1');
 });
 
 test('the puck lifts on hover and is a glowing hollow ring while held', async ({
