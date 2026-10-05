@@ -391,6 +391,18 @@ import '#styles/playground.css';
 			<sonic-slider aria-label="Locked B" data-sonic-locked id="locked-b" value="30"></sonic-slider>
 			<sonic-slider aria-label="Locked C" id="locked-c" value="20"></sonic-slider>
 		</sonic-split>
+		<div class="flex h-[150px] gap-2">
+			<sonic-meter class="[--sonic-meter-length:100%]" id="meter-percent"></sonic-meter>
+			<sonic-meter class="[--sonic-meter-length:150px]" id="meter-fixed"></sonic-meter>
+		</div>
+		<div class="h-2 w-[150px]">
+			<sonic-meter
+				class="[--sonic-meter-length:100%]"
+				id="ladder-percent"
+				orientation="horizontal"
+				segments="-24 -12 -6 -3 0"
+			></sonic-meter>
+		</div>
 	</main>
 	<script>
 		import '@xsynaptic/sonic-ui/define';

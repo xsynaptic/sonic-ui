@@ -130,3 +130,34 @@ test('a value lights from the origin toward it, either way, and nothing at the o
 	expectEdge(below.at(0)?.[0], 1);
 	expectEdge(below.at(-1)?.[1], 60);
 });
+
+async function partBoxes(page: Page, id: string): Promise<{ meter: DOMRect; segments: DOMRect }> {
+	return page.locator(`#${id}`).evaluate((element) => {
+		const meter = element.querySelector('.sonic-meter')?.getBoundingClientRect();
+		const segments = element.querySelector('.sonic-meter-segments')?.getBoundingClientRect();
+		if (!meter || !segments) throw new Error('The meter did not render');
+
+		return { meter: meter.toJSON() as DOMRect, segments: segments.toJSON() as DOMRect };
+	});
+}
+
+test('a length of 100% fills the parent and draws the segments a fixed length does', async ({
+	page,
+}) => {
+	const percent = await partBoxes(page, 'meter-percent');
+	const fixed = await partBoxes(page, 'meter-fixed');
+
+	expect(percent.meter.height).toBeCloseTo(150, 1);
+	expect(percent.segments.height).toBeCloseTo(fixed.segments.height, 1);
+	expect(percent.segments.bottom).toBeCloseTo(fixed.segments.bottom, 1);
+});
+
+test('a horizontal ladder at a length of 100% runs the same inset from both ends', async ({
+	page,
+}) => {
+	const { meter, segments } = await partBoxes(page, 'ladder-percent');
+
+	expect(meter.width).toBeCloseTo(150, 1);
+	expect(segments.left - meter.left).toBeGreaterThan(0);
+	expect(meter.right - segments.right).toBeCloseTo(segments.left - meter.left, 1);
+});

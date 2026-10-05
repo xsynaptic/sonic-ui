@@ -5,7 +5,7 @@
 }
 
 @property --_sonic-meter-length {
-	syntax: '<length>';
+	syntax: '<length-percentage>';
 	inherits: true;
 	initial-value: 128px;
 }
@@ -55,17 +55,12 @@
 		--_sonic-meter-segment-radius: calc(
 			var(--_sonic-meter-segment) * var(--_sonic-meter-segment-radius-ratio)
 		);
-		--_sonic-meter-segments: round(
-			down,
-			var(--_sonic-meter-length) - 2 * var(--_sonic-meter-inset) - var(--_sonic-meter-clip-space) +
-				var(--_sonic-meter-gap),
-			var(--_sonic-meter-pitch)
-		);
 
 		position: relative;
 		flex-shrink: 0;
 		inline-size: var(--_sonic-meter-size);
 		block-size: var(--_sonic-meter-length);
+		container-type: size;
 		background: var(--sonic-bezel, color-mix(in oklab, var(--_sonic-unlit) 55%, #000));
 		border-radius: calc(var(--_sonic-meter-size) * var(--_sonic-meter-radius-ratio));
 
@@ -91,21 +86,18 @@
 	}
 
 	:state(ladder) > .sonic-meter {
-		--_sonic-meter-pitch: calc(
-			(var(--_sonic-meter-length) - 2 * var(--_sonic-meter-inset)) / var(--_sonic-meter-count, 1)
-		);
 		--_sonic-meter-gap: 0px;
-		--_sonic-meter-segments: calc(var(--_sonic-meter-length) - 2 * var(--_sonic-meter-inset));
-		--_sonic-meter-ladder-radius: calc(
-			min(
-					var(--_sonic-meter-lens),
-					var(--_sonic-meter-pitch) * (1 - var(--_sonic-meter-gap-ratio))
-				) /
-				2
-		);
 	}
 
+	/* A percentage length means the parent only on the meter's own box; its parts measure the box */
 	:is(.sonic-meter-segments, .sonic-meter-bar) {
+		--_sonic-meter-length: 100cqb;
+		--_sonic-meter-segments: round(
+			down,
+			var(--_sonic-meter-length) - 2 * var(--_sonic-meter-inset) - var(--_sonic-meter-clip-space) +
+				var(--_sonic-meter-gap),
+			var(--_sonic-meter-pitch)
+		);
 		--_sonic-meter-span: calc(var(--_sonic-meter-max, 0) - var(--_sonic-meter-min, -60));
 		--_sonic-meter-hot-at: round(
 			clamp(
@@ -177,6 +169,17 @@
 	}
 
 	:state(ladder) > .sonic-meter > :is(.sonic-meter-segments, .sonic-meter-bar) {
+		--_sonic-meter-pitch: calc(
+			(var(--_sonic-meter-length) - 2 * var(--_sonic-meter-inset)) / var(--_sonic-meter-count, 1)
+		);
+		--_sonic-meter-segments: calc(var(--_sonic-meter-length) - 2 * var(--_sonic-meter-inset));
+		--_sonic-meter-ladder-radius: calc(
+			min(
+					var(--_sonic-meter-lens),
+					var(--_sonic-meter-pitch) * (1 - var(--_sonic-meter-gap-ratio))
+				) /
+				2
+		);
 		--_sonic-meter-hot-at: calc(var(--_sonic-meter-hot-segments, 0) * var(--_sonic-meter-pitch));
 		--_sonic-meter-clip-at: calc(var(--_sonic-meter-clip-segments, 0) * var(--_sonic-meter-pitch));
 		--_sonic-meter-segment-mask: radial-gradient(
@@ -193,6 +196,7 @@
 	}
 
 	[orientation='horizontal'] > .sonic-meter > :is(.sonic-meter-segments, .sonic-meter-bar) {
+		--_sonic-meter-length: 100cqi;
 		--_sonic-meter-segment-mask:
 			linear-gradient(to right, #000 var(--_sonic-meter-segment), transparent 0) 0
 				var(--_sonic-meter-segment-radius) / var(--_sonic-meter-pitch)

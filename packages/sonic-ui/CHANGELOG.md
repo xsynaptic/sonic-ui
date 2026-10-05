@@ -1,5 +1,11 @@
 # @xsynaptic/sonic-ui
 
+## 0.8.1
+
+### Patch Changes
+
+- `--sonic-meter-length` takes a percentage, as the other length tokens do; `.sonic-meter` is now a size container.
+
 ## 0.8.0
 
 ### Minor Changes
