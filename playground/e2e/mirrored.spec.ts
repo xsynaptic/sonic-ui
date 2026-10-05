@@ -6,7 +6,7 @@ test.beforeEach(async ({ page }) => {
 	await page.goto('/fixtures/mirrored/');
 });
 
-async function centrePixel(page: Page, target: Locator): Promise<Array<number>> {
+async function centerPixel(page: Page, target: Locator): Promise<Array<number>> {
 	const shot = await target.screenshot();
 
 	return page.evaluate(
@@ -41,20 +41,22 @@ function expectGreen([red = 0, green = 0, blue = 0]: Array<number>): void {
 	expect(Math.max(red, blue)).toBeLessThan(100);
 }
 
-for (const name of ['gradient', 'use', 'encoded']) {
-	test(`an icon whose ids repeat later on the page paints in the button and after it: ${name}`, async ({
-		page,
-	}) => {
-		expectGreen(await centrePixel(page, page.locator(`#${name} .sonic-button-cap svg`)));
-		expectGreen(await centrePixel(page, page.locator(`#${name}-twin`)));
-	});
-}
-
-test('a style block inside a mirrored icon paints through its prefixed id', async ({ page }) => {
-	expectGreen(await centrePixel(page, page.locator('#styled .sonic-button-cap svg')));
+test('an icon whose ids repeat later on the page paints in the button and after it, as does one styled through its prefixed id', async ({
+	page,
+}) => {
+	for (const name of ['gradient', 'use', 'encoded']) {
+		await test.step(name, async () => {
+			expectGreen(await centerPixel(page, page.locator(`#${name} .sonic-button-cap svg`)));
+			expectGreen(await centerPixel(page, page.locator(`#${name}-twin`)));
+		});
+	}
+	expectGreen(await centerPixel(page, page.locator('#styled .sonic-button-cap svg')));
 });
 
-test('a mirrored original takes no room and no pointer', async ({ page }) => {
+test('a mirrored original takes no room, no pointer, and no place in the accessibility tree', async ({
+	browserName,
+	page,
+}) => {
 	const button = page.locator('#gradient');
 	const original = button.locator(':scope > svg');
 
@@ -77,6 +79,20 @@ test('a mirrored original takes no room and no pointer', async ({ page }) => {
 			return root.scrollWidth <= root.clientWidth && root.scrollHeight <= root.clientHeight;
 		}),
 	).toBe(true);
+
+	// Playwright's own tree counts a text node by its parent's style, so this reads the browser's tree over CDP
+	if (browserName !== 'chromium') return;
+
+	const session = await page.context().newCDPSession(page);
+	const { nodes } = await session.send('Accessibility.getFullAXTree');
+
+	await session.detach();
+
+	expect(
+		nodes.filter(
+			(node) => !node.ignored && node.role?.value === 'StaticText' && node.name?.value === 'Go',
+		),
+	).toHaveLength(1);
 });
 
 test('buttons cloned or written back from their own markup hold one native button and still paint', async ({
@@ -94,24 +110,5 @@ test('buttons cloned or written back from their own markup hold one native butto
 	await expect(page.locator('sonic-button')).toHaveCount(6);
 	await expect(page.locator('sonic-button button')).toHaveCount(6);
 	await expect(page.locator('#worded .sonic-button-cap').last()).toHaveText('Go');
-	expectGreen(await centrePixel(page, page.locator('#gradient .sonic-button-cap svg')));
-});
-
-// Playwright's own tree counts a text node by its parent's style, so this reads the browser's tree
-test('a mirrored original has no place in the accessibility tree', async ({
-	browserName,
-	page,
-}) => {
-	test.skip(browserName !== 'chromium', 'The accessibility tree is read over CDP');
-
-	const session = await page.context().newCDPSession(page);
-	const { nodes } = await session.send('Accessibility.getFullAXTree');
-
-	await session.detach();
-
-	expect(
-		nodes.filter(
-			(node) => !node.ignored && node.role?.value === 'StaticText' && node.name?.value === 'Go',
-		),
-	).toHaveLength(1);
+	expectGreen(await centerPixel(page, page.locator('#gradient .sonic-button-cap svg')));
 });

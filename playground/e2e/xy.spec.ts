@@ -2,7 +2,7 @@ import type { Locator, Page } from '@playwright/test';
 
 import { expect, test } from '@playwright/test';
 
-import { centreOf, mouseOnly } from './pointer.ts';
+import { centerOf, mouseOnly } from './pointer.ts';
 
 interface Box {
 	height: number;
@@ -46,7 +46,7 @@ test('a drag from the puck moves both values, and the puck stays inside the glas
 
 	const glass = await boxOf(page.locator('#xy .sonic-xy'));
 	const puck = page.locator('#xy .sonic-xy-puck');
-	const start = await centreOf(puck);
+	const start = await centerOf(puck);
 
 	await page.mouse.move(start.x, start.y);
 	await page.mouse.down();
@@ -69,34 +69,16 @@ test('a drag from the puck moves both values, and the puck stays inside the glas
 	expectInside(await boxOf(puck), glass);
 });
 
-test("a press on the glass brings the puck's centre under the pointer, and a corner clamps it inside", async ({
+test("a press on the glass reports dragging by its first input and brings the puck's center under the pointer, and a corner clamps it inside", async ({
 	isMobile,
 	page,
 }) => {
 	test.skip(isMobile, mouseOnly);
 
+	const xy = page.locator('#xy');
 	const glass = await boxOf(page.locator('#xy .sonic-xy'));
 	const puck = page.locator('#xy .sonic-xy-puck');
 	const at = { x: glass.x + glass.width * 0.3, y: glass.y + glass.height * 0.25 };
-
-	await page.mouse.click(at.x, at.y);
-
-	const centre = await centreOf(puck);
-
-	expect(Math.abs(centre.x - at.x)).toBeLessThanOrEqual(1);
-	expect(Math.abs(centre.y - at.y)).toBeLessThanOrEqual(1);
-	await expect(page.locator('#xy [data-sonic-axis="x"]')).toBeFocused();
-
-	await page.mouse.click(glass.x + glass.width - 6, glass.y + 6);
-	expect(await readValues(page)).toEqual(['100', '100']);
-	expectInside(await boxOf(puck), glass);
-});
-
-test('a press on the glass reports dragging by its first input', async ({ isMobile, page }) => {
-	test.skip(isMobile, mouseOnly);
-
-	const xy = page.locator('#xy');
-	const glass = await boxOf(page.locator('#xy .sonic-xy'));
 
 	await xy.evaluate((element) => {
 		element.addEventListener(
@@ -107,11 +89,21 @@ test('a press on the glass reports dragging by its first input', async ({ isMobi
 			{ once: true },
 		);
 	});
-	await page.mouse.move(glass.x + glass.width * 0.3, glass.y + glass.height * 0.25);
+	await page.mouse.move(at.x, at.y);
 	await page.mouse.down();
 	expect(await xy.getAttribute('data-pressed')).toBe('true');
 
 	await page.mouse.up();
+
+	const center = await centerOf(puck);
+
+	expect(Math.abs(center.x - at.x)).toBeLessThanOrEqual(1);
+	expect(Math.abs(center.y - at.y)).toBeLessThanOrEqual(1);
+	await expect(page.locator('#xy [data-sonic-axis="x"]')).toBeFocused();
+
+	await page.mouse.click(glass.x + glass.width - 6, glass.y + 6);
+	expect(await readValues(page)).toEqual(['100', '100']);
+	expectInside(await boxOf(puck), glass);
 });
 
 test('a disabled XY pad takes no press and no focus', async ({ isMobile, page }) => {

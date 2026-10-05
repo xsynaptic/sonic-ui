@@ -2,7 +2,7 @@ import type { Locator } from '@playwright/test';
 
 import { expect, test } from '@playwright/test';
 
-import { centreOf, drag, mouseOnly } from './pointer.ts';
+import { drag, mouseOnly } from './pointer.ts';
 import { readState } from './state.ts';
 
 test.beforeEach(async ({ page }) => {
@@ -17,21 +17,7 @@ function readLens(led: Locator): Promise<string> {
 	});
 }
 
-test('a latched button lights the LED it holds, as data-sonic-lit does', async ({ page }) => {
-	const [unlit, lit] = [
-		await readLens(page.locator('#led')),
-		await readLens(page.locator('#led-lit')),
-	];
-	const held = page.locator('#power .sonic-button .sonic-led');
-
-	expect(lit).not.toBe(unlit);
-	expect(await readLens(held)).toBe(unlit);
-
-	await page.locator('#power .sonic-button').click();
-	expect(await readLens(held)).toBe(lit);
-});
-
-test('hot, clip, dim and second-colour lenses each differ from lit and from off', async ({
+test('each lens differs from the rest, and a button lights the LED it holds: dim while armed, lit once latched', async ({
 	page,
 }) => {
 	const lenses = await Promise.all(
@@ -39,17 +25,24 @@ test('hot, clip, dim and second-colour lenses each differ from lit and from off'
 			readLens(page.locator(selector)),
 		),
 	);
+	const [unlit, lit] = lenses;
+	const dim = lenses[4];
 
 	expect(new Set(lenses).size).toBe(lenses.length);
-});
 
-test('an LED inside an armed button rests dim, then lights once latched', async ({ page }) => {
-	const held = page.locator('#armed-led .sonic-button .sonic-led');
+	const held = page.locator('#power .sonic-button .sonic-led');
 
-	expect(await readLens(held)).toBe(await readLens(page.locator('#led-dim')));
+	expect(await readLens(held)).toBe(unlit);
+
+	await page.locator('#power .sonic-button').click();
+	expect(await readLens(held)).toBe(lit);
+
+	const armed = page.locator('#armed-led .sonic-button .sonic-led');
+
+	expect(await readLens(armed)).toBe(dim);
 
 	await page.locator('#armed-led .sonic-button').click();
-	expect(await readLens(held)).toBe(await readLens(page.locator('#led-lit')));
+	expect(await readLens(armed)).toBe(lit);
 });
 
 test('a slider is at its origin, and its child LED lights only there', async ({
@@ -93,20 +86,5 @@ test('with no origin a slider rests only at its minimum', async ({ page }) => {
 	expect(await readState(host, 'at-origin')).toBe(false);
 
 	await host.locator('.sonic-slider').press('Home');
-	expect(await readState(host, 'at-origin')).toBe(true);
-});
-
-test('a springing slider is at rest again once let go', async ({ isMobile, page }) => {
-	test.skip(isMobile, mouseOnly);
-
-	const host = page.locator('#bend');
-	const start = await centreOf(host.locator('.sonic-slider-cap'));
-
-	await page.mouse.move(start.x, start.y);
-	await page.mouse.down();
-	await page.mouse.move(start.x + 20, start.y, { steps: 4 });
-	expect(await readState(host, 'at-origin')).toBe(false);
-
-	await page.mouse.up();
 	expect(await readState(host, 'at-origin')).toBe(true);
 });

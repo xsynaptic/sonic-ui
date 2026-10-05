@@ -2,7 +2,7 @@ import type { Page } from '@playwright/test';
 
 import { expect, test } from '@playwright/test';
 
-import { centreOf, mouseOnly } from './pointer.ts';
+import { centerOf, mouseOnly } from './pointer.ts';
 import { readState } from './state.ts';
 
 test.beforeEach(async ({ page }) => {
@@ -30,7 +30,7 @@ test('a momentary button stays pressed until the pointer lifts, even off the but
 	test.skip(isMobile, mouseOnly);
 
 	const kick = page.locator('#kick');
-	const at = await centreOf(kick.locator('.sonic-button'));
+	const at = await centerOf(kick.locator('.sonic-button'));
 
 	await page.mouse.move(at.x, at.y);
 	await page.mouse.down();

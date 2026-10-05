@@ -1,6 +1,8 @@
 import { expect, test } from '@playwright/test';
 
-test('a ring sizes and rounds the button it holds, centred inside the arc', async ({ page }) => {
+test('a ring sizes and rounds the button it holds, centerd inside the arc, and the button still takes its presses', async ({
+	page,
+}) => {
 	await page.goto('/fixtures/');
 
 	const ring = page.locator('#ring-button');
@@ -16,13 +18,9 @@ test('a ring sizes and rounds the button it holds, centred inside the arc', asyn
 	expect(inner.y - outer.y).toBeCloseTo(5, 1);
 	await expect(button).toHaveCSS('border-radius', '15px');
 	await expect(button.locator('.sonic-button-cap')).toHaveCSS('border-radius', '15px');
-});
 
-test('a button inside a ring still takes its presses', async ({ page }) => {
-	await page.goto('/fixtures/');
+	const named = page.getByRole('button', { name: 'Loop position' });
 
-	const button = page.getByRole('button', { name: 'Loop position' });
-
-	await button.click();
-	await expect(button).toHaveAttribute('aria-pressed', 'true');
+	await named.click();
+	await expect(named).toHaveAttribute('aria-pressed', 'true');
 });

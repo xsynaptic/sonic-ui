@@ -240,7 +240,7 @@ describe('a taper', () => {
 		},
 	);
 
-	test('a midpoint at the centre is linear, so each arrow moves one step', () => {
+	test('a midpoint at the center is linear, so each arrow moves one step', () => {
 		expect(mappingOf({ max: 20_000, midpoint: 10_010, min: 20 }).keyTarget('ArrowUp', 1000)).toBe(
 			1001,
 		);

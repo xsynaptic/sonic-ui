@@ -114,12 +114,12 @@ function paintPlaceholders(context: CanvasRenderingContext2D, scene: Scene): voi
 
 	const { dpr, height, pixelsPerSecond, startSeconds } = scene;
 	const wavelength = placeholderWavelengthPx * dpr;
-	const centre = height / 2;
+	const center = height / 2;
 	const origin = startSeconds * pixelsPerSecond;
 	const waveY = (x: number): number =>
-		centre -
+		center -
 		Math.sin(((x + origin) / wavelength + scene.phase) * 2 * Math.PI) *
-			centre *
+			center *
 			placeholderAmplitude;
 
 	context.beginPath();
@@ -152,15 +152,15 @@ function paintWave(context: CanvasRenderingContext2D, scene: Scene, peaks: Wavef
 	const [first] = buckets;
 	if (!first) return;
 
-	const centre = scene.height / 2;
-	const amplitudePx = centre * amplitudeMargin;
+	const center = scene.height / 2;
+	const amplitudePx = center * amplitudeMargin;
 
 	context.fillStyle = waveFill(context, scene);
 	context.beginPath();
-	context.moveTo(first.x, centre);
-	for (const bucket of buckets) context.lineTo(bucket.x, centre - bucket.high * amplitudePx);
+	context.moveTo(first.x, center);
+	for (const bucket of buckets) context.lineTo(bucket.x, center - bucket.high * amplitudePx);
 	for (const bucket of buckets.toReversed())
-		context.lineTo(bucket.x, centre - bucket.low * amplitudePx);
+		context.lineTo(bucket.x, center - bucket.low * amplitudePx);
 	context.closePath();
 	context.fill();
 }

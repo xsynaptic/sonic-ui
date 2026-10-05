@@ -203,7 +203,7 @@ test('a promise from requestPeaks repaints and asks again when it settles, eithe
 	expect(asks).toBe(3);
 });
 
-test('with reduced-motion="scroll" the playhead stays centred under reduced motion', () => {
+test('with reduced-motion="scroll" the playhead stays centerd under reduced motion', () => {
 	const { flushFrames } = installCanvasFakes({ isReducedMotion: true });
 	const { control, waveform } = mountWaveform(
 		'max="300" reduced-motion="scroll" step="0" value="13.9"',

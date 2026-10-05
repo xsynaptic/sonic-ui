@@ -2,7 +2,7 @@ import type { Locator, Page } from '@playwright/test';
 
 import { expect, test } from '@playwright/test';
 
-import { centreOf, mouseOnly } from './pointer.ts';
+import { centerOf, mouseOnly } from './pointer.ts';
 
 test.use({ reducedMotion: 'reduce' });
 
@@ -17,7 +17,7 @@ async function hold(page: Page, part: Locator, by: { x: number; y: number }): Pr
 		element.scrollIntoView({ block: 'center' });
 	});
 
-	const start = await centreOf(part);
+	const start = await centerOf(part);
 
 	await page.mouse.move(start.x, start.y);
 	await page.mouse.down();
@@ -45,11 +45,11 @@ test('the XY pad readout names both axes and stays over the puck as it moves', a
 	await expectAbove(readout, puck);
 	await expect(readout).toHaveText(/^Cutoff \d+, Resonance -?[\d.]+$/);
 
-	const first = await centreOf(puck);
+	const first = await centerOf(puck);
 
 	await page.mouse.move(first.x - 40, first.y - 30, { steps: 4 });
 
-	const second = await centreOf(puck);
+	const second = await centerOf(puck);
 
 	expect(second.x).toBeLessThan(first.x - 20);
 	await expectAbove(readout, puck);

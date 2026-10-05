@@ -20,7 +20,7 @@ function at(clockSeconds: number, isPaged: boolean): [number, number] {
 	return [timeline.view.startSeconds, timeline.playheadAt];
 }
 
-test('the playhead sits centred, or paged on pages counted from zero rather than from the range', () => {
+test('the playhead sits centerd, or paged on pages counted from zero rather than from the range', () => {
 	expect(at(13.9, false)[0]).toBeCloseTo(10.4, 9);
 	expect(at(13.9, false)[1]).toBeCloseTo(0.5, 9);
 	expect(at(13.9, true)[0]).toBe(7);

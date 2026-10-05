@@ -43,7 +43,7 @@ function readPlayhead(waveform: Locator): Promise<string> {
 		.evaluate((line) => getComputedStyle(line).translate);
 }
 
-test("the wave's centre paints the lit colour", async ({ page }) => {
+test("the wave's center paints the lit colour", async ({ page }) => {
 	const { canvas } = await openWaveform(page);
 	const lit = await canvas.evaluate((element) =>
 		getComputedStyle(element).getPropertyValue('--_sonic-lit'),
@@ -110,7 +110,7 @@ test('under reduced motion the picture holds still while the playhead crosses it
 	expect(await upperRow(canvas)).toBe(before);
 });
 
-test('the pending state follows a region in the window, and clears when it lands or leaves', async ({
+test('the pending state follows a region in the window, clears when it lands or leaves, and waits out pending-delay', async ({
 	page,
 }) => {
 	const { waveform } = await openWaveform(page);
@@ -129,6 +129,13 @@ test('the pending state follows a region in the window, and clears when it lands
 
 	await setPending([[250, 260]]);
 	await expect.poll(readPending).toBe(false);
+
+	await waveform.evaluate((element) => {
+		element.setAttribute('pending-delay', '300');
+		Object.assign(element, { pending: [[149, 152]] });
+	});
+	expect(await readPending()).toBe(false);
+	await expect.poll(readPending).toBe(true);
 });
 
 test('a host tabindex of -1 leaves the tab order, and a press still focuses the waveform', async ({
@@ -161,7 +168,7 @@ test('a host tabindex of -1 leaves the tab order, and a press still focuses the 
 	expect(await holdsFocus()).toBe(true);
 });
 
-test('the playhead, ghost, label, readout and touch tokens each land on their own part', async ({
+test('the playhead, ghost, label, readout and touch tokens each land on their own part, and the parked label keeps its insets from the wave', async ({
 	page,
 }) => {
 	await page.goto('/fixtures/');
@@ -183,18 +190,6 @@ test('the playhead, ghost, label, readout and touch tokens each land on their ow
 	await expect(label).toHaveCSS('font-family', 'monospace');
 	await expect(waveform.locator('.sonic-waveform-readout')).toHaveCSS('color', 'rgb(1, 2, 3)');
 	await expect(waveform.locator('.sonic-waveform')).toHaveCSS('touch-action', 'none');
-});
-
-test('the parked label starts at its inline inset from the wave, and keeps its block inset', async ({
-	page,
-}) => {
-	await page.goto('/fixtures/');
-
-	const waveform = page.locator('#waveform-tokens');
-	const label = waveform.locator('.sonic-waveform-label').first();
-
-	await waveform.locator('canvas').scrollIntoViewIfNeeded();
-	await expect(label).toHaveText('Intro');
 
 	const inline = await waveform.evaluate((host) => {
 		const wave = host.querySelector('canvas')?.getBoundingClientRect();
@@ -211,17 +206,6 @@ test('the parked label starts at its inline inset from the wave, and keeps its b
 	expect(inline).toBeCloseTo(16, 1);
 	// 6rem of size: the glass's 0.06 inset and the label's 0.04, untouched by the inline token
 	await expect(label).toHaveCSS('bottom', '9.6px');
-});
-
-test('a pending region waits out pending-delay before the placeholder shows', async ({ page }) => {
-	const { waveform } = await openWaveform(page);
-
-	await waveform.evaluate((element) => {
-		element.setAttribute('pending-delay', '300');
-		Object.assign(element, { pending: [[149, 152]] });
-	});
-	expect(await readState(waveform, 'pending')).toBe(false);
-	await expect.poll(() => readState(waveform, 'pending')).toBe(true);
 });
 
 test('a scrim spans the wave under the label, and a block inset lifts the label', async ({

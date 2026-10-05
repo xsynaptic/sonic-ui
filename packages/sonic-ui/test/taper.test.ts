@@ -27,7 +27,7 @@ test.each([
 	['at min', 0],
 	['at max', 100],
 	['outside the range', 150],
-	['at the centre', 50],
+	['at the center', 50],
 	['missing', NaN],
 ])('a midpoint %s takes no skew', (_case, midpoint) => {
 	expect(skewTaper(0, 100, midpoint)).toBeUndefined();

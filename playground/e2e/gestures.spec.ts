@@ -2,7 +2,7 @@ import type { Locator } from '@playwright/test';
 
 import { expect, test } from '@playwright/test';
 
-import { centreOf, drag, mouseOnly } from './pointer.ts';
+import { centerOf, drag, mouseOnly } from './pointer.ts';
 import { readState } from './state.ts';
 
 test.skip(({ isMobile }) => isMobile, mouseOnly);
@@ -15,7 +15,7 @@ test('a 32px drag moves a dial by a fifth of its 160px travel, dragging only whi
 	page,
 }) => {
 	const host = page.locator('#level');
-	const start = await centreOf(host.locator('.sonic-dial'));
+	const start = await centerOf(host.locator('.sonic-dial'));
 
 	await page.mouse.move(start.x, start.y);
 	await page.mouse.down();
@@ -116,11 +116,11 @@ test('Cmd-click on an Apple platform, or Ctrl-click elsewhere, resets to the def
 
 test('a disabled dial ignores drags and presses', async ({ page }) => {
 	const control = page.locator('#locked .sonic-dial');
-	const centre = await centreOf(control);
+	const center = await centerOf(control);
 
 	await drag(page, control, { x: 0, y: -32 });
 	// The locator's own `dblclick` waits for an enabled target
-	await page.mouse.dblclick(centre.x, centre.y);
+	await page.mouse.dblclick(center.x, center.y);
 
 	await expect(control).toHaveAttribute('aria-valuenow', '30');
 	await expect(page.getByRole('textbox')).toHaveCount(0);
@@ -193,29 +193,16 @@ test('a double press on a number box types in place, with no bubble', async ({ p
 	await expect(spinbutton).toHaveAttribute('aria-valuenow', '98');
 });
 
-test('a segmented press dragged to another option latches it, and dragged off latches nothing', async ({
+test('a segmented press dragged off latches nothing, and dragged to another option latches it and carries the focus the group held', async ({
 	page,
 }) => {
 	const lowPass = page.getByRole('radio', { name: 'LP' });
 	const highPass = page.getByRole('radio', { name: 'HP' });
-	const start = await centreOf(lowPass);
-	const end = await centreOf(highPass);
-	const offset = { x: end.x - start.x, y: end.y - start.y };
+	const start = await centerOf(lowPass);
+	const end = await centerOf(highPass);
 
 	await drag(page, highPass, { x: 0, y: 200 });
 	await expect(lowPass).toBeChecked();
-
-	await drag(page, lowPass, offset);
-	await expect(highPass).toBeChecked();
-});
-
-test('a segmented press released on another option carries the focus the group held there', async ({
-	page,
-}) => {
-	const lowPass = page.getByRole('radio', { name: 'LP' });
-	const highPass = page.getByRole('radio', { name: 'HP' });
-	const start = await centreOf(lowPass);
-	const end = await centreOf(highPass);
 
 	await lowPass.focus();
 	await drag(page, lowPass, { x: end.x - start.x, y: end.y - start.y });
@@ -239,31 +226,6 @@ test('a detent holds a drag that crosses it, then lets it go past the zone', asy
 	await expect(slider).toHaveAttribute('aria-valuenow', '2');
 });
 
-test('a springing slider reports where it was let go, then its return to the origin', async ({
-	page,
-}) => {
-	const host = page.locator('#bend');
-	const slider = page.getByRole('slider', { name: 'Bend' });
-
-	await host.evaluate((element) => {
-		element.addEventListener('change', () => {
-			const now = element.querySelector('[role="slider"]')?.getAttribute('aria-valuenow') ?? '';
-
-			element.dataset.changed = `${element.dataset.changed ?? ''} ${now}`.trim();
-		});
-	});
-	await drag(page, page.locator('#bend .sonic-slider-cap'), { x: 30, y: 0 });
-
-	await expect(slider).toHaveAttribute('aria-valuenow', '0');
-
-	const [released, returned] = ((await host.getAttribute('data-changed')) ?? '')
-		.split(' ')
-		.map(Number);
-
-	expect(released).toBeGreaterThan(0);
-	expect(returned).toBe(0);
-});
-
 function readSpring(host: Locator): Promise<{ drawn: number; isSpringing: boolean }> {
 	return host.evaluate((element) => {
 		const control = element.querySelector('.sonic-slider');
@@ -275,21 +237,44 @@ function readSpring(host: Locator): Promise<{ drawn: number; isSpringing: boolea
 	});
 }
 
-test('a springing slider lands its value at once while the cap glides back, then stops springing', async ({
+test('a springing slider let go reports where it was, then its return to the origin, landing its value at once while the cap glides back', async ({
 	page,
 }) => {
 	const host = page.locator('#bend');
+	const slider = page.getByRole('slider', { name: 'Bend' });
+	const start = await centerOf(host.locator('.sonic-slider-cap'));
 
 	await page.addStyleTag({
 		content: '#bend:state(springing) > .sonic-slider { transition-duration: 2s; }',
 	});
-	await drag(page, page.locator('#bend .sonic-slider-cap'), { x: 30, y: 0 });
+	await host.evaluate((element) => {
+		element.addEventListener('change', () => {
+			const now = element.querySelector('[role="slider"]')?.getAttribute('aria-valuenow') ?? '';
+
+			element.dataset.changed = `${element.dataset.changed ?? ''} ${now}`.trim();
+		});
+	});
+
+	await page.mouse.move(start.x, start.y);
+	await page.mouse.down();
+	await page.mouse.move(start.x + 30, start.y, { steps: 4 });
+	expect(await readState(host, 'at-origin')).toBe(false);
+
+	await page.mouse.up();
 
 	const gliding = await readSpring(host);
 
-	await expect(page.getByRole('slider', { name: 'Bend' })).toHaveAttribute('aria-valuenow', '0');
+	await expect(slider).toHaveAttribute('aria-valuenow', '0');
+	expect(await readState(host, 'at-origin')).toBe(true);
 	expect(gliding.isSpringing).toBe(true);
 	expect(gliding.drawn).toBeGreaterThan(0.5);
+
+	const [released, returned] = ((await host.getAttribute('data-changed')) ?? '')
+		.split(' ')
+		.map(Number);
+
+	expect(released).toBeGreaterThan(0);
+	expect(returned).toBe(0);
 
 	await expect.poll(() => readSpring(host)).toEqual({ drawn: 0.5, isSpringing: false });
 });

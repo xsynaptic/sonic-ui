@@ -2,7 +2,7 @@ import type { Page } from '@playwright/test';
 
 import { expect, test } from '@playwright/test';
 
-import { centreOf, mouseOnly } from './pointer.ts';
+import { centerOf, mouseOnly } from './pointer.ts';
 
 test.beforeEach(async ({ page }) => {
 	await page.goto('/fixtures/');
@@ -54,7 +54,7 @@ test('a trusted press on a switch flips it once, and a drag sets it by direction
 	test.skip(isMobile, mouseOnly);
 
 	const bare = page.getByRole('switch', { name: 'Sync' });
-	const at = await centreOf(bare);
+	const at = await centerOf(bare);
 
 	await page.mouse.click(at.x, at.y);
 	await expect(bare).toHaveAttribute('aria-checked', 'true');
@@ -70,7 +70,7 @@ test('a trusted press on a switch flips it once, and a drag sets it by direction
 test('a drag on the bat throws it through its positions', async ({ isMobile, page }) => {
 	test.skip(isMobile, mouseOnly);
 
-	const at = await centreOf(page.locator('#talk .sonic-switch-bat'));
+	const at = await centerOf(page.locator('#talk .sonic-switch-bat'));
 
 	await page.mouse.move(at.x, at.y);
 	await page.mouse.down();
@@ -88,14 +88,14 @@ test('a press or a drag on the bat carries the focus the switch held to the new 
 }) => {
 	test.skip(isMobile, mouseOnly);
 
-	const at = await centreOf(page.locator('#talk .sonic-switch-bat'));
+	const at = await centerOf(page.locator('#talk .sonic-switch-bat'));
 
 	await page.getByRole('radio', { name: 'Off' }).focus();
 	await page.mouse.click(at.x, at.y);
 	await expect(page.getByRole('radio', { name: 'On' })).toBeChecked();
 	await expect(page.getByRole('radio', { name: 'On' })).toBeFocused();
 
-	const thrown = await centreOf(page.locator('#talk .sonic-switch-bat'));
+	const thrown = await centerOf(page.locator('#talk .sonic-switch-bat'));
 
 	await page.mouse.move(thrown.x, thrown.y);
 	await page.mouse.down();

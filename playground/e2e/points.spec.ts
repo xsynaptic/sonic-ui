@@ -11,16 +11,16 @@ function isClear(paint: string): boolean {
 	return /^(?:rgba?|oklab)\([^)]*[,/] ?0\)/.test(paint);
 }
 
-for (const selector of points) {
-	test(`a point on glass brightens on hover and keeps its ring while held: ${selector}`, async ({
-		isMobile,
-		page,
-	}) => {
-		test.skip(isMobile, mouseOnly);
+test('a handle and a curve handle on glass brighten on hover and keep their ring while held', async ({
+	isMobile,
+	page,
+}) => {
+	test.skip(isMobile, mouseOnly);
 
-		await page.goto('/fixtures/');
-		await page.addStyleTag({ content: '* { transition: none !important; }' });
+	await page.goto('/fixtures/');
+	await page.addStyleTag({ content: '* { transition: none !important; }' });
 
+	for (const selector of points) {
 		const point = page.locator(selector);
 		const read = () =>
 			point.evaluate((element) => {
@@ -39,12 +39,12 @@ for (const selector of points) {
 		const held = await read();
 
 		await page.mouse.up();
-		expect(rest.core).toBe(rest.ring);
-		expect(hovered.ring).not.toBe(rest.ring);
-		expect(hovered.core).toBe(hovered.ring);
-		expect(held.ring).toBe(rest.ring);
-	});
-}
+		expect.soft(rest.core, selector).toBe(rest.ring);
+		expect.soft(hovered.ring, selector).not.toBe(rest.ring);
+		expect.soft(hovered.core, selector).toBe(hovered.ring);
+		expect.soft(held.ring, selector).toBe(rest.ring);
+	}
+});
 
 test('a held handle is a hollow ring, and a relief skin gives it a glow, not a bracket', async ({
 	isMobile,

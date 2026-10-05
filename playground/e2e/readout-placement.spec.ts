@@ -2,7 +2,9 @@ import { expect, test } from '@playwright/test';
 
 test.use({ reducedMotion: 'reduce' });
 
-test('the readout opens above a dial in a filtered bar with room below it', async ({ page }) => {
+test('a closed readout is not rendered, and opens above a dial in a filtered bar with room below it', async ({
+	page,
+}) => {
 	await page.goto('/fixtures/docked/');
 	await page.evaluate(() => {
 		window.scrollTo(0, document.body.scrollHeight);
@@ -10,6 +12,7 @@ test('the readout opens above a dial in a filtered bar with room below it', asyn
 
 	const host = page.locator('#docked');
 
+	await expect(host.locator('.sonic-dial-readout')).toHaveCSS('display', 'none');
 	await host.getByRole('slider').focus();
 	await page.keyboard.press('ArrowUp');
 	await expect(host.locator('.sonic-dial-readout')).toBeVisible();
@@ -70,10 +73,4 @@ test('a readout size in em follows the control, not the readout', async ({ page 
 
 	await expect(readout).toHaveCSS('block-size', '60px');
 	await expect(readout).toHaveCSS('font-size', '30px');
-});
-
-test('a closed readout is not rendered', async ({ page }) => {
-	await page.goto('/fixtures/docked/');
-
-	await expect(page.locator('#docked .sonic-dial-readout')).toHaveCSS('display', 'none');
 });

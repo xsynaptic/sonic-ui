@@ -43,12 +43,12 @@ interface BatPress {
 	width: number;
 }
 
-const pressCentreZone = 0.08;
+const pressCenterZone = 0.08;
 
 function pressedIndex(index: number, count: number, offset: number): number {
 	if (count === 2) return index === 0 ? 1 : 0;
 
-	const side = Math.abs(offset) < pressCentreZone ? 1 : Math.sign(offset);
+	const side = Math.abs(offset) < pressCenterZone ? 1 : Math.sign(offset);
 	const next = index + side;
 
 	return next < 0 || next >= count ? index - side : next;

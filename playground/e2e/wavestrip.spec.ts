@@ -33,23 +33,15 @@ function readWidth(canvas: Locator): Promise<{ css: number; device: number }> {
 	});
 }
 
-test('the canvas backs every device pixel, and bars and gaps land where the grid puts them', async ({
+test('the canvas backs every device pixel, bars and gaps land where the grid puts them, and the played side paints the lit colour and the rest the wave colour', async ({
 	page,
 }) => {
 	const { canvas } = await openWavestrip(page);
 	const { css, device } = await readWidth(canvas);
-	const [inBar, inGap] = await canvasPixels(canvas, [10 * pitch + 1, 10 * pitch + bar]);
-
-	expect(Math.abs(device - css * 2)).toBeLessThanOrEqual(1);
-	expect(inBar?.[3]).toBe(255);
-	expect(inGap?.[3]).toBe(0);
-});
-
-test('the played side paints the lit colour and the rest the wave colour', async ({ page }) => {
-	const { canvas } = await openWavestrip(page);
-	const { device } = await readWidth(canvas);
 	const edgeBar = Math.floor(device / 2 / pitch);
-	const [played, unplayed] = await canvasPixels(canvas, [
+	const [inBar, inGap, played, unplayed] = await canvasPixels(canvas, [
+		10 * pitch + 1,
+		10 * pitch + bar,
 		(edgeBar - 4) * pitch + 1,
 		(edgeBar + 4) * pitch + 1,
 	]);
@@ -60,40 +52,34 @@ test('the played side paints the lit colour and the rest the wave colour', async
 		getComputedStyle(element).getPropertyValue('--_sonic-wavestrip-wave'),
 	);
 
+	expect(Math.abs(device - css * 2)).toBeLessThanOrEqual(1);
+	expect(inBar?.[3]).toBe(255);
+	expect(inGap?.[3]).toBe(0);
 	expectPixel(played, await paintedColour(canvas, lit));
 	expectPixel(unplayed, await paintedColour(canvas, wave));
 });
 
-test('a lit colour set on an ancestor repaints within two frames', async ({ page }) => {
-	const { canvas } = await openWavestrip(page);
+function setOnBox(page: Page, tokens: Record<string, string>): Promise<void> {
+	return page.evaluate(async (entries) => {
+		const box = document.querySelector<HTMLElement>('#wavestrip-box');
 
-	await page.evaluate(async () => {
-		document
-			.querySelector<HTMLElement>('#wavestrip-box')
-			?.style.setProperty('--sonic-lit', '#0080ff');
+		for (const [name, value] of entries) box?.style.setProperty(name, value);
 		for (let frame = 0; frame < 2; frame += 1) {
 			await new Promise((resolve) => requestAnimationFrame(resolve));
 		}
-	});
+	}, Object.entries(tokens));
+}
 
-	expectPixel(await pixelAt(canvas, 1), [0, 128, 255, 255]);
-});
-
-test('an ink of currentcolor paints the bars from the text colour on the glass', async ({
+test('a lit colour set on an ancestor repaints within two frames, as does an ink of currentcolor, from the text colour on the glass', async ({
 	page,
 }) => {
 	const { canvas } = await openWavestrip(page);
 	const { device } = await readWidth(canvas);
 
-	await page.evaluate(async () => {
-		const box = document.querySelector<HTMLElement>('#wavestrip-box');
+	await setOnBox(page, { '--sonic-lit': '#0080ff' });
+	expectPixel(await pixelAt(canvas, 1), [0, 128, 255, 255]);
 
-		box?.style.setProperty('--sonic-ink', 'currentcolor');
-		box?.style.setProperty('--sonic-glass-text', '#0080ff');
-		for (let frame = 0; frame < 2; frame += 1) {
-			await new Promise((resolve) => requestAnimationFrame(resolve));
-		}
-	});
+	await setOnBox(page, { '--sonic-glass-text': '#0080ff', '--sonic-ink': 'currentcolor' });
 
 	const unlit = await canvas.evaluate((element) =>
 		getComputedStyle(element).getPropertyValue('--_sonic-unlit'),
@@ -134,7 +120,7 @@ test('empty peaks draw a plain groove, set the empty state, and a ratio of 0 lea
 	await expect.poll(() => alphaAt(canvas, middle)).toBe(0);
 });
 
-test('the readout stays inside the strip at both ends, and an empty string hides it', async ({
+test('a long readout stays inside the strip at both ends, on one line and on glass of its own colour, and an empty string hides it', async ({
 	isMobile,
 	page,
 }) => {
@@ -148,7 +134,9 @@ test('the readout stays inside the strip at both ends, and an empty string hides
 	const middle = strip.y + strip.height / 2;
 
 	await wavestrip.evaluate((element) => {
-		Object.assign(element, { formatValue: () => '1:15 A title of some length' });
+		element.style.setProperty('--sonic-glass', 'transparent');
+		element.style.setProperty('--sonic-readout-glass', 'rgb(10 20 30)');
+		Object.assign(element, { formatValue: () => '1:15 A title far longer than any number' });
 	});
 	await page.mouse.move(strip.x + 14, middle);
 	await expect(readout).toBeVisible();
@@ -163,10 +151,20 @@ test('the readout stays inside the strip at both ends, and an empty string hides
 
 	expect((atEnd?.x ?? 0) + (atEnd?.width ?? 0)).toBeCloseTo(strip.x + strip.width, 0);
 
+	await page.mouse.move(strip.x + strip.width / 2, middle);
+
+	const look = await readout.evaluate((bubble) => ({
+		fill: getComputedStyle(bubble).backgroundColor,
+		isOneLine: bubble.scrollHeight <= bubble.clientHeight,
+		strip: getComputedStyle(bubble.parentElement ?? bubble).backgroundColor,
+	}));
+
+	expect(look).toEqual({ fill: 'rgb(10, 20, 30)', isOneLine: true, strip: 'rgba(0, 0, 0, 0)' });
+
 	await wavestrip.evaluate((element) => {
 		Object.assign(element, { formatValue: () => '' });
 	});
-	await page.mouse.move(strip.x + strip.width / 2, middle);
+	await page.mouse.move(strip.x + strip.width / 2 + 10, middle);
 	await expect(readout).toBeHidden();
 });
 
@@ -200,36 +198,30 @@ test('a cancellable drag past its zone matches cancelling, and revealed only whi
 	await expect(wavestrip).toHaveJSProperty('value', 150);
 });
 
-test('with fill, the strip takes its row and its ratios follow the height', async ({ page }) => {
-	await page.goto('/fixtures/');
-
-	const strip = page.locator('#wavestrip-fill .sonic-wavestrip');
-
-	await strip.scrollIntoViewIfNeeded();
-	await expect(strip).toHaveCSS('block-size', '96px');
-	await expect(strip).toHaveCSS('padding-top', '9.6px');
-
-	await page.locator('#wavestrip-fill-box').evaluate((box) => {
-		box.style.setProperty('height', '48px');
-	});
-	await expect(strip).toHaveCSS('block-size', '48px');
-	await expect(strip).toHaveCSS('padding-top', '4.8px');
-});
-
-test('a marker size holds the dots still on a filled strip, and lanes are measured from it', async ({
+test('with fill, the strip takes its row and its ratios follow the height, while a marker size holds the dots still and sets their lanes', async ({
 	page,
 }) => {
 	await page.goto('/fixtures/');
 
+	const strip = page.locator('#wavestrip-fill .sonic-wavestrip');
 	const dots = page.locator('#wavestrip-fill .sonic-wavestrip-marker');
 
-	await page.locator('#wavestrip-fill .sonic-wavestrip').scrollIntoViewIfNeeded();
+	await strip.scrollIntoViewIfNeeded();
+	await expect(strip).toHaveCSS('block-size', '96px');
+	await expect(strip).toHaveCSS('padding-top', '9.6px');
 	await expect(dots.first()).toHaveCSS('inline-size', '4px');
 
 	// 6.7px apart: one lane for 4px dots, where the 96px strip's own 6.2px dots would take two
 	const tops = await dots.evaluateAll((parts) => parts.map((part) => getComputedStyle(part).top));
 
 	expect(tops).toEqual(['0px', '0px']);
+
+	await page.locator('#wavestrip-fill-box').evaluate((box) => {
+		box.style.setProperty('height', '48px');
+	});
+	await expect(strip).toHaveCSS('block-size', '48px');
+	await expect(strip).toHaveCSS('padding-top', '4.8px');
+	await expect(dots.first()).toHaveCSS('inline-size', '4px');
 });
 
 test('the hover readout opens over the pointer, and Escape dismisses it', async ({
@@ -303,33 +295,6 @@ test('a press reports dragging by its first input, and the hovered value returns
 	expect(await read('hoverValue')).toBeUndefined();
 });
 
-test('a long readout stays on one line, on glass of its own colour', async ({ isMobile, page }) => {
-	test.skip(isMobile, 'Touch shows the readout only once a drag reveals it');
-
-	const { canvas, wavestrip } = await openWavestrip(page);
-	const box = await canvas.boundingBox();
-	if (!box) throw new Error('The wavestrip has no box');
-
-	await wavestrip.evaluate((element) => {
-		element.style.setProperty('--sonic-glass', 'transparent');
-		element.style.setProperty('--sonic-readout-glass', 'rgb(10 20 30)');
-		Object.assign(element, { formatValue: () => '1:15 A title far longer than any number' });
-	});
-	await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-
-	const readout = wavestrip.locator('.sonic-wavestrip-readout');
-
-	await expect(readout).toBeVisible();
-
-	const look = await readout.evaluate((bubble) => ({
-		fill: getComputedStyle(bubble).backgroundColor,
-		isOneLine: bubble.scrollHeight <= bubble.clientHeight,
-		strip: getComputedStyle(bubble.parentElement ?? bubble).backgroundColor,
-	}));
-
-	expect(look).toEqual({ fill: 'rgb(10, 20, 30)', isOneLine: true, strip: 'rgba(0, 0, 0, 0)' });
-});
-
 async function pressBy(page: Page, dot: Locator, by: { x: number; y: number }): Promise<void> {
 	const box = await dot.boundingBox();
 	if (!box) throw new Error('The marker has no box');
@@ -341,7 +306,9 @@ function readValue(wavestrip: Locator): Promise<number> {
 	return wavestrip.evaluate((element) => ('value' in element ? Number(element.value) : NaN));
 }
 
-test('a press on a dot snaps to its marker, in whichever lane it sits', async ({ page }) => {
+test('a press on a dot snaps to its marker, in whichever lane it sits, and a press below a dot seeks to where it lands', async ({
+	page,
+}) => {
 	const { wavestrip } = await openWavestrip(page);
 	const dots = wavestrip.locator('.sonic-wavestrip-marker');
 	const [first, second] = await Promise.all([dots.nth(0).boundingBox(), dots.nth(1).boundingBox()]);
@@ -353,12 +320,8 @@ test('a press on a dot snaps to its marker, in whichever lane it sits', async ({
 
 	await pressBy(page, dots.nth(1), { x: 3, y: 0 });
 	expect(await readValue(wavestrip)).toBe(62);
-});
 
-test('a press below a dot, in its column, seeks to where it lands', async ({ page }) => {
-	const { wavestrip } = await openWavestrip(page);
-
-	await pressBy(page, wavestrip.locator('.sonic-wavestrip-marker').nth(0), { x: -3, y: 20 });
+	await pressBy(page, dots.nth(0), { x: -3, y: 20 });
 
 	const value = await readValue(wavestrip);
 

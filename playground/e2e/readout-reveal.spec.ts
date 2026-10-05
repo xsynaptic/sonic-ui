@@ -29,7 +29,9 @@ async function pressDial(page: Page): Promise<{ x: number; y: number }> {
 	return start;
 }
 
-test('a held press shows the readout after 250ms, until release', async ({ page }) => {
+test('a held press shows the readout after 250ms, until release, and a 4px drag shows it at once', async ({
+	page,
+}) => {
 	const readout = page.locator('#level .sonic-dial-readout');
 
 	await pressDial(page);
@@ -40,6 +42,16 @@ test('a held press shows the readout after 250ms, until release', async ({ page 
 
 	await page.mouse.up();
 	expect(await readOpen(readout)).toBe(false);
+
+	// Past the double-press window, so the second press is a press of its own
+	await page.clock.runFor(1000);
+
+	const start = await pressDial(page);
+
+	expect(await readOpen(readout)).toBe(false);
+
+	await page.mouse.move(start.x, start.y - 4);
+	expect(await readOpen(readout)).toBe(true);
 });
 
 test('the reveal delay token sets how long a held press waits', async ({ page }) => {
@@ -53,14 +65,6 @@ test('the reveal delay token sets how long a held press waits', async ({ page })
 	expect(await readOpen(readout)).toBe(false);
 
 	await page.clock.runFor(1);
-	expect(await readOpen(readout)).toBe(true);
-});
-
-test('a 4px drag shows the readout at once', async ({ page }) => {
-	const readout = page.locator('#level .sonic-dial-readout');
-	const start = await pressDial(page);
-
-	await page.mouse.move(start.x, start.y - 4);
 	expect(await readOpen(readout)).toBe(true);
 });
 

@@ -434,6 +434,26 @@ import '#styles/playground.css';
 				segments="-24 -12 -6 -3 0"
 			></sonic-meter>
 		</div>
+		<sonic-dial aria-label="Depth" id="scaled-dial" value="50">
+			<span data-sonic-value="0">Min</span>
+			<span data-sonic-value="25"></span>
+			<span data-sonic-value="50"></span>
+			<span data-sonic-value="75"></span>
+			<span data-sonic-value="100">Max</span>
+		</sonic-dial>
+		<sonic-slider
+			aria-label="Blend"
+			class="[--sonic-slider-size:3.25rem]"
+			id="scaled-blend"
+			max="50"
+			min="-50"
+			origin="0"
+			value="-20"
+		>
+			<span data-sonic-value="-50">A</span>
+			<span data-sonic-value="0"></span>
+			<span data-sonic-value="50">B</span>
+		</sonic-slider>
 	</main>
 	<script>
 		import '@xsynaptic/sonic-ui/define';

@@ -94,7 +94,7 @@ test('closing the entry restores the orientation with the slider role', () => {
 	expect(control.getAttribute('aria-orientation')).toBe('vertical');
 });
 
-// A 220px slider at 100px with a 20px cap leaves 200px of travel, the cap's centre at 110px at the minimum
+// A 220px slider at 100px with a 20px cap leaves 200px of travel, the cap's center at 110px at the minimum
 test.each([
 	['', 25, 50],
 	['groove-press="none"', 40, 40],
@@ -138,7 +138,7 @@ test('with groove-press="none", the cap still drags', () => {
 	expect(slider.value).toBe(50);
 });
 
-// The slider's bottom is 320px down, so the cap's centre sits at 310px at the minimum and travel runs upward
+// The slider's bottom is 320px down, so the cap's center sits at 310px at the minimum and travel runs upward
 test('a vertical slider jumps to a groove press a quarter up and drags upward', () => {
 	const { control, slider } = mountSlider('orientation="vertical" value="80"');
 
@@ -199,7 +199,7 @@ test('orientation set as a property turns the slider', () => {
 	expect(control.getAttribute('aria-orientation')).toBe('horizontal');
 });
 
-// A 220px slider at 100px with a 20px cap: 200px of travel, the centre of a -50 to 50 slider at 210px
+// A 220px slider at 100px with a 20px cap: 200px of travel, the center of a -50 to 50 slider at 210px
 test.each([
 	['origin="0"', 0],
 	['', -50],

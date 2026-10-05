@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 
 import { expect, test } from '@playwright/test';
 
@@ -13,6 +13,10 @@ function readGlass(page: Page): Promise<{ bloom: string; breath: string }> {
 			breath: before.animationName,
 		};
 	});
+}
+
+function readFont(target: Locator): Promise<string> {
+	return target.evaluate((element) => getComputedStyle(element).fontFamily);
 }
 
 test('glass breathes only while hovered, and holds still under reduced motion', async ({
@@ -31,7 +35,9 @@ test('glass breathes only while hovered, and holds still under reduced motion', 
 	expect(await readGlass(page)).toMatchObject({ breath: 'none' });
 });
 
-test('the texture token at 0 on an ancestor drops the bloom', async ({ page }) => {
+test('the texture token at 0 on an ancestor drops the bloom, and forced colours draw no texture', async ({
+	page,
+}) => {
 	await page.goto('/fixtures/');
 	await page.addStyleTag({ content: ':root { --sonic-glass-texture: 0; }' });
 
@@ -40,15 +46,32 @@ test('the texture token at 0 on an ancestor drops the bloom', async ({ page }) =
 		.evaluate((glass) => getComputedStyle(glass, '::before').opacity);
 
 	expect(bloom).toBe('0');
-});
 
-test('forced colours draw no texture', async ({ page }) => {
 	await page.emulateMedia({ forcedColors: 'active' });
-	await page.goto('/fixtures/');
 
 	const forced = await readGlass(page);
 
 	expect(forced.bloom).toBe('none');
+});
+
+test('--sonic-glass-font reaches the readout and its entry; unset, the readout inherits', async ({
+	page,
+}) => {
+	await page.goto('/fixtures/');
+
+	const host = page.locator('#level');
+	const readout = host.locator('.sonic-dial-readout');
+
+	await host.evaluate((element) => {
+		element.style.fontFamily = 'serif';
+	});
+	expect(await readFont(readout)).toBe('serif');
+
+	await host.evaluate((element) => {
+		element.style.setProperty('--sonic-glass-font', 'monospace');
+	});
+	expect(await readFont(readout)).toBe('monospace');
+	expect(await readFont(host.locator('.sonic-dial-entry'))).toBe('monospace');
 });
 
 test('a screen is cut from the glass a number box is, and sizes every edge from its token', async ({

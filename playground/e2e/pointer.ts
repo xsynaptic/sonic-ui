@@ -7,7 +7,7 @@ export interface Point {
 
 export const mouseOnly = 'The mouse drives this gesture';
 
-export async function centreOf(target: Locator): Promise<Point> {
+export async function centerOf(target: Locator): Promise<Point> {
 	const box = await target.boundingBox();
 	if (!box) throw new Error('The target has no box');
 
@@ -15,7 +15,7 @@ export async function centreOf(target: Locator): Promise<Point> {
 }
 
 export async function drag(page: Page, target: Locator, by: Point): Promise<void> {
-	const start = await centreOf(target);
+	const start = await centerOf(target);
 
 	await page.mouse.move(start.x, start.y);
 	await page.mouse.down();

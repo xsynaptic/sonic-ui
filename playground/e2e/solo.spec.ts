@@ -44,23 +44,35 @@ function readPaint(page: Page): Promise<Record<string, string>> {
 	});
 }
 
-for (const [solo, { warns }] of Object.entries(solos)) {
-	if (warns !== undefined) {
-		test(`${solo} warns without ${warns}`, async ({ page }) => {
-			const messages = collectConsole(page);
+const warnings = [
+	{ path: '/fixtures/bare/', warning: 'material.css' },
+	...Object.entries(solos).flatMap(([solo, { warns }]) =>
+		warns === undefined
+			? []
+			: [
+					{
+						path: `/fixtures/solo/${solo}/`,
+						warning: ` draws blank without @xsynaptic/sonic-ui/${warns} (or controls.css)`,
+					},
+				],
+	),
+];
 
-			await page.goto(`/fixtures/solo/${solo}/`);
+test('a control without the material, or without a sheet its markup needs, warns once and names it', async ({
+	page,
+}) => {
+	const messages = collectConsole(page);
 
-			await expect
-				.poll(() => messages)
-				.toEqual([
-					expect.stringContaining(
-						` draws blank without @xsynaptic/sonic-ui/${warns} (or controls.css)`,
-					),
-				]);
-		});
-		continue;
+	for (const { path, warning } of warnings) {
+		messages.length = 0;
+		await page.goto(path);
+
+		await expect.poll(() => messages, path).toEqual([expect.stringContaining(warning)]);
 	}
+});
+
+for (const [solo, { warns }] of Object.entries(solos)) {
+	if (warns !== undefined) continue;
 
 	test(`${solo} paints with the material and its own sheet alone`, async ({ page }) => {
 		const messages = collectConsole(page);

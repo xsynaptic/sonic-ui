@@ -4,7 +4,7 @@ import { expect, test } from '@playwright/test';
 
 import type { Point } from './pointer.ts';
 
-import { centreOf } from './pointer.ts';
+import { centerOf } from './pointer.ts';
 
 test.skip(({ browserName }) => browserName !== 'chromium', 'A touch swipe needs CDP');
 test.use({ hasTouch: true, viewport: { height: 400, width: 400 } });
@@ -23,12 +23,12 @@ async function swipe(page: Page, from: Point, to: Point): Promise<void> {
 	await session.send('Input.dispatchTouchEvent', { touchPoints: [], type: 'touchEnd' });
 }
 
-async function centreInView(page: Page, selector: string): Promise<Point> {
+async function centerInView(page: Page, selector: string): Promise<Point> {
 	const target = page.locator(selector);
 
 	await target.scrollIntoViewIfNeeded();
 
-	return centreOf(target);
+	return centerOf(target);
 }
 
 test('a mostly vertical swipe from a horizontal slider scrolls the page and leaves the value', async ({
@@ -36,7 +36,7 @@ test('a mostly vertical swipe from a horizontal slider scrolls the page and leav
 }) => {
 	await page.goto('/fixtures/');
 
-	const from = await centreInView(page, '#send .sonic-slider');
+	const from = await centerInView(page, '#send .sonic-slider');
 	const scrolled = await page.evaluate(() => window.scrollY);
 
 	await swipe(page, from, { x: from.x + 30, y: from.y - 150 });
@@ -50,7 +50,7 @@ test('a horizontal swipe on a horizontal slider moves the value and not the page
 }) => {
 	await page.goto('/fixtures/');
 
-	const from = await centreInView(page, '#send .sonic-slider');
+	const from = await centerInView(page, '#send .sonic-slider');
 	const scrolled = await page.evaluate(() => window.scrollY);
 
 	await swipe(page, from, { x: from.x + 60, y: from.y });
@@ -66,7 +66,7 @@ test('a horizontal swipe on a horizontal slider moves the value and not the page
 test('a swipe on an XY pad moves both values and never the page', async ({ page }) => {
 	await page.goto('/fixtures/');
 
-	const from = await centreInView(page, '#xy .sonic-xy-puck');
+	const from = await centerInView(page, '#xy .sonic-xy-puck');
 	const scrolled = await page.evaluate(() => window.scrollY);
 
 	await swipe(page, from, { x: from.x + 30, y: from.y - 30 });
@@ -105,7 +105,7 @@ for (const { name, role, selector, value } of [
 		await page.goto('/fixtures/');
 		await page.addStyleTag({ content: roomToPan });
 
-		const from = await centreInView(page, selector);
+		const from = await centerInView(page, selector);
 		const scrolled = await readScroll(page);
 
 		await swipe(page, from, { x: from.x - 150, y: from.y - 30 });
@@ -119,14 +119,14 @@ for (const { name, selector } of [
 	{ name: 'Position', selector: '#wavestrip .sonic-wavestrip' },
 	{ name: 'Detail', selector: '#waveform .sonic-waveform' },
 ]) {
-	test(`a mostly vertical swipe from ${name}, off its centre, scrolls the page and leaves the value`, async ({
+	test(`a mostly vertical swipe from ${name}, off its center, scrolls the page and leaves the value`, async ({
 		page,
 	}) => {
 		await page.goto('/fixtures/');
 		await page.addStyleTag({ content: roomToPan });
 
-		const centre = await centreInView(page, selector);
-		const from = { x: centre.x - 60, y: centre.y };
+		const center = await centerInView(page, selector);
+		const from = { x: center.x - 60, y: center.y };
 		const scrolled = await readScroll(page);
 
 		await swipe(page, from, { x: from.x + 30, y: from.y - 150 });
@@ -143,7 +143,7 @@ test('a swipe on an envelope handle turns its dials and never the page, and one 
 	await page.addStyleTag({ content: roomToPan });
 
 	const decay = page.getByRole('slider', { exact: true, name: 'Envelope decay' });
-	const handle = await centreInView(
+	const handle = await centerInView(
 		page,
 		'#envelope .sonic-envelope-handle[data-sonic-stage="decay"]',
 	);

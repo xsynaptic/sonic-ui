@@ -30,44 +30,41 @@ function readFace(page: Page, selector: string, pseudo: string): Promise<Face> {
 	}, pseudo);
 }
 
-for (const { name, pseudo, selector } of faces) {
-	test(`the flat skin leaves no shading on the face of ${name}`, async ({ page }) => {
-		const messages = collectConsole(page);
-
-		await page.goto('/fixtures/');
-
-		const lit = await readFace(page, selector, pseudo);
-
-		expect(lit.gradient).toContain('gradient');
-		expect(lit.shadowAlphas.length).toBeGreaterThan(0);
-		for (const alpha of lit.shadowAlphas) expect(alpha).toBeGreaterThan(0);
-
-		await page.evaluate(() => {
-			document.documentElement.classList.add('sonic-skin-flat');
-		});
-
-		const flat = await readFace(page, selector, pseudo);
-
-		expect(flat.gradient).toContain('gradient');
-		expect(flat.shadowAlphas).toEqual(lit.shadowAlphas.map(() => 0));
-		expect(messages).toEqual([]);
-	});
-}
-
-test("the flat skin inks a button's icon evenly, where the default fades it along the light", async ({
+test("the flat skin leaves no shading on the face of a button or a dial, and inks a button's icon evenly where the default fades it along the light", async ({
 	page,
 }) => {
+	const messages = collectConsole(page);
+
 	await page.goto('/fixtures/');
 
 	const icon = page.locator('#next .sonic-button-cap > svg');
 	const readMask = (): Promise<string> =>
 		icon.evaluate((element) => getComputedStyle(element).maskImage);
+	const readFaces = (): Promise<Array<Face>> =>
+		Promise.all(faces.map(({ pseudo, selector }) => readFace(page, selector, pseudo)));
+	const lit = await readFaces();
 
+	for (const [index, face] of lit.entries()) {
+		const name = faces[index]?.name;
+
+		expect(face.gradient, name).toContain('gradient');
+		expect(face.shadowAlphas.length, name).toBeGreaterThan(0);
+		for (const alpha of face.shadowAlphas) expect(alpha, name).toBeGreaterThan(0);
+	}
 	expect(await readMask()).toContain('rgba(0, 0, 0, 0.6)');
 
 	await page.evaluate(() => {
 		document.documentElement.classList.add('sonic-skin-flat');
 	});
 
+	const flat = await readFaces();
+
+	for (const [index, face] of flat.entries()) {
+		const name = faces[index]?.name;
+
+		expect(face.gradient, name).toContain('gradient');
+		expect(face.shadowAlphas, name).toEqual(lit[index]?.shadowAlphas.map(() => 0));
+	}
 	expect(await readMask()).not.toContain('rgba');
+	expect(messages).toEqual([]);
 });

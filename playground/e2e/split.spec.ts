@@ -4,7 +4,7 @@ import { expect, test } from '@playwright/test';
 
 import type { Point } from './pointer.ts';
 
-import { centreOf, mouseOnly } from './pointer.ts';
+import { centerOf, mouseOnly } from './pointer.ts';
 
 async function valueOf(page: Page, name: string): Promise<number> {
 	const slider = page.getByRole('slider', { exact: true, name });
@@ -13,7 +13,7 @@ async function valueOf(page: Page, name: string): Promise<number> {
 }
 
 async function capBox(page: Page, id: string): Promise<{ cap: Point; grooveRight: number }> {
-	const cap = await centreOf(page.locator(`#${id} .sonic-slider-cap`));
+	const cap = await centerOf(page.locator(`#${id} .sonic-slider-cap`));
 	const groove = await page.locator(`#${id} .sonic-slider`).boundingBox();
 	if (!groove) throw new Error(`#${id} has no box`);
 
@@ -58,8 +58,8 @@ test.describe('two fingers', () => {
 		page,
 	}) => {
 		const session = await page.context().newCDPSession(page);
-		const first = await centreOf(page.locator('#split-a .sonic-slider-cap'));
-		const third = await centreOf(page.locator('#split-c .sonic-slider-cap'));
+		const first = await centerOf(page.locator('#split-a .sonic-slider-cap'));
+		const third = await centerOf(page.locator('#split-c .sonic-slider-cap'));
 		const at = (by: number): Array<Point & { id: number }> => [
 			{ id: 0, x: first.x + by, y: first.y },
 			{ id: 1, x: third.x + by, y: third.y },

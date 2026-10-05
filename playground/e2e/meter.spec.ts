@@ -141,21 +141,16 @@ async function partBoxes(page: Page, id: string): Promise<{ meter: DOMRect; segm
 	});
 }
 
-test('a length of 100% fills the parent and draws the segments a fixed length does', async ({
+test('a length of 100% fills the parent, draws the segments a fixed length does, and runs a horizontal ladder the same inset from both ends', async ({
 	page,
 }) => {
 	const percent = await partBoxes(page, 'meter-percent');
 	const fixed = await partBoxes(page, 'meter-fixed');
+	const { meter, segments } = await partBoxes(page, 'ladder-percent');
 
 	expect(percent.meter.height).toBeCloseTo(150, 1);
 	expect(percent.segments.height).toBeCloseTo(fixed.segments.height, 1);
 	expect(percent.segments.bottom).toBeCloseTo(fixed.segments.bottom, 1);
-});
-
-test('a horizontal ladder at a length of 100% runs the same inset from both ends', async ({
-	page,
-}) => {
-	const { meter, segments } = await partBoxes(page, 'ladder-percent');
 
 	expect(meter.width).toBeCloseTo(150, 1);
 	expect(segments.left - meter.left).toBeGreaterThan(0);

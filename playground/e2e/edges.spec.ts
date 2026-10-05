@@ -31,8 +31,11 @@ function laneTops(host: Locator, edgeWidth: string): Promise<Array<string>> {
 	}, edgeWidth);
 }
 
-test("with no edge width and no inset, the canvas is the strip's own box", async ({ page }) => {
-	const { strip } = await openPinned(page);
+test("with no edge width and no inset the canvas is the strip's own box, while its regions and readout keep their own edges", async ({
+	page,
+}) => {
+	const { host, strip } = await openPinned(page);
+	const readout = host.locator('.sonic-wavestrip-readout');
 
 	await expect(strip).toHaveCSS('border-top-width', '0px');
 
@@ -48,13 +51,15 @@ test("with no edge width and no inset, the canvas is the strip's own box", async
 	});
 
 	expect(boxes[1]).toEqual(boxes[0]);
-});
+	await expect(host.locator('.sonic-wavestrip-region')).toHaveCSS(
+		'border-inline-start-width',
+		'1px',
+	);
+	await expect(readout).toHaveCSS('border-top-width', '2px');
+	await expect(readout).toHaveCSS('border-top-color', 'rgb(1, 2, 3)');
 
-test('forced colours keep an edge on glass that asked for none', async ({ page }) => {
+	// Forced colours keep an edge on glass that asked for none
 	await page.emulateMedia({ forcedColors: 'active' });
-
-	const { strip } = await openPinned(page);
-
 	await expect(strip).toHaveCSS('border-top-width', '1px');
 });
 
@@ -72,21 +77,4 @@ test('a marker edge width sets the lane step on a filled strip', async ({ page }
 	const [, lane = ''] = await laneTops(host, 'initial');
 
 	expect(Number(lane.replace('px', ''))).toBeCloseTo(4 + Math.round(1.5 * ratio) / ratio, 3);
-});
-
-test('a region edge width holds its lines on a filled strip', async ({ page }) => {
-	const { host } = await openPinned(page);
-
-	await expect(host.locator('.sonic-wavestrip-region')).toHaveCSS(
-		'border-inline-start-width',
-		'1px',
-	);
-});
-
-test('a readout keeps its own edge on glass that has none', async ({ page }) => {
-	const { host } = await openPinned(page);
-	const readout = host.locator('.sonic-wavestrip-readout');
-
-	await expect(readout).toHaveCSS('border-top-width', '2px');
-	await expect(readout).toHaveCSS('border-top-color', 'rgb(1, 2, 3)');
 });

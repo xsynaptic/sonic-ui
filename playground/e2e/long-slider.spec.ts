@@ -18,12 +18,25 @@ async function readoutOffset(page: Page, id: string): Promise<{ above: number; a
 	});
 }
 
-test('a length of 100% fills the parent, and the cap travels to its far end', async ({ page }) => {
+test('a length of 100% fills the parent, and a capless slider shows its focus on the groove and keeps its readout over the cap to the far end', async ({
+	page,
+}) => {
 	await page.goto('/fixtures/');
 
 	const strip = page.locator('#strip');
+	const control = strip.getByRole('slider');
+	const groove = strip.locator('.sonic-slider-groove');
+	const resting = await groove.evaluate((element) => getComputedStyle(element).boxShadow);
 
-	await strip.getByRole('slider').focus();
+	await control.focus();
+	await page.keyboard.press('PageUp');
+	await expect(groove).not.toHaveCSS('box-shadow', resting);
+	await expect(strip.locator('.sonic-slider-readout')).toBeVisible();
+
+	const low = await readoutOffset(page, 'strip');
+
+	expect(Math.abs(low.across)).toBeLessThan(1);
+
 	await page.keyboard.press('End');
 
 	const gaps = await strip.evaluate((element) => {
@@ -37,36 +50,7 @@ test('a length of 100% fills the parent, and the cap travels to its far end', as
 
 	expect(Math.abs(gaps.width)).toBeLessThan(0.5);
 	expect(Math.abs(gaps.end)).toBeLessThan(0.5);
-});
 
-test('a focused capless slider shows its focus on the groove', async ({ page }) => {
-	await page.goto('/fixtures/');
-
-	const control = page.locator('#strip').getByRole('slider');
-	const groove = page.locator('#strip .sonic-slider-groove');
-	const resting = await groove.evaluate((element) => getComputedStyle(element).boxShadow);
-
-	await control.focus();
-	await page.keyboard.press('ArrowRight');
-
-	await expect(groove).not.toHaveCSS('box-shadow', resting);
-});
-
-test('the readout follows the cap along a long horizontal slider', async ({ page }) => {
-	await page.goto('/fixtures/');
-
-	const control = page.locator('#strip').getByRole('slider');
-	const readout = page.locator('#strip .sonic-slider-readout');
-
-	await control.focus();
-	await page.keyboard.press('PageUp');
-	await expect(readout).toBeVisible();
-
-	const low = await readoutOffset(page, 'strip');
-
-	expect(Math.abs(low.across)).toBeLessThan(1);
-
-	await page.keyboard.press('End');
 	await page.keyboard.press('PageDown');
 	await expect(control).toHaveAttribute('aria-valuenow', '250');
 
@@ -75,7 +59,7 @@ test('the readout follows the cap along a long horizontal slider', async ({ page
 	expect(Math.abs(high.across)).toBeLessThan(1);
 });
 
-test('a vertical fader keeps its readout centred above its top end', async ({ page }) => {
+test('a vertical fader keeps its readout centerd above its top end', async ({ page }) => {
 	await page.goto('/fixtures/');
 
 	const fader = page.locator('#fader');

@@ -89,10 +89,10 @@ async function setOnBox(page: Page, property: string, value: string): Promise<vo
 	);
 }
 
-test('the canvas backs every device pixel, and the spike stands one column wide where the log axis puts it', async ({
+test('the canvas backs every device pixel, the spike stands one column wide where the log axis puts it, and the bars turn from the lit colour to the hot one at the hot threshold', async ({
 	page,
 }) => {
-	const { alphaAt, canvas } = await openSpectrum(page);
+	const { alphaAt, canvas, pixelAt, token } = await openSpectrum(page);
 	const { css, device } = await canvas.evaluate((element) => ({
 		css: element.getBoundingClientRect().width,
 		device: element instanceof HTMLCanvasElement ? element.width : 0,
@@ -103,12 +103,6 @@ test('the canvas backs every device pixel, and the spike stands one column wide 
 	expect(await alphaAt(-6, { row: -1 })).toBe(0);
 	expect(await alphaAt(-6, { column: -1 })).toBe(0);
 	expect(await alphaAt(-6, { column: 1 })).toBe(0);
-});
-
-test('the bars paint the lit colour, and the hot colour from the hot threshold up', async ({
-	page,
-}) => {
-	const { pixelAt, token } = await openSpectrum(page);
 
 	expectPixel(await pixelAt(-30), await token('--_sonic-spectrum-lit'));
 	expectPixel(await pixelAt(-12, { row: 1 }), await token('--_sonic-spectrum-lit'));
@@ -116,19 +110,15 @@ test('the bars paint the lit colour, and the hot colour from the hot threshold u
 	expect(await token('--_sonic-spectrum-hot')).not.toEqual(await token('--_sonic-spectrum-lit'));
 });
 
-test('a lit colour set on an ancestor repaints within two frames', async ({ page }) => {
-	const { pixelAt } = await openSpectrum(page);
-
-	await setOnBox(page, '--sonic-lit', '#0080ff');
-
-	expectPixel(await pixelAt(-30), [0, 128, 255, 255]);
-});
-
-test('a hot threshold set on an ancestor repaints within two frames', async ({ page }) => {
+test('a lit colour or a hot threshold set on an ancestor repaints within two frames', async ({
+	page,
+}) => {
 	const { pixelAt, token } = await openSpectrum(page);
 
-	await setOnBox(page, '--sonic-spectrum-hot-from', '-40');
+	await setOnBox(page, '--sonic-lit', '#0080ff');
+	expectPixel(await pixelAt(-30), [0, 128, 255, 255]);
 
+	await setOnBox(page, '--sonic-spectrum-hot-from', '-40');
 	expectPixel(await pixelAt(-30), await token('--_sonic-spectrum-hot'));
 });
 

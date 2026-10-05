@@ -92,8 +92,8 @@ function bucketAt(
 	).find((bucket) => bucket.fromPair === fromPair);
 }
 
-// Deliberate: a bar always touches the centreline, so a DC offset never floats it
-test('a bucket wholly above zero still reaches the centreline, and one wholly below does too', () => {
+// Deliberate: a bar always touches the centerline, so a DC offset never floats it
+test('a bucket wholly above zero still reaches the centerline, and one wholly below does too', () => {
 	expect(bucketAt(new Int8Array([16, 64, 32, 96]), 1)).toMatchObject({ high: 0.75, low: 0 });
 	expect(bucketAt(new Int8Array([-64, -16, -96, -32]), 1)).toMatchObject({ high: 0, low: -0.75 });
 });

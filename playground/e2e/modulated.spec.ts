@@ -15,28 +15,28 @@ function px(length: string): number {
 	return Number(length.replace('px', ''));
 }
 
-for (const [id, part] of [
-	['modulated', '.sonic-dial-modulation'],
-	['modulated-slider', '.sonic-slider-modulation'],
-] as const) {
-	test(`#${id} renders its modulation part with a live value alone, and drops it when cleared`, async ({
-		page,
-	}) => {
-		await page.goto('/fixtures/');
+test('a dial and a slider render the modulation part with a live value alone, and drop it when cleared', async ({
+	page,
+}) => {
+	await page.goto('/fixtures/');
 
+	for (const [id, part] of [
+		['modulated', '.sonic-dial-modulation'],
+		['modulated-slider', '.sonic-slider-modulation'],
+	] as const) {
 		const host = page.locator(`#${id}`);
 		const drawn = host.locator(part);
 
-		await expect(drawn).toHaveCSS('display', 'none');
+		await expect.soft(drawn).toHaveCSS('display', 'none');
 
 		await setModulated(host, 95);
-		await expect(drawn).toHaveCSS('display', 'block');
-		expect(await readState(host, 'modulated')).toBe(true);
+		await expect.soft(drawn).toHaveCSS('display', 'block');
+		expect.soft(await readState(host, 'modulated'), id).toBe(true);
 
 		await setModulated(host, undefined);
-		await expect(drawn).toHaveCSS('display', 'none');
-	});
-}
+		await expect.soft(drawn).toHaveCSS('display', 'none');
+	}
+});
 
 test('a slider draws the live value from the cap to the modulation value, with a tick there', async ({
 	page,

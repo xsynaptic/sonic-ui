@@ -36,7 +36,7 @@ test('positions past either end read as the end', () => {
 test.each([
 	['power', Math.SQRT1_2],
 	['linear', 0.5],
-] as const)('the %s law at the centre gives each side %d', (law, gain) => {
+] as const)('the %s law at the center gives each side %d', (law, gain) => {
 	const { a, b } = crossfadeGains(0.5, { law });
 
 	expect(a).toBeCloseTo(gain, 12);

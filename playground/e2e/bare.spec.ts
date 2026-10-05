@@ -90,7 +90,7 @@ async function readGlass(
 	return { ...glass, fill: lightness(glass.fill), text: lightness(glass.text) };
 }
 
-test('a bare cap with no legend draws a faint edge in the text colour, and a legend takes it away', async ({
+test('a bare cap with no legend draws a faint edge in the text colour, which a legend, a cap or an edge takes away', async ({
 	page,
 }) => {
 	const blank = await readEdge(page.locator('#bare-blank .sonic-button'));
@@ -100,11 +100,20 @@ test('a bare cap with no legend draws a faint edge in the text colour, and a leg
 	expect(blank.edge).toBe(blank.faint);
 	expect(ledOnly.edge).toBe(ledOnly.faint);
 	expect(legend.edge).toMatch(clear);
+
+	for (const id of ['amber', 'flat', 'edged']) {
+		const { edge } = await readEdge(page.locator(`#${id}-blank .sonic-button`));
+
+		expect(edge, id).toMatch(clear);
+	}
 });
 
-test('the edge follows a legend added or removed later', async ({ page }) => {
+test('the edge follows a legend added or removed later, and lights at full strength once latched', async ({
+	page,
+}) => {
 	const host = page.locator('#bare-blank');
 	const button = host.locator('.sonic-button');
+	const rest = await readEdge(button);
 
 	await host.evaluate((element) => {
 		const legend = document.createElement('span');
@@ -122,11 +131,6 @@ test('the edge follows a legend added or removed later', async ({ page }) => {
 	});
 
 	await expect.poll(() => isEdged(button, 'faint')).toBe(true);
-});
-
-test('a latched blank button lights its edge at full strength', async ({ page }) => {
-	const button = page.locator('#bare-blank .sonic-button');
-	const rest = await readEdge(button);
 
 	await button.click();
 	await page.mouse.move(0, 0);
@@ -136,14 +140,6 @@ test('a latched blank button lights its edge at full strength', async ({ page })
 	const latched = await readEdge(button);
 
 	expect(latched.text).not.toBe(rest.text);
-});
-
-test('a blank cap draws no edge of its own once a cap or its edge is set', async ({ page }) => {
-	for (const id of ['amber', 'flat', 'edged']) {
-		const { edge } = await readEdge(page.locator(`#${id}-blank .sonic-button`));
-
-		expect(edge, id).toMatch(clear);
-	}
 });
 
 test('a bare unlit LED is a tint of the text around it with no bezel, and a skinned one keeps its glass', async ({
@@ -161,12 +157,21 @@ test('a bare unlit LED is a tint of the text around it with no bezel, and a skin
 	expect(amber.inset).toBe('3.75px');
 });
 
-test('bare glass follows the colour scheme, and skinned glass does not', async ({ page }) => {
+test('bare glass has an edge and follows the colour scheme, and skinned glass does neither', async ({
+	page,
+}) => {
 	await page.emulateMedia({ colorScheme: 'light' });
 
 	const light = await readGlass(page, '#bare-screen');
 	const amberLight = await readGlass(page, '#amber-screen');
+	const flat = await readGlass(page, '#flat-screen');
 	const own = await readGlass(page, '#own-glass');
+
+	expect(light.edge).toBe('1px');
+	expect(amberLight.edge).toBe('0px');
+	expect(amberLight.inner).toBe(amberLight.outer);
+	expect(flat.edge).toBe('1px');
+	expect(light.outer).toBe(amberLight.outer);
 
 	expect(light.fill).toBeGreaterThan(0.9);
 	expect(light.text).toBeLessThan(0.3);
@@ -181,16 +186,4 @@ test('bare glass follows the colour scheme, and skinned glass does not', async (
 	expect(await readGlass(page, '#amber-screen')).toEqual(amberLight);
 	expect(amberLight.fill).toBeLessThan(0.2);
 	expect(amberLight.text).toBeGreaterThan(0.7);
-});
-
-test('bare glass has an edge, which costs a skinned glass none of its size', async ({ page }) => {
-	const bare = await readGlass(page, '#bare-screen');
-	const amber = await readGlass(page, '#amber-screen');
-	const flat = await readGlass(page, '#flat-screen');
-
-	expect(bare.edge).toBe('1px');
-	expect(amber.edge).toBe('0px');
-	expect(amber.inner).toBe(amber.outer);
-	expect(flat.edge).toBe('1px');
-	expect(bare.outer).toBe(amber.outer);
 });

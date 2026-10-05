@@ -126,7 +126,7 @@ The words this library uses for its controls, their parts and their values. Wher
 
 **Default**: The value a value control goes back to when it is reset. _Avoid_: Reset value, initial value
 
-**Origin**: The value that a control's light starts from. _Avoid_: Rest, bipolar centre, zero
+**Origin**: The value that a control's light starts from. _Avoid_: Rest, bipolar center, zero
 
 **Detent**: A single value that a control catches on as it passes. _Avoid_: Snap, notch; "detent" for every stop of a stepped control
 
@@ -138,7 +138,7 @@ The words this library uses for its controls, their parts and their values. Wher
 
 **Taper**: The shape of a mapping, linear or logarithmic. _Avoid_: Law, skew, easing
 
-**Midpoint**: The value that sits halfway along the travel. Setting it bends the taper to fit. _Avoid_: Skew, centre
+**Midpoint**: The value that sits halfway along the travel. Setting it bends the taper to fit. _Avoid_: Skew, center
 
 **Modulation**: How far a modulation source can push a control's value to either side of where it is set. _Avoid_: Modulation depth, amount
 
@@ -166,7 +166,7 @@ The words this library uses for its controls, their parts and their values. Wher
 
 **Endless**: Turning with no end stops, so the value wraps from maximum round to minimum. _Avoid_: Wrapping, infinite, encoder
 
-**Spring**: Going back to the origin when let go. _Avoid_: Sprung, snap-back, self-centring
+**Spring**: Going back to the origin when let go. _Avoid_: Sprung, snap-back, self-centering
 
 ### Skinning
 

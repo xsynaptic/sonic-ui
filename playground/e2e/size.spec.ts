@@ -41,10 +41,12 @@ function readParts(control: Locator): Promise<Record<string, Array<number>>> {
 	});
 }
 
-for (const { control, host, name, token } of controls) {
-	test(`${name} scales as one piece when its size doubles`, async ({ page }) => {
-		await page.goto('/fixtures/');
+test('a dial, a button holding an LED, an XY pad and an envelope each scale as one piece when their size doubles', async ({
+	page,
+}) => {
+	await page.goto('/fixtures/');
 
+	for (const { control, host, name, token } of controls) {
 		const target = page.locator(`${host} ${control}`);
 
 		await target.scrollIntoViewIfNeeded();
@@ -55,7 +57,7 @@ for (const { control, host, name, token } of controls) {
 			token.replace('--sonic', '--_sonic'),
 		);
 
-		expect(Object.keys(before).length).toBeGreaterThan(2);
+		expect(Object.keys(before).length, name).toBeGreaterThan(2);
 		await page.locator(host).evaluate(
 			(element: HTMLElement, [name, value]) => {
 				element.style.setProperty(name, value);
@@ -70,11 +72,12 @@ for (const { control, host, name, token } of controls) {
 				for (const [index, edge] of box.entries()) {
 					const doubled = after[part]?.[index] ?? NaN;
 
-					expect(Math.abs(doubled - 2 * edge), `${part} from ${String(box)}`).toBeLessThanOrEqual(
-						1,
-					);
+					expect(
+						Math.abs(doubled - 2 * edge),
+						`${name}: ${part} from ${String(box)}`,
+					).toBeLessThanOrEqual(1);
 				}
 			}
 		}).toPass();
-	});
-}
+	}
+});
