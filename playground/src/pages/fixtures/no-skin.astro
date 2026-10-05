@@ -1,0 +1,78 @@
+---
+import Play from '@lucide/astro/icons/play';
+
+import Document from '#components/document.astro';
+import '#styles/playground.css';
+
+const groups = [
+	{ id: 'bare', skinClass: undefined },
+	{ id: 'amber', skinClass: 'sonic-skin-amber' },
+	{ id: 'flat', skinClass: 'sonic-skin-flat' },
+];
+const stages = ['attack', 'decay', 'sustain', 'release'];
+---
+
+<Document bodyClass="bg-ground" title="sonic-ui fixtures, no skin">
+	<main class="grid gap-16 p-16 [--sonic-led-size:20px]">
+		<h1 class="sr-only">No skin</h1>
+		{groups.map(({ id, skinClass }) => (
+			<section
+				aria-label={id}
+				class:list={['flex flex-wrap items-center gap-16 text-[rgb(40_90_160)]', skinClass]}
+				id={id}
+			>
+				<sonic-button aria-label="Blank" id={`${id}-blank`} latching></sonic-button>
+				<sonic-button aria-label="LED only" id={`${id}-led-only`} latching>
+					<span class="sonic-led"></span>
+				</sonic-button>
+				<sonic-button aria-label="Legend only" id={`${id}-legend`} latching>
+					<Play aria-hidden="true" />
+				</sonic-button>
+				<span class="sonic-led" id={`${id}-led`}></span>
+				<div class="sonic-screen" id={`${id}-screen`}>
+					440 Hz
+				</div>
+				<sonic-number aria-label="Tempo" id={`${id}-number`} max="300" min="20" value="120" />
+				<sonic-xy aria-label="Pad" id={`${id}-xy`} readout x="30" y="60"></sonic-xy>
+				<sonic-envelope
+					id={`${id}-envelope`}
+					{...Object.fromEntries(stages.map((stage) => [stage, `stage-${stage}`]))}
+				/>
+				<sonic-wavestrip
+					aria-label="Position"
+					data-peaks="flat"
+					id={`${id}-wavestrip`}
+					max="300"
+					value="150"
+				></sonic-wavestrip>
+				<sonic-waveform
+					aria-label="Detail"
+					data-samples="3"
+					id={`${id}-waveform`}
+					max="300"
+					value="150"
+				></sonic-waveform>
+			</section>
+		))}
+		<div class="flex gap-16 text-[rgb(40_90_160)] [--sonic-cap-edge:rgb(200_30_30)]">
+			<sonic-button aria-label="Edged blank" id="edged-blank" latching></sonic-button>
+			<sonic-button aria-label="Edged legend" id="edged-legend" latching>
+				<Play aria-hidden="true" />
+			</sonic-button>
+		</div>
+		<div class="sonic-screen [--sonic-glass:#123]" id="own-glass">
+			440 Hz
+		</div>
+		<div class="flex gap-16">
+			{stages.map((stage) => (
+				<sonic-dial aria-label={stage} id={`stage-${stage}`} value="40"></sonic-dial>
+			))}
+		</div>
+	</main>
+	<script>
+		import '@xsynaptic/sonic-ui/define';
+
+		import '#scripts/samples.ts';
+		import '#scripts/peaks.ts';
+	</script>
+</Document>

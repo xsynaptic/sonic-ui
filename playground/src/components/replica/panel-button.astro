@@ -1,7 +1,4 @@
 ---
-import Circle from '@lucide/astro/icons/circle';
-import Square from '@lucide/astro/icons/square';
-
 import Label from '#components/replica/label.astro';
 
 interface Props {
@@ -36,8 +33,6 @@ const sizeClass = {
 	small: '[--sonic-button-size:1.25rem]',
 }[size];
 
-const Glyph = isRound ? Circle : Square;
-
 // Astro writes `false` as a string, which still sets a boolean attribute
 const mode = isMomentary ? { momentary: '' } : { latching: '' };
 ---
@@ -58,7 +53,6 @@ const mode = isMomentary ? { momentary: '' } : { latching: '' };
 			{...data}
 		>
 			<span class="sonic-led" data-sonic-lit="alt"></span>
-			<Glyph aria-hidden="true" class="replica-glyph" />
 		</sonic-button>
 	) : (
 		<sonic-button
@@ -68,7 +62,6 @@ const mode = isMomentary ? { momentary: '' } : { latching: '' };
 			{...data}
 		>
 			{hasLed ? <span class="sonic-led"></span> : undefined}
-			<Glyph aria-hidden="true" class="replica-glyph" />
 		</sonic-button>
 	)}
 	<Label id={id} text={label} />

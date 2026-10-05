@@ -144,15 +144,17 @@ test('a host tabindex of -1 leaves the tab order, and a press still focuses the 
 	await canvas.click();
 	expect(await holdsFocus()).toBe(true);
 
-	await page.keyboard.press('Shift+Tab');
+	// WebKit walks back from the pressed canvas, and the stop before it is the control it sits in
 	await page.keyboard.press('Tab');
+	expect(await holdsFocus()).toBe(false);
+	await page.keyboard.press('Shift+Tab');
 	expect(await holdsFocus()).toBe(true);
 
 	await waveform.evaluate((host) => {
 		host.setAttribute('tabindex', '-1');
 	});
-	await page.keyboard.press('Shift+Tab');
 	await page.keyboard.press('Tab');
+	await page.keyboard.press('Shift+Tab');
 	expect(await holdsFocus()).toBe(false);
 
 	await canvas.click();

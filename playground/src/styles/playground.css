@@ -45,10 +45,6 @@
 }
 
 @layer components {
-	[class*='sonic-skin-'] .replica-glyph {
-		display: none;
-	}
-
 	:root {
 		--sonic-scale: color-mix(in oklab, currentcolor 30%, transparent);
 	}

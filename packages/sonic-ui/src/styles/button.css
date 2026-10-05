@@ -152,6 +152,27 @@
 		}
 	}
 
+	.sonic-button:not(:has(> .sonic-button-cap > :not(.sonic-led))) {
+		/* Invalid with both tokens unset, which is the one case that draws */
+		--_sonic-blank-edge-off: color-mix(
+			in oklab,
+			var(--sonic-cap-edge, var(--sonic-cap)) 0%,
+			transparent
+		);
+		--_sonic-blank-edge: var(
+			--_sonic-blank-edge-off,
+			color-mix(in oklab, currentcolor 35%, transparent)
+		);
+
+		&:is([aria-pressed='true'], :where([momentary]:state(pressed)) > *) {
+			--_sonic-blank-edge: var(--_sonic-blank-edge-off, currentcolor);
+		}
+
+		@media (forced-colors: active) {
+			--_sonic-blank-edge: transparent;
+		}
+	}
+
 	.sonic-button-cap {
 		--_sonic-keycap-corner: max(0px, var(--_sonic-button-corner) - var(--_sonic-button-gap));
 		--_sonic-keycap-bevel: calc(var(--_sonic-button-size) * var(--_sonic-button-bevel-ratio));

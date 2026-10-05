@@ -183,7 +183,15 @@
 		.sonic-xy,
 		.sonic-xy-readout
 	) {
-		--_sonic-glass-base: var(--sonic-glass, color-mix(in oklab, var(--_sonic-unlit) 45%, #000));
+		--_sonic-glass-slab: color-mix(in oklab, var(--_sonic-unlit) 45%, #000);
+		--_sonic-glass-base: var(
+			--sonic-glass,
+			color-mix(
+				in oklab,
+				var(--_sonic-glass-slab) calc(100% * var(--_sonic-relief)),
+				light-dark(oklch(97% 0.003 286deg), var(--_sonic-glass-slab))
+			)
+		);
 		--_sonic-glass: var(--_sonic-glass-base);
 		--_sonic-glass-fill: radial-gradient(
 				closest-side,
@@ -197,9 +205,20 @@
 			var(--_sonic-glass);
 		--_sonic-glass-text: var(
 			--sonic-glass-text,
-			color-mix(in oklab, var(--_sonic-glass) 20%, #fff)
+			color-mix(
+				in oklab,
+				var(--_sonic-glass) 20%,
+				oklch(from var(--_sonic-glass) clamp(0, (0.6 - l) * 1000, 1) 0 0deg / 100%)
+			)
 		);
-		--_sonic-glass-edge: 1px solid var(--sonic-glass-edge);
+
+		/* Invalid with the token unset, so the default takes over */
+		--_sonic-glass-edge-set: 1px solid var(--sonic-glass-edge);
+		--_sonic-glass-edge: var(
+			--_sonic-glass-edge-set,
+			calc(1px * (1 - var(--_sonic-relief))) solid
+				color-mix(in oklab, currentcolor 35%, transparent)
+		);
 
 		/* Glass is forced to Canvas like the page, so only a border shows its edge */
 		@media (forced-colors: active) {
@@ -372,7 +391,11 @@
 		place-items: center;
 		background: var(--_sonic-skirt);
 		border-radius: var(--_sonic-keycap-corner);
-		box-shadow: var(--_sonic-keycap-drop), var(--_sonic-rim), var(--_sonic-focus-shadow);
+		box-shadow:
+			var(--_sonic-keycap-drop),
+			var(--_sonic-rim),
+			0 0 0 max(1px, 0.75 * var(--_sonic-unit)) var(--_sonic-blank-edge, transparent),
+			var(--_sonic-focus-shadow);
 		scale: var(--_sonic-keycap-scale);
 		translate: 0 var(--_sonic-keycap-shift);
 		transition: var(--_sonic-press-transition);

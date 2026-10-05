@@ -7,10 +7,26 @@
 @layer sonic {
 	.sonic-led {
 		--_sonic-led-size: var(--sonic-led-size, 0.5rem);
-		--_sonic-led-lens-ratio: var(--sonic-led-lens-ratio, 0.625);
+		--_sonic-led-lens-ratio: var(--sonic-led-lens-ratio, calc(0.8 - 0.175 * var(--_sonic-relief)));
 		--_sonic-lit-alt: var(--sonic-lit-alt, oklch(79% 0.2 150deg));
 		--_sonic-unit: calc(var(--_sonic-led-size) / 8);
-		--_sonic-led-bezel: var(--sonic-bezel, color-mix(in oklab, var(--_sonic-unlit) 55%, #000));
+		--_sonic-led-modelled: calc(100% * var(--_sonic-relief));
+		--_sonic-led-bezel: var(
+			--sonic-bezel,
+			color-mix(
+				in oklab,
+				color-mix(in oklab, var(--_sonic-unlit) 55%, #000) var(--_sonic-led-modelled),
+				transparent
+			)
+		);
+		--_sonic-lens-glass: var(
+			--sonic-lens,
+			color-mix(
+				in oklab,
+				color-mix(in oklab, var(--_sonic-unlit) 60%, #000) var(--_sonic-led-modelled),
+				color-mix(in oklab, currentcolor 30%, transparent)
+			)
+		);
 
 		position: relative;
 		display: inline-block;

@@ -168,6 +168,18 @@ test('a disabled latched cap inks in the colour its grey fill is drawn against',
 	expect(inks).toEqual([buttonFace, buttonFace]);
 });
 
+test('a bare blank cap is edged by its rim alone', async ({ page }) => {
+	await page.goto('/fixtures/no-skin/');
+
+	const buttonText = await systemColour(page, 'ButtonText');
+	const [, rim, edge] = await page
+		.locator('#bare-blank .sonic-button-cap')
+		.evaluate((cap) => getComputedStyle(cap).boxShadow.split(/,(?![^(]*\))/));
+
+	expect(rim?.trim()).toContain(buttonText);
+	expect(edge?.trim()).toMatch(/^(rgba\(0, 0, 0, 0\)|transparent)/);
+});
+
 test('the number box edges its glass and inks its digits, grey when disabled', async ({ page }) => {
 	const [canvasText, grayText] = [
 		await systemColour(page, 'CanvasText'),
