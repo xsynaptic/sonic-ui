@@ -284,6 +284,24 @@ test('a double press hands the slider role to the entry, holding the value text 
 	}
 });
 
+test('an entry opening with text parseValue cannot read warns, and formatEntry quiets it', () => {
+	const { control, dial } = mountDial('max="300" min="20" step="0.1" value="120"');
+	const entry = entryOf(control);
+	const warn = vi.spyOn(console, 'warn').mockReturnValue();
+
+	dial.formatValue = (value) => `${value.toFixed(1)} BPM`;
+	dial.parseValue = Number;
+	press(control);
+	press(control);
+	expect(warn.mock.calls[0]?.[0]).toContain('"120.0 BPM"');
+
+	typeKey(entry, 'Escape');
+	dial.formatEntry = (value) => value.toFixed(1);
+	press(control);
+	press(control);
+	expect(warn).toHaveBeenCalledOnce();
+});
+
 test('formatEntry sets the text the entry opens with, leaving the value text its unit', () => {
 	const { control, dial } = mountDial('max="300" min="20" step="0.1" value="120"');
 	const entry = entryOf(control);

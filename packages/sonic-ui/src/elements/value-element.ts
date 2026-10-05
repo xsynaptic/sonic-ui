@@ -14,6 +14,9 @@ import { readPxProperty } from '#lib/read-px-property.ts';
 import { valueMapping } from '#lib/value-mapping.ts';
 import { writeAttribute } from '#lib/write-attribute.ts';
 
+// eslint-disable-next-line unicorn/consistent-boolean-name -- the name bundlers and other kits use
+declare const __DEV__: boolean;
+
 interface HoverBinding {
 	canShow?: () => boolean;
 	place: () => void;
@@ -408,6 +411,13 @@ export abstract class SonicValueElement extends SonicFormElement {
 			control,
 		);
 		this.#gestures.bind(signal, grab);
+		control.addEventListener(
+			'pointerup',
+			(event) => {
+				this.#hover?.at(event);
+			},
+			{ signal },
+		);
 	}
 
 	protected bindHover(
@@ -562,7 +572,17 @@ export abstract class SonicValueElement extends SonicFormElement {
 		if (this.#formatEntry) return this.#formatEntry(value);
 
 		// `Number.parseFloat` reads "5 kHz" as 5
-		return this.#parseValue ? this.valueText : String(value);
+		if (!this.#parseValue) return String(value);
+
+		const text = this.valueText;
+
+		if (__DEV__ && !Number.isFinite(this.#parseValue(text))) {
+			console.warn(
+				`<${this.localName}> opens its entry with "${text}", which parseValue cannot read; set formatEntry`,
+			);
+		}
+
+		return text;
 	}
 
 	#isEditing(): boolean {

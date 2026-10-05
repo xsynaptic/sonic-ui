@@ -8,6 +8,7 @@ interface HoverOptions {
 }
 
 export interface HoverPreview {
+	at: (event: PointerEvent) => void;
 	clear: () => void;
 	value: () => number | undefined;
 }
@@ -58,15 +59,13 @@ export function bindHoverPreview(
 		watchEscape(value !== undefined);
 	};
 
-	target.addEventListener(
-		'pointermove',
-		(event) => {
-			if (event.pointerType === 'touch' || event.buttons !== 0 || !options.canShow()) return;
+	const at = (event: PointerEvent): void => {
+		if (event.pointerType === 'touch' || event.buttons !== 0 || !options.canShow()) return;
 
-			hoverAt(options.valueAt(event));
-		},
-		{ signal },
-	);
+		hoverAt(options.valueAt(event));
+	};
+
+	target.addEventListener('pointermove', at, { signal });
 	for (const type of ['pointerdown', 'pointerleave']) {
 		target.addEventListener(
 			type,
@@ -85,6 +84,7 @@ export function bindHoverPreview(
 	);
 
 	return {
+		at,
 		clear: () => {
 			hold(undefined);
 		},

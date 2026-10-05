@@ -64,6 +64,7 @@ const detentZonePx = 8;
 export class ValueGestures {
 	readonly #claim = new ReadoutClaim(() => {
 		this.#host.holdChanged();
+		this.#showRevealed();
 	});
 
 	readonly #control: HTMLElement;
@@ -107,8 +108,14 @@ export class ValueGestures {
 					}
 
 					const fromValue = host.value();
+
+					host.toggleState('dragging', true);
+
 					const axis = grab(event);
-					if (!axis) return;
+					if (!axis) {
+						host.toggleState('dragging', false);
+						return;
+					}
 
 					const drag: ValueDrag = {
 						...axis,
@@ -245,8 +252,9 @@ export class ValueGestures {
 				if (next === undefined) return;
 
 				event.preventDefault();
-				this.#keyTo(event, next);
 				this.#claim.reveal('keys');
+				this.#showRevealed();
+				this.#keyTo(event, next);
 				host.holdChanged();
 			},
 			{ signal },
@@ -284,7 +292,21 @@ export class ValueGestures {
 	}
 
 	#concealKeyReveal(): void {
-		if (this.#claim.conceal('keys')) this.#host.holdChanged();
+		if (!this.#claim.conceal('keys')) return;
+
+		this.#host.holdChanged();
+		this.#showRevealed();
+	}
+
+	#crossCancelZone(drag: ValueDrag, value: number): void {
+		const host = this.#host;
+		const isOutside = !drag.isOutside;
+
+		drag.isOutside = isOutside;
+		host.toggleState('cancelling', isOutside);
+		if (isOutside) this.#renderDragReveal(drag);
+		host.input(isOutside ? drag.fromValue : value);
+		if (!isOutside) this.#renderDragReveal(drag);
 	}
 
 	#dragging(): undefined | ValueDrag {
@@ -307,14 +329,8 @@ export class ValueGestures {
 
 		if (!wasEngaged) this.#reveal(drag);
 
-		const isCrossing = isOutside !== drag.isOutside;
-
-		if (isCrossing) {
-			drag.isOutside = isOutside;
-			host.toggleState('cancelling', isOutside);
-		}
-		host.input(isOutside ? drag.fromValue : value);
-		if (isCrossing) this.#renderDragReveal(drag);
+		if (isOutside === drag.isOutside) host.input(value);
+		else this.#crossCancelZone(drag, value);
 	}
 
 	#endKeyScrub(): void {
@@ -354,7 +370,7 @@ export class ValueGestures {
 		this.#claim.conceal('drag');
 		host.toggleState('cancelling', false);
 		host.holdChanged();
-		this.#showRevealed(false);
+		this.#showRevealed();
 		if (host.value() !== drag.fromValue) host.dispatch('change');
 		this.#springBack();
 	}
@@ -365,7 +381,7 @@ export class ValueGestures {
 		if (isRevealed) this.#claim.reveal('drag');
 		else this.#claim.conceal('drag');
 		this.#host.holdChanged();
-		this.#showRevealed(isRevealed);
+		this.#showRevealed();
 	}
 
 	#reset(): void {
@@ -389,7 +405,8 @@ export class ValueGestures {
 		host.input(next);
 	}
 
-	#showRevealed(isRevealed: boolean): void {
+	#showRevealed(): void {
+		const { isRevealed } = this.#claim;
 		if (isRevealed === this.#isRevealed) return;
 
 		this.#isRevealed = isRevealed;

@@ -370,6 +370,28 @@ test('Escape and a press each drop the hovered value once, and the drag after st
 	expect(hovered).toEqual([105, undefined, 120, undefined]);
 });
 
+test('a release under a still mouse brings the hovered value back, and a touch release does not', () => {
+	installCanvasFakes();
+
+	const { control, wavestrip } = mountWavestrip('min="30" max="330" step="0" value="30"');
+	const hovered: Array<number | undefined> = [];
+
+	document.body.addEventListener('sonic-hover', () => {
+		hovered.push(wavestrip.hoverValue);
+	});
+
+	midPointerAt(control, 'pointermove', { clientX: 75, pointerType: 'mouse' });
+	midPointerAt(control, 'pointerdown', { clientX: 75, pointerType: 'mouse' });
+	midPointerAt(control, 'pointermove', { buttons: 1, clientX: 150, pointerType: 'mouse' });
+	midPointerAt(control, 'pointerup', { clientX: 150, pointerType: 'mouse' });
+	expect(hovered).toEqual([105, undefined, 180]);
+
+	midPointerAt(control, 'pointerleave', { pointerType: 'mouse' });
+	midPointerAt(control, 'pointerdown', { clientX: 90, pointerType: 'touch' });
+	midPointerAt(control, 'pointerup', { clientX: 90, pointerType: 'touch' });
+	expect(wavestrip.hoverValue).toBeUndefined();
+});
+
 function readoutAt(control: HTMLElement): string {
 	return control.style.getPropertyValue('--_sonic-wavestrip-readout-at');
 }
@@ -520,7 +542,7 @@ test('a touch held still reveals after the hold time, and reports its pointer ty
 	vi.useRealTimers();
 });
 
-test('leaving the cancel zone reports the reveal ending after the value returns, and coming back restores it', () => {
+test('leaving the cancel zone ends the reveal before the value returns, and coming back restores it', () => {
 	installCanvasFakes();
 
 	const { control, wavestrip } = mountWavestrip(
@@ -538,11 +560,31 @@ test('leaving the cancel zone reports the reveal ending after the value returns,
 	expect(trace).toEqual([
 		'sonic-reveal:180',
 		'input:130',
+		'sonic-reveal:130',
 		'input:50',
-		'sonic-reveal:50',
 		'input:130',
 		'sonic-reveal:130',
 	]);
+});
+
+test('a key reveals before its input, and the reveal ends once, a second after the last key', () => {
+	vi.useFakeTimers();
+	installCanvasFakes();
+
+	const { control, wavestrip } = mountWavestrip(
+		'min="30" max="330" step="0" key-step="30" value="50"',
+	);
+	const trace = revealTrace(wavestrip);
+
+	keyAt(control, 'keydown', false);
+	vi.advanceTimersByTime(600);
+	keyAt(control, 'keydown', false);
+	vi.advanceTimersByTime(999);
+	expect(trace).toEqual(['sonic-reveal:50', 'input:80', 'input:110']);
+
+	vi.advanceTimersByTime(1);
+	expect(trace).toEqual(['sonic-reveal:50', 'input:80', 'input:110', 'sonic-reveal:110']);
+	vi.useRealTimers();
 });
 
 test('a pointer that cannot be captured still drags and changes on release', () => {

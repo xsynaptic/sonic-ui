@@ -260,6 +260,48 @@ test('the hover readout opens over the pointer, and Escape dismisses it', async 
 	await expect(readout).toBeHidden();
 });
 
+test('a press reports dragging by its first input, and the hovered value returns on a release inside', async ({
+	isMobile,
+	page,
+}) => {
+	test.skip(isMobile, 'Touch reports no hovered value');
+
+	const { canvas, wavestrip } = await openWavestrip(page);
+	const box = await canvas.boundingBox();
+	if (!box) throw new Error('The wavestrip has no box');
+
+	const read = (name: 'hoverValue' | 'value'): Promise<unknown> =>
+		wavestrip.evaluate((element, property) => {
+			const value: unknown = Reflect.get(element, property);
+
+			return value;
+		}, name);
+	const x = box.x + box.width / 4;
+	const y = box.y + box.height / 2;
+
+	await wavestrip.evaluate((element) => {
+		element.addEventListener(
+			'input',
+			() => {
+				element.dataset.pressed = String(element.matches(':state(dragging)'));
+			},
+			{ once: true },
+		);
+	});
+	await page.mouse.move(x, y);
+	await page.mouse.down();
+	expect(await wavestrip.getAttribute('data-pressed')).toBe('true');
+	expect(await read('hoverValue')).toBeUndefined();
+
+	await page.mouse.up();
+	expect(await read('hoverValue')).toBe(await read('value'));
+
+	await page.mouse.down();
+	await page.mouse.move(x + 20, box.y + box.height + 30, { steps: 2 });
+	await page.mouse.up();
+	expect(await read('hoverValue')).toBeUndefined();
+});
+
 test('a long readout stays on one line, on glass of its own colour', async ({ isMobile, page }) => {
 	test.skip(isMobile, 'Touch shows the readout only once a drag reveals it');
 
