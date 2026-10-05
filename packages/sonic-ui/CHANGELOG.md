@@ -1,5 +1,13 @@
 # @xsynaptic/sonic-ui
 
+## 0.10.3
+
+### Patch Changes
+
+- - Value controls: a release outside the control fires no `sonic-hover`, and `pointerType` holds through the `change` of a release, a tap or a reset press.
+  - XY pad: `:state(dragging)` is set before a press's first `input`.
+  - XY pad and envelope: `pointerType`, as on value controls.
+
 ## 0.10.2
 
 ### Patch Changes
