@@ -1,5 +1,11 @@
 # @xsynaptic/sonic-ui
 
+## 0.10.1
+
+### Patch Changes
+
+- Value controls: `hoverValue` returns on release, `:state(revealed)` covers a key reveal, and `dragging` and `revealed` are set before the `input` they describe.
+
 ## 0.10.0
 
 ### Minor Changes
