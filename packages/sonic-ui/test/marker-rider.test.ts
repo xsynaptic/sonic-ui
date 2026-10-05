@@ -7,6 +7,7 @@ import { createLabelRider, layoutRider } from '#lib/marker-rider.ts';
 const view: RiderView = {
 	fadeShare: 0.25,
 	insetPx: 8,
+	parkPx: 8,
 	playheadSeconds: 20,
 	startSeconds: 0,
 	widthPx: 400,
@@ -74,6 +75,15 @@ test('the far edge cuts a label, and one starting past it does not arrive', () =
 	expect(layoutRider(labels([38, 40]), { ...view, playheadSeconds: 39 }).parked?.shownPx).toBe(12);
 });
 
+test('a label parks at its own inset, and rides its line at the gap either side of that', () => {
+	const safe = { ...early, parkPx: 16 };
+	const markers = labels([1, 40], [30, 40]);
+
+	expect(layoutRider(markers, { ...safe, startSeconds: 0.5 }).parked?.x).toBe(16);
+	expect(layoutRider(markers, safe).parked?.x).toBe(18);
+	expect(layoutRider(markers, safe).arriving?.x).toBe(308);
+});
+
 function mountRider(): {
 	arriving: HTMLElement;
 	control: HTMLElement;
@@ -92,6 +102,7 @@ function mountRider(): {
 		colourProperty: '--_sonic-test-marker',
 		fadeProperty: '--_sonic-test-fade',
 		insetProperty: '--_sonic-test-inset',
+		parkProperty: '--_sonic-test-park',
 	});
 
 	rider.measure([

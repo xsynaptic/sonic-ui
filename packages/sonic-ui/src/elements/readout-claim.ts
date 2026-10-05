@@ -1,6 +1,12 @@
+import { readMsProperty } from '#lib/read-ms-property.ts';
+
 const keyRevealMs = 1000;
 
-export const revealMs = 250;
+const revealMs = 250;
+
+export function revealDelay(control: Element): number {
+	return Math.max(0, readMsProperty(getComputedStyle(control), '--_sonic-reveal-delay', revealMs));
+}
 
 export class ReadoutClaim {
 	get isRevealed(): boolean {
@@ -38,7 +44,7 @@ export class ReadoutClaim {
 		return wasTimed;
 	}
 
-	press(isDown: boolean): void {
+	press(isDown: boolean, delayMs = revealMs): void {
 		this.conceal('drag');
 		if (!isDown) {
 			this.#onLapse();
@@ -48,7 +54,7 @@ export class ReadoutClaim {
 		this.#holdTimer = setTimeout(() => {
 			this.reveal('drag');
 			this.#onLapse();
-		}, revealMs);
+		}, delayMs);
 	}
 
 	reveal(by: 'drag' | 'keys'): void {

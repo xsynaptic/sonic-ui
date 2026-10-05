@@ -185,6 +185,34 @@ test('the playhead, ghost, label, readout and touch tokens each land on their ow
 	await expect(waveform.locator('.sonic-waveform')).toHaveCSS('touch-action', 'none');
 });
 
+test('the parked label starts at its inline inset from the wave, and keeps its block inset', async ({
+	page,
+}) => {
+	await page.goto('/fixtures/');
+
+	const waveform = page.locator('#waveform-tokens');
+	const label = waveform.locator('.sonic-waveform-label').first();
+
+	await waveform.locator('canvas').scrollIntoViewIfNeeded();
+	await expect(label).toHaveText('Intro');
+
+	const inline = await waveform.evaluate((host) => {
+		const wave = host.querySelector('canvas')?.getBoundingClientRect();
+		const parked = host.querySelector('.sonic-waveform-label');
+		if (!wave || !parked) throw new Error('The waveform drew no label');
+
+		const text = document.createRange();
+
+		text.selectNodeContents(parked);
+
+		return text.getBoundingClientRect().left - wave.left;
+	});
+
+	expect(inline).toBeCloseTo(16, 1);
+	// 6rem of size: the glass's 0.06 inset and the label's 0.04, untouched by the inline token
+	await expect(label).toHaveCSS('bottom', '9.6px');
+});
+
 test('a pending region waits out pending-delay before the placeholder shows', async ({ page }) => {
 	const { waveform } = await openWaveform(page);
 

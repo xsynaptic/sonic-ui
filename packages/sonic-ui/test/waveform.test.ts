@@ -216,3 +216,36 @@ test('with reduced-motion="scroll" the playhead stays centred under reduced moti
 	flushFrames();
 	expect(playheadAt(control)).toBeCloseTo((6.9 / 7) * 100, 6);
 });
+
+test('the current marker follows the value while no frame paints', () => {
+	const { flushFrames } = installCanvasFakes();
+	const { waveform } = mountWaveform('max="300" step="0" value="10"');
+	const seen: Array<string | undefined> = [];
+
+	document.body.addEventListener('sonic-marker', () => {
+		seen.push(waveform.currentMarker?.label);
+	});
+	waveform.markers = [
+		{ label: 'Second', start: 120 },
+		{ label: 'First', start: 30 },
+	];
+	flushFrames();
+	FakeIntersectionObserver.instances.at(-1)?.report(false);
+	waveform.value = 90;
+	flushFrames();
+	waveform.value = 200;
+	waveform.markers = [{ label: 'Late', start: 150 }];
+
+	expect(seen).toEqual(['First', 'Second', 'Late']);
+});
+
+test('a waveform that opens out of view reports the marker it starts on', () => {
+	const { flushFrames } = installCanvasFakes();
+	const { waveform } = mountWaveform('max="300" step="0" value="40"');
+
+	FakeIntersectionObserver.instances.at(-1)?.report(false);
+	flushFrames();
+	waveform.markers = [{ label: 'First', start: 30 }];
+
+	expect(waveform.currentMarker?.label).toBe('First');
+});

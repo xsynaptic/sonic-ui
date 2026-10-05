@@ -3,7 +3,7 @@ import type { PointerDrag } from '#lib/pointer-drag.ts';
 import type { ValueMapping, ValueSpec } from '#lib/value-mapping.ts';
 
 import { SonicFormElement } from '#elements/form-element.ts';
-import { ReadoutClaim } from '#elements/readout-claim.ts';
+import { ReadoutClaim, revealDelay } from '#elements/readout-claim.ts';
 import { Readout } from '#elements/readout.ts';
 import { dragThresholdPx } from '#lib/drag-step.ts';
 import { pointerMove, pointerPosition, startFieldDrag, stepFieldDrag } from '#lib/field.ts';
@@ -482,7 +482,7 @@ export class SonicXy extends SonicFormElement {
 
 		if (!isOnPuck)
 			this.#input({ x: mappings.x.valueAt(pressed.x), y: mappings.y.valueAt(pressed.y) });
-		this.#claim.press(true);
+		this.#claim.press(true, revealDelay(this.#xy));
 
 		const start = (axis: FieldAxis) => ({
 			from: this.#values[axis].value,

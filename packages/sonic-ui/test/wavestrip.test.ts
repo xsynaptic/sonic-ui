@@ -179,6 +179,19 @@ test('a disabled strip still reads out under a mouse, and a press moves nothing'
 	expect(events).toEqual([]);
 });
 
+test('a press and a hover between two pixels land between them', () => {
+	installCanvasFakes();
+
+	const { control, wavestrip } = mountWavestrip('readout min="30" max="330" step="0" value="30"');
+
+	wavestrip.formatValue = (seconds) => `${String(seconds)} s`;
+	midPointerAt(control, 'pointermove', { clientX: 75.25, pointerType: 'mouse' });
+	expect(readoutText(control)).toBe('105.25 s');
+
+	midPointerAt(control, 'pointerdown', { clientX: 150.8, pointerType: 'mouse' });
+	expect(wavestrip.value).toBeCloseTo(180.8, 9);
+});
+
 test("a drag's reveal takes the readout from the hover", () => {
 	installCanvasFakes();
 
@@ -397,6 +410,35 @@ test('switching key mid-scrub changes for the first key, then scrubs from there 
 	scrubKey(control, 'keyup', 'ArrowLeft');
 	expect(wavestrip.value).toBe(55);
 	expect(events.slice(4)).toEqual(['input', 'input', 'change']);
+});
+
+test('with double-press="none", two presses on one spot seek twice and Enter still opens the entry', () => {
+	installCanvasFakes();
+
+	const { control, wavestrip } = mountWavestrip(
+		'double-press="none" min="30" max="330" step="0" value="50"',
+	);
+	const entry = control.querySelector<HTMLInputElement>('.sonic-wavestrip-entry');
+	const events = recordEvents(document.body);
+
+	for (const clientX of [150, 150]) {
+		midPointerAt(control, 'pointerdown', { clientX });
+		midPointerAt(control, 'pointerup', { clientX });
+		wavestrip.value = 50;
+	}
+	expect(entry?.hidden).toBe(true);
+	expect(events).toEqual(['input', 'change', 'input', 'change']);
+
+	midPointerAt(control, 'pointerdown', { clientX: 150 });
+	midPointerAt(control, 'pointermove', { clientX: 200 });
+	expect(wavestrip.value).toBe(230);
+
+	midPointerAt(control, 'pointerup', { clientX: 200 });
+	control.focus();
+	control.dispatchEvent(
+		new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'Enter' }),
+	);
+	expect(entry?.hidden).toBe(false);
 });
 
 function revealTrace(wavestrip: SonicWavestrip): Array<string> {

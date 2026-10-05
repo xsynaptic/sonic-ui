@@ -3,7 +3,7 @@ import type { AdsrCurves, AdsrProportions, AdsrShape } from '#lib/adsr-shape.ts'
 import type { FieldAxis, FieldDragState, FieldMappings, FieldPoint } from '#lib/field.ts';
 import type { PointerDrag } from '#lib/pointer-drag.ts';
 
-import { ReadoutClaim } from '#elements/readout-claim.ts';
+import { ReadoutClaim, revealDelay } from '#elements/readout-claim.ts';
 import { Readout } from '#elements/readout.ts';
 import { SonicElement } from '#elements/sonic-element.ts';
 import { linkValue, SonicValueElement } from '#elements/value-element.ts';
@@ -376,7 +376,7 @@ export class SonicEnvelope extends SonicElement {
 
 		const { drives, isFlipped, part } = pressed;
 
-		this.#claim.press(true);
+		this.#claim.press(true, revealDelay(this.#envelope));
 		this.#held = part;
 		this.#drawBracket();
 		const box = this.#graph.getBoundingClientRect();

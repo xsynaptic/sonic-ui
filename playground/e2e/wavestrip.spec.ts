@@ -214,6 +214,22 @@ test('with fill, the strip takes its row and its ratios follow the height', asyn
 	await expect(strip).toHaveCSS('padding-top', '4.8px');
 });
 
+test('a marker size holds the dots still on a filled strip, and lanes are measured from it', async ({
+	page,
+}) => {
+	await page.goto('/fixtures/');
+
+	const dots = page.locator('#wavestrip-fill .sonic-wavestrip-marker');
+
+	await dots.first().scrollIntoViewIfNeeded();
+	await expect(dots.first()).toHaveCSS('inline-size', '4px');
+
+	// 6.7px apart: one lane for 4px dots, where the 96px strip's own 6.2px dots would take two
+	const tops = await dots.evaluateAll((parts) => parts.map((part) => getComputedStyle(part).top));
+
+	expect(tops).toEqual(['0px', '0px']);
+});
+
 test('the hover readout opens over the pointer, and Escape dismisses it', async ({
 	isMobile,
 	page,

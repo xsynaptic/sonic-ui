@@ -42,6 +42,20 @@ test('a held press shows the readout after 250ms, until release', async ({ page 
 	expect(await readOpen(readout)).toBe(false);
 });
 
+test('the reveal delay token sets how long a held press waits', async ({ page }) => {
+	const readout = page.locator('#level .sonic-dial-readout');
+
+	await page.locator('#level').evaluate((host) => {
+		host.style.setProperty('--sonic-reveal-delay', '0.4s');
+	});
+	await pressDial(page);
+	await page.clock.runFor(399);
+	expect(await readOpen(readout)).toBe(false);
+
+	await page.clock.runFor(1);
+	expect(await readOpen(readout)).toBe(true);
+});
+
 test('a 4px drag shows the readout at once', async ({ page }) => {
 	const readout = page.locator('#level .sonic-dial-readout');
 	const start = await pressDial(page);

@@ -3,7 +3,7 @@ import type { PointerDrag } from '#lib/pointer-drag.ts';
 import type { ValueMapping } from '#lib/value-mapping.ts';
 
 import { SonicFormElement } from '#elements/form-element.ts';
-import { ReadoutClaim, revealMs } from '#elements/readout-claim.ts';
+import { ReadoutClaim, revealDelay } from '#elements/readout-claim.ts';
 import { Readout } from '#elements/readout.ts';
 import { ValueEntry } from '#elements/value-entry.ts';
 import { dragThresholdPx, startDrag, stepDrag } from '#lib/drag-step.ts';
@@ -142,11 +142,13 @@ export abstract class SonicValueElement extends SonicFormElement {
 		this.reflect('dimmed', isDimmed);
 	}
 
-	get doublePress(): 'entry' | 'reset' {
-		return this.getAttribute('double-press') === 'reset' ? 'reset' : 'entry';
+	get doublePress(): 'entry' | 'none' | 'reset' {
+		const gesture = this.getAttribute('double-press');
+
+		return gesture === 'none' || gesture === 'reset' ? gesture : 'entry';
 	}
 
-	set doublePress(gesture: 'entry' | 'reset' | undefined) {
+	set doublePress(gesture: 'entry' | 'none' | 'reset' | undefined) {
 		this.reflect('double-press', gesture);
 	}
 
@@ -421,7 +423,7 @@ export abstract class SonicValueElement extends SonicFormElement {
 
 					drag.revealTimer = setTimeout(() => {
 						this.#reveal(drag);
-					}, revealMs);
+					}, revealDelay(control));
 
 					return drag;
 				},
@@ -435,8 +437,10 @@ export abstract class SonicValueElement extends SonicFormElement {
 					}
 					if (!entry.press(event) || this.springTarget() !== undefined) return;
 
-					if (this.doublePress === 'reset') this.#reset();
-					else entry.open();
+					const gesture = this.doublePress;
+
+					if (gesture === 'reset') this.#reset();
+					else if (gesture === 'entry') entry.open();
 				},
 				move: (drag, event) => {
 					this.#dragTo(drag, event);

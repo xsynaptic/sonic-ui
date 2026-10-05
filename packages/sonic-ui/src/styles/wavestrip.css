@@ -106,7 +106,10 @@
 		);
 		--_sonic-unit: calc(var(--_sonic-wavestrip-size) / 32);
 		--_sonic-wavestrip-lit: var(--_sonic-lit);
-		--_sonic-marker-size: calc(var(--_sonic-wavestrip-size) * var(--_sonic-wavestrip-marker-ratio));
+		--_sonic-marker-size: var(
+			--sonic-wavestrip-marker-size,
+			calc(var(--_sonic-wavestrip-size) * var(--_sonic-wavestrip-marker-ratio))
+		);
 		--_sonic-marker-ring: max(1px, 0.5 * var(--_sonic-unit));
 		--_sonic-marker-step: calc(var(--_sonic-marker-size) + var(--_sonic-marker-ring));
 		--_sonic-marker-default: var(--sonic-marker, var(--_sonic-ink));

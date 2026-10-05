@@ -313,6 +313,7 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 		colourProperty: '--_sonic-waveform-marker',
 		fadeProperty: '--_sonic-waveform-label-fade',
 		insetProperty: '--_sonic-waveform-label-inset',
+		parkProperty: '--_sonic-waveform-label-park',
 	});
 
 	override connectedCallback(): void {
@@ -343,7 +344,11 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 	}
 
 	protected draw(): void {
-		this.surface()?.requestFrame();
+		const surface = this.surface();
+
+		surface?.requestFrame();
+		// No frame follows the position out of view, or before the first one paints
+		if (surface?.isVisible === false || !this.#drawn) this.showCurrentMarker(this.#sourceSeconds());
 	}
 
 	protected isEmpty(): boolean {

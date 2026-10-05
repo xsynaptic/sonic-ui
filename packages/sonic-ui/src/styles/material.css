@@ -10,6 +10,12 @@
 	initial-value: 8px;
 }
 
+@property --_sonic-reveal-delay {
+	syntax: '<time>';
+	inherits: true;
+	initial-value: 250ms;
+}
+
 @keyframes sonic-glass-breathe {
 	to {
 		opacity: calc(0.4 * min(1, var(--_sonic-glass-texture)));
@@ -165,6 +171,18 @@
 
 	:is(.sonic-dial, .sonic-envelope, .sonic-slider, .sonic-waveform, .sonic-wavestrip, .sonic-xy) {
 		--_sonic-readout-size: var(--sonic-readout-size, 1.5rem);
+	}
+
+	:is(
+		.sonic-dial,
+		.sonic-envelope,
+		.sonic-number,
+		.sonic-slider,
+		.sonic-waveform,
+		.sonic-wavestrip,
+		.sonic-xy
+	) {
+		--_sonic-reveal-delay: var(--sonic-reveal-delay, 250ms);
 	}
 
 	:is(.sonic-dial, .sonic-slider, .sonic-waveform, .sonic-wavestrip) {

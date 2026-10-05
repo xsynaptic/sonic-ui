@@ -1,5 +1,14 @@
 # @xsynaptic/sonic-ui
 
+## 0.9.0
+
+### Minor Changes
+
+- - Waveform: `currentMarker` and `sonic-marker` follow `value` and `markers` while the waveform is out of view or has not yet painted.
+  - Waveform: `--sonic-waveform-label-inset-inline`, a length (so it can hold `env(safe-area-inset-left)`), sets how far from the wave's edge a label parks. Unset, it follows `--sonic-waveform-label-inset-ratio` as before, which still sets the label's block inset and its gap from its marker's line.
+  - Wave strip: `--sonic-wavestrip-marker-size`, a length, overrides `--sonic-wavestrip-marker-ratio` so dots keep one size on a `fill` strip; lanes and the snap reach follow it.
+  - Value controls: `double-press="none"` makes a double press do nothing (Enter still opens the entry), and `--sonic-reveal-delay` sets how long a still press waits before the reveal (250ms by default).
+
 ## 0.8.1
 
 ### Patch Changes

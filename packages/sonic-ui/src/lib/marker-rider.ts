@@ -13,6 +13,7 @@ interface RiderWindow {
 export interface RiderView extends RiderWindow {
 	fadeShare: number;
 	insetPx: number;
+	parkPx: number;
 }
 
 export interface RiderLabel {
@@ -56,7 +57,7 @@ function parkedPlacement(
 	if (!parked) return undefined;
 
 	const next = labels[index + 1];
-	const x = Math.max(view.insetPx, lineX(parked.start, view) + view.insetPx);
+	const x = Math.max(view.parkPx, lineX(parked.start, view) + view.insetPx);
 	const approachPx = next ? lineX(next.start, view) - lineX(view.playheadSeconds, view) : Infinity;
 
 	return {
@@ -169,16 +170,18 @@ export function createLabelRider(
 		colourProperty: `--_sonic-${string}`;
 		fadeProperty: `--_sonic-${string}`;
 		insetProperty: `--_sonic-${string}`;
+		parkProperty: `--_sonic-${string}`;
 	},
 ): {
 	measure: (labels: ReadonlyArray<Omit<RiderLabel, 'widthPx'>>) => void;
 	place: (window: RiderWindow) => void;
 } {
-	const { className, colourProperty, fadeProperty, insetProperty } = options;
+	const { className, colourProperty, fadeProperty, insetProperty, parkProperty } = options;
 	const parked = labelSlot(requireChild(control, `.${className}`, HTMLElement));
 	const arriving = labelSlot(requireChild(control, `.${className} + .${className}`, HTMLElement));
 	let fadeShare = 0.25;
 	let insetPx = 0;
+	let parkPx = 0;
 	let measured: Array<RiderLabel> = [];
 
 	return {
@@ -193,12 +196,13 @@ export function createLabelRider(
 
 			fadeShare = readPxProperty(styles, fadeProperty, 0.25);
 			insetPx = readPxProperty(styles, insetProperty, 0);
+			parkPx = readPxProperty(styles, parkProperty, 0);
 			measured = labels
 				.map((label, index) => ({ ...label, widthPx: widths[index] ?? 0 }))
 				.toSorted((first, second) => first.start - second.start);
 		},
 		place: (window) => {
-			const layout = layoutRider(measured, { ...window, fadeShare, insetPx });
+			const layout = layoutRider(measured, { ...window, fadeShare, insetPx, parkPx });
 
 			writeLabel(parked, [measured, colourProperty], layout.parked);
 			writeLabel(arriving, [measured, colourProperty], layout.arriving);

@@ -33,6 +33,7 @@ export interface SurfaceFrame<
 
 export interface Surface {
 	invalidate: () => void;
+	readonly isVisible: boolean;
 	rebuild: () => void;
 	requestFrame: () => void;
 	readonly size: SurfaceSize;
@@ -84,6 +85,10 @@ class CanvasSurface<
 	Length extends string,
 	Numeric extends string,
 > implements Surface {
+	get isVisible(): boolean {
+		return this.#isVisible;
+	}
+
 	get size(): SurfaceSize {
 		return this.#size;
 	}
