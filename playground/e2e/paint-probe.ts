@@ -9,7 +9,7 @@ interface PaintedLine {
 	pixels: Array<Colour>;
 }
 
-export function pixelLine(page: Page, shot: Buffer, axis: 'x' | 'y'): Promise<Array<Colour>> {
+function pixelLine(page: Page, shot: Buffer, axis: 'x' | 'y'): Promise<Array<Colour>> {
 	return page.evaluate(
 		async ([data, axis]) => {
 			const image = new Image();
