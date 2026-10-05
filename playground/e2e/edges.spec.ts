@@ -66,7 +66,12 @@ test('a marker edge width sets the lane step on a filled strip', async ({ page }
 		'box-shadow',
 		/0px 0px 0px 1px$/,
 	);
-	expect(await laneTops(host, 'initial')).toEqual(['0px', '5.5px']);
+
+	const ratio = await page.evaluate(() => devicePixelRatio);
+
+	const [, lane = ''] = await laneTops(host, 'initial');
+
+	expect(Number(lane.replace('px', ''))).toBeCloseTo(4 + Math.round(1.5 * ratio) / ratio, 3);
 });
 
 test('a region edge width holds its lines on a filled strip', async ({ page }) => {

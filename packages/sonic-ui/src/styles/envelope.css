@@ -106,7 +106,7 @@
 		--_sonic-point-ring: var(--_sonic-lit);
 		--_sonic-point-core: var(--_sonic-lit);
 		--_sonic-point-lift: color-mix(in oklab, var(--_sonic-lit) 85%, #fff);
-		--_sonic-point-edge: max(1px, var(--_sonic-point-stroke, 0px));
+		--_sonic-point-edge: max(1px, round(var(--_sonic-point-stroke, 0px), var(--_sonic-snap)));
 		--_sonic-point-halo: transparent;
 
 		z-index: 1;

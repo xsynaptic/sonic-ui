@@ -4,6 +4,12 @@
 	initial-value: 32px;
 }
 
+@property --_sonic-switch-at {
+	syntax: '<number>';
+	inherits: true;
+	initial-value: 0;
+}
+
 @layer sonic {
 	:is(sonic-switch, .sonic-switch) {
 		--_sonic-switch-size: var(--sonic-switch-size, 2rem);
@@ -52,6 +58,11 @@
 		place-items: center;
 		line-height: 1;
 		user-select: none;
+		transition: --_sonic-switch-at 90ms cubic-bezier(0.4, 0, 0.2, 1);
+
+		@media (prefers-reduced-motion: reduce) {
+			transition: none;
+		}
 
 		& > * {
 			grid-area: 1 / 1;
@@ -243,7 +254,7 @@
 		);
 		border-radius: 50%;
 		box-shadow:
-			0 0 0 max(1px, 0.75 * var(--_sonic-unit))
+			0 0 0 var(--_sonic-rim-width)
 				var(
 					--sonic-cap-edge,
 					color-mix(
@@ -257,11 +268,9 @@
 	}
 
 	.sonic-switch-bat {
-		--_sonic-switch-lean: max(var(--_sonic-switch-at, 0), -1 * var(--_sonic-switch-at, 0));
-		--_sonic-switch-transition:
-			translate 90ms cubic-bezier(0.4, 0, 0.2, 1), inline-size 90ms cubic-bezier(0.4, 0, 0.2, 1),
-			block-size 90ms cubic-bezier(0.4, 0, 0.2, 1),
-			background-position 90ms cubic-bezier(0.4, 0, 0.2, 1);
+		--_sonic-switch-lean: max(var(--_sonic-switch-at), -1 * var(--_sonic-switch-at));
+		--_sonic-switch-throw: calc(var(--_sonic-switch-at) * var(--_sonic-switch-reach));
+		--_sonic-switch-pivot: calc((var(--_sonic-switch-size) - var(--_sonic-switch-shaft)) / 2);
 		--_sonic-switch-sheen: linear-gradient(
 			var(--_sonic-light-fall),
 			color-mix(in oklab, var(--_sonic-switch-metal) calc(100% - 45% * var(--_sonic-relief)), #fff)
@@ -269,7 +278,7 @@
 			var(--_sonic-switch-metal) 45%,
 			var(--_sonic-switch-metal-shade) 88%
 		);
-		--_sonic-switch-outline: max(1px, 0.4 * var(--_sonic-unit));
+		--_sonic-switch-outline: max(1px, round(0.4 * var(--_sonic-unit), var(--_sonic-snap)));
 		--_sonic-switch-rim: var(
 			--sonic-cap-edge,
 			color-mix(in oklab, var(--_sonic-switch-cap) calc(100% - 30% * var(--_sonic-relief)), #000)
@@ -286,10 +295,6 @@
 				var(--_sonic-drop-shade)
 		);
 
-		@media (prefers-reduced-motion: reduce) {
-			--_sonic-switch-transition: none;
-		}
-
 		&::before,
 		&::after {
 			position: absolute;
@@ -300,29 +305,30 @@
 			background-size: var(--_sonic-switch-size) var(--_sonic-switch-size);
 			border-radius: 999px;
 			box-shadow: 0 0 0 var(--_sonic-switch-outline) var(--_sonic-switch-rim);
-			transition: var(--_sonic-switch-transition);
 		}
 
 		&::before {
-			--_sonic-switch-shaft-x: calc(
-				var(--_sonic-switch-shaft) + var(--_sonic-switch-along-x) * var(--_sonic-switch-lean) *
-					var(--_sonic-switch-reach)
+			--_sonic-switch-shaft-top: calc(
+				var(--_sonic-switch-pivot) + var(--_sonic-switch-along-y) *
+					min(0px, var(--_sonic-switch-throw))
 			);
-			--_sonic-switch-shaft-y: calc(
-				var(--_sonic-switch-shaft) + var(--_sonic-switch-along-y) * var(--_sonic-switch-lean) *
-					var(--_sonic-switch-reach)
+			--_sonic-switch-shaft-left: calc(
+				var(--_sonic-switch-pivot) + var(--_sonic-switch-along-x) *
+					min(0px, var(--_sonic-switch-throw))
 			);
 
-			inline-size: var(--_sonic-switch-shaft-x);
-			block-size: var(--_sonic-switch-shaft-y);
-			background-position: calc((var(--_sonic-switch-shaft-x) - var(--_sonic-switch-size)) / 2)
-				calc((var(--_sonic-switch-shaft-y) - var(--_sonic-switch-size)) / 2);
-			translate: calc(
-					var(--_sonic-switch-along-x) * var(--_sonic-switch-at, 0) * var(--_sonic-switch-reach) / 2
+			inset: var(--_sonic-switch-shaft-top)
+				calc(
+					var(--_sonic-switch-pivot) - var(--_sonic-switch-along-x) *
+						max(0px, var(--_sonic-switch-throw))
 				)
 				calc(
-					var(--_sonic-switch-along-y) * var(--_sonic-switch-at, 0) * var(--_sonic-switch-reach) / 2
-				);
+					var(--_sonic-switch-pivot) - var(--_sonic-switch-along-y) *
+						max(0px, var(--_sonic-switch-throw))
+				)
+				var(--_sonic-switch-shaft-left);
+			background-position: calc(-1 * var(--_sonic-switch-shaft-left))
+				calc(-1 * var(--_sonic-switch-shaft-top));
 		}
 
 		&::after {
@@ -335,10 +341,8 @@
 					rgb(0 0 0 / calc(0.3 * var(--_sonic-relief))),
 				0 0 0 var(--_sonic-switch-outline) var(--_sonic-switch-rim),
 				var(--_sonic-focus-shadow);
-			translate: calc(
-					var(--_sonic-switch-along-x) * var(--_sonic-switch-at, 0) * var(--_sonic-switch-reach)
-				)
-				calc(var(--_sonic-switch-along-y) * var(--_sonic-switch-at, 0) * var(--_sonic-switch-reach));
+			translate: calc(var(--_sonic-switch-along-x) * var(--_sonic-switch-throw))
+				calc(var(--_sonic-switch-along-y) * var(--_sonic-switch-throw));
 		}
 	}
 
@@ -347,9 +351,14 @@
 	}
 
 	.sonic-switch:has(> .sonic-switch-position:disabled) {
-		--_sonic-switch-cap: var(--sonic-cap, var(--_sonic-etch));
-		--_sonic-switch-metal: var(--_sonic-etch);
-		--_sonic-switch-metal-shade: var(--_sonic-etch);
+		--_sonic-switch-disabled: color-mix(
+			in oklab,
+			var(--_sonic-ink) 30%,
+			oklch(from var(--_sonic-ink) clamp(0, (0.6 - l) * 1000, 1) 0 0deg)
+		);
+		--_sonic-switch-cap: var(--sonic-cap, var(--_sonic-switch-disabled));
+		--_sonic-switch-metal: var(--_sonic-switch-disabled);
+		--_sonic-switch-metal-shade: var(--_sonic-switch-disabled);
 	}
 
 	@media (forced-colors: active) {

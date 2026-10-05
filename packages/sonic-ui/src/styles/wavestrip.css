@@ -112,7 +112,7 @@
 		);
 		--_sonic-marker-edge: var(
 			--sonic-wavestrip-marker-edge-width,
-			max(1px, 0.5 * var(--_sonic-unit))
+			max(1px, round(0.5 * var(--_sonic-unit), var(--_sonic-snap)))
 		);
 		--_sonic-marker-step: calc(var(--_sonic-marker-size) + var(--_sonic-marker-edge));
 		--_sonic-marker-default: var(--sonic-marker, var(--_sonic-ink));
@@ -188,7 +188,7 @@
 			calc(var(--_sonic-marker-from, 0) * 100% - var(--_sonic-marker-size) / 2);
 		inline-size: var(--_sonic-marker-size);
 		block-size: var(--_sonic-marker-size);
-		background: color-mix(in oklab, var(--_sonic-marker-colour) 85%, transparent);
+		background: var(--_sonic-marker-colour);
 		border-radius: 50%;
 		box-shadow: 0 0 0 var(--_sonic-marker-edge) var(--_sonic-glass);
 	}

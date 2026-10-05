@@ -52,7 +52,7 @@
 	}
 
 	.sonic-xy-field {
-		--_sonic-xy-line: max(1px, round(var(--_sonic-unit), 1px));
+		--_sonic-xy-line: max(1px, round(var(--_sonic-unit), var(--_sonic-snap)));
 		--_sonic-xy-x-low: min(var(--_sonic-xy-x-origin, 0), var(--_sonic-xy-x, 0));
 		--_sonic-xy-x-high: max(var(--_sonic-xy-x-origin, 0), var(--_sonic-xy-x, 0));
 		--_sonic-xy-y-low: min(var(--_sonic-xy-y-origin, 0), var(--_sonic-xy-y, 0));
@@ -169,8 +169,8 @@
 	.sonic-xy-puck:has(> :focus-visible:not([data-sonic-pointer-focus])) {
 		--_sonic-xy-puck-fill: var(--_sonic-xy-puck-lift);
 		--_sonic-xy-puck-ring:
-			0 0 0 max(2px, 0.08 * var(--_sonic-xy-puck)) var(--_sonic-glass),
-			0 0 0 max(4px, 0.16 * var(--_sonic-xy-puck)) var(--_sonic-focus);
+			0 0 0 max(2px, round(0.08 * var(--_sonic-xy-puck), var(--_sonic-snap))) var(--_sonic-glass),
+			0 0 0 max(4px, round(0.16 * var(--_sonic-xy-puck), var(--_sonic-snap))) var(--_sonic-focus);
 	}
 
 	:state(dragging) > .sonic-xy > .sonic-xy-puck {
@@ -178,7 +178,7 @@
 		--_sonic-xy-puck-edge: var(--_sonic-xy-lit);
 		--_sonic-xy-puck-glow: color-mix(
 			in oklab,
-			var(--_sonic-xy-lit) calc(45% * var(--_sonic-relief)),
+			var(--_sonic-xy-lit) calc(30% * var(--_sonic-relief)),
 			transparent
 		);
 	}

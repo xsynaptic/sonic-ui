@@ -103,7 +103,7 @@
 		background:
 			radial-gradient(
 				closest-side,
-				color-mix(in oklab, var(--_sonic-lit) calc(60% * var(--_sonic-relief)), transparent)
+				color-mix(in oklab, var(--_sonic-lit) calc(40% * var(--_sonic-relief)), transparent)
 					calc(var(--_sonic-led-lens-ratio) * 100%),
 				transparent
 			),

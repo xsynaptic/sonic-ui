@@ -284,6 +284,26 @@ test('a double press hands the slider role to the entry, holding the value text 
 	}
 });
 
+test('formatEntry sets the text the entry opens with, leaving the value text its unit', () => {
+	const { control, dial } = mountDial('max="300" min="20" step="0.1" value="120"');
+	const entry = entryOf(control);
+	const events = recordEvents(dial);
+
+	dial.formatValue = (value) => `${value.toFixed(1)} BPM`;
+	dial.formatEntry = (value) => value.toFixed(1);
+	press(control);
+	press(control);
+
+	expect(entry.value).toBe('120.0');
+
+	entry.value = '98.5';
+	typeKey(entry, 'Enter');
+
+	expect(dial.value).toBe(98.5);
+	expect(dial.valueText).toBe('98.5 BPM');
+	expect(events).toEqual(['input', 'change']);
+});
+
 test('without parseValue, the entry holds the plain number, so committing it unchanged keeps the value', () => {
 	const { control, dial } = mountDial('max="20000" min="20" value="5000"');
 	const entry = entryOf(control);

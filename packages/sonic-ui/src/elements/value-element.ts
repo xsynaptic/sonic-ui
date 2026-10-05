@@ -132,6 +132,14 @@ export abstract class SonicValueElement extends SonicFormElement {
 		this.reflect('double-press', gesture);
 	}
 
+	get formatEntry(): ((value: number) => string) | undefined {
+		return this.#formatEntry;
+	}
+
+	set formatEntry(format: ((value: number) => string) | undefined) {
+		this.#formatEntry = format;
+	}
+
 	get formatSpokenValue(): ((value: number) => string) | undefined {
 		return this.#formatSpokenValue;
 	}
@@ -281,6 +289,8 @@ export abstract class SonicValueElement extends SonicFormElement {
 
 	readonly #cell: AskedValue = { asked: undefined, value: 0 };
 
+	#formatEntry: ((value: number) => string) | undefined;
+
 	#formatSpokenValue: ((value: number) => string) | undefined;
 
 	#formatValue: ((value: number) => string) | undefined;
@@ -342,6 +352,7 @@ export abstract class SonicValueElement extends SonicFormElement {
 			'taper',
 			'positions',
 			'detent',
+			'formatEntry',
 			'formatValue',
 			'formatSpokenValue',
 			'keyStep',
@@ -368,8 +379,7 @@ export abstract class SonicValueElement extends SonicFormElement {
 				},
 				doublePress: () => this.doublePress,
 				entryId: `sonic-entry-${this.#instance}`,
-				// `Number.parseFloat` reads "5 kHz" as 5
-				entryText: () => (this.#parseValue ? this.valueText : String(this.#cell.value)),
+				entryText: () => this.#entryText(),
 				forwardNaming: (target, isNamed) => {
 					this.forwardNaming(target, isNamed);
 				},
@@ -544,6 +554,15 @@ export abstract class SonicValueElement extends SonicFormElement {
 
 	protected travelPx(control: HTMLElement, property: `--_sonic-${string}`): number {
 		return Math.max(1, readPxProperty(getComputedStyle(control), property, fallbackTravelPx));
+	}
+
+	#entryText(): string {
+		const value = this.#cell.value;
+
+		if (this.#formatEntry) return this.#formatEntry(value);
+
+		// `Number.parseFloat` reads "5 kHz" as 5
+		return this.#parseValue ? this.valueText : String(value);
 	}
 
 	#isEditing(): boolean {

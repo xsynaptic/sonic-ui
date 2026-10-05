@@ -87,7 +87,11 @@
 			var(--_sonic-waveform-size) * var(--sonic-waveform-inset-ratio, 0.06)
 		);
 		--_sonic-unit: calc(var(--_sonic-waveform-size) / 48);
-		--_sonic-waveform-line: var(--sonic-waveform-playhead-width, max(1px, var(--_sonic-unit)));
+		--_sonic-glass-depth: var(--sonic-glass-depth, calc(0.6 * var(--_sonic-relief)));
+		--_sonic-waveform-line: var(
+			--sonic-waveform-playhead-width,
+			max(1px, round(var(--_sonic-unit), var(--_sonic-snap)))
+		);
 		--_sonic-waveform-lit: var(--_sonic-lit);
 		--_sonic-waveform-wave: var(--_sonic-waveform-lit);
 		--_sonic-waveform-wave-edge: var(

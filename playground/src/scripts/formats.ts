@@ -9,6 +9,7 @@ import type {
 import { channelCurves, echoModes, filterTypes, tapeStyles } from '#scripts/stop-names.ts';
 
 interface Format {
+	entry?: (value: number) => string;
 	format: (value: number) => string;
 	parse?: (text: string) => number;
 }
@@ -97,7 +98,14 @@ function parseScaled(text: string, unit: RegExp, factor: number): number {
 
 const formats = new Map<string, Format>([
 	['beats', { format: formatBeats, parse: parseBeats }],
-	['bpm', { format: (value) => `${value.toFixed(1)} BPM`, parse: parseNumber }],
+	[
+		'bpm',
+		{
+			entry: (value) => value.toFixed(1),
+			format: (value) => `${value.toFixed(1)} BPM`,
+			parse: parseNumber,
+		},
+	],
 	['channel-curve', namedStops(channelCurves.labels)],
 	['clock', { format: (value) => formatClock(floorTo(value, 0), 0) }],
 	['clock-tenths', { format: (value) => formatClock(floorTo(value, 1), 1) }],
@@ -175,6 +183,7 @@ export function applyFormat(control: FormattedControl, name: string): void {
 	if (!format) return;
 
 	control.dataset.format = name;
+	control.formatEntry = format.entry;
 	control.formatValue = format.format;
 	control.parseValue = format.parse;
 }
