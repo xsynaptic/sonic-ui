@@ -1,5 +1,20 @@
 # @xsynaptic/sonic-ui
 
+## 0.10.0
+
+### Minor Changes
+
+- - Value controls: `formatEntry`, a function, sets the text the entry opens with, so a unit can stay out of what is typed.
+  - Switch: the shaft stays planted at the bushing while the bat is thrown, and a disabled switch is one opaque colour.
+  - Wave strip: a marker's dot is opaque.
+  - Relief skins: a softer glow on lit caps, legends, LEDs and a held XY puck; a shallower well on the waveform's glass.
+  - Edges: rims, outlines and hairlines snap to the device pixel grid, so an edge keeps one weight around a control at any size.
+- - Glass: `--sonic-glass-edge-width`, a length, sets the edge's width on every glass part; at 0 a flat control's canvas is its own box. Forced colours keep a 1px edge. `--sonic-readout-edge` and `--sonic-readout-edge-width` set a readout's edge apart from its control's.
+  - Value controls: `hoverValue` and a `sonic-hover` event report the value under a hovering mouse on the wave strip and a `scrub` slider, with or without `readout`; a marker's start over its dot, `undefined` when nothing is hovered.
+  - Wave strip: `--sonic-wavestrip-marker-edge-width` and `--sonic-wavestrip-region-edge-width`, lengths, hold a dot's edge (and so the lane step) and a region's lines still on a `fill` strip.
+  - Waveform: `--sonic-waveform-scrim`, a background across the wave under the labels, on the new hook class `sonic-waveform-scrim`; `--sonic-waveform-label-inset-block`, a length, sets a label's block inset.
+  - Spectrum: `fill`, as on the wave controls.
+
 ## 0.9.0
 
 ### Minor Changes
