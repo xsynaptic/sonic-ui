@@ -203,6 +203,32 @@ test('a promise from requestPeaks repaints and asks again when it settles, eithe
 	expect(asks).toBe(3);
 });
 
+test('a request still out when a later one is made repaints as it settles', async () => {
+	const { flushFrames } = installCanvasFakes();
+	const { waveform } = mountWaveform('max="300" step="0" value="100"');
+	const settles: Array<() => void> = [];
+	let asks = 0;
+
+	waveform.requestPeaks = () => {
+		asks += 1;
+
+		return asks > 2
+			? undefined
+			: new Promise<void>((resolve) => {
+					settles.push(resolve);
+				});
+	};
+	flushFrames();
+	waveform.zoom = 35;
+	flushFrames();
+	expect(asks).toBe(2);
+
+	settles[0]?.();
+	await nextTask();
+	flushFrames();
+	expect(asks).toBe(3);
+});
+
 test('with reduced-motion="scroll" the playhead stays centerd under reduced motion', () => {
 	const { flushFrames } = installCanvasFakes({ isReducedMotion: true });
 	const { control, waveform } = mountWaveform(

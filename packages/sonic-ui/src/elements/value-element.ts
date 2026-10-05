@@ -108,6 +108,10 @@ export abstract class SonicValueElement extends SonicFormElement {
 		});
 	}
 
+	get cancelling(): boolean {
+		return this.hasState('cancelling');
+	}
+
 	get default(): number | undefined {
 		return this.optionalNumberAttribute('default');
 	}
@@ -140,6 +144,10 @@ export abstract class SonicValueElement extends SonicFormElement {
 
 	set doublePress(gesture: 'entry' | 'none' | 'reset' | undefined) {
 		this.reflect('double-press', gesture);
+	}
+
+	get dragging(): boolean {
+		return this.hasState('dragging');
 	}
 
 	get formatEntry(): ((value: number) => string) | undefined {
@@ -246,6 +254,10 @@ export abstract class SonicValueElement extends SonicFormElement {
 
 	set readout(isShown: boolean) {
 		this.reflect('readout', isShown);
+	}
+
+	get revealed(): boolean {
+		return this.hasState('revealed');
 	}
 
 	get spokenStep(): number | undefined {

@@ -275,6 +275,26 @@ test('a marker sits at its proportion between the bounds', () => {
 	expect(dot?.style.getPropertyValue('--_sonic-marker-to')).toBe('0.75');
 });
 
+test('the band holds one part per marker in the order `markers` reads back', () => {
+	installCanvasFakes();
+
+	const { control, wavestrip } = mountWavestrip('min="30" max="330" step="0" value="50"');
+
+	wavestrip.markers = [{ start: 200 }, { end: 150, start: 100 }, { start: 50 }];
+
+	expect(
+		markerDots(control).map((part) => [
+			part.className,
+			Number(part.style.getPropertyValue('--_sonic-marker-from')) * 300 + 30,
+		]),
+	).toEqual(
+		wavestrip.markers.map(({ end, start }) => [
+			end === undefined ? 'sonic-wavestrip-marker' : 'sonic-wavestrip-region',
+			start,
+		]),
+	);
+});
+
 test('a value write leaves the marker dots as they were built', () => {
 	installCanvasFakes();
 
@@ -614,6 +634,35 @@ test('leaving the cancel zone ends the reveal before the value returns, and comi
 		'input:50',
 		'input:130',
 		'sonic-reveal:130',
+	]);
+});
+
+test('the gesture reads as properties through a press, a scrub, the cancel zone and a release', () => {
+	installCanvasFakes();
+
+	const { control, wavestrip } = mountWavestrip(
+		'cancellable min="30" max="330" step="0" value="50"',
+	);
+	const phases: Array<string> = [];
+	const step = (type: string, init: PointerEventInit): void => {
+		midPointerAt(control, type, init);
+		phases.push(
+			(['dragging', 'revealed', 'cancelling'] as const).filter((name) => wavestrip[name]).join(' '),
+		);
+	};
+
+	step('pointerdown', { clientX: 150 });
+	step('pointermove', { clientX: 100 });
+	step('pointermove', { clientX: 100, clientY: -60 });
+	step('pointermove', { clientX: 100 });
+	step('pointerup', { clientX: 100 });
+
+	expect(phases).toEqual([
+		'dragging',
+		'dragging revealed',
+		'dragging cancelling',
+		'dragging revealed',
+		'',
 	]);
 });
 

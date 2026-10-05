@@ -253,7 +253,6 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 
 	set requestPeaks(request: PeaksRequest | undefined) {
 		this.#requestPeaks = request;
-		this.#asked = undefined;
 		this.surface()?.invalidate();
 	}
 
@@ -283,7 +282,7 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 
 	protected readonly sizeProperty = '--_sonic-waveform-size';
 
-	#asked: Promise<unknown> | undefined;
+	readonly #asked = new Set<Promise<unknown>>();
 
 	readonly #clock = createTrackingClock();
 
@@ -335,6 +334,8 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 	protected override connect(signal: AbortSignal): void {
 		super.connect(signal);
 		this.bindGestures(this.control, signal, () => this.#grab());
+		if (!('fonts' in document)) return;
+
 		document.fonts.addEventListener(
 			'loadingdone',
 			() => {
@@ -421,9 +422,9 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 
 	#ask(wanted: [number, number]): void {
 		const asked = this.#requestPeaks?.(...wanted);
-		if (!(asked instanceof Promise)) return;
+		if (!(asked instanceof Promise) || this.#asked.has(asked)) return;
 
-		this.#asked = asked;
+		this.#asked.add(asked);
 		void this.#repaintAfter(asked);
 	}
 
@@ -521,9 +522,7 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 
 	async #repaintAfter(asked: Promise<unknown>): Promise<void> {
 		await Promise.allSettled([asked]);
-		if (this.#asked !== asked) return;
-
-		this.#asked = undefined;
+		this.#asked.delete(asked);
 		this.surface()?.invalidate();
 	}
 

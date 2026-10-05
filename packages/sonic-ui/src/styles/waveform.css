@@ -190,8 +190,11 @@
 		padding: 0.2em 0.35em;
 		margin: -0.2em -0.35em;
 		font-family: var(--sonic-waveform-label-font, inherit);
-		font-size: calc(var(--_sonic-waveform-size) * var(--sonic-waveform-label-font-ratio, 0.13));
-		line-height: 1;
+		font-size: var(
+			--sonic-waveform-label-font-size,
+			calc(var(--_sonic-waveform-size) * var(--sonic-waveform-label-font-ratio, 0.13))
+		);
+		line-height: var(--sonic-waveform-label-line-height, 1);
 		color: var(--_sonic-marker, var(--_sonic-waveform-label));
 		white-space: nowrap;
 		text-shadow: var(--sonic-waveform-label-shadow, none);

@@ -109,8 +109,26 @@ test('a played or scrub proportion that is not a number counts as the start', ()
 
 test('the empty groove spans the width, centerd in whole pixels, and a ratio of 0 draws none', () => {
 	const size = { dpr: 2, height: 97, width: 604 };
+	const groove = (grooveRatio: number, grooveSize = 0): ReturnType<typeof stripGroove> =>
+		stripGroove(size, { grooveRatio, grooveSize });
 
-	expect(stripGroove(size, 0.15)).toEqual({ height: 15, radius: 7.5, width: 604, x: 0, y: 41 });
-	expect(stripGroove(size, 0.001)?.height).toBe(1);
-	expect(stripGroove(size, 0)).toBeUndefined();
+	expect(groove(0.15)).toEqual({ height: 15, radius: 7.5, width: 604, x: 0, y: 41 });
+	expect(groove(0.001)?.height).toBe(1);
+	expect(groove(0)).toBeUndefined();
 });
+
+test.each([
+	[97, 8],
+	[300, 8],
+	[5, 5],
+])(
+	'a 4px groove size on a wave %i device pixels high draws %i, never past the wave',
+	(height, drawn) => {
+		const groove = stripGroove(
+			{ dpr: 2, height, width: 604 },
+			{ grooveRatio: 0.15, grooveSize: 4 },
+		);
+
+		expect(groove?.height).toBe(drawn);
+	},
+);

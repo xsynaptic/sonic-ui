@@ -34,6 +34,12 @@
 	initial-value: 0.15;
 }
 
+@property --_sonic-wavestrip-groove-size {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 0;
+}
+
 @property --_sonic-wavestrip-wave {
 	syntax: '<color>';
 	inherits: true;
@@ -100,6 +106,7 @@
 		--_sonic-wavestrip-bar-gap-ratio: var(--sonic-wavestrip-bar-gap-ratio, 0.33);
 		--_sonic-wavestrip-bar-radius-ratio: var(--sonic-wavestrip-bar-radius-ratio, 0.5);
 		--_sonic-wavestrip-groove-ratio: var(--sonic-wavestrip-groove-ratio, 0.15);
+		--_sonic-wavestrip-groove-size: var(--sonic-wavestrip-groove-size, 0px);
 		--_sonic-wavestrip-marker-ratio: var(--sonic-wavestrip-marker-ratio, 0.065);
 		--_sonic-wavestrip-inset: calc(
 			var(--_sonic-wavestrip-size) * var(--sonic-wavestrip-inset-ratio, 0.1)

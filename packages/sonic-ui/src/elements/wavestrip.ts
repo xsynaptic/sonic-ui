@@ -31,6 +31,7 @@ const colours = {
 const lengths = {
 	gapRatio: '--_sonic-wavestrip-bar-gap-ratio',
 	grooveRatio: '--_sonic-wavestrip-groove-ratio',
+	grooveSize: '--_sonic-wavestrip-groove-size',
 	pitch: '--_sonic-wavestrip-bar-pitch',
 	radiusRatio: '--_sonic-wavestrip-bar-radius-ratio',
 } as const;
@@ -206,7 +207,7 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 		if (!isDirty && this.#bars) return this.#bars;
 
 		const peaks = this.#peaks;
-		const groove = stripGroove(size, look.lengths.grooveRatio);
+		const groove = stripGroove(size, look.lengths);
 		const drawn = groove ? [groove] : [];
 		const bars = peaks && peaks.length > 0 ? stripBars(peaks, size, look.lengths) : drawn;
 

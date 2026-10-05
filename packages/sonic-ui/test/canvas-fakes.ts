@@ -124,9 +124,6 @@ export function installCanvasFakes({ isReducedMotion = false } = {}): {
 
 		return query;
 	});
-	if (!('fonts' in document)) {
-		Object.defineProperty(document, 'fonts', { configurable: true, value: new EventTarget() });
-	}
 	vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
 		frameId += 1;
 		frames.set(frameId, callback);

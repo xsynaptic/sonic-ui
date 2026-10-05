@@ -188,6 +188,8 @@ test('the playhead, ghost, label, readout and touch tokens each land on their ow
 	await expect(label).toHaveCSS('color', 'rgb(10, 11, 12)');
 	await expect(label).toHaveCSS('background-color', 'rgb(4, 5, 6)');
 	await expect(label).toHaveCSS('font-family', 'monospace');
+	await expect(label).toHaveCSS('font-size', '14px');
+	await expect(label).toHaveCSS('line-height', '21px');
 	await expect(waveform.locator('.sonic-waveform-readout')).toHaveCSS('color', 'rgb(1, 2, 3)');
 	await expect(waveform.locator('.sonic-waveform')).toHaveCSS('touch-action', 'none');
 

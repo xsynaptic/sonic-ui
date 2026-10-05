@@ -120,6 +120,25 @@ test('empty peaks draw a plain groove, set the empty state, and a ratio of 0 lea
 	await expect.poll(() => alphaAt(canvas, middle)).toBe(0);
 });
 
+test('a groove size sets the empty groove in CSS pixels, whatever the ratio', async ({ page }) => {
+	const { canvas, wavestrip } = await openWavestrip(page);
+	const { device } = await readWidth(canvas);
+	const alphaAtRow = async (rowFraction: number): Promise<number | undefined> => {
+		const [pixel] = await canvasPixels(canvas, [Math.floor(device / 2)], rowFraction);
+
+		return pixel?.[3];
+	};
+
+	// 20px of a 44.8px wave reaches a row the default 0.15 ratio leaves clear
+	await wavestrip.evaluate((element) => {
+		element.style.setProperty('--sonic-wavestrip-groove-size', '20px');
+		element.toggleAttribute('dimmed', true);
+		Object.assign(element, { peaks: [] });
+	});
+
+	await expect.poll(async () => [await alphaAtRow(0.2), await alphaAtRow(0.35)]).toEqual([0, 255]);
+});
+
 test('a long readout stays inside the strip at both ends, on one line and on glass of its own colour, and an empty string hides it', async ({
 	isMobile,
 	page,

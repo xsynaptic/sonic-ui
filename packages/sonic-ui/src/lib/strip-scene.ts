@@ -52,10 +52,14 @@ export function stripBars(
 	});
 }
 
-export function stripGroove(size: SurfaceSize, ratio: number): BarRect | undefined {
-	if (ratio <= 0) return undefined;
+export function stripGroove(
+	size: SurfaceSize,
+	{ grooveRatio, grooveSize }: { grooveRatio: number; grooveSize: number },
+): BarRect | undefined {
+	const thickness = grooveSize > 0 ? grooveSize * size.dpr : size.height * grooveRatio;
+	if (thickness <= 0) return undefined;
 
-	const height = Math.max(1, Math.round(size.height * ratio));
+	const height = Math.max(1, Math.round(Math.min(thickness, size.height)));
 
 	return {
 		height,

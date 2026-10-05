@@ -45,6 +45,8 @@ export abstract class SonicElement extends HTMLElement {
 
 	#connection: AbortController | undefined;
 
+	readonly #states = new Set<string>();
+
 	override blur(): void {
 		this.#focused()?.blur();
 	}
@@ -148,6 +150,10 @@ export abstract class SonicElement extends HTMLElement {
 		if (labels.length > 0) writeLabelledBy(target, labels);
 	}
 
+	protected hasState(state: string): boolean {
+		return this.#states.has(state);
+	}
+
 	// happy-dom matches `:disabled` on no custom element, and an element not form-associated never matches
 	protected isBound(): boolean {
 		return this.#connection !== undefined;
@@ -207,8 +213,14 @@ export abstract class SonicElement extends HTMLElement {
 	}
 
 	protected toggleState(state: string, isOn: boolean): void {
-		if (isOn) this.internals?.states.add(state);
-		else this.internals?.states.delete(state);
+		if (isOn) {
+			this.#states.add(state);
+			this.internals?.states.add(state);
+			return;
+		}
+
+		this.#states.delete(state);
+		this.internals?.states.delete(state);
 	}
 
 	// A property set before upgrade shadows its accessor
