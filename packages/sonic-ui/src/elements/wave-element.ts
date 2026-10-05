@@ -2,6 +2,7 @@ import type { Surface, SurfaceFrame } from '#lib/canvas-surface.ts';
 
 import { SonicValueElement } from '#elements/value-element.ts';
 import { bindSurface } from '#lib/canvas-surface.ts';
+import { bindFill } from '#lib/fill-watch.ts';
 
 export interface WaveMarker {
 	dimmed?: boolean;
@@ -62,15 +63,15 @@ export abstract class SonicWaveElement<
 
 	#current: undefined | WaveMarker;
 
-	#fillWatch: ResizeObserver | undefined;
-
 	#markers: Array<WaveMarker> = [];
 
 	#surface: Surface | undefined;
 
+	#syncFill: ((isFilling: boolean) => void) | undefined;
+
 	override attributeChangedCallback(name: string): void {
 		super.attributeChangedCallback(name);
-		if (name === 'fill') this.#watchFill();
+		if (name === 'fill') this.#syncFill?.(this.fill);
 	}
 
 	override connectedCallback(): void {
@@ -101,15 +102,8 @@ export abstract class SonicWaveElement<
 		});
 		this.render();
 		this.checkStyles(control, this.sheet);
-		this.#watchFill();
-		signal.addEventListener(
-			'abort',
-			() => {
-				this.#fillWatch?.disconnect();
-				this.#fillWatch = undefined;
-			},
-			{ once: true },
-		);
+		this.#syncFill = bindFill(control, this.sizeProperty, signal);
+		this.#syncFill(this.fill);
 	}
 
 	protected override focusTarget(): HTMLElement {
@@ -167,31 +161,5 @@ export abstract class SonicWaveElement<
 
 	protected surface(): Surface | undefined {
 		return this.#surface;
-	}
-
-	#watchFill(): void {
-		const control = this.control;
-		const isFilling = this.fill && this.isBound();
-		if (isFilling === (this.#fillWatch !== undefined)) return;
-
-		this.#fillWatch?.disconnect();
-		this.#fillWatch = undefined;
-		if (!isFilling) {
-			control.style.removeProperty(this.sizeProperty);
-			return;
-		}
-
-		this.#fillWatch = new ResizeObserver((entries) => {
-			const box = entries.at(-1)?.borderBoxSize[0];
-			if (!box) return;
-
-			// Written a frame on, or the canvas resizes inside this delivery and WebKit reports a loop
-			requestAnimationFrame(() => {
-				if (this.#fillWatch) {
-					control.style.setProperty(this.sizeProperty, `${String(box.blockSize)}px`);
-				}
-			});
-		});
-		this.#fillWatch.observe(control);
 	}
 }

@@ -154,7 +154,7 @@ export class SonicSlider extends SonicValueElement {
 			{ signal },
 		);
 		this.bindHover(slider, signal, {
-			canShow: () => this.scrub && this.readout && this.orientation === 'horizontal',
+			canShow: () => this.scrub && this.orientation === 'horizontal',
 			place: () => {
 				this.#placeReadout(slider);
 			},

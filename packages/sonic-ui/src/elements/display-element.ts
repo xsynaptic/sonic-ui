@@ -2,12 +2,18 @@ import type { Surface, SurfaceFrame } from '#lib/canvas-surface.ts';
 
 import { SonicElement } from '#elements/sonic-element.ts';
 import { bindSurface } from '#lib/canvas-surface.ts';
+import { bindFill } from '#lib/fill-watch.ts';
 
 export abstract class SonicDisplayElement<
 	Colour extends string,
 	Numeric extends string = never,
 > extends SonicElement {
-	static override readonly observedAttributes = [...SonicElement.observedAttributes, 'max', 'min'];
+	static override readonly observedAttributes = [
+		...SonicElement.observedAttributes,
+		'fill',
+		'max',
+		'min',
+	];
 
 	get analyser(): AnalyserNode | undefined {
 		return this.#analyser;
@@ -16,6 +22,15 @@ export abstract class SonicDisplayElement<
 	set analyser(node: AnalyserNode | null | undefined) {
 		this.#analyser = node ?? undefined;
 		this.#surface?.requestFrame();
+	}
+
+	// fallow-ignore-next-line code-duplication -- one accessor pair per reflected attribute
+	get fill(): boolean {
+		return this.hasAttribute('fill');
+	}
+
+	set fill(isFilling: boolean) {
+		this.reflect('fill', isFilling);
 	}
 
 	// fallow-ignore-next-line code-duplication -- one accessor pair per reflected attribute
@@ -45,18 +60,23 @@ export abstract class SonicDisplayElement<
 
 	protected abstract readonly sheet: string;
 
+	protected abstract readonly sizeProperty: `--_sonic-${string}`;
+
 	#analyser: AnalyserNode | undefined;
 
 	#buffer = new Float32Array(0);
 
 	#surface: Surface | undefined;
 
-	attributeChangedCallback(): void {
+	#syncFill: ((isFilling: boolean) => void) | undefined;
+
+	attributeChangedCallback(name: string): void {
+		if (name === 'fill') this.#syncFill?.(this.fill);
 		this.#surface?.invalidate();
 	}
 
 	override connectedCallback(): void {
-		this.upgradeProperties('analyser', 'max', 'min');
+		this.upgradeProperties('analyser', 'fill', 'max', 'min');
 		super.connectedCallback();
 	}
 
@@ -84,6 +104,8 @@ export abstract class SonicDisplayElement<
 			signal,
 		});
 		this.checkStyles(control, this.sheet);
+		this.#syncFill = bindFill(control, this.sizeProperty, signal);
+		this.#syncFill(this.fill);
 	}
 
 	protected abstract paint(

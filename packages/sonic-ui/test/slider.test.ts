@@ -408,6 +408,23 @@ test('with scrub, a repeating key holds writes as the played edge and changes on
 	expect(slider.value).toBe(70);
 });
 
+test.each([
+	['scrub', [90, undefined]],
+	['', []],
+])('a slider with "%s" and no readout reports the hovered value as %j', (attributes, expected) => {
+	const { control, slider } = mountSlider(`${attributes} min="10" max="310" step="20" value="50"`);
+	const hovered: Array<number | undefined> = [];
+
+	document.body.addEventListener('sonic-hover', () => {
+		hovered.push(slider.hoverValue);
+	});
+	layOut(control, new DOMRect(0, 0, 320, 32), new DOMRect(0, 0, 20, 32));
+	pointerAt(control, 'pointermove', { buttons: 0, clientX: 85, pointerType: 'mouse' });
+	pointerAt(control, 'pointerleave');
+
+	expect(hovered).toEqual(expected);
+});
+
 test('with scrub, a mouse over the groove previews the value under it and a touch does not', () => {
 	const { control, slider } = mountSlider('scrub readout min="10" max="310" step="0" value="60"');
 	const readoutAt = (): string => control.style.getPropertyValue('--_sonic-slider-readout-value');

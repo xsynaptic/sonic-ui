@@ -87,6 +87,11 @@
 		border-radius: var(--_sonic-glass-radius);
 	}
 
+	[fill] > .sonic-spectrum,
+	sonic-spectrum[fill]:not(:defined, [hidden]) {
+		block-size: 100%;
+	}
+
 	.sonic-spectrum-canvas {
 		display: block;
 		inline-size: 100%;

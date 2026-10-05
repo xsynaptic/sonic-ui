@@ -325,6 +325,51 @@ test('Escape dismisses a hovered readout without focus, until the pointer leaves
 	expect(readoutText(control)).toBe('120 s');
 });
 
+test('with no readout, the hovered value is public and reports each change once', () => {
+	installCanvasFakes();
+
+	const { control, wavestrip } = mountWavestrip('min="30" max="330" step="0" value="30"');
+	const hovered: Array<number | undefined> = [];
+
+	document.body.addEventListener('sonic-hover', () => {
+		hovered.push(wavestrip.hoverValue);
+	});
+	wavestrip.markers = [{ start: 200 }];
+
+	midPointerAt(control, 'pointermove', { clientX: 75, pointerType: 'touch' });
+	midPointerAt(control, 'pointermove', { clientX: 75, pointerType: 'mouse' });
+	midPointerAt(control, 'pointermove', { clientX: 75, pointerType: 'mouse' });
+	midPointerAt(control, 'pointermove', { clientX: 172, clientY: 2, pointerType: 'mouse' });
+	midPointerAt(control, 'pointerleave', { pointerType: 'mouse' });
+	midPointerAt(control, 'pointerleave', { pointerType: 'mouse' });
+
+	expect(hovered).toEqual([105, 200, undefined]);
+	expect(wavestrip.value).toBe(30);
+});
+
+test('Escape and a press each drop the hovered value once, and the drag after stays quiet', () => {
+	installCanvasFakes();
+
+	const { control, wavestrip } = mountWavestrip('min="30" max="330" step="0" value="30"');
+	const hovered: Array<number | undefined> = [];
+
+	document.body.addEventListener('sonic-hover', () => {
+		hovered.push(wavestrip.hoverValue);
+	});
+
+	midPointerAt(control, 'pointermove', { clientX: 75, pointerType: 'mouse' });
+	document.body.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'Escape' }));
+	midPointerAt(control, 'pointermove', { clientX: 90, pointerType: 'mouse' });
+	expect(hovered).toEqual([105, undefined]);
+
+	midPointerAt(control, 'pointerleave', { pointerType: 'mouse' });
+	midPointerAt(control, 'pointermove', { clientX: 90, pointerType: 'mouse' });
+	midPointerAt(control, 'pointerdown', { clientX: 90, pointerType: 'mouse' });
+	midPointerAt(control, 'pointermove', { buttons: 1, clientX: 150, pointerType: 'mouse' });
+	midPointerAt(control, 'pointermove', { buttons: 1, clientX: 200, pointerType: 'mouse' });
+	expect(hovered).toEqual([105, undefined, 120, undefined]);
+});
+
 function readoutAt(control: HTMLElement): string {
 	return control.style.getPropertyValue('--_sonic-wavestrip-readout-at');
 }

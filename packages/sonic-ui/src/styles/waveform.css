@@ -103,6 +103,10 @@
 		--_sonic-waveform-label-inset: calc(
 			var(--_sonic-waveform-size) * var(--sonic-waveform-label-inset-ratio, 0.04)
 		);
+		--_sonic-waveform-label-lift: var(
+			--sonic-waveform-label-inset-block,
+			var(--_sonic-waveform-label-inset)
+		);
 		--_sonic-waveform-label-park: var(
 			--sonic-waveform-label-inset-inline,
 			var(--_sonic-waveform-label-inset)
@@ -151,6 +155,13 @@
 		block-size: 100%;
 	}
 
+	.sonic-waveform-scrim {
+		position: absolute;
+		inset: var(--_sonic-waveform-inset);
+		pointer-events: none;
+		background: var(--sonic-waveform-scrim, none);
+	}
+
 	:is(.sonic-waveform-playhead, .sonic-waveform-ghost) {
 		position: absolute;
 		inset-block: var(--_sonic-waveform-inset);
@@ -170,7 +181,7 @@
 
 	.sonic-waveform-label {
 		position: absolute;
-		inset-block-end: calc(var(--_sonic-waveform-inset) + var(--_sonic-waveform-label-inset));
+		inset-block-end: calc(var(--_sonic-waveform-inset) + var(--_sonic-waveform-label-lift));
 		inset-inline-start: var(--_sonic-waveform-inset);
 		padding: 0.2em 0.35em;
 		margin: -0.2em -0.35em;
@@ -207,6 +218,10 @@
 
 		:is(.sonic-waveform-playhead, .sonic-waveform-ghost) {
 			forced-color-adjust: none;
+		}
+
+		.sonic-waveform-scrim {
+			background: none;
 		}
 
 		.sonic-waveform-label {

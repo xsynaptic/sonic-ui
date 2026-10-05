@@ -209,6 +209,8 @@ export class SonicSpectrum extends SonicDisplayElement<Colour, Numeric> {
 
 	protected readonly sheet = 'spectrum.css';
 
+	protected readonly sizeProperty = '--_sonic-spectrum-size';
+
 	#columns: Columns | undefined;
 
 	#isSettled = true;

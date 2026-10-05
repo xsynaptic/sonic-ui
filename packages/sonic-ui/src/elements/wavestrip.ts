@@ -139,7 +139,6 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 
 		super.connect(signal);
 		this.bindHover(control, signal, {
-			canShow: () => this.readout,
 			place: () => {
 				this.#placeReadout();
 			},

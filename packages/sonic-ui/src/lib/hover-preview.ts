@@ -1,5 +1,6 @@
 interface HoverOptions {
 	canShow: () => boolean;
+	changed: () => void;
 	dismiss: () => void;
 	isTaken: () => boolean;
 	show: () => void;
@@ -20,6 +21,13 @@ export function bindHoverPreview(
 	let isDismissed = false;
 	let escapeWatch: AbortController | undefined;
 
+	const hold = (value: number | undefined): void => {
+		if (value === hover) return;
+
+		hover = value;
+		options.changed();
+	};
+
 	// A hover holds no focus, so the key is heard on the document (WCAG 1.4.13)
 	const watchEscape = (isHovered: boolean): void => {
 		if (!isHovered) {
@@ -36,8 +44,8 @@ export function bindHoverPreview(
 				if (hover === undefined || event.key !== 'Escape') return;
 
 				// Stays dismissed until the hover ends, or the next pointer move would bring it straight back
-				hover = undefined;
 				isDismissed = true;
+				hold(undefined);
 				options.dismiss();
 			},
 			{ signal: escapeWatch.signal },
@@ -45,7 +53,7 @@ export function bindHoverPreview(
 	};
 	const hoverAt = (value: number | undefined): void => {
 		if (value === undefined) isDismissed = false;
-		if (!isDismissed && !options.isTaken()) hover = value;
+		if (!isDismissed && !options.isTaken()) hold(value);
 		options.show();
 		watchEscape(value !== undefined);
 	};
@@ -78,7 +86,7 @@ export function bindHoverPreview(
 
 	return {
 		clear: () => {
-			hover = undefined;
+			hold(undefined);
 		},
 		value: () => hover,
 	};

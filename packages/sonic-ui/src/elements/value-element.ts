@@ -15,7 +15,7 @@ import { valueMapping } from '#lib/value-mapping.ts';
 import { writeAttribute } from '#lib/write-attribute.ts';
 
 interface HoverBinding {
-	canShow: () => boolean;
+	canShow?: () => boolean;
 	place: () => void;
 	valueAt: (event: PointerEvent) => number | undefined;
 }
@@ -148,6 +148,10 @@ export abstract class SonicValueElement extends SonicFormElement {
 	set formatValue(format: ((value: number) => string) | undefined) {
 		this.#formatValue = format;
 		this.render();
+	}
+
+	get hoverValue(): number | undefined {
+		return this.#hover?.value();
 	}
 
 	get keyStep(): number | undefined {
@@ -399,17 +403,22 @@ export abstract class SonicValueElement extends SonicFormElement {
 	protected bindHover(
 		control: HTMLElement,
 		signal: AbortSignal,
-		{ canShow, place, valueAt }: HoverBinding,
+		{ canShow = () => true, place, valueAt }: HoverBinding,
 	): void {
 		this.#hover = bindHoverPreview(
 			control,
 			{
 				canShow,
+				changed: () => {
+					this.dispatchEvent(new Event('sonic-hover', { bubbles: true }));
+				},
 				dismiss: () => {
 					this.render();
 				},
 				isTaken: () => this.#isEditing() || this.isRevealed(),
 				show: () => {
+					if (!this.readout) return;
+
 					this.renderReadout();
 					place();
 				},

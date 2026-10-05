@@ -237,10 +237,13 @@
 		);
 
 		/* Invalid with the token unset, so the default takes over */
-		--_sonic-glass-edge-set: 1px solid var(--sonic-glass-edge);
+		--_sonic-glass-edge-colour: var(--sonic-glass-edge);
+		--_sonic-glass-edge-width: var(--sonic-glass-edge-width);
+		--_sonic-glass-edge-set: var(--_sonic-glass-edge-width, 1px) solid
+			var(--_sonic-glass-edge-colour);
 		--_sonic-glass-edge: var(
 			--_sonic-glass-edge-set,
-			calc(1px * (1 - var(--_sonic-relief))) solid
+			var(--_sonic-glass-edge-width, calc(1px * (1 - var(--_sonic-relief)))) solid
 				color-mix(in oklab, currentcolor 35%, transparent)
 		);
 
@@ -532,6 +535,8 @@
 	) {
 		--_sonic-unit: calc(var(--_sonic-readout-size) / 32);
 		--_sonic-glass: var(--sonic-readout-glass, var(--_sonic-glass-base));
+		--_sonic-glass-edge-colour: var(--sonic-readout-edge, var(--sonic-glass-edge));
+		--_sonic-glass-edge-width: var(--sonic-readout-edge-width, var(--sonic-glass-edge-width));
 
 		box-sizing: border-box;
 		place-items: center;

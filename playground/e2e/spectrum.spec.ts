@@ -131,3 +131,19 @@ test('a hot threshold set on an ancestor repaints within two frames', async ({ p
 
 	expectPixel(await pixelAt(-30), await token('--_sonic-spectrum-hot'));
 });
+
+test('with fill, the spectrum takes its row and its ratios follow the height', async ({ page }) => {
+	await page.goto('/fixtures/');
+
+	const spectrum = page.locator('#spectrum-fill .sonic-spectrum');
+
+	await spectrum.scrollIntoViewIfNeeded();
+	await expect(spectrum).toHaveCSS('block-size', '128px');
+	await expect(spectrum).toHaveCSS('padding-top', '7.68px');
+
+	await page.locator('#spectrum-fill-box').evaluate((box) => {
+		box.style.setProperty('height', '64px');
+	});
+	await expect(spectrum).toHaveCSS('block-size', '64px');
+	await expect(spectrum).toHaveCSS('padding-top', '3.84px');
+});

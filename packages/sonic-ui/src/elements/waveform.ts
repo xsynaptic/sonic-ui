@@ -49,6 +49,7 @@ const renderWaveform = template(
 	/* HTML */ `
 		<div class="sonic-waveform" role="slider" tabindex="0">
 			<canvas class="sonic-waveform-canvas" aria-hidden="true"></canvas>
+			<div class="sonic-waveform-scrim" aria-hidden="true"></div>
 			<div class="sonic-waveform-ghost" aria-hidden="true" hidden></div>
 			<div class="sonic-waveform-playhead" aria-hidden="true"></div>
 			<div class="sonic-waveform-label" aria-hidden="true" hidden></div>

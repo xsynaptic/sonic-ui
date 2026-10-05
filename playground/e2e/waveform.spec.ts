@@ -223,3 +223,28 @@ test('a pending region waits out pending-delay before the placeholder shows', as
 	expect(await readState(waveform, 'pending')).toBe(false);
 	await expect.poll(() => readState(waveform, 'pending')).toBe(true);
 });
+
+test('a scrim spans the wave under the label, and a block inset lifts the label', async ({
+	page,
+}) => {
+	await page.goto('/fixtures/');
+
+	const waveform = page.locator('#waveform-pinned');
+	const scrim = waveform.locator('.sonic-waveform-scrim');
+	const label = waveform.locator('.sonic-waveform-label').first();
+
+	await waveform.locator('canvas').scrollIntoViewIfNeeded();
+	await expect(label).toHaveText('Intro');
+	await expect(scrim).toHaveCSS('background-image', /rgb\(13, 14, 15\)/);
+
+	const boxes = await waveform.evaluate((host) =>
+		[...host.querySelectorAll('canvas, .sonic-waveform-scrim')].map((part) => {
+			const { height, width, x, y } = part.getBoundingClientRect();
+
+			return [x, y, width, height];
+		}),
+	);
+
+	expect(boxes[1]).toEqual(boxes[0]);
+	await expect(label).toHaveCSS('bottom', '14px');
+});

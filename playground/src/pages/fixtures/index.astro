@@ -210,6 +210,29 @@ import '#styles/playground.css';
 				value="150"
 			></sonic-wavestrip>
 		</div>
+		<div class="flex h-24 w-72" id="wavestrip-pinned-box">
+			<sonic-wavestrip
+				aria-label="Pinned"
+				class="[--sonic-glass-edge-width:0] [--sonic-readout-edge-width:2px] [--sonic-readout-edge:rgb(1_2_3)] [--sonic-wavestrip-inset-ratio:0] [--sonic-wavestrip-length:100%] [--sonic-wavestrip-marker-edge-width:1px] [--sonic-wavestrip-marker-size:4px] [--sonic-wavestrip-region-edge-width:1px]"
+				data-markers="150..180"
+				fill
+				id="wavestrip-pinned"
+				max="300"
+				readout
+				value="150"
+			></sonic-wavestrip>
+		</div>
+		<div class="w-72" id="waveform-pinned-box">
+			<sonic-waveform
+				aria-label="Scrim"
+				class="[--sonic-glass-edge-width:0] [--sonic-waveform-inset-ratio:0] [--sonic-waveform-label-inset-block:14px] [--sonic-waveform-length:100%] [--sonic-waveform-scrim:linear-gradient(to_top,rgb(13_14_15),transparent_28px)]"
+				data-markers="100=Intro"
+				id="waveform-pinned"
+				max="300"
+				step="0"
+				value="150"
+			></sonic-waveform>
+		</div>
 		<div class="w-72" id="waveform-tokens-box">
 			<sonic-waveform
 				aria-label="Tokens"
@@ -241,6 +264,13 @@ import '#styles/playground.css';
 		>
 			<Play aria-hidden="true" />
 		</sonic-button>
+		<div class="flex h-32 w-72" id="spectrum-fill-box">
+			<sonic-spectrum
+				class="[--sonic-spectrum-length:100%]"
+				fill
+				id="spectrum-fill"
+			></sonic-spectrum>
+		</div>
 		<div class="w-72" id="spectrum-box">
 			<sonic-spectrum
 				class="[--sonic-spectrum-length:100%]"
