@@ -1,11 +1,9 @@
-import type { ValueAxis } from '#elements/value-element.ts';
+import type { ValueAxis } from '#elements/value-gestures.ts';
 import type { SurfaceFrame } from '#lib/canvas-surface.ts';
-import type { HoverPreview } from '#lib/hover-preview.ts';
 import type { StripRegions } from '#lib/strip-scene.ts';
 import type { TimeRegions } from '#lib/time-regions.ts';
 
 import { SonicWaveElement } from '#elements/wave-element.ts';
-import { bindHoverPreview } from '#lib/hover-preview.ts';
 import { createMarkerBand } from '#lib/marker-band.ts';
 import { clampProportion } from '#lib/math.ts';
 import { readPxProperty } from '#lib/read-px-property.ts';
@@ -123,8 +121,6 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 
 	#buffered: Array<[number, number]> = [];
 
-	#hover: HoverPreview | undefined;
-
 	readonly #markerBand = createMarkerBand(
 		requireChild(this.control, '.sonic-wavestrip-markers', HTMLDivElement),
 	);
@@ -139,37 +135,28 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 	}
 
 	protected override connect(signal: AbortSignal): void {
-		super.connect(signal);
-		this.#hover = bindHoverPreview(
-			this.control,
-			{
-				canShow: () => this.readout,
-				dismiss: () => {
-					this.render();
-				},
-				isTaken: () => this.isEditing() || this.isRevealed(),
-				show: () => {
-					this.renderReadout();
-					this.#placeReadout();
-				},
-				valueAt: (event) => {
-					const axis = this.#axis();
-					const at = clampProportion((event.clientX - axis.startPx) / axis.travelPx);
-					const mapping = this.mapping();
+		const { control } = this;
 
-					return this.#markerAt(event, axis) ?? mapping.snap(mapping.valueAt(at));
-				},
+		super.connect(signal);
+		this.bindHover(control, signal, {
+			canShow: () => this.readout,
+			place: () => {
+				this.#placeReadout();
 			},
-			signal,
-		);
-		this.bindGestures(this.control, signal, (event) => this.#grab(event));
+			valueAt: (event) => {
+				const axis = this.#axis();
+				const at = clampProportion((event.clientX - axis.startPx) / axis.travelPx);
+				const mapping = this.mapping();
+
+				return this.#markerAt(event, axis) ?? mapping.snap(mapping.valueAt(at));
+			},
+		});
+		this.bindGestures(control, signal, (event) => this.#grab(event));
 	}
 
 	protected draw(): void {
 		const surface = this.surface();
 
-		// A reveal or typed entry takes the readout from a hover
-		if (this.isEditing() || this.isRevealed()) this.#hover?.clear();
 		this.#placeReadout();
 		this.showCurrentMarker(this.playback());
 		if (surface && this.#stripRegions(surface.size.width).key !== this.#paintedKey) {
@@ -195,10 +182,6 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 		for (const { from, kind, to } of strip.regions) {
 			fillRegion(context, bars, [from, to, look.colours[kind]]);
 		}
-	}
-
-	protected override previewValue(): number | undefined {
-		return this.#hover?.value();
 	}
 
 	protected override renderMarkers(): void {

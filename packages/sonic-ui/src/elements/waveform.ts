@@ -1,4 +1,4 @@
-import type { ValueAxis } from '#elements/value-element.ts';
+import type { ValueAxis } from '#elements/value-gestures.ts';
 import type { SurfaceFrame, SurfaceLook } from '#lib/canvas-surface.ts';
 import type { Drawn, View } from '#lib/frame-timeline.ts';
 import type { TimeRegions } from '#lib/time-regions.ts';

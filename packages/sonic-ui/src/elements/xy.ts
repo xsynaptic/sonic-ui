@@ -1,3 +1,4 @@
+import type { AskedValue } from '#lib/asked-value.ts';
 import type { FieldAxis, FieldDragState, FieldPoint } from '#lib/field.ts';
 import type { PointerDrag } from '#lib/pointer-drag.ts';
 import type { ValueMapping, ValueSpec } from '#lib/value-mapping.ts';
@@ -5,6 +6,7 @@ import type { ValueMapping, ValueSpec } from '#lib/value-mapping.ts';
 import { SonicFormElement } from '#elements/form-element.ts';
 import { ReadoutClaim, revealDelay } from '#elements/readout-claim.ts';
 import { Readout } from '#elements/readout.ts';
+import { moveTo, resnap, setAsked } from '#lib/asked-value.ts';
 import { dragThresholdPx } from '#lib/drag-step.ts';
 import { pointerMove, pointerPosition, startFieldDrag, stepFieldDrag } from '#lib/field.ts';
 import { focusByPointer } from '#lib/focus-by-pointer.ts';
@@ -19,11 +21,6 @@ declare global {
 	interface HTMLElementTagNameMap {
 		'sonic-xy': SonicXy;
 	}
-}
-
-interface AxisValue {
-	asked: number | undefined;
-	value: number;
 }
 
 interface XyDrag {
@@ -281,7 +278,7 @@ export class SonicXy extends SonicFormElement {
 
 	readonly #readout = new Readout(requireChild(this.#xy, '.sonic-xy-readout', HTMLDivElement));
 
-	readonly #values: Record<FieldAxis, AxisValue> = {
+	readonly #values: Record<FieldAxis, AskedValue> = {
 		x: { asked: undefined, value: 0 },
 		y: { asked: undefined, value: 0 },
 	};
@@ -512,7 +509,7 @@ export class SonicXy extends SonicFormElement {
 		let hasMoved = false;
 
 		for (const axis of axes) {
-			if (this.#set(axis, next[axis] ?? NaN)) hasMoved = true;
+			if (moveTo(this.#values[axis], this.#mappings()[axis], next[axis] ?? NaN)) hasMoved = true;
 		}
 		if (!hasMoved) return false;
 
@@ -523,8 +520,9 @@ export class SonicXy extends SonicFormElement {
 	}
 
 	#keyTo(axis: FieldAxis, key: string): void {
-		const next = this.#mappings()[axis].keyTarget(key, this.#values[axis].value);
-		const hasMoved = this.#set(axis, next ?? NaN);
+		const mapping = this.#mappings()[axis];
+		const next = mapping.keyTarget(key, this.#values[axis].value);
+		const hasMoved = moveTo(this.#values[axis], mapping, next ?? NaN);
 
 		this.#currentAxis = axis;
 		this.render();
@@ -561,12 +559,9 @@ export class SonicXy extends SonicFormElement {
 		const mappings = this.#mappings();
 
 		for (const axis of axes) {
-			const axisValue = this.#values[axis];
 			const mapping = mappings[axis];
 
-			axisValue.value = mapping.snap(
-				axisValue.asked ?? this.numberAttribute(axis, mapping.bounds[0]),
-			);
+			resnap(this.#values[axis], mapping, this.numberAttribute(axis, mapping.bounds[0]));
 		}
 		this.render();
 	}
@@ -622,20 +617,6 @@ export class SonicXy extends SonicFormElement {
 		this.#commit({ x: this.xDefault, y: this.yDefault });
 	}
 
-	#set(axis: FieldAxis, next: number): boolean {
-		if (!Number.isFinite(next)) return false;
-
-		const axisValue = this.#values[axis];
-		const snapped = this.#mappings()[axis].snap(next);
-
-		axisValue.asked = snapped;
-		if (snapped === axisValue.value) return false;
-
-		axisValue.value = snapped;
-
-		return true;
-	}
-
 	#taper(axis: FieldAxis): ValueSpec['taper'] {
 		return this.getAttribute(`${axis}-taper`) === 'log' ? 'log' : 'linear';
 	}
@@ -656,10 +637,6 @@ export class SonicXy extends SonicFormElement {
 			return;
 		}
 
-		const asked = toNumber(next);
-		const hasMoved = this.#set(axis, asked);
-
-		if (Number.isFinite(asked)) axisValue.asked = asked;
-		if (hasMoved) this.render();
+		if (setAsked(axisValue, this.#mappings()[axis], toNumber(next))) this.render();
 	}
 }

@@ -1,10 +1,9 @@
-import type { ValueAxis } from '#elements/value-element.ts';
-import type { HoverPreview } from '#lib/hover-preview.ts';
+import type { ValueAxis } from '#elements/value-gestures.ts';
 import type { TimeRegions } from '#lib/time-regions.ts';
 
+import { createModulation } from '#elements/modulation.ts';
 import { bindScale } from '#elements/scale.ts';
 import { SonicValueElement } from '#elements/value-element.ts';
-import { bindHoverPreview } from '#lib/hover-preview.ts';
 import { clampProportion } from '#lib/math.ts';
 import { requireChild, template } from '#lib/render.ts';
 import { sortedRegions } from '#lib/time-regions.ts';
@@ -86,11 +85,11 @@ export class SonicSlider extends SonicValueElement {
 	}
 
 	get modulationValue(): number | undefined {
-		return this.readModulationValue();
+		return this.#modulation.value();
 	}
 
 	set modulationValue(value: null | number | undefined) {
-		this.writeModulationValue(this.#slider, 'slider', value);
+		this.#modulation.write(value, this.isBound() ? this.mapping() : undefined);
 	}
 
 	get orientation(): 'horizontal' | 'vertical' {
@@ -119,9 +118,11 @@ export class SonicSlider extends SonicValueElement {
 
 	#buffered: Array<[number, number]> = [];
 
-	#hover: HoverPreview | undefined;
-
 	readonly #slider = renderSlider();
+
+	readonly #modulation = createModulation(this.#slider, 'slider', (isModulated) => {
+		this.toggleState('modulated', isModulated);
+	});
 
 	override connectedCallback(): void {
 		this.upgradeProperties(
@@ -152,28 +153,19 @@ export class SonicSlider extends SonicValueElement {
 			},
 			{ signal },
 		);
-		this.#hover = bindHoverPreview(
-			slider,
-			{
-				canShow: () => this.scrub && this.readout && this.orientation === 'horizontal',
-				dismiss: () => {
-					this.render();
-				},
-				isTaken: () => this.isEditing() || this.isRevealed(),
-				show: () => {
-					this.renderReadout();
-					this.#placeReadout(slider);
-				},
-				valueAt: (event) => {
-					const axis = this.#axis(slider, cap);
-					const at = clampProportion((axis.position(event) - axis.startPx) / axis.travelPx);
-					const mapping = this.mapping();
-
-					return mapping.snap(mapping.valueAt(at));
-				},
+		this.bindHover(slider, signal, {
+			canShow: () => this.scrub && this.readout && this.orientation === 'horizontal',
+			place: () => {
+				this.#placeReadout(slider);
 			},
-			signal,
-		);
+			valueAt: (event) => {
+				const axis = this.#axis(slider, cap);
+				const at = clampProportion((axis.position(event) - axis.startPx) / axis.travelPx);
+				const mapping = this.mapping();
+
+				return mapping.snap(mapping.valueAt(at));
+			},
+		});
 		this.render();
 		this.checkStyles(slider, 'slider.css');
 		this.bindGestures(slider, signal, (event) => {
@@ -193,8 +185,12 @@ export class SonicSlider extends SonicValueElement {
 	}
 
 	protected draw(): void {
-		if (this.isEditing() || this.isRevealed()) this.#hover?.clear();
-		this.writeProportions(this.#slider, 'slider', this.modulation);
+		this.#modulation.draw({
+			mapping: this.mapping(),
+			modulation: this.modulation,
+			origin: this.originValue(),
+			value: this.value,
+		});
 		this.#renderBuffered(this.#slider);
 		this.#renderScrub(this.#slider);
 		this.#placeReadout(this.#slider);
@@ -211,10 +207,6 @@ export class SonicSlider extends SonicValueElement {
 
 	protected override holdChanged(): void {
 		if (this.scrub) this.render();
-	}
-
-	protected override previewValue(): number | undefined {
-		return this.#hover?.value();
 	}
 
 	protected override scrubsKeyRepeat(): boolean {

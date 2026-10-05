@@ -1,45 +1,25 @@
-import type { DragState } from '#lib/drag-step.ts';
-import type { PointerDrag } from '#lib/pointer-drag.ts';
+import type { ValueAxis } from '#elements/value-gestures.ts';
+import type { AskedValue } from '#lib/asked-value.ts';
+import type { HoverPreview } from '#lib/hover-preview.ts';
 import type { ValueMapping } from '#lib/value-mapping.ts';
 
 import { SonicFormElement } from '#elements/form-element.ts';
-import { ReadoutClaim, revealDelay } from '#elements/readout-claim.ts';
 import { Readout } from '#elements/readout.ts';
-import { ValueEntry } from '#elements/value-entry.ts';
-import { dragThresholdPx, startDrag, stepDrag } from '#lib/drag-step.ts';
-import { focusByPointer } from '#lib/focus-by-pointer.ts';
+import { ValueGestures } from '#elements/value-gestures.ts';
+import { moveTo, resnap, setAsked } from '#lib/asked-value.ts';
+import { bindHoverPreview } from '#lib/hover-preview.ts';
 import { clamp, toNumber, trimFloat } from '#lib/math.ts';
-import { isMenuPress, isResetPress } from '#lib/modifier-press.ts';
 import { parseNumberList } from '#lib/number-list.ts';
-import { bindDrag } from '#lib/pointer-drag.ts';
 import { readPxProperty } from '#lib/read-px-property.ts';
-import { requireChild } from '#lib/render.ts';
-import { resetKeys, valueMapping } from '#lib/value-mapping.ts';
+import { valueMapping } from '#lib/value-mapping.ts';
 import { writeAttribute } from '#lib/write-attribute.ts';
 
-export interface ValueAxis {
-	fromProportion?: number;
-	isKeptOnCancel?: boolean;
-	outside?: (event: PointerEvent) => boolean;
-	position: (event: PointerEvent) => number;
-	travelPx: number;
+interface HoverBinding {
+	canShow: () => boolean;
+	place: () => void;
+	valueAt: (event: PointerEvent) => number | undefined;
 }
 
-interface ValueDrag extends ValueAxis {
-	fromValue: number;
-	isOutside: boolean;
-	isRevealed: boolean;
-	pointerType: string;
-	revealTimer: ReturnType<typeof setTimeout> | undefined;
-	state: DragState;
-}
-
-interface KeyScrub {
-	fromValue: number;
-	key: string;
-}
-
-const detentZonePx = 8;
 const fallbackTravelPx = 160;
 
 let instanceCount = 0;
@@ -107,7 +87,7 @@ export abstract class SonicValueElement extends SonicFormElement {
 				element.#limit = bounds;
 			},
 			mapping: () => element.mapping(),
-			value: () => element.#value,
+			value: () => element.#cell.value,
 			watch: (listener) => {
 				element.#watchers.add(listener);
 
@@ -227,7 +207,7 @@ export abstract class SonicValueElement extends SonicFormElement {
 	}
 
 	get pointerType(): string | undefined {
-		return this.#dragging()?.pointerType;
+		return this.#gestures?.pointerType();
 	}
 
 	get positions(): Array<number> | undefined {
@@ -271,7 +251,7 @@ export abstract class SonicValueElement extends SonicFormElement {
 	}
 
 	get value(): number {
-		return this.#value;
+		return this.#cell.value;
 	}
 
 	set value(next: null | number | undefined) {
@@ -288,35 +268,26 @@ export abstract class SonicValueElement extends SonicFormElement {
 			return;
 		}
 
-		this.#write(value);
-		if (Number.isFinite(value)) this.#asked = value;
+		if (setAsked(this.#cell, this.mapping(), value)) this.render();
 	}
 
 	get valueText(): string {
-		return this.#textFor(this.#value);
+		return this.#textFor(this.#cell.value);
 	}
 
-	#asked: number | undefined;
-
-	readonly #claim = new ReadoutClaim(() => {
-		this.#renderHold();
-	});
-
-	#entry: undefined | ValueEntry;
+	readonly #cell: AskedValue = { asked: undefined, value: 0 };
 
 	#formatSpokenValue: ((value: number) => string) | undefined;
 
 	#formatValue: ((value: number) => string) | undefined;
 
+	#gestures: undefined | ValueGestures;
+
 	#heldAt: number | undefined;
 
+	#hover: HoverPreview | undefined;
+
 	readonly #instance = String((instanceCount += 1));
-
-	#isModulated = false;
-
-	#isRevealed = false;
-
-	#keyScrub: KeyScrub | undefined;
 
 	#land: undefined | ValueLanding;
 
@@ -325,17 +296,11 @@ export abstract class SonicValueElement extends SonicFormElement {
 	// Every attribute it reads is observed; a subclass adding an input to `isWrapping()` has to observe it
 	#mapping: undefined | ValueMapping;
 
-	#modulationValue: number | undefined;
-
 	#parseValue: ((text: string) => number) | undefined;
-
-	#pointerDrag: PointerDrag<ValueDrag> | undefined;
 
 	#positions: Array<number> | undefined;
 
 	#readout: undefined | { anchor: HTMLElement; bubble: Readout };
-
-	#value = 0;
 
 	readonly #watchers = new Set<() => void>();
 
@@ -348,11 +313,11 @@ export abstract class SonicValueElement extends SonicFormElement {
 				return;
 			}
 
-			this.#asked = undefined;
+			this.#cell.asked = undefined;
 		}
-		if (name === 'disabled' && this.isDisabled()) this.#endHolds();
+		if (name === 'disabled' && this.isDisabled()) this.#gestures?.end();
 
-		this.#value = this.mapping().snap(this.#asked ?? this.numberAttribute('value', this.min));
+		resnap(this.#cell, this.mapping(), this.numberAttribute('value', this.min));
 		if (proportionAttributes.has(name) && this.isBound()) this.proportionsChanged();
 		this.render();
 	}
@@ -387,88 +352,70 @@ export abstract class SonicValueElement extends SonicFormElement {
 		signal: AbortSignal,
 		grab: (event: PointerEvent) => undefined | ValueAxis,
 	): void {
-		const entry = this.#bindEntry(control, signal);
+		const bubble = control.querySelector<HTMLElement>('[popover]');
 
-		this.#pointerDrag = bindDrag<ValueDrag>(
+		if (bubble) this.#readout = { anchor: control, bubble: new Readout(bubble) };
+		this.#gestures = new ValueGestures(
+			{
+				default: () => this.default,
+				detent: () => this.detent,
+				dispatch: (type) => {
+					this.dispatchEvent(new Event(type, { bubbles: true }));
+				},
+				doublePress: () => this.doublePress,
+				entryId: `sonic-entry-${this.#instance}`,
+				// `Number.parseFloat` reads "5 kHz" as 5
+				entryText: () => (this.#parseValue ? this.valueText : String(this.#cell.value)),
+				forwardNaming: (target, isNamed) => {
+					this.forwardNaming(target, isNamed);
+				},
+				holdChanged: () => {
+					this.#renderHold();
+				},
+				input: (next) => this.input(next),
+				isDisabled: () => this.isDisabled(),
+				keyStep: () => this.keyStep,
+				land: (target, direction) => this.#land?.(target, direction) ?? target,
+				limit: () => this.#limit,
+				mapping: () => this.mapping(),
+				// eslint-disable-next-line unicorn/prefer-number-coercion -- `Number('')` is 0; an emptied field should leave the value alone
+				parse: (text) => (this.#parseValue ?? Number.parseFloat)(text),
+				render: () => {
+					this.render();
+				},
+				scrubsKeyRepeat: () => this.scrubsKeyRepeat(),
+				springTarget: () => this.springTarget(),
+				tapTarget: () => this.tapTarget(),
+				toggleState: (state, isOn) => {
+					this.toggleState(state, isOn);
+				},
+				value: () => this.#cell.value,
+			},
+			control,
+		);
+		this.#gestures.bind(signal, grab);
+	}
+
+	protected bindHover(
+		control: HTMLElement,
+		signal: AbortSignal,
+		{ canShow, place, valueAt }: HoverBinding,
+	): void {
+		this.#hover = bindHoverPreview(
 			control,
 			{
-				cancel: (drag) => {
-					if (drag.isKeptOnCancel !== true) this.input(drag.fromValue);
+				canShow,
+				dismiss: () => {
+					this.render();
 				},
-				grab: (event) => {
-					if (isMenuPress(event) || this.isDisabled() || entry.isOpen) return;
-
-					this.toggleState('springing', false);
-					// A click listener above makes WebKit send a tap's compatibility mousedown, which blurs the entry a double tap just opened
-					if (event.pointerType === 'touch') event.preventDefault();
-					focusByPointer(control);
-					if (isResetPress(event)) {
-						this.#reset();
-						return;
-					}
-
-					const fromValue = this.#value;
-					const axis = grab(event);
-					if (!axis) return;
-
-					const drag: ValueDrag = {
-						...axis,
-						fromValue,
-						isOutside: false,
-						isRevealed: false,
-						pointerType: event.pointerType,
-						revealTimer: undefined,
-						state: this.#startDrag(control, axis, event),
-					};
-
-					drag.revealTimer = setTimeout(() => {
-						this.#reveal(drag);
-					}, revealDelay(control));
-
-					return drag;
+				isTaken: () => this.#isEditing() || this.isRevealed(),
+				show: () => {
+					this.renderReadout();
+					place();
 				},
-				lift: (drag, event) => {
-					const tap = drag.state.isEngaged ? undefined : this.tapTarget();
-
-					if (tap !== undefined) {
-						entry.forgetPress();
-						this.#commit(tap);
-						return;
-					}
-					if (!entry.press(event) || this.springTarget() !== undefined) return;
-
-					const gesture = this.doublePress;
-
-					if (gesture === 'reset') this.#reset();
-					else if (gesture === 'entry') entry.open();
-				},
-				move: (drag, event) => {
-					this.#dragTo(drag, event);
-				},
-				release: (drag) => {
-					this.#releaseDrag(drag);
-				},
-				toggle: (isDragging) => {
-					this.toggleState('dragging', isDragging);
-				},
+				valueAt,
 			},
 			signal,
-		);
-		control.addEventListener(
-			'pointercancel',
-			() => {
-				entry.forgetPress();
-			},
-			{ signal },
-		);
-		this.#bindKeys(control, entry, signal);
-		signal.addEventListener(
-			'abort',
-			() => {
-				this.#endKeyScrub();
-				this.#concealKeyReveal();
-			},
-			{ once: true },
 		);
 	}
 
@@ -485,7 +432,7 @@ export abstract class SonicValueElement extends SonicFormElement {
 	protected abstract override focusTarget(): HTMLElement;
 
 	protected heldFrom(): number | undefined {
-		return this.#dragging()?.fromValue ?? this.#keyScrub?.fromValue;
+		return this.#gestures?.heldFrom();
 	}
 
 	protected heldWrite(next: number): void {
@@ -497,22 +444,20 @@ export abstract class SonicValueElement extends SonicFormElement {
 	}
 
 	protected input(next: number): boolean {
-		const previous = this.#value;
+		const previous = this.#cell.value;
 
-		this.#write(this.#limit ? clamp(next, ...this.#limit) : next);
-		if (this.#value === previous) return false;
+		const target = this.#limit ? clamp(next, ...this.#limit) : next;
+
+		if (moveTo(this.#cell, this.mapping(), target)) this.render();
+		if (this.#cell.value === previous) return false;
 
 		this.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
 
 		return true;
 	}
 
-	protected isEditing(): boolean {
-		return this.#entry?.isOpen === true;
-	}
-
 	protected isRevealed(): boolean {
-		return this.#claim.isRevealed;
+		return this.#gestures?.isRevealed() === true;
 	}
 
 	protected isWrapping(): boolean {
@@ -546,23 +491,15 @@ export abstract class SonicValueElement extends SonicFormElement {
 	protected playback(): number {
 		const from = this.heldFrom();
 
-		return from === undefined ? this.#value : (this.#heldAt ?? from);
-	}
-
-	protected previewValue(): number | undefined {
-		return undefined;
+		return from === undefined ? this.#cell.value : (this.#heldAt ?? from);
 	}
 
 	protected proportionsChanged(): void {
 		// Runs when every proportion moves, never per input
 	}
 
-	protected readModulationValue(): number | undefined {
-		return this.#modulationValue;
-	}
-
 	protected readoutValue(): number {
-		return this.#shown().value ?? this.#value;
+		return this.#shown().value ?? this.#cell.value;
 	}
 
 	protected render(): void {
@@ -600,206 +537,17 @@ export abstract class SonicValueElement extends SonicFormElement {
 		return Math.max(1, readPxProperty(getComputedStyle(control), property, fallbackTravelPx));
 	}
 
-	protected writeModulationValue(
-		control: HTMLElement,
-		prefix: 'dial' | 'slider',
-		next: null | number | undefined,
-	): void {
-		const value = next === undefined || next === null ? undefined : toNumber(next);
-		if (value !== undefined && !Number.isFinite(value)) return;
-
-		this.#modulationValue = value;
-		if (this.isBound()) this.#writeModulationProportion(control, prefix);
-	}
-
-	protected writeProportions(
-		control: HTMLElement,
-		prefix: 'dial' | 'slider',
-		modulation: number,
-	): void {
-		const { style } = control;
-		const mapping = this.mapping();
-		const value = mapping.proportionOf(this.#value);
-		const reach = mapping.proportionOf(this.#value + modulation);
-		const { positionCount } = mapping;
-
-		style.setProperty(`--_sonic-${prefix}-value`, String(value));
-		style.setProperty(
-			`--_sonic-${prefix}-origin`,
-			String(mapping.proportionOf(this.originValue())),
-		);
-		style.setProperty(`--_sonic-${prefix}-modulation-from`, String(Math.min(value, reach)));
-		style.setProperty(`--_sonic-${prefix}-modulation-to`, String(Math.max(value, reach)));
-		if (positionCount === undefined) style.removeProperty(`--_sonic-${prefix}-position-count`);
-		else style.setProperty(`--_sonic-${prefix}-position-count`, String(positionCount));
-		this.#writeModulationProportion(control, prefix);
-	}
-
-	#bindEntry(control: HTMLElement, signal: AbortSignal): ValueEntry {
-		const input = requireChild(control, 'input', HTMLInputElement);
-		const bubble = control.querySelector<HTMLElement>('[popover]');
-
-		// Chrome's issues panel flags a form field with no id or name; a `name` would submit it
-		input.id = `sonic-entry-${this.#instance}`;
-		if (bubble) this.#readout = { anchor: control, bubble: new Readout(bubble) };
-
-		const entry = new ValueEntry(input, {
-			commit: (text) => {
-				// eslint-disable-next-line unicorn/prefer-number-coercion -- `Number('')` is 0; an emptied field should leave the value alone
-				this.#commit((this.#parseValue ?? Number.parseFloat)(text));
-			},
-			// `Number.parseFloat` reads "5 kHz" as 5
-			text: () => (this.#parseValue ? this.valueText : String(this.#value)),
-			toggle: (isOpen) => {
-				if (isOpen) this.forwardNaming(input, true);
-				this.toggleState('editing', isOpen);
-				this.render();
-			},
-		});
-
-		this.#entry = entry;
-		entry.bind(control, signal);
-
-		return entry;
-	}
-
-	#bindKeys(control: HTMLElement, entry: ValueEntry, signal: AbortSignal): void {
-		control.addEventListener(
-			'keydown',
-			(event) => {
-				if (this.isDisabled() || event.defaultPrevented || event.target !== control) return;
-
-				this.toggleState('springing', false);
-				if (event.key === 'Enter') {
-					if (this.springTarget() !== undefined) return;
-
-					event.preventDefault();
-					entry.open();
-					return;
-				}
-
-				const next = this.#keyTarget(event.key);
-				if (next === undefined) return;
-
-				event.preventDefault();
-				this.#keyTo(event, next);
-				this.#claim.reveal('keys');
-				this.#renderHold();
-			},
-			{ signal },
-		);
-		control.addEventListener(
-			'keyup',
-			(event) => {
-				// macOS sends no `keyup` for a key let go while Cmd is down
-				const isMeta = event.key === 'Meta';
-
-				if (isMeta || event.key === this.#keyScrub?.key) this.#endKeyScrub();
-				if (isMeta && this.#dragging()) return;
-				if (isMeta || this.mapping().keyTarget(event.key, this.#value) !== undefined) {
-					this.#springBack();
-				}
-			},
-			{ signal },
-		);
-		control.addEventListener(
-			'blur',
-			() => {
-				this.#endKeyScrub();
-				this.#concealKeyReveal();
-				this.#springBack();
-			},
-			{ signal },
-		);
-	}
-
-	#commit(next: number, direction: -1 | 0 | 1 = 0): void {
-		const landed = Number.isFinite(next) ? (this.#land?.(next, direction) ?? next) : next;
-
-		if (this.input(landed)) this.dispatchEvent(new Event('change', { bubbles: true }));
-	}
-
-	#concealKeyReveal(): void {
-		if (this.#claim.conceal('keys')) this.#renderHold();
-	}
-
-	#dragging(): undefined | ValueDrag {
-		return this.#pointerDrag?.current();
-	}
-
-	#dragTo(drag: ValueDrag, event: PointerEvent): void {
-		const isOutside = drag.outside?.(event) === true;
-		const wasEngaged = drag.state.isEngaged;
-		const mapping = this.mapping();
-		const { state, value } = stepDrag(mapping, drag.state, {
-			isFine: event.shiftKey,
-			isOutside,
-			position: drag.position(event),
-		});
-
-		drag.state = this.#withinLimit(mapping, state);
-		if (value === undefined) return;
-
-		if (!wasEngaged) this.#reveal(drag);
-
-		const isCrossing = isOutside !== drag.isOutside;
-
-		if (isCrossing) {
-			drag.isOutside = isOutside;
-			this.toggleState('cancelling', isOutside);
-		}
-		this.input(isOutside ? drag.fromValue : value);
-		if (isCrossing) this.#renderDragReveal(drag);
-	}
-
-	#endHolds(): void {
-		this.#entry?.close(false);
-		this.#pointerDrag?.end();
-		this.#endKeyScrub();
-	}
-
-	#endKeyScrub(): void {
-		const scrub = this.#keyScrub;
-		if (!scrub) return;
-
-		this.#keyScrub = undefined;
-		this.#renderHold();
-		if (this.#value !== scrub.fromValue) this.dispatchEvent(new Event('change', { bubbles: true }));
+	#isEditing(): boolean {
+		return this.#gestures?.isEditing() === true;
 	}
 
 	#isHeld(): boolean {
-		return this.#dragging() !== undefined || this.#keyScrub !== undefined;
-	}
-
-	#keyTarget(key: string): number | undefined {
-		if (resetKeys.has(key)) return this.default;
-
-		return this.mapping().keyTarget(key, this.#value, this.keyStep);
-	}
-
-	#keyTo(event: KeyboardEvent, next: number): void {
-		if (event.repeat && this.scrubsKeyRepeat()) {
-			this.#scrubKey(event.key, next);
-			return;
-		}
-
-		this.#endKeyScrub();
-		this.#commit(next, next > this.#value ? 1 : -1);
-	}
-
-	#releaseDrag(drag: ValueDrag): void {
-		clearTimeout(drag.revealTimer);
-		this.#claim.conceal('drag');
-		this.toggleState('cancelling', false);
-		this.#renderHold();
-		this.#showRevealed(false);
-		if (this.#value !== drag.fromValue) this.dispatchEvent(new Event('change', { bubbles: true }));
-		this.#springBack();
+		return this.#gestures?.isHeld() === true;
 	}
 
 	#renderAria(control: HTMLElement, orientation?: 'horizontal' | 'vertical'): void {
-		this.writeFormValue(String(this.#value), String(this.#value));
-		if (this.#entry?.isOpen) {
+		this.writeFormValue(String(this.#cell.value), String(this.#cell.value));
+		if (this.#isEditing()) {
 			for (const name of roleAttributes) control.removeAttribute(name);
 			this.forwardNaming(control, false);
 			this.renderReadout();
@@ -816,7 +564,7 @@ export abstract class SonicValueElement extends SonicFormElement {
 		writeAttribute(
 			control,
 			'aria-valuetext',
-			(this.#formatSpokenValue ?? this.#formatValue)?.(this.#value),
+			(this.#formatSpokenValue ?? this.#formatValue)?.(this.#cell.value),
 		);
 		this.forwardNaming(control, true);
 		this.#renderDisabled(control);
@@ -824,10 +572,12 @@ export abstract class SonicValueElement extends SonicFormElement {
 	}
 
 	#renderControl(): void {
+		// A reveal or typed entry takes the readout from a hover
+		if (this.#isEditing() || this.isRevealed()) this.#hover?.clear();
 		this.draw();
 		this.toggleState(
 			'at-origin',
-			!this.isWrapping() && this.#value === this.mapping().snap(this.originValue()),
+			!this.isWrapping() && this.#cell.value === this.mapping().snap(this.originValue()),
 		);
 		this.#renderAria(this.focusTarget(), this.controlOrientation());
 	}
@@ -842,145 +592,33 @@ export abstract class SonicValueElement extends SonicFormElement {
 		writeAttribute(control, 'tabindex', isDisabled ? undefined : stop);
 	}
 
-	#renderDragReveal(drag: ValueDrag): void {
-		const isRevealed = drag.isRevealed && !drag.isOutside;
-
-		if (isRevealed) this.#claim.reveal('drag');
-		else this.#claim.conceal('drag');
-		this.#renderHold();
-		this.#showRevealed(isRevealed);
-	}
-
 	#renderHold(): void {
 		if (this.heldFrom() === undefined) this.#heldAt = undefined;
 		this.renderReadout();
 		this.holdChanged();
 	}
 
-	#reset(): void {
-		this.#commit(this.default ?? NaN);
-	}
-
-	#reveal(drag: ValueDrag): void {
-		if (drag.isRevealed || this.#dragging() !== drag) return;
-
-		drag.isRevealed = true;
-		this.#renderDragReveal(drag);
-	}
-
-	#scrubKey(key: string, next: number): void {
-		if (this.#keyScrub?.key !== key) {
-			this.#endKeyScrub();
-			this.#keyScrub = { fromValue: this.#value, key };
-		}
-		this.input(next);
-	}
-
 	#shown(): { isOpen: boolean; value: number | undefined } {
-		if (this.isEditing()) return { isOpen: true, value: undefined };
+		if (this.#isEditing()) return { isOpen: true, value: undefined };
 
-		const isRevealed = this.#claim.isRevealed;
-		const preview = isRevealed ? undefined : this.previewValue();
+		const isRevealed = this.isRevealed();
+		const preview = isRevealed ? undefined : this.#hover?.value();
 
 		return {
 			isOpen: (isRevealed || preview !== undefined) && this.readout,
-			value: preview ?? this.#value,
+			value: preview ?? this.#cell.value,
 		};
-	}
-
-	#showRevealed(isRevealed: boolean): void {
-		if (isRevealed === this.#isRevealed) return;
-
-		this.#isRevealed = isRevealed;
-		this.toggleState('revealed', isRevealed);
-		this.dispatchEvent(new Event('sonic-reveal', { bubbles: true }));
 	}
 
 	#spokenNow(): number {
 		const step = this.spokenStep;
 
 		return step !== undefined && step > 0
-			? trimFloat(Math.round(this.#value / step) * step)
-			: this.#value;
-	}
-
-	#springBack(): void {
-		const target = this.springTarget();
-		if (target === undefined) return;
-
-		// Set before the commit so a `change` listener reading styles sees the glide
-		if (this.mapping().snap(target) !== this.#value) this.toggleState('springing', true);
-		this.#commit(target);
-	}
-
-	#startDrag(control: HTMLElement, axis: ValueAxis, event: PointerEvent): DragState {
-		const mapping = this.mapping();
-		const detent = this.detent;
-		const start = {
-			from: this.#value,
-			position: axis.position(event),
-			proportion: axis.fromProportion ?? mapping.proportionOf(this.#value),
-			thresholdPx: dragThresholdPx(event.pointerType),
-			travelPx: axis.travelPx,
-		};
-		if (detent === undefined) return startDrag(mapping, start);
-
-		const zonePx = readPxProperty(getComputedStyle(control), '--_sonic-detent-zone', detentZonePx);
-
-		return startDrag(mapping, {
-			...start,
-			detent: { value: detent, zone: zonePx / axis.travelPx },
-		});
+			? trimFloat(Math.round(this.#cell.value / step) * step)
+			: this.#cell.value;
 	}
 
 	#textFor(value: number): string {
 		return this.#formatValue?.(value) ?? String(value);
-	}
-
-	#withinLimit(mapping: ValueMapping, state: DragState): DragState {
-		const limit = this.#limit;
-		if (!limit || mapping.isWrapping) return state;
-
-		const [low, high] = limit;
-
-		return {
-			...state,
-			rawProportion: clamp(
-				state.rawProportion,
-				mapping.proportionOf(low),
-				mapping.proportionOf(high),
-			),
-		};
-	}
-
-	#write(next: number): void {
-		if (!Number.isFinite(next)) return;
-
-		const clamped = this.mapping().snap(next);
-
-		this.#asked = clamped;
-		if (clamped === this.#value) return;
-
-		this.#value = clamped;
-		this.render();
-	}
-
-	#writeModulationProportion(control: HTMLElement, prefix: 'dial' | 'slider'): void {
-		const modulationValue = this.isWrapping() ? undefined : this.#modulationValue;
-		const isModulated = modulationValue !== undefined;
-
-		if (isModulated !== this.#isModulated) {
-			this.#isModulated = isModulated;
-			this.toggleState('modulated', isModulated);
-		}
-		if (modulationValue === undefined) {
-			control.style.removeProperty(`--_sonic-${prefix}-modulation-value`);
-			return;
-		}
-
-		control.style.setProperty(
-			`--_sonic-${prefix}-modulation-value`,
-			String(this.mapping().proportionOf(modulationValue)),
-		);
 	}
 }

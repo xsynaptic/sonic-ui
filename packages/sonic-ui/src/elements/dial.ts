@@ -1,3 +1,4 @@
+import { createModulation } from '#elements/modulation.ts';
 import { bindScale } from '#elements/scale.ts';
 import { SonicValueElement } from '#elements/value-element.ts';
 import { requireChild, template } from '#lib/render.ts';
@@ -59,14 +60,18 @@ export class SonicDial extends SonicValueElement {
 
 	// fallow-ignore-next-line code-duplication -- one accessor pair per property
 	get modulationValue(): number | undefined {
-		return this.readModulationValue();
+		return this.#modulation.value();
 	}
 
 	set modulationValue(value: null | number | undefined) {
-		this.writeModulationValue(this.#dial, 'dial', value);
+		this.#modulation.write(value, this.isBound() ? this.mapping() : undefined);
 	}
 
 	readonly #dial = renderDial();
+
+	readonly #modulation = createModulation(this.#dial, 'dial', (isModulated) => {
+		this.toggleState('modulated', isModulated);
+	});
 
 	override connectedCallback(): void {
 		this.upgradeProperties('endless', 'modulationValue', 'modulation');
@@ -90,7 +95,12 @@ export class SonicDial extends SonicValueElement {
 	}
 
 	protected draw(): void {
-		this.writeProportions(this.#dial, 'dial', this.endless ? 0 : this.modulation);
+		this.#modulation.draw({
+			mapping: this.mapping(),
+			modulation: this.endless ? 0 : this.modulation,
+			origin: this.originValue(),
+			value: this.value,
+		});
 	}
 
 	protected override focusTarget(): HTMLElement {
