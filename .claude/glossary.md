@@ -52,6 +52,8 @@ The words this library uses for its controls, their parts and their values. Wher
 
 **Cap**: The part of a control that the hand moves. On a dial it is the knob, on a slider the handle, on a button the face. _Avoid_: Thumb, knob, handle
 
+**Legend**: What is printed on a button's cap: an icon or a label, always an element. A button with no legend is blank; an LED is not a legend. _Avoid_: Label (that is the accessible name), glyph, icon (one kind of legend)
+
 **Indicator**: The line on a cap that shows where it is set. _Avoid_: Pointer (that is the mouse, pen or finger), index, marker
 
 **Groove**: The slot a slider's cap runs in. _Avoid_: Track, slot, rail
@@ -87,6 +89,8 @@ The words this library uses for its controls, their parts and their values. Wher
 **Segment**: One light in a meter's ladder. _Avoid_: Light, step, LED
 
 **Ladder**: A meter drawn as separate segments, each with its own threshold. _Avoid_: LED strip, stepped meter
+
+**Bracket**: The pair of arcs round a held puck or handle on a skin with no relief. _Avoid_: Ring (that is a lit arc), halo
 
 **Readout**: The bubble that shows a control's value while it is being moved. _Avoid_: Tooltip, value label
 
@@ -160,7 +164,7 @@ The words this library uses for its controls, their parts and their values. Wher
 
 ### Skinning
 
-**Skin**: A stylesheet that restyles every control by setting tokens. With no skin a control is bare: no cap and no well, so a press control is its legend alone, in the text colour around it. _Avoid_: Theme, preset
+**Skin**: A stylesheet that restyles every control by setting tokens. With no skin a control is bare: no cap and no well, so a press control is its legend alone, or its edge when it has none, in the text colour around it. _Avoid_: Theme, preset
 
 **Token**: A public custom property that a skin may set. _Avoid_: Variable, custom property (that is the mechanism)
 
