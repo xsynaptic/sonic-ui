@@ -17,6 +17,13 @@ import { writeAttribute } from '#lib/write-attribute.ts';
 // eslint-disable-next-line unicorn/consistent-boolean-name -- the name bundlers and other kits use
 declare const __DEV__: boolean;
 
+declare global {
+	interface HTMLElementEventMap {
+		'sonic-hover': Event;
+		'sonic-reveal': Event;
+	}
+}
+
 interface HoverBinding {
 	canShow?: () => boolean;
 	place: () => void;
@@ -642,6 +649,7 @@ export abstract class SonicValueElement extends SonicFormElement {
 
 	#renderHold(): void {
 		if (this.heldFrom() === undefined) this.#heldAt = undefined;
+		this.#hover?.restore();
 		this.renderReadout();
 		this.holdChanged();
 	}

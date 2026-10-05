@@ -77,7 +77,8 @@
 		"#*": "./src/*"
 	},
 	"files": [
-		"dist"
+		"dist",
+		"CHANGELOG.md"
 	],
 	"publishConfig": {
 		"imports": {}

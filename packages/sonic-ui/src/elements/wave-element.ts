@@ -4,6 +4,12 @@ import { SonicValueElement } from '#elements/value-element.ts';
 import { bindSurface } from '#lib/canvas-surface.ts';
 import { bindFill } from '#lib/fill-watch.ts';
 
+declare global {
+	interface HTMLElementEventMap {
+		'sonic-marker': Event;
+	}
+}
+
 export interface WaveMarker {
 	dimmed?: boolean;
 	end?: number;

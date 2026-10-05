@@ -10,6 +10,7 @@ interface HoverOptions {
 export interface HoverPreview {
 	at: (event: PointerEvent) => void;
 	clear: () => void;
+	restore: () => void;
 	value: () => number | undefined;
 }
 
@@ -20,6 +21,7 @@ export function bindHoverPreview(
 ): HoverPreview {
 	let hover: number | undefined;
 	let isDismissed = false;
+	let under: number | undefined;
 	let escapeWatch: AbortController | undefined;
 
 	const hold = (value: number | undefined): void => {
@@ -53,6 +55,7 @@ export function bindHoverPreview(
 		);
 	};
 	const hoverAt = (value: number | undefined): void => {
+		under = value;
 		if (value === undefined) isDismissed = false;
 		if (!isDismissed && !options.isTaken()) hold(value);
 		options.show();
@@ -87,6 +90,9 @@ export function bindHoverPreview(
 		at,
 		clear: () => {
 			hold(undefined);
+		},
+		restore: () => {
+			if (under !== undefined) hoverAt(under);
 		},
 		value: () => hover,
 	};

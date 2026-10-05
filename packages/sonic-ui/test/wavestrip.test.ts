@@ -103,13 +103,14 @@ test('with cancellable, a drag far off the strip returns to its start and resume
 		[150, 108],
 		[100, 24],
 		[100, -60],
+		[80, -70],
 	] as const) {
 		midPointerAt(control, 'pointermove', { clientX, clientY });
 		values.push(wavestrip.value);
 	}
-	midPointerAt(control, 'pointerup', { clientX: 100, clientY: -60 });
+	midPointerAt(control, 'pointerup', { clientX: 80, clientY: -70 });
 
-	expect(values).toEqual([50, 130, 50]);
+	expect(values).toEqual([50, 130, 50, 50]);
 	expect(events).not.toContain('change');
 });
 
@@ -396,7 +397,7 @@ function readoutAt(control: HTMLElement): string {
 	return control.style.getPropertyValue('--_sonic-wavestrip-readout-at');
 }
 
-test('a key reveal takes the readout from a hover, which returns only when the pointer moves again', () => {
+test('a key reveal takes the readout from a hover, which returns under a still pointer when it lapses', () => {
 	installCanvasFakes();
 	vi.useFakeTimers();
 
@@ -409,9 +410,11 @@ test('a key reveal takes the readout from a hover, which returns only when the p
 
 	keyAt(control, 'keydown', false);
 	keyAt(control, 'keyup', false);
+	expect(readoutAt(control)).toBe('0.1');
+
 	vi.runAllTimers();
 	vi.useRealTimers();
-	expect(readoutAt(control)).toBe('0.1');
+	expect(readoutAt(control)).toBe('0.25');
 
 	midPointerAt(control, 'pointermove', { clientX: 150, pointerType: 'mouse' });
 	expect(readoutAt(control)).toBe('0.5');
@@ -526,10 +529,16 @@ test('a touch held still reveals after the hold time, and reports its pointer ty
 
 	const { control, wavestrip } = mountWavestrip('min="30" max="330" step="0" value="50"');
 
+	const pressedBy: Array<string | undefined> = [];
+
+	document.body.addEventListener('input', () => {
+		pressedBy.push(wavestrip.pointerType);
+	});
 	midPointerAt(control, 'pointerdown', { clientX: 150, pointerType: 'touch' });
 
 	const trace = revealTrace(wavestrip);
 
+	expect(pressedBy).toEqual(['touch']);
 	expect(wavestrip.pointerType).toBe('touch');
 	vi.advanceTimersByTime(249);
 	expect(trace).toEqual([]);

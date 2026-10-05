@@ -197,6 +197,7 @@ test('a cancellable drag past its zone matches cancelling, and revealed only whi
 
 	await page.mouse.up();
 	expect(await states()).toEqual([false, false]);
+	await expect(wavestrip).toHaveJSProperty('value', 150);
 });
 
 test('with fill, the strip takes its row and its ratios follow the height', async ({ page }) => {

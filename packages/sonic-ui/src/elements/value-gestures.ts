@@ -54,7 +54,6 @@ interface ValueDrag extends ValueAxis {
 	fromValue: number;
 	isOutside: boolean;
 	isRevealed: boolean;
-	pointerType: string;
 	revealTimer: ReturnType<typeof setTimeout> | undefined;
 	state: DragState;
 }
@@ -63,8 +62,8 @@ const detentZonePx = 8;
 
 export class ValueGestures {
 	readonly #claim = new ReadoutClaim(() => {
-		this.#host.holdChanged();
 		this.#showRevealed();
+		this.#host.holdChanged();
 	});
 
 	readonly #control: HTMLElement;
@@ -78,6 +77,8 @@ export class ValueGestures {
 	#keyScrub: KeyScrub | undefined;
 
 	#pointerDrag: PointerDrag<ValueDrag> | undefined;
+
+	#pointerType: string | undefined;
 
 	constructor(host: GestureHost, control: HTMLElement) {
 		this.#host = host;
@@ -110,10 +111,12 @@ export class ValueGestures {
 					const fromValue = host.value();
 
 					host.toggleState('dragging', true);
+					this.#pointerType = event.pointerType;
 
 					const axis = grab(event);
 					if (!axis) {
 						host.toggleState('dragging', false);
+						this.#pointerType = undefined;
 						return;
 					}
 
@@ -122,7 +125,6 @@ export class ValueGestures {
 						fromValue,
 						isOutside: false,
 						isRevealed: false,
-						pointerType: event.pointerType,
 						revealTimer: undefined,
 						state: this.#startDrag(axis, event),
 					};
@@ -201,7 +203,7 @@ export class ValueGestures {
 	}
 
 	pointerType(): string | undefined {
-		return this.#dragging()?.pointerType;
+		return this.#pointerType;
 	}
 
 	#bindEntry(signal: AbortSignal): ValueEntry {
@@ -294,8 +296,8 @@ export class ValueGestures {
 	#concealKeyReveal(): void {
 		if (!this.#claim.conceal('keys')) return;
 
-		this.#host.holdChanged();
 		this.#showRevealed();
+		this.#host.holdChanged();
 	}
 
 	#crossCancelZone(drag: ValueDrag, value: number): void {
@@ -329,7 +331,7 @@ export class ValueGestures {
 
 		if (!wasEngaged) this.#reveal(drag);
 
-		if (isOutside === drag.isOutside) host.input(value);
+		if (isOutside === drag.isOutside) host.input(isOutside ? drag.fromValue : value);
 		else this.#crossCancelZone(drag, value);
 	}
 
@@ -367,6 +369,7 @@ export class ValueGestures {
 		const host = this.#host;
 
 		clearTimeout(drag.revealTimer);
+		this.#pointerType = undefined;
 		this.#claim.conceal('drag');
 		host.toggleState('cancelling', false);
 		host.holdChanged();
