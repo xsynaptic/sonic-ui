@@ -122,8 +122,9 @@ test('empty peaks draw a plain groove, set the empty state, and a ratio of 0 lea
 		return pixel?.[3];
 	};
 
-	await expect.poll(alphaNearTop).toBe(0);
-	expect(await alphaAt(canvas, middle)).toBe(255);
+	await expect
+		.poll(async () => [await alphaNearTop(), await alphaAt(canvas, middle)])
+		.toEqual([0, 255]);
 	expect(await readState(wavestrip, 'empty')).toBe(true);
 
 	await wavestrip.evaluate((element) => {
@@ -221,7 +222,7 @@ test('a marker size holds the dots still on a filled strip, and lanes are measur
 
 	const dots = page.locator('#wavestrip-fill .sonic-wavestrip-marker');
 
-	await dots.first().scrollIntoViewIfNeeded();
+	await page.locator('#wavestrip-fill .sonic-wavestrip').scrollIntoViewIfNeeded();
 	await expect(dots.first()).toHaveCSS('inline-size', '4px');
 
 	// 6.7px apart: one lane for 4px dots, where the 96px strip's own 6.2px dots would take two

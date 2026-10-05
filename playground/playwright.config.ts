@@ -27,4 +27,5 @@ export default defineConfig({
 		reuseExistingServer: false,
 		url: `http://localhost:${String(port)}/fixtures/`,
 	},
+	workers: 4,
 });
