@@ -1,5 +1,21 @@
 # @xsynaptic/sonic-ui
 
+## 0.14.0
+
+### Minor Changes
+
+- Slider: three tokens for a capless progress strip. `--sonic-slider-groove-radius-ratio` rounds the groove's ends as a ratio of its thickness (0.5 by default; at 0 a capless groove is exactly the control's length and its fills stop at their proportions of it). `--sonic-slider-groove-anchor` places the groove across the breadth, 0 at the start, 0.5 by default, 1 at the end, so a thickening groove grows one way. `--sonic-slider-indicator` colours the indicator line apart from the ink.
+
+## 0.13.0
+
+### Minor Changes
+
+- The material is split into sheets under `material/*.css`, so you can load only what your controls need; the README lists them. `material.css` and `controls.css` work as before, and sheets now load in any order.
+
+  New public surface: the material sheets, and the sublayers `sonic.material` and `sonic.control`. A rule written directly in `@layer sonic` now always wins over the control sheets.
+
+- Waveform: `zoomable` opts in to zoom by ctrl or cmd wheel, two-finger pinch and the `+` and `-` keys, between `zoom-min` and `zoom-max` (20 and 280 by default). `sonic-zoom` fires for a gesture and never for a write to `zoom`. A second finger ends a scrub without a seek. Without `zoomable` nothing changes.
+
 ## 0.12.0
 
 ### Minor Changes
