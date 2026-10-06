@@ -1,5 +1,16 @@
 # @xsynaptic/sonic-ui
 
+## 0.11.0
+
+### Minor Changes
+
+- - Breaking: lit colours take status names. `data-sonic-lit` values `alt`, `hot`, `clip` and `dim` are now `ok`, `warning`, `danger` and `idle`; `--sonic-lit-alt`, `--sonic-hot` and `--sonic-clip` are now `--sonic-lit-ok`, `--sonic-lit-warning` and `--sonic-lit-danger`. A meter's and a spectrum's hot and clip zones keep their names and draw in the warning and danger colours.
+  - Toggle: new `<sonic-toggle>`, a round cap sliding in a well, two or three positions or on/off, with lit, momentary and disabled positions and an optional LED or icon on the cap.
+  - Segmented control and switch: `data-sonic-disabled` on a position child disables that one position; arrows skip it, a press and the bat pass it by. A disabled switch position's label is drawn faint, which also dims the labels of a wholly disabled switch.
+  - Switch: a press on the rest label of a two-position switch holds its momentary position instead of latching it.
+  - Button and segmented control: a held Space shows the press in Firefox. `data-sonic-pressed` marks a part held by a key as well as by a pointer.
+  - Segmented control: on a skin whose ink is dark the chosen legend is drawn in the ink, so it reads on a light cap; the lit well still marks the choice.
+
 ## 0.10.4
 
 ### Patch Changes
