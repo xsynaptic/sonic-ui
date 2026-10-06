@@ -42,6 +42,13 @@ import '#styles/playground.css';
 				<span data-sonic-value="off">Off</span>
 				<span data-sonic-value="y">Y</span>
 			</sonic-switch>
+			<label for="link">Link</label>
+			<sonic-toggle id="link" name="link"></sonic-toggle>
+			<sonic-toggle aria-label="Route" id="route" name="route" value="in">
+				<span data-sonic-value="in">In</span>
+				<span data-sonic-value="thru">Thru</span>
+				<span data-sonic-value="out">Out</span>
+			</sonic-toggle>
 			<sonic-dial aria-label="Held" disabled id="held" value="50"></sonic-dial>
 			<sonic-dial id="late" name="late" value="10"></sonic-dial>
 			<fieldset disabled id="rack">

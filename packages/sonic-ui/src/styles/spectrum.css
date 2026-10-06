@@ -67,8 +67,8 @@
 	.sonic-spectrum {
 		--_sonic-unit: calc(var(--_sonic-spectrum-size) / 48);
 		--_sonic-spectrum-lit: var(--_sonic-lit);
-		--_sonic-spectrum-hot: var(--_sonic-hot);
-		--_sonic-spectrum-clip: var(--_sonic-clip);
+		--_sonic-spectrum-hot: var(--_sonic-lit-warning);
+		--_sonic-spectrum-clip: var(--_sonic-lit-danger);
 		--_sonic-spectrum-grid: color-mix(in oklab, var(--_sonic-glass-text) 20%, transparent);
 		--_sonic-spectrum-hot-from: var(--sonic-spectrum-hot-from, -12);
 		--_sonic-spectrum-clip-from: var(--sonic-spectrum-clip-from, -3);

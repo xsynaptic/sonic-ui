@@ -1,5 +1,7 @@
 import { SonicFormElement } from '#elements/form-element.ts';
 import { copyNode } from '#lib/copy-node.ts';
+import { bindKeyPress } from '#lib/key-press.ts';
+import { clamp } from '#lib/math.ts';
 import { mirrorChildren } from '#lib/mirror-children.ts';
 import { bindDrag } from '#lib/pointer-drag.ts';
 import { placeChildren } from '#lib/render.ts';
@@ -75,9 +77,9 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 			{
 				control: group,
 				copy: copyNode,
-				isCopied: (child) => child instanceof Element && child.matches('[data-sonic-value]'),
+				isCopied: (child) => this.isMirrored(child),
 				place: (copies) => {
-					this.#copyOptions(copies);
+					this.placeCopies(copies);
 				},
 			},
 			signal,
@@ -94,6 +96,7 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 			{ signal },
 		);
 		this.#bindPress(group, signal);
+		bindKeyPress(group, signal);
 		group.addEventListener(
 			'keydown',
 			(event) => {
@@ -112,6 +115,14 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 
 	protected override focusTarget(): HTMLElement | undefined {
 		return this.options().find((option) => option.tabIndex === 0);
+	}
+
+	protected isMirrored(child: Node): boolean {
+		return child instanceof Element && child.matches('[data-sonic-value]');
+	}
+
+	protected isOptionDisabled(option: HTMLButtonElement): boolean {
+		return option.querySelector('[data-sonic-value]')?.hasAttribute('data-sonic-disabled') === true;
 	}
 
 	protected isWrapping(): boolean {
@@ -135,6 +146,10 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 		);
 	}
 
+	protected placeCopies(copies: Array<Node>): void {
+		this.#copyOptions(copies);
+	}
+
 	protected releaseTarget(option: HTMLButtonElement): HTMLButtonElement | undefined {
 		return option;
 	}
@@ -144,11 +159,13 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 
 		const options = this.options();
 		const checked = options.find((option) => optionValue(option) === this.#value);
-		const focusable = checked ?? options[0];
-		const isDisabled = this.isDisabled();
+		const enabled = this.isDisabled()
+			? []
+			: options.filter((option) => !this.isOptionDisabled(option));
+		const focusable = enabled.find((option) => option === checked) ?? enabled[0];
 
 		for (const option of options) {
-			writeAttribute(option, 'disabled', isDisabled ? '' : undefined);
+			writeAttribute(option, 'disabled', enabled.includes(option) ? undefined : '');
 			writeAttribute(option, 'aria-checked', String(option === checked));
 			writeAttribute(option, 'tabindex', option === focusable ? '0' : '-1');
 		}
@@ -171,13 +188,32 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 		this.dispatchEvent(new Event('change', { bubbles: true }));
 	}
 
+	protected stepFrom(from: number, step: number): HTMLButtonElement | undefined {
+		const options = this.options();
+		let index = from;
+
+		for (const _ of options) {
+			const next = index + step;
+
+			index = this.isWrapping()
+				? (next + options.length) % options.length
+				: clamp(next, 0, options.length - 1);
+
+			const option = options[index];
+			if (option && !this.isOptionDisabled(option)) return option;
+		}
+
+		return undefined;
+	}
+
 	#bindPress(group: HTMLElement, signal: AbortSignal): void {
 		bindDrag<Press>(
 			group,
 			{
 				grab: (event) => {
 					const option = this.optionOf(event.target);
-					if (!option || this.isDisabled() || this.claimPress(option, event)) return;
+					if (!option || this.isDisabled() || this.isOptionDisabled(option)) return;
+					if (this.claimPress(option, event)) return;
 
 					const boxes = this.#optionBoxes();
 
@@ -230,17 +266,15 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 
 	#keyTarget(option: HTMLButtonElement, key: string): HTMLButtonElement | undefined {
 		const options = this.options();
+		const isEnabled = (other: HTMLButtonElement): boolean => !this.isOptionDisabled(other);
 
-		if (key === 'Home') return options[0];
-		if (key === 'End') return options.at(-1);
+		if (key === 'Home') return options.find((other) => isEnabled(other));
+		if (key === 'End') return options.findLast((other) => isEnabled(other));
 
 		const step = keySteps.get(key);
 		if (step === undefined) return undefined;
 
-		const index = options.indexOf(option) + step;
-		if (this.isWrapping()) return options[(index + options.length) % options.length];
-
-		return options[Math.min(Math.max(index, 0), options.length - 1)];
+		return this.stepFrom(options.indexOf(option), step) ?? option;
 	}
 
 	#markPressed(pressed: HTMLButtonElement | undefined): void {
@@ -250,7 +284,9 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 	}
 
 	#optionBoxes(): Array<[HTMLButtonElement, DOMRect]> {
-		return this.options().map((option) => [option, option.getBoundingClientRect()]);
+		return this.options()
+			.filter((option) => !this.isOptionDisabled(option))
+			.map((option) => [option, option.getBoundingClientRect()]);
 	}
 
 	#refocus(focused: HTMLButtonElement, value: string | undefined): void {

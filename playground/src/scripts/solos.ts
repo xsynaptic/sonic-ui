@@ -75,6 +75,11 @@ export const solos: Record<string, Solo> = {
 			'<sonic-switch aria-label="Talk" value="off"><span data-sonic-value="off">Off</span><span data-sonic-value="on">On</span></sonic-switch>',
 		sheets: ['switch'],
 	},
+	toggle: {
+		markup:
+			'<sonic-toggle aria-label="Route" value="a"><span data-sonic-value="a">A</span><span data-sonic-value="b">B</span></sonic-toggle>',
+		sheets: ['toggle'],
+	},
 	waveform: {
 		markup: '<sonic-waveform aria-label="Detail" max="300" value="150"></sonic-waveform>',
 		sheets: ['waveform'],

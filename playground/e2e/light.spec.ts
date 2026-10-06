@@ -12,6 +12,7 @@ const shaded = [
 	'#send .sonic-slider-cap',
 	'#mode .sonic-segmented-cap',
 	'#talk .sonic-switch-bat::before',
+	'#route .sonic-toggle-cap',
 	'#ladder .sonic-meter-segments::after',
 ];
 
@@ -23,6 +24,8 @@ const cast = [
 	'#send .sonic-slider-groove',
 	'#mode .sonic-segmented-cap',
 	'#talk .sonic-switch-bushing',
+	'#route .sonic-toggle-well',
+	'#route .sonic-toggle-cap',
 	'#panel',
 ];
 

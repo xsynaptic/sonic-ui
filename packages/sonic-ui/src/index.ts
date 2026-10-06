@@ -8,6 +8,7 @@ export { SonicSlider } from '#elements/slider.ts';
 export { SonicSpectrum } from '#elements/spectrum.ts';
 export { SonicSplit } from '#elements/split.ts';
 export { SonicSwitch } from '#elements/switch.ts';
+export { SonicToggle } from '#elements/toggle.ts';
 export type { WaveMarker } from '#elements/wave-element.ts';
 export { SonicWaveform } from '#elements/waveform.ts';
 export { SonicWavestrip } from '#elements/wavestrip.ts';

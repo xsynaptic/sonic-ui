@@ -3,6 +3,7 @@ import type { Hold } from '#lib/hold.ts';
 import { SonicFormElement } from '#elements/form-element.ts';
 import { copyNode } from '#lib/copy-node.ts';
 import { bindHold } from '#lib/hold.ts';
+import { bindKeyPress } from '#lib/key-press.ts';
 import { mirrorChildren } from '#lib/mirror-children.ts';
 import { capturePointer } from '#lib/pointer-drag.ts';
 import { placeChildren, requireChild, template } from '#lib/render.ts';
@@ -187,6 +188,7 @@ export class SonicButton extends SonicFormElement {
 			{ signal },
 		);
 		this.#bindMomentary(button, signal);
+		bindKeyPress(button, signal);
 	}
 
 	protected override focusTarget(): HTMLElement {

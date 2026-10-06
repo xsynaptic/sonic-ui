@@ -4,6 +4,6 @@ for (const button of document.querySelectorAll<SonicButton>('sonic-button[data-t
 	button.addEventListener('change', () => {
 		button
 			.querySelector(':scope > .sonic-led')
-			?.setAttribute('data-sonic-lit', button.pressed ? '' : 'alt');
+			?.setAttribute('data-sonic-lit', button.pressed ? '' : 'ok');
 	});
 }

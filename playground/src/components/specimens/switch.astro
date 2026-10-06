@@ -43,6 +43,15 @@ const legend = 'font-mono text-text uppercase';
 			<span data-sonic-value="on">On</span>
 		</sonic-switch>
 	</Cell>
+	<Cell id="switch-position-disabled" label="One position disabled">
+		<sonic-switch aria-labelledby="switch-position-disabled" class={legend} value="off">
+			<span data-sonic-value="1">1</span>
+			<span data-sonic-value="off">Off</span>
+			<span data-sonic-disabled data-sonic-value="2">
+				2
+			</span>
+		</sonic-switch>
+	</Cell>
 	<Cell id="switch-disabled" label="Disabled">
 		<sonic-switch aria-labelledby="switch-disabled" class={legend} disabled value="post">
 			<span data-sonic-value="pre">Pre</span>

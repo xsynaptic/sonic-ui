@@ -1,0 +1,217 @@
+---
+import Power from '@lucide/astro/icons/power';
+import Volume2 from '@lucide/astro/icons/volume-2';
+import VolumeX from '@lucide/astro/icons/volume-x';
+
+import Cell from '#components/specimens/cell.astro';
+import SpecimenGrid from '#components/specimens/specimen-grid.astro';
+import TransportModes from '#components/specimens/transport-modes.astro';
+
+const legend = 'font-mono uppercase';
+---
+
+<SpecimenGrid>
+	<Cell id="toggle-sync" label="Sync">
+		<sonic-toggle aria-labelledby="toggle-sync"></sonic-toggle>
+	</Cell>
+	<Cell id="toggle-sync-on" label="Sync, on">
+		<sonic-toggle aria-labelledby="toggle-sync-on" checked></sonic-toggle>
+	</Cell>
+	<Cell id="toggle-sync-lit" label="Sync, lit">
+		<sonic-toggle aria-labelledby="toggle-sync-lit" checked data-sonic-lit></sonic-toggle>
+	</Cell>
+	<Cell id="toggle-mix" label="Mix">
+		<sonic-toggle aria-labelledby="toggle-mix" class={legend} value="dry">
+			<span data-sonic-value="dry">Dry</span>
+			<span data-sonic-value="wet">Wet</span>
+		</sonic-toggle>
+	</Cell>
+	<Cell id="toggle-assign" isWide={true} label="Assign">
+		<sonic-toggle aria-labelledby="toggle-assign" class={legend} value="off">
+			<span data-sonic-value="1">1</span>
+			<span data-sonic-value="off">Off</span>
+			<span data-sonic-value="2">2</span>
+		</sonic-toggle>
+	</Cell>
+	<Cell id="toggle-bypass" isWide={true} label="Lit, two colours">
+		<sonic-toggle aria-labelledby="toggle-bypass" class={legend} value="a">
+			<span data-sonic-lit data-sonic-value="a">
+				A
+			</span>
+			<span data-sonic-value="off">Off</span>
+			<span data-sonic-lit="ok" data-sonic-value="b">
+				B
+			</span>
+		</sonic-toggle>
+	</Cell>
+	<Cell id="toggle-power" label="LED">
+		<sonic-toggle aria-labelledby="toggle-power" checked>
+			<span class="sonic-led"></span>
+		</sonic-toggle>
+	</Cell>
+	<Cell id="toggle-record" label="LED, danger">
+		<sonic-toggle aria-labelledby="toggle-record" value="rec">
+			<span class="sonic-led"></span>
+			<span aria-label="Safe" data-sonic-value="safe"></span>
+			<span aria-label="Record" data-sonic-lit="danger" data-sonic-value="rec"></span>
+		</sonic-toggle>
+	</Cell>
+	<Cell id="toggle-monitor" label="Icons">
+		<sonic-toggle aria-labelledby="toggle-monitor" value="on">
+			<VolumeX aria-label="Muted" data-sonic-value="muted" role="img" />
+			<Volume2 aria-label="On" data-sonic-lit data-sonic-value="on" role="img" />
+		</sonic-toggle>
+	</Cell>
+	<Cell id="toggle-transport" isWide={true} label="Icons, three">
+		<sonic-toggle aria-labelledby="toggle-transport" value="pause">
+			<TransportModes />
+		</sonic-toggle>
+	</Cell>
+	<Cell id="toggle-standby" label="Icon, on/off">
+		<sonic-toggle aria-labelledby="toggle-standby" checked>
+			<Power aria-hidden="true" />
+		</sonic-toggle>
+	</Cell>
+	<Cell id="toggle-small" label="Small">
+		<sonic-toggle
+			aria-labelledby="toggle-small"
+			class:list={[legend, '[--sonic-toggle-size:1.25rem]']}
+			value="b"
+		>
+			<span data-sonic-value="a">A</span>
+			<span data-sonic-value="b">B</span>
+		</sonic-toggle>
+	</Cell>
+	<Cell id="toggle-cue" isWide={true} label="Momentary">
+		<sonic-toggle aria-labelledby="toggle-cue" class={legend} value="off">
+			<span data-sonic-lit data-sonic-momentary data-sonic-value="cue">
+				Cue
+			</span>
+			<span data-sonic-value="off">Off</span>
+			<span data-sonic-value="on">On</span>
+		</sonic-toggle>
+	</Cell>
+	<Cell id="toggle-tap" label="Momentary, two">
+		<sonic-toggle aria-labelledby="toggle-tap" class={legend} value="off">
+			<span data-sonic-value="off">Off</span>
+			<span data-sonic-lit="ok" data-sonic-momentary data-sonic-value="tap">
+				Tap
+			</span>
+		</sonic-toggle>
+	</Cell>
+	<Cell id="toggle-position-disabled" isWide={true} label="One position disabled">
+		<sonic-toggle aria-labelledby="toggle-position-disabled" class={legend} value="off">
+			<span data-sonic-value="1">1</span>
+			<span data-sonic-value="off">Off</span>
+			<span data-sonic-disabled data-sonic-value="2">
+				2
+			</span>
+		</sonic-toggle>
+	</Cell>
+	<Cell id="toggle-disabled" label="Disabled">
+		<sonic-toggle aria-labelledby="toggle-disabled" class={legend} disabled value="wet">
+			<span data-sonic-value="dry">Dry</span>
+			<span data-sonic-value="wet">Wet</span>
+		</sonic-toggle>
+	</Cell>
+</SpecimenGrid>
+<SpecimenGrid>
+	<Cell id="toggle-vertical" label="Vertical">
+		<sonic-toggle
+			aria-labelledby="toggle-vertical"
+			class={legend}
+			orientation="vertical"
+			value="off"
+		>
+			<span data-sonic-value="1">1</span>
+			<span data-sonic-value="off">Off</span>
+			<span data-sonic-value="2">2</span>
+		</sonic-toggle>
+	</Cell>
+	<Cell id="toggle-vertical-sync" label="Vertical, bare">
+		<sonic-toggle
+			aria-labelledby="toggle-vertical-sync"
+			checked
+			orientation="vertical"
+		></sonic-toggle>
+	</Cell>
+	<Cell id="toggle-outside-loop" isWide={true} label="Legends outside">
+		<sonic-toggle
+			aria-labelledby="toggle-outside-loop"
+			class={legend}
+			legends="outside"
+			value="pre"
+		>
+			<span data-sonic-value="pre">Pre</span>
+			<span data-sonic-value="post">Post</span>
+		</sonic-toggle>
+	</Cell>
+	<Cell id="toggle-outside-assign" isWide={true} label="Outside, three">
+		<sonic-toggle
+			aria-labelledby="toggle-outside-assign"
+			class={legend}
+			legends="outside"
+			value="off"
+		>
+			<span data-sonic-lit data-sonic-value="a">
+				A
+			</span>
+			<span data-sonic-value="off">Off</span>
+			<span data-sonic-lit="ok" data-sonic-value="b">
+				B
+			</span>
+		</sonic-toggle>
+	</Cell>
+	<Cell id="toggle-outside-disabled" isWide={true} label="Outside, one disabled">
+		<sonic-toggle
+			aria-labelledby="toggle-outside-disabled"
+			class={legend}
+			legends="outside"
+			value="a"
+		>
+			<span data-sonic-value="a">A</span>
+			<span data-sonic-disabled data-sonic-value="off">
+				Off
+			</span>
+			<span data-sonic-value="b">B</span>
+		</sonic-toggle>
+	</Cell>
+	<Cell id="toggle-outside-vertical" label="Outside, vertical">
+		<sonic-toggle
+			aria-labelledby="toggle-outside-vertical"
+			class={legend}
+			legends="outside"
+			orientation="vertical"
+			value="off"
+		>
+			<span data-sonic-value="up">Up</span>
+			<span data-sonic-value="off">Off</span>
+			<span data-sonic-value="down">Down</span>
+		</sonic-toggle>
+	</Cell>
+	<Cell id="toggle-outside-vertical-loop" label="Outside, vertical, two">
+		<sonic-toggle
+			aria-labelledby="toggle-outside-vertical-loop"
+			class={legend}
+			legends="outside"
+			orientation="vertical"
+			value="post"
+		>
+			<span data-sonic-value="pre">Pre</span>
+			<span data-sonic-value="post">Post</span>
+		</sonic-toggle>
+	</Cell>
+</SpecimenGrid>
+<SpecimenGrid isLarge={true}>
+	<Cell id="toggle-large-assign" isWide={true} label="Assign, large">
+		<sonic-toggle
+			aria-labelledby="toggle-large-assign"
+			class:list={[legend, '[--sonic-toggle-size:4rem]']}
+			value="x"
+		>
+			<span data-sonic-value="x">X</span>
+			<span data-sonic-value="off">Off</span>
+			<span data-sonic-value="y">Y</span>
+		</sonic-toggle>
+	</Cell>
+</SpecimenGrid>

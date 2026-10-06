@@ -78,7 +78,11 @@ test("a press on the glass reports dragging by its first input and brings the pu
 	const xy = page.locator('#xy');
 	const glass = await boxOf(page.locator('#xy .sonic-xy'));
 	const puck = page.locator('#xy .sonic-xy-puck');
-	const at = { x: glass.x + glass.width * 0.3, y: glass.y + glass.height * 0.25 };
+	// Whole pixels, since Firefox and WebKit round the pointer
+	const at = {
+		x: Math.round(glass.x + glass.width * 0.3),
+		y: Math.round(glass.y + glass.height * 0.25),
+	};
 
 	await xy.evaluate((element) => {
 		element.addEventListener(

@@ -1,11 +1,7 @@
-import type { Hold } from '#lib/hold.ts';
-
-import { isUnder, optionValue, SonicRadioGroupElement } from '#elements/radio-group.ts';
-import { bindHold } from '#lib/hold.ts';
-import { clamp } from '#lib/math.ts';
+import { SonicPositionGroupElement } from '#elements/position-group.ts';
+import { isUnder, optionValue } from '#elements/radio-group.ts';
 import { bindDrag } from '#lib/pointer-drag.ts';
 import { requireChild, template } from '#lib/render.ts';
-import { writeAttribute } from '#lib/write-attribute.ts';
 
 declare global {
 	interface HTMLElementTagNameMap {
@@ -45,111 +41,25 @@ interface BatPress {
 
 const pressCenterZone = 0.08;
 
-function pressedIndex(index: number, count: number, offset: number): number {
-	if (count === 2) return index === 0 ? 1 : 0;
+export class SonicSwitch extends SonicPositionGroupElement {
+	protected readonly bare = renderBare();
 
-	const side = Math.abs(offset) < pressCenterZone ? 1 : Math.sign(offset);
-	const next = index + side;
-
-	return next < 0 || next >= count ? index - side : next;
-}
-
-export class SonicSwitch extends SonicRadioGroupElement {
-	static override readonly observedAttributes = [
-		...SonicRadioGroupElement.observedAttributes,
-		'checked',
-		'orientation',
-	];
-
-	get checked(): boolean {
-		return this.#isDirty ? this.#checked : this.defaultChecked;
-	}
-
-	set checked(isChecked: boolean | undefined) {
-		this.#isDirty = true;
-		this.#checked = isChecked === true;
-		this.render();
-	}
-
-	get defaultChecked(): boolean {
-		return this.hasAttribute('checked');
-	}
-
-	set defaultChecked(isChecked: boolean) {
-		this.reflect('checked', isChecked);
-	}
-
-	// fallow-ignore-next-line code-duplication -- one accessor pair per reflected attribute
-	get orientation(): 'horizontal' | 'vertical' {
-		return this.getAttribute('orientation') === 'horizontal' ? 'horizontal' : 'vertical';
-	}
-
-	set orientation(direction: 'horizontal' | 'vertical' | undefined) {
-		this.reflect('orientation', direction);
-	}
-
-	override get value(): string {
-		const value = super.value;
-
-		return value === '' && this.#isBare() ? 'on' : value;
-	}
-
-	override set value(next: string) {
-		super.value = next;
-	}
+	protected readonly defaultOrientation = 'vertical';
 
 	protected readonly group = renderSwitch();
 
-	readonly #bare = renderBare();
-
 	readonly #bat = requireChild(this.group, '.sonic-switch-bat', HTMLSpanElement);
-
-	#checked = false;
-
-	#holding: Hold | undefined;
 
 	#isClickSwallowed = false;
 
-	#isDirty = false;
-
-	override attributeChangedCallback(name: string): void {
-		if (name === 'checked') this.#isDirty = false;
-		if (this.isDisabled()) this.#holding?.release();
-		super.attributeChangedCallback(name);
-	}
-
-	override formResetCallback(): void {
-		this.#isDirty = false;
-		super.formResetCallback();
-	}
-
-	protected override activate(): void {
-		if (this.#isBare()) this.#bare.click();
-		else super.activate();
-	}
-
-	protected override chooseByClick(option: HTMLButtonElement): void {
-		super.chooseByClick(option);
-		if (this.#isMomentary(option)) this.#springBack();
-	}
-
-	protected override chooseByKey(option: HTMLButtonElement, event: KeyboardEvent): void {
-		if (!this.#isMomentary(option)) {
-			super.chooseByKey(option, event);
-			return;
-		}
-		if (event.repeat) return;
-
-		this.#hold(option, event.key);
-		option.focus();
-	}
-
 	protected override claimPress(option: HTMLButtonElement, event: PointerEvent): boolean {
 		if (this.#isOnBat(event)) return true;
-		if (!this.#isMomentary(option)) return false;
+
+		const target = this.pressTarget(option);
+		if (this.isOptionDisabled(target) || !this.isMomentary(target)) return false;
 
 		this.group.setPointerCapture(event.pointerId);
-		this.#hold(option, event.pointerId);
+		this.hold(target, event.pointerId);
 
 		return true;
 	}
@@ -157,22 +67,21 @@ export class SonicSwitch extends SonicRadioGroupElement {
 	protected override connect(signal: AbortSignal): void {
 		const group = this.group;
 
-		this.upgradeProperties('defaultChecked', 'checked', 'orientation');
 		super.connect(signal);
 		this.checkStyles(group, 'switch.css');
 
-		this.#bare.addEventListener(
+		this.bare.addEventListener(
 			'click',
 			(event) => {
 				const isSwallowed =
 					this.#isClickSwallowed && event instanceof PointerEvent && event.pointerType !== '';
 
 				this.#isClickSwallowed = false;
-				if (!isSwallowed) this.#setChecked(!this.checked);
+				if (!isSwallowed) this.setChecked(!this.checked);
 			},
 			{ signal },
 		);
-		this.#bare.addEventListener(
+		this.bare.addEventListener(
 			'pointerdown',
 			() => {
 				this.#isClickSwallowed = false;
@@ -180,86 +89,32 @@ export class SonicSwitch extends SonicRadioGroupElement {
 			{ signal },
 		);
 		this.#bindBat(group, signal);
-
-		this.#holding = bindHold(
-			group,
-			{
-				canHold: () => !this.isDisabled(),
-				leave: 'focusout',
-				onHold: () => {
-					this.toggleState('held', true);
-				},
-				onRelease: () => {
-					this.toggleState('held', false);
-					this.#springBack();
-				},
-			},
-			signal,
-		);
-	}
-
-	protected override focusTarget(): HTMLElement | undefined {
-		return this.#isBare() ? this.#bare : super.focusTarget();
-	}
-
-	protected override isWrapping(): boolean {
-		return false;
 	}
 
 	protected override releaseTarget(option: HTMLButtonElement): HTMLButtonElement | undefined {
-		if (this.#isMomentary(option)) return undefined;
+		const target = this.pressTarget(option);
 
-		const options = this.options();
-		if (options.length === 2 && optionValue(option) === this.value) {
-			return options.find((other) => other !== option);
-		}
-
-		return option;
+		return this.isMomentary(target) || this.isOptionDisabled(target) ? undefined : target;
 	}
 
 	protected override render(): void {
 		if (!this.isBound()) return;
 
-		const group = this.group;
-		const options = this.options();
+		super.render();
 
+		const options = this.options();
 		if (options.length > 0) {
-			this.#bare.remove();
-			writeAttribute(group, 'role', 'radiogroup');
-			writeAttribute(group, 'data-sonic-position-count', String(options.length));
-			super.render();
-			this.#renderThrow(this.#checkedIndex(options));
+			this.#renderThrow(this.checkedIndex(options));
 			return;
 		}
 
-		const bare = this.#bare;
-		const isChecked = this.checked;
-
-		writeAttribute(group, 'role', undefined);
-		delete group.dataset.sonicPositionCount;
-		if (bare.parentElement !== group) group.append(bare);
-		writeAttribute(bare, 'disabled', this.isDisabled() ? '' : undefined);
-		writeAttribute(bare, 'aria-checked', String(isChecked));
-		this.forwardNaming(group, false);
-		this.forwardNaming(bare, true);
 		const onSide = this.orientation === 'horizontal' ? 1 : -1;
 
-		group.style.setProperty('--_sonic-switch-at', String(isChecked ? onSide : -onSide));
-		// eslint-disable-next-line unicorn/no-null -- `null` submits nothing
-		this.writeFormValue(isChecked ? this.value : null, String(isChecked));
+		this.group.style.setProperty('--_sonic-switch-at', String(this.checked ? onSide : -onSide));
 	}
 
 	protected renderOption(): HTMLButtonElement {
 		return renderPosition();
-	}
-
-	protected override restoreState(state: string): void {
-		if (this.#isBare()) this.checked = state === 'true';
-		else super.restoreState(state);
-	}
-
-	#along(event: PointerEvent): number {
-		return this.orientation === 'horizontal' ? event.clientX : event.clientY;
 	}
 
 	#bindBat(group: HTMLElement, signal: AbortSignal): void {
@@ -268,12 +123,12 @@ export class SonicSwitch extends SonicRadioGroupElement {
 			{
 				grab: (event) => {
 					const isOnPosition =
-						event.target === this.#bare || this.optionOf(event.target) !== undefined;
+						event.target === this.bare || this.optionOf(event.target) !== undefined;
 					if (!isOnPosition || this.isDisabled() || !this.#isOnBat(event)) return;
 
 					return {
 						hasMoved: false,
-						last: this.#along(event),
+						last: this.along(event),
 						width: this.#bat.getBoundingClientRect().width,
 					};
 				},
@@ -284,11 +139,11 @@ export class SonicSwitch extends SonicRadioGroupElement {
 				move: (press, event) => {
 					if (this.isDisabled()) return;
 
-					const delta = this.#along(event) - press.last;
+					const delta = this.along(event) - press.last;
 					if (Math.abs(delta) < press.width / 4) return;
 
 					press.hasMoved = true;
-					press.last = this.#along(event);
+					press.last = this.along(event);
 					this.#throwBy(Math.sign(delta), event.pointerId);
 				},
 			},
@@ -296,35 +151,12 @@ export class SonicSwitch extends SonicRadioGroupElement {
 		);
 	}
 
-	#checkedIndex(options: Array<HTMLButtonElement>): number {
-		return options.findIndex((option) => optionValue(option) === this.value);
-	}
-
 	#hasSprungFrom(option: HTMLButtonElement | undefined): boolean {
-		if (!option || !this.#isMomentary(option)) return false;
+		if (!option || !this.isMomentary(option)) return false;
 
-		this.#holding?.release();
+		this.releaseHold();
 
 		return this.value !== optionValue(option);
-	}
-
-	#hold(option: HTMLButtonElement, by: number | string): void {
-		if (this.#holding?.hold(by) === true) this.select(option);
-	}
-
-	#isBare(): boolean {
-		return this.options().length === 0;
-	}
-
-	#isMomentary(option: HTMLButtonElement): boolean {
-		const options = this.options();
-		const isEnd = option === options[0] || option === options.at(-1);
-
-		return (
-			isEnd &&
-			options.length > 1 &&
-			option.querySelector('[data-sonic-value]')?.hasAttribute('data-sonic-momentary') === true
-		);
 	}
 
 	#isOnBat(event: PointerEvent): boolean {
@@ -334,15 +166,18 @@ export class SonicSwitch extends SonicRadioGroupElement {
 	#pressBat(event: PointerEvent): void {
 		const options = this.options();
 		if (options.length === 0) {
-			this.#setChecked(!this.checked);
+			this.setChecked(!this.checked);
 			return;
 		}
 
 		const box = this.#bat.getBoundingClientRect();
 		const [start, size] =
 			this.orientation === 'horizontal' ? [box.left, box.width] : [box.top, box.height];
-		const offset = (this.#along(event) - start) / size - 0.5;
-		const option = options[pressedIndex(this.#checkedIndex(options), options.length, offset)];
+		const offset = (this.along(event) - start) / size - 0.5;
+		const index = this.checkedIndex(options);
+		const side = Math.abs(offset) < pressCenterZone ? 1 : Math.sign(offset);
+		const toward = this.stepFrom(index, side);
+		const option = toward && toward !== options[index] ? toward : this.stepFrom(index, -side);
 		if (!option) return;
 
 		this.chooseByClick(option);
@@ -350,7 +185,7 @@ export class SonicSwitch extends SonicRadioGroupElement {
 	}
 
 	#refocus(options: Array<HTMLButtonElement>): void {
-		if (this.group.matches(':focus-within')) options[this.#checkedIndex(options)]?.focus();
+		if (this.group.matches(':focus-within')) options[this.checkedIndex(options)]?.focus();
 	}
 
 	#renderThrow(index: number): void {
@@ -360,40 +195,18 @@ export class SonicSwitch extends SonicRadioGroupElement {
 		this.group.style.setProperty('--_sonic-switch-at', String(at));
 	}
 
-	#setChecked(isChecked: boolean): void {
-		if (isChecked === this.checked) return;
-
-		this.checked = isChecked;
-		this.dispatchEvent(new Event('change', { bubbles: true }));
-	}
-
-	#springBack(): void {
-		const options = this.options();
-		const index = this.#checkedIndex(options);
-		const held = options[index];
-		if (!held || !this.#isMomentary(held)) return;
-
-		const rest = options[index === 0 ? 1 : index - 1];
-		if (!rest) return;
-
-		const isFocused = this.group.contains(this.ownerDocument.activeElement);
-
-		this.select(rest);
-		if (isFocused) rest.focus();
-	}
-
 	#throwBy(direction: number, pointerId: number): void {
 		const options = this.options();
 		if (options.length === 0) {
-			this.#setChecked(direction === (this.orientation === 'horizontal' ? 1 : -1));
+			this.setChecked(direction === (this.orientation === 'horizontal' ? 1 : -1));
 			return;
 		}
 
-		const index = this.#checkedIndex(options);
-		const option = options[clamp(index + direction, 0, options.length - 1)];
+		const index = this.checkedIndex(options);
+		const option = this.stepFrom(index, direction);
 		if (!option || option === options[index] || this.#hasSprungFrom(options[index])) return;
 
-		if (this.#isMomentary(option)) this.#hold(option, pointerId);
+		if (this.isMomentary(option)) this.hold(option, pointerId);
 		else this.select(option);
 		this.#refocus(options);
 	}

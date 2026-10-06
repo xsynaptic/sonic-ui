@@ -143,7 +143,7 @@ import '#styles/playground.css';
 		</sonic-button>
 		<span class="sonic-led" id="led"></span>
 		<span class="sonic-led" data-sonic-lit id="led-lit"></span>
-		<span class="sonic-led" data-sonic-lit="alt" id="led-alt"></span>
+		<span class="sonic-led" data-sonic-lit="ok" id="led-ok"></span>
 		<sonic-segmented aria-label="Mode" id="mode" value="lp">
 			<span data-sonic-value="lp">LP</span>
 			<span data-sonic-value="hp">HP</span>
@@ -156,6 +156,16 @@ import '#styles/playground.css';
 			<span data-sonic-value="on">On</span>
 		</sonic-switch>
 		<sonic-switch aria-label="Sync" id="sync"></sonic-switch>
+		<sonic-toggle aria-label="Route" id="route" value="off">
+			<span data-sonic-lit data-sonic-value="dry">
+				Dry
+			</span>
+			<span data-sonic-value="off">Thru</span>
+			<span data-sonic-lit="ok" data-sonic-value="wet">
+				Wet
+			</span>
+		</sonic-toggle>
+		<sonic-toggle aria-label="Link" id="link"></sonic-toggle>
 		<section aria-label="Panel" class="sonic-panel p-4" id="panel">
 			<h2 class="sonic-panel-title">Panel</h2>
 		</section>
@@ -297,9 +307,9 @@ import '#styles/playground.css';
 		<sonic-button aria-label="Loop" armed id="armed-led" latching>
 			<span class="sonic-led"></span>
 		</sonic-button>
-		<span class="sonic-led" data-sonic-lit="dim" id="led-dim"></span>
-		<span class="sonic-led" data-sonic-lit="hot" id="led-hot"></span>
-		<span class="sonic-led" data-sonic-lit="clip" id="led-clip"></span>
+		<span class="sonic-led" data-sonic-lit="idle" id="led-idle"></span>
+		<span class="sonic-led" data-sonic-lit="warning" id="led-warning"></span>
+		<span class="sonic-led" data-sonic-lit="danger" id="led-danger"></span>
 		<sonic-dial aria-label="Wobble" id="modulated" max="120" min="20" value="40"></sonic-dial>
 		<sonic-slider
 			aria-label="Sweep"
@@ -454,6 +464,32 @@ import '#styles/playground.css';
 			<span data-sonic-value="0"></span>
 			<span data-sonic-value="50">B</span>
 		</sonic-slider>
+		<sonic-toggle aria-label="Record" id="record" value="rec">
+			<span class="sonic-led"></span>
+			<span aria-label="Safe" data-sonic-value="safe"></span>
+			<span aria-label="Record" data-sonic-lit="danger" data-sonic-value="rec"></span>
+		</sonic-toggle>
+		<sonic-toggle aria-label="Cue" id="cue" value="idle">
+			<span data-sonic-lit data-sonic-momentary data-sonic-value="cue">
+				Cue
+			</span>
+			<span data-sonic-value="idle">Idle</span>
+			<span data-sonic-value="air">Air</span>
+		</sonic-toggle>
+		<sonic-toggle aria-label="Bus" id="bus" value="both">
+			<span data-sonic-value="left">Left</span>
+			<span data-sonic-value="both">Both</span>
+			<span data-sonic-disabled data-sonic-value="right">
+				Right
+			</span>
+		</sonic-toggle>
+		<sonic-segmented aria-label="Band" id="band" value="low">
+			<span data-sonic-value="low">Low</span>
+			<span data-sonic-disabled data-sonic-value="mids">
+				Mids
+			</span>
+			<span data-sonic-value="high">High</span>
+		</sonic-segmented>
 	</main>
 	<script>
 		import '@xsynaptic/sonic-ui/define';

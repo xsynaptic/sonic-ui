@@ -17,16 +17,16 @@ function readLens(led: Locator): Promise<string> {
 	});
 }
 
-test('each lens differs from the rest, and a button lights the LED it holds: dim while armed, lit once latched', async ({
+test('each lens differs from the rest, and a button lights the LED it holds: idle while armed, lit once latched', async ({
 	page,
 }) => {
 	const lenses = await Promise.all(
-		['#led', '#led-lit', '#led-hot', '#led-clip', '#led-dim', '#led-alt'].map((selector) =>
+		['#led', '#led-lit', '#led-warning', '#led-danger', '#led-idle', '#led-ok'].map((selector) =>
 			readLens(page.locator(selector)),
 		),
 	);
 	const [unlit, lit] = lenses;
-	const dim = lenses[4];
+	const idle = lenses[4];
 
 	expect(new Set(lenses).size).toBe(lenses.length);
 
@@ -39,7 +39,7 @@ test('each lens differs from the rest, and a button lights the LED it holds: dim
 
 	const armed = page.locator('#armed-led .sonic-button .sonic-led');
 
-	expect(await readLens(armed)).toBe(dim);
+	expect(await readLens(armed)).toBe(idle);
 
 	await page.locator('#armed-led .sonic-button').click();
 	expect(await readLens(armed)).toBe(lit);

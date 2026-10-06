@@ -127,6 +127,10 @@
 		}
 	}
 
+	.sonic-switch-position:disabled > .sonic-switch-label {
+		color: color-mix(in oklab, currentcolor 30%, transparent);
+	}
+
 	.sonic-switch[data-sonic-position-count] {
 		& > :is(.sonic-switch-bushing, .sonic-switch-bat) {
 			grid-area: 2 / 1 / -2 / 2;
@@ -350,7 +354,7 @@
 		--_sonic-focus-shadow: var(--_sonic-focus-glow);
 	}
 
-	.sonic-switch:has(> .sonic-switch-position:disabled) {
+	.sonic-switch:not(:has(> .sonic-switch-position:not(:disabled))) {
 		--_sonic-switch-disabled: color-mix(
 			in oklab,
 			var(--_sonic-ink) 30%,
@@ -371,7 +375,7 @@
 			--_sonic-switch-metal-shade: CanvasText;
 		}
 
-		.sonic-switch:has(> .sonic-switch-position:disabled) {
+		.sonic-switch:not(:has(> .sonic-switch-position:not(:disabled))) {
 			--_sonic-switch-metal: GrayText;
 			--_sonic-switch-metal-shade: GrayText;
 		}

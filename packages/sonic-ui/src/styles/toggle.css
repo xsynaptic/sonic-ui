@@ -1,0 +1,481 @@
+@property --_sonic-toggle-size {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 32px;
+}
+
+@property --_sonic-toggle-at {
+	syntax: '<number>';
+	inherits: true;
+	initial-value: 0;
+}
+
+@property --_sonic-toggle-sink {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 0;
+}
+
+@property --_sonic-toggle-well-tint {
+	syntax: '<color>';
+	inherits: false;
+	initial-value: transparent;
+}
+
+@layer sonic {
+	:is(sonic-toggle, .sonic-toggle) {
+		--_sonic-toggle-size: var(--sonic-toggle-size, 2rem);
+	}
+
+	:has(> .sonic-toggle):not([hidden]) {
+		display: contents;
+	}
+
+	sonic-toggle:not(:defined, [hidden]) {
+		display: block;
+		visibility: hidden;
+		flex-shrink: 0;
+		inline-size: var(--_sonic-toggle-size);
+		block-size: var(--_sonic-toggle-size);
+		overflow: hidden;
+	}
+
+	.sonic-toggle {
+		--_sonic-toggle-travel-ratio: var(--sonic-toggle-travel-ratio, 0.75);
+		--_sonic-toggle-gap-ratio: var(
+			--sonic-toggle-gap-ratio,
+			calc(0.14 - 0.06 * var(--_sonic-relief))
+		);
+		--_sonic-toggle-radius-ratio: var(--sonic-toggle-radius-ratio, 0.5);
+		--_sonic-toggle-bevel-ratio: var(--sonic-toggle-bevel-ratio, 0.075);
+		--_sonic-toggle-depth-ratio: var(--sonic-toggle-depth-ratio, calc(0.03 * var(--_sonic-relief)));
+		--_sonic-toggle-font-ratio: var(--sonic-toggle-font-ratio, 0.26);
+		--_sonic-toggle-press-scale: var(--sonic-toggle-press-scale, 0.985);
+		--_sonic-toggle-icon-ratio: var(--sonic-toggle-icon-ratio, 0.5);
+		--_sonic-toggle-led-ratio: var(--sonic-toggle-led-ratio, 0.25);
+		--_sonic-toggle-well-glow: color-mix(
+			in oklab,
+			var(--_sonic-lit) calc(100% * var(--_sonic-relief)),
+			transparent
+		);
+		--_sonic-toggle-well-lit: var(--sonic-well-lit, var(--_sonic-toggle-well-glow));
+		--_sonic-toggle-well-fill: transparent;
+		--_sonic-toggle-sink: 0px;
+		--_sonic-toggle-well-forced: Canvas;
+		--_sonic-toggle-count: 2;
+		--_sonic-toggle-along-x: 1;
+		--_sonic-toggle-along-y: 0;
+		--_sonic-toggle-disc: var(--_sonic-ink);
+		--_sonic-cap: var(--sonic-cap, var(--_sonic-toggle-disc));
+		--_sonic-cap-hover: var(--sonic-cap-hover, var(--sonic-cap, var(--_sonic-toggle-disc)));
+		--_sonic-toggle-pole: oklch(from var(--_sonic-cap) clamp(0, (0.6 - l) * 1000, 1) 0 0deg / 100%);
+		--_sonic-toggle-ink-set: color-mix(in oklab, var(--sonic-cap) 0%, var(--_sonic-ink));
+		--_sonic-toggle-legend: var(--_sonic-toggle-ink-set, var(--_sonic-toggle-pole));
+		--_sonic-toggle-legend-lit: var(--_sonic-legend-lit, var(--_sonic-toggle-pole));
+		--_sonic-toggle-well-edge-off: color-mix(in oklab, var(--sonic-well) 0%, transparent);
+		--_sonic-toggle-well-edge: var(--_sonic-toggle-well-edge-off, var(--_sonic-etch));
+		--_sonic-toggle-led-ring-off: color-mix(in oklab, var(--sonic-cap) 0%, transparent);
+		--_sonic-toggle-led-ring: var(--_sonic-toggle-led-ring-off, var(--_sonic-toggle-pole));
+		--_sonic-unit: calc(var(--_sonic-toggle-size) / 32);
+		--_sonic-toggle-step: calc(var(--_sonic-toggle-size) * var(--_sonic-toggle-travel-ratio));
+		--_sonic-toggle-gap: calc(var(--_sonic-toggle-size) * var(--_sonic-toggle-gap-ratio));
+		--_sonic-toggle-cap-size: calc(var(--_sonic-toggle-size) - 2 * var(--_sonic-toggle-gap));
+		--_sonic-toggle-slice: calc(
+			(var(--_sonic-toggle-size) + var(--_sonic-toggle-run)) / var(--_sonic-toggle-count)
+		);
+		--_sonic-toggle-run: calc((var(--_sonic-toggle-count) - 1) * var(--_sonic-toggle-step));
+		--_sonic-toggle-mid: calc((var(--_sonic-toggle-count) - 1) / 2);
+		--_sonic-toggle-throw: calc(
+			(var(--_sonic-toggle-at) - var(--_sonic-toggle-mid)) * var(--_sonic-toggle-step)
+		);
+		--_sonic-toggle-corner: calc(var(--_sonic-toggle-size) * var(--_sonic-toggle-radius-ratio));
+		--_sonic-keycap-depth: calc(var(--_sonic-toggle-size) * var(--_sonic-toggle-depth-ratio));
+		--_sonic-keycap-corner: max(0px, var(--_sonic-toggle-corner) - var(--_sonic-toggle-gap));
+		--_sonic-keycap-bevel: calc(var(--_sonic-toggle-size) * var(--_sonic-toggle-bevel-ratio));
+		--_sonic-keycap-face-corner: max(0px, var(--_sonic-keycap-corner) - var(--_sonic-keycap-bevel));
+
+		position: relative;
+		display: inline-grid;
+		flex-shrink: 0;
+		grid-template-rows: var(--_sonic-toggle-size);
+		grid-auto-columns: var(--_sonic-toggle-slice);
+		grid-auto-flow: column;
+		line-height: 1;
+		touch-action: pan-y;
+		user-select: none;
+		transition:
+			--_sonic-toggle-at 120ms cubic-bezier(0.4, 0, 0.2, 1),
+			--_sonic-toggle-sink 60ms cubic-bezier(0.4, 0, 0.2, 1);
+	}
+
+	[orientation='vertical'] > .sonic-toggle {
+		--_sonic-toggle-along-x: 0;
+		--_sonic-toggle-along-y: 1;
+
+		grid-template-rows: none;
+		grid-template-columns: var(--_sonic-toggle-size);
+		grid-auto-rows: var(--_sonic-toggle-slice);
+		grid-auto-flow: row;
+		touch-action: pan-x;
+	}
+
+	:state(dragging) > .sonic-toggle {
+		transition: --_sonic-toggle-sink 60ms cubic-bezier(0.4, 0, 0.2, 1);
+	}
+
+	[data-sonic-lit='ok'] > .sonic-toggle:has(> [role='switch']),
+	.sonic-toggle:has(> [aria-checked='true'] [data-sonic-lit='ok']) {
+		--_sonic-lit: var(--_sonic-lit-ok);
+	}
+
+	[data-sonic-lit='warning'] > .sonic-toggle:has(> [role='switch']),
+	.sonic-toggle:has(> [aria-checked='true'] [data-sonic-lit='warning']) {
+		--_sonic-lit: var(--_sonic-lit-warning);
+	}
+
+	[data-sonic-lit='danger'] > .sonic-toggle:has(> [role='switch']),
+	.sonic-toggle:has(> [aria-checked='true'] [data-sonic-lit='danger']) {
+		--_sonic-lit: var(--_sonic-lit-danger);
+	}
+
+	/* `--sonic-well-lit` holds a skin's one lit colour, so a coloured position takes only whether it is set */
+	[data-sonic-lit]:where(:not([data-sonic-lit=''], [data-sonic-lit='idle']))
+		> .sonic-toggle:has(> [role='switch']),
+	.sonic-toggle:has(
+		> [aria-checked='true']
+			[data-sonic-lit]:where(:not([data-sonic-lit=''], [data-sonic-lit='idle']))
+	) {
+		--_sonic-toggle-well-lit-set: color-mix(in oklab, var(--sonic-well-lit) 0%, var(--_sonic-lit));
+		--_sonic-toggle-well-lit: var(--_sonic-toggle-well-lit-set, var(--_sonic-toggle-well-glow));
+	}
+
+	:where([data-sonic-lit]) > .sonic-toggle:has(> [role='switch'][aria-checked='true']),
+	.sonic-toggle:has(> [aria-checked='true'] [data-sonic-lit]) {
+		--_sonic-toggle-disc: var(--_sonic-lit);
+		--_sonic-toggle-well-fill: var(--_sonic-toggle-well-lit);
+		--_sonic-toggle-well-forced: var(--_sonic-lit);
+	}
+
+	.sonic-toggle:not(:has(> .sonic-toggle-position:not(:disabled))) {
+		--_sonic-lit: var(--_sonic-lit-disabled);
+		--_sonic-toggle-disc: var(--_sonic-etch);
+		--_sonic-toggle-ink-set: color-mix(in oklab, var(--sonic-cap) 0%, var(--_sonic-etch));
+		--_sonic-legend-lit: color-mix(in oklab, var(--sonic-cap) 0%, var(--_sonic-lit));
+	}
+
+	.sonic-toggle:has(> .sonic-toggle-position:focus-visible) {
+		--_sonic-cap: var(--_sonic-cap-hover);
+		--_sonic-focus-shadow: var(--_sonic-focus-glow);
+	}
+
+	@media (hover: hover) {
+		.sonic-toggle:has(> .sonic-toggle-position:not(:disabled):hover) {
+			--_sonic-cap: var(--_sonic-cap-hover);
+		}
+	}
+
+	/* Held, never resting: the chosen position's cap stands as proud as any other */
+	.sonic-toggle:has(> .sonic-toggle-position[data-sonic-pressed]):has(
+			> .sonic-toggle-position:not(:disabled)
+		) {
+		--_sonic-toggle-sink: calc(var(--_sonic-keycap-depth) / 2);
+		--_sonic-keycap-scale: var(--_sonic-toggle-press-scale);
+		--_sonic-keycap-drop: var(--_sonic-press-drop);
+	}
+
+	.sonic-toggle-well {
+		--_sonic-toggle-well-tint: var(--_sonic-toggle-well-fill);
+
+		position: absolute;
+		inset: 0;
+		inline-size: calc(
+			var(--_sonic-toggle-size) + var(--_sonic-toggle-along-x) * var(--_sonic-toggle-run)
+		);
+		block-size: calc(
+			var(--_sonic-toggle-size) + var(--_sonic-toggle-along-y) * var(--_sonic-toggle-run)
+		);
+		margin: auto;
+		pointer-events: none;
+		background:
+			linear-gradient(var(--_sonic-toggle-well-tint), var(--_sonic-toggle-well-tint)),
+			var(--_sonic-well-floor);
+		border-radius: var(--_sonic-toggle-corner);
+		box-shadow:
+			var(--_sonic-well),
+			inset 0 0 0 calc(1px * (1 - var(--_sonic-relief))) var(--_sonic-toggle-well-edge);
+		transition: --_sonic-toggle-well-tint 120ms ease-out;
+	}
+
+	/* The position rides `--_sonic-toggle-at`, which already eases; easing the offset too would trail a drag */
+	.sonic-toggle-cap {
+		position: absolute;
+		inset: 0;
+		inline-size: var(--_sonic-toggle-cap-size);
+		block-size: var(--_sonic-toggle-cap-size);
+		margin: auto;
+		pointer-events: none;
+		translate: calc(var(--_sonic-toggle-along-x) * var(--_sonic-toggle-throw))
+			calc(var(--_sonic-toggle-along-y) * var(--_sonic-toggle-throw) + var(--_sonic-toggle-sink));
+		transition:
+			scale 60ms cubic-bezier(0.4, 0, 0.2, 1),
+			box-shadow 60ms cubic-bezier(0.4, 0, 0.2, 1);
+
+		& > .sonic-led {
+			--_sonic-led-size: var(
+				--sonic-led-size,
+				calc(var(--_sonic-toggle-size) * var(--_sonic-toggle-led-ratio))
+			);
+			--_sonic-lit: inherit;
+
+			box-shadow: inset 0 0 0 max(1px, 0.1 * var(--_sonic-led-size)) var(--_sonic-toggle-led-ring);
+		}
+
+		& > * {
+			color: var(--_sonic-toggle-legend);
+		}
+	}
+
+	.sonic-toggle-position {
+		position: relative;
+		padding: 0;
+		font: inherit;
+		font-size: calc(var(--_sonic-toggle-size) * var(--_sonic-toggle-font-ratio));
+		line-height: 1;
+		color: inherit;
+		text-transform: inherit;
+		letter-spacing: inherit;
+		cursor: pointer;
+		background: transparent;
+		border: 0;
+	}
+
+	.sonic-toggle-position:focus-visible {
+		outline: 2px solid transparent;
+		outline-offset: -2px;
+	}
+
+	.sonic-toggle-position:disabled {
+		cursor: default;
+	}
+
+	.sonic-toggle-position:has([data-sonic-momentary]),
+	.sonic-toggle[data-sonic-position-count='2']:has([data-sonic-momentary])
+		> .sonic-toggle-position {
+		touch-action: none;
+	}
+
+	.sonic-toggle-position::after {
+		inset-inline: 0;
+	}
+
+	[orientation='vertical'] > .sonic-toggle > .sonic-toggle-position::after {
+		inset-block: 0;
+		inset-inline: var(--_sonic-target-outset);
+	}
+
+	.sonic-toggle-position[role='switch'] {
+		grid-column: span 2;
+	}
+
+	[orientation='vertical'] > .sonic-toggle > .sonic-toggle-position[role='switch'] {
+		grid-row: span 2;
+		grid-column: auto;
+	}
+
+	/* Every legend sits at the cap, so a press must fall through to the position under it */
+	.sonic-toggle-legend {
+		--_sonic-toggle-ride: calc(
+			var(--_sonic-toggle-throw) - (var(--_sonic-toggle-index, 0) - var(--_sonic-toggle-mid)) *
+				var(--_sonic-toggle-slice)
+		);
+
+		position: absolute;
+		inset: 0;
+		display: grid;
+		place-items: center;
+		inline-size: var(--_sonic-toggle-cap-size);
+		block-size: var(--_sonic-toggle-cap-size);
+		margin: auto;
+		color: var(--_sonic-toggle-legend);
+		white-space: nowrap;
+		pointer-events: none;
+		opacity: 0;
+		translate: calc(var(--_sonic-toggle-along-x) * var(--_sonic-toggle-ride))
+			calc(var(--_sonic-toggle-along-y) * var(--_sonic-toggle-ride) + var(--_sonic-toggle-sink));
+		transition: opacity 120ms ease-out;
+
+		& > * {
+			filter: var(--_sonic-engraving);
+		}
+	}
+
+	:is(.sonic-toggle-cap, .sonic-toggle-legend) > svg {
+		display: block;
+		inline-size: calc(var(--_sonic-toggle-size) * var(--_sonic-toggle-icon-ratio));
+		block-size: calc(var(--_sonic-toggle-size) * var(--_sonic-toggle-icon-ratio));
+	}
+
+	.sonic-toggle-position[aria-checked='true'] > .sonic-toggle-legend {
+		opacity: 1;
+	}
+
+	.sonic-toggle-position[aria-checked='true']:has([data-sonic-lit]) > .sonic-toggle-legend {
+		color: var(--_sonic-toggle-legend-lit);
+
+		& > * {
+			filter: var(--_sonic-engraving) var(--_sonic-legend-glow);
+		}
+	}
+
+	[legends='outside'] > .sonic-toggle[data-sonic-position-count] {
+		& > :is(.sonic-toggle-well, .sonic-toggle-cap) {
+			grid-area: 1 / 2 / 2 / -2;
+		}
+
+		& > .sonic-toggle-position {
+			display: grid;
+			grid-area: 1 / 1 / 2 / 3;
+			grid-template: subgrid / subgrid;
+			place-items: center;
+		}
+
+		& > .sonic-toggle-position > .sonic-toggle-legend {
+			position: static;
+			display: block;
+			inline-size: auto;
+			block-size: auto;
+			padding: calc(var(--_sonic-toggle-size) * 0.12);
+			margin: 0;
+			color: inherit;
+			pointer-events: auto;
+			opacity: 1;
+			translate: none;
+
+			& > * {
+				filter: none;
+			}
+		}
+
+		& > .sonic-toggle-position:disabled > .sonic-toggle-legend {
+			color: color-mix(in oklab, currentcolor 30%, transparent);
+		}
+
+		& > .sonic-toggle-position:last-child > .sonic-toggle-legend {
+			grid-column: 2;
+		}
+	}
+
+	[legends='outside'][orientation='vertical'] > .sonic-toggle[data-sonic-position-count] {
+		& > :is(.sonic-toggle-well, .sonic-toggle-cap) {
+			grid-area: 2 / 1 / -2 / 2;
+		}
+
+		& > .sonic-toggle-position {
+			grid-area: 1 / 1 / 3 / 2;
+		}
+
+		& > .sonic-toggle-position:last-child > .sonic-toggle-legend {
+			grid-area: 2 / 1;
+		}
+	}
+
+	[legends='outside'] > .sonic-toggle[data-sonic-position-count='2'] {
+		grid-template: var(--_sonic-toggle-size) / auto repeat(2, var(--_sonic-toggle-slice)) auto;
+
+		& > .sonic-toggle-position:last-child {
+			grid-area: 1 / 3 / 2 / 5;
+		}
+	}
+
+	[legends='outside'] > .sonic-toggle[data-sonic-position-count='3'] {
+		grid-template: var(--_sonic-toggle-size) auto / auto repeat(3, var(--_sonic-toggle-slice)) auto;
+
+		& > .sonic-toggle-position:last-child {
+			grid-area: 1 / 4 / 2 / 6;
+		}
+
+		& > .sonic-toggle-position:nth-child(2 of .sonic-toggle-position) {
+			grid-area: 1 / 3 / 3 / 4;
+
+			& > .sonic-toggle-legend {
+				grid-row: 2;
+			}
+		}
+	}
+
+	[legends='outside'][orientation='vertical'] > .sonic-toggle[data-sonic-position-count='2'] {
+		grid-template:
+			auto repeat(2, var(--_sonic-toggle-slice)) auto /
+			minmax(var(--_sonic-toggle-size), auto);
+
+		& > .sonic-toggle-position:last-child {
+			grid-area: 3 / 1 / 5 / 2;
+		}
+	}
+
+	[legends='outside'][orientation='vertical'] > .sonic-toggle[data-sonic-position-count='3'] {
+		grid-template:
+			auto repeat(3, var(--_sonic-toggle-slice)) auto /
+			minmax(var(--_sonic-toggle-size), auto) auto;
+
+		& > .sonic-toggle-position:last-child {
+			grid-area: 4 / 1 / 6 / 2;
+		}
+
+		& > .sonic-toggle-position:nth-child(2 of .sonic-toggle-position) {
+			grid-area: 3 / 1 / 4 / 3;
+
+			& > .sonic-toggle-legend {
+				grid-area: 1 / 2;
+			}
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.sonic-toggle,
+		:state(dragging) > .sonic-toggle,
+		.sonic-toggle-well,
+		.sonic-toggle-cap,
+		.sonic-toggle-legend {
+			transition: none;
+		}
+	}
+
+	@media (forced-colors: active) {
+		.sonic-toggle {
+			--_sonic-skirt: CanvasText;
+			--_sonic-face: CanvasText;
+			--_sonic-rim: 0 0 0 var(--_sonic-rim-width) Canvas;
+			--_sonic-toggle-legend: Canvas;
+			--_sonic-toggle-legend-lit: Canvas;
+			--_sonic-toggle-led-ring: transparent;
+		}
+
+		.sonic-toggle:not(:has(> .sonic-toggle-position:not(:disabled))) {
+			--_sonic-skirt: GrayText;
+			--_sonic-face: GrayText;
+		}
+
+		.sonic-toggle-well {
+			forced-color-adjust: none;
+			background: var(--_sonic-toggle-well-forced);
+			box-shadow: inset 0 0 0 1px CanvasText;
+		}
+
+		.sonic-toggle-position:focus-visible {
+			outline-offset: 2px;
+		}
+
+		.sonic-toggle-legend {
+			forced-color-adjust: none;
+		}
+
+		[legends='outside'] > .sonic-toggle > .sonic-toggle-position > .sonic-toggle-legend {
+			forced-color-adjust: auto;
+		}
+
+		.sonic-toggle-position > .sonic-toggle-legend > * {
+			filter: none;
+		}
+	}
+}

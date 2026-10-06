@@ -26,6 +26,8 @@ const drawnParts = [
 	'#talk .sonic-switch-bushing',
 	'#talk .sonic-switch-bat::before',
 	'#talk .sonic-switch-bat::after',
+	'#route .sonic-toggle-well',
+	'#route .sonic-toggle-cap',
 	'#xy .sonic-xy-field::before',
 	'#xy .sonic-xy-field::after',
 	'#xy .sonic-xy-puck::before',
@@ -71,6 +73,7 @@ const focusable = [
 	'.sonic-button',
 	'.sonic-segmented-option',
 	'.sonic-switch-position',
+	'.sonic-toggle-position',
 	'.sonic-xy-axis',
 ];
 
@@ -113,6 +116,19 @@ test('every drawn part opts out of forced colours and paints, and every focusabl
 		.soft(parts)
 		.toEqual(drawnParts.map((selector) => ({ adjust: 'none', isPainted: true, selector })));
 	expect(adjusts).toEqual(focusable.map(() => 'auto'));
+});
+
+test('a toggle draws its cap in CanvasText, and its well in Canvas until a lit position is chosen', async ({
+	page,
+}) => {
+	const backgroundOf = (part: string): Promise<string> =>
+		page.locator(`#route ${part}`).evaluate((element) => getComputedStyle(element).backgroundColor);
+
+	expect.soft(await backgroundOf('.sonic-toggle-cap')).toBe(await systemColour(page, 'CanvasText'));
+	expect.soft(await backgroundOf('.sonic-toggle-well')).toBe(await systemColour(page, 'Canvas'));
+
+	await page.getByRole('radio', { name: 'Dry' }).click();
+	expect.soft(await backgroundOf('.sonic-toggle-well')).toBe(await systemColour(page, 'Highlight'));
 });
 
 test('a hovered or latched cap keeps to system colours, and a disabled latched cap inks in the colour its grey fill is drawn against', async ({
@@ -241,24 +257,24 @@ test('each part at rest paints in its system colours', async ({ page }) => {
 		expect.soft(ring.image).toContain(highlight);
 	});
 
-	await test.step('an LED lens is grey at rest, Highlight lit and Mark in its second colour, ringed in CanvasText', async () => {
-		const [unlit, lit, alt] = [
+	await test.step('an LED lens is grey at rest, Highlight lit and Mark when ok, ringed in CanvasText', async () => {
+		const [unlit, lit, ok] = [
 			await readLens(page, '#led'),
 			await readLens(page, '#led-lit'),
-			await readLens(page, '#led-alt'),
+			await readLens(page, '#led-ok'),
 		];
-		const [clip, dim] = [await readLens(page, '#led-clip'), await readLens(page, '#led-dim')];
+		const [danger, idle] = [await readLens(page, '#led-danger'), await readLens(page, '#led-idle')];
 
 		expect.soft(unlit.fill).toBe(grayText);
 		expect.soft(lit.fill).toBe(highlight);
-		expect.soft(alt.fill).toBe(mark);
-		expect.soft(clip.fill).toBe(mark);
+		expect.soft(ok.fill).toBe(mark);
+		expect.soft(danger.fill).toBe(mark);
 		expect.soft(unlit.rim).toContain(canvasText);
 		expect.soft(lit.rim).toContain(canvasText);
 
-		expect.soft(dim.fill).toBe(grayText);
-		expect.soft(dim.rim).toContain(highlight);
-		expect.soft(dim.rim).not.toBe(unlit.rim);
+		expect.soft(idle.fill).toBe(grayText);
+		expect.soft(idle.rim).toContain(highlight);
+		expect.soft(idle.rim).not.toBe(unlit.rim);
 	});
 
 	await test.step('a ring paints its arc in system colours and leaves the button inside it forced', async () => {
@@ -413,6 +429,8 @@ test('each focusable element focused by a key paints its outline outside its box
 		['a segmented option', '#mode .sonic-segmented-option[tabindex="0"]'],
 		['a switch position', '#talk .sonic-switch-position[tabindex="0"]'],
 		['a bare switch', '#sync .sonic-switch-position'],
+		['a toggle position', '#route .sonic-toggle-position[tabindex="0"]'],
+		['a toggle with no positions', '#link .sonic-toggle-position'],
 		['a wavestrip', '#wavestrip .sonic-wavestrip'],
 		['a waveform', '#waveform .sonic-waveform'],
 		['an XY part', '#xy [data-sonic-axis="x"]'],

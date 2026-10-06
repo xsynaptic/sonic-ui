@@ -357,3 +357,60 @@ test('a disabled control holds no press', async () => {
 	expect(held(options)).toEqual([false, false, false]);
 	expect(segmented.value).toBe('lp');
 });
+
+async function mountWithout(
+	disabled: string,
+	attributes: string,
+): Promise<{
+	group: HTMLElement;
+	options: Array<HTMLButtonElement>;
+	segmented: SonicSegmented;
+}> {
+	const mounted = await mountSegmented(attributes);
+
+	mounted.segmented
+		.querySelector(`:scope > [data-sonic-value="${CSS.escape(disabled)}"]`)
+		?.toggleAttribute('data-sonic-disabled', true);
+	await nextTask();
+	await nextTask();
+
+	return mounted;
+}
+
+test('marking a child later disables its option alone, and the arrows wrap past it', async () => {
+	const { options, segmented } = await mountWithout('hp', 'value="bp"');
+	const changes = recordChanges(segmented);
+	const middle = options[1];
+	if (!middle) throw new Error('No middle option');
+
+	expect(options.map((option) => option.disabled)).toEqual([false, false, true]);
+
+	middle.focus();
+	pressKey(middle, 'ArrowRight');
+	pressKey(document.activeElement as HTMLElement, 'End');
+
+	expect(changes).toEqual(['lp', 'bp']);
+});
+
+test('the tab stop leaves a chosen option that is disabled for the first enabled one', async () => {
+	const { options, segmented } = await mountWithout('lp', 'value="lp"');
+
+	expect(segmented.value).toBe('lp');
+	expect(options.map((option) => option.tabIndex)).toEqual([-1, 0, -1]);
+});
+
+test('a press on a disabled option, or one released over it, latches nothing', async () => {
+	const { group, options, segmented } = await mountWithout('hp', 'value="lp"');
+	const changes = recordChanges(segmented);
+
+	layOut(options);
+	mouseAt(options[1] ?? group, 'pointerdown', 90);
+	mouseAt(group, 'pointermove', 150);
+	expect(held(options)).toEqual([false, false, false]);
+	mouseAt(group, 'pointerup', 150);
+
+	mouseAt(options[2] ?? group, 'pointerdown', 150);
+	mouseAt(group, 'pointerup', 150);
+
+	expect(changes).toEqual([]);
+});

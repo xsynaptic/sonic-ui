@@ -8,7 +8,6 @@
 	.sonic-led {
 		--_sonic-led-size: var(--sonic-led-size, 0.5rem);
 		--_sonic-led-lens-ratio: var(--sonic-led-lens-ratio, calc(0.8 - 0.175 * var(--_sonic-relief)));
-		--_sonic-lit-alt: var(--sonic-lit-alt, oklch(79% 0.2 150deg));
 		--_sonic-unit: calc(var(--_sonic-led-size) / 8);
 		--_sonic-led-modelled: calc(100% * var(--_sonic-relief));
 		--_sonic-led-bezel: var(
@@ -45,9 +44,9 @@
 		}
 
 		@media (forced-colors: active) {
-			--_sonic-lit-alt: Mark;
-			--_sonic-hot: Highlight;
-			--_sonic-clip: Mark;
+			--_sonic-lit-ok: Mark;
+			--_sonic-lit-warning: Highlight;
+			--_sonic-lit-danger: Mark;
 
 			forced-color-adjust: none;
 			background: none;
@@ -59,21 +58,21 @@
 		}
 	}
 
-	.sonic-led[data-sonic-lit='alt'] {
-		--_sonic-lit: var(--_sonic-lit-alt);
+	.sonic-led[data-sonic-lit='ok'] {
+		--_sonic-lit: var(--_sonic-lit-ok);
 	}
 
-	.sonic-led[data-sonic-lit='hot'] {
-		--_sonic-lit: var(--_sonic-hot);
+	.sonic-led[data-sonic-lit='warning'] {
+		--_sonic-lit: var(--_sonic-lit-warning);
 	}
 
-	.sonic-led[data-sonic-lit='clip'] {
-		--_sonic-lit: var(--_sonic-clip);
+	.sonic-led[data-sonic-lit='danger'] {
+		--_sonic-lit: var(--_sonic-lit-danger);
 	}
 
 	/* Before the lit rule, which a latched button's LED also matches */
 	.sonic-led:is(
-		[data-sonic-lit='dim'],
+		[data-sonic-lit='idle'],
 		:where(:is([armed], [busy]) > .sonic-button:not(:disabled, [aria-disabled='true'])) *
 	) {
 		&::after {
@@ -91,11 +90,15 @@
 	}
 
 	.sonic-led:is(
-		[data-sonic-lit]:where(:not([data-sonic-lit='dim'])),
+		[data-sonic-lit]:where(:not([data-sonic-lit='idle'])),
 		:where(
 				.sonic-button[aria-pressed='true'],
 				[momentary]:state(pressed) > .sonic-button,
-				.sonic-segmented-option[aria-checked='true']
+				.sonic-segmented-option[aria-checked='true'],
+				.sonic-toggle:has(
+					> [role='switch'][aria-checked='true'],
+					> [aria-checked='true'] [data-sonic-lit]
+				)
 			)
 			*,
 		:where(:state(at-origin):not(:disabled) > .sonic-led)

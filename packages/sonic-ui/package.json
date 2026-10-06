@@ -68,6 +68,7 @@
 		"./slider.css": "./dist/styles/slider.css",
 		"./spectrum.css": "./dist/styles/spectrum.css",
 		"./switch.css": "./dist/styles/switch.css",
+		"./toggle.css": "./dist/styles/toggle.css",
 		"./waveform.css": "./dist/styles/waveform.css",
 		"./wavestrip.css": "./dist/styles/wavestrip.css",
 		"./xy.css": "./dist/styles/xy.css",

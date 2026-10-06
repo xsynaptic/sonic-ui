@@ -290,8 +290,9 @@
 		background: linear-gradient(
 			var(--_sonic-meter-toward),
 			color-mix(in oklab, var(--_sonic-lit) 12%, var(--_sonic-unlit)) 0 var(--_sonic-meter-hot-at),
-			color-mix(in oklab, var(--_sonic-hot) 12%, var(--_sonic-unlit)) 0 var(--_sonic-meter-clip-at),
-			color-mix(in oklab, var(--_sonic-clip) 12%, var(--_sonic-unlit)) 0
+			color-mix(in oklab, var(--_sonic-lit-warning) 12%, var(--_sonic-unlit)) 0
+				var(--_sonic-meter-clip-at),
+			color-mix(in oklab, var(--_sonic-lit-danger) 12%, var(--_sonic-unlit)) 0
 		);
 	}
 
@@ -318,8 +319,8 @@
 		background: linear-gradient(
 			var(--_sonic-meter-toward),
 			var(--_sonic-lit) 0 var(--_sonic-meter-hot-at),
-			var(--_sonic-hot) 0 var(--_sonic-meter-clip-at),
-			var(--_sonic-clip) 0
+			var(--_sonic-lit-warning) 0 var(--_sonic-meter-clip-at),
+			var(--_sonic-lit-danger) 0
 		);
 		mask:
 			linear-gradient(
@@ -347,8 +348,8 @@
 			content: '';
 			background: radial-gradient(
 				closest-side,
-				color-mix(in oklab, var(--_sonic-clip) 55%, #fff),
-				var(--_sonic-clip)
+				color-mix(in oklab, var(--_sonic-lit-danger) 55%, #fff),
+				var(--_sonic-lit-danger)
 			);
 			border-radius: inherit;
 			opacity: var(--_sonic-meter-clipped, 0);

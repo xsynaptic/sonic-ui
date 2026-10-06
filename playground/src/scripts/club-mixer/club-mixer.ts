@@ -134,7 +134,7 @@ function bindMixer(mixer: Element): void {
 			meter.level = (mix[index] ?? 0) * (masterMix.value / 7);
 		}
 		for (const mic of mics) {
-			if (mic.switch.value !== 'off' && mic.fader.value > -60) mic.led.dataset.sonicLit = 'alt';
+			if (mic.switch.value !== 'off' && mic.fader.value > -60) mic.led.dataset.sonicLit = 'ok';
 			else delete mic.led.dataset.sonicLit;
 		}
 		for (const clock of clocks) tickClock(clock, time);

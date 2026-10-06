@@ -61,6 +61,7 @@ test('a label for the host, around it, or added later reaches the inner control 
 }) => {
 	const bridges = {
 		cutoff: await readBridge(page.locator('#cutoff'), '.sonic-dial'),
+		link: await readBridge(page.locator('#link'), '[role="switch"]'),
 		mode: await readBridge(page.locator('#mode'), '.sonic-segmented'),
 		mute: await readBridge(page.locator('#mute'), '.sonic-button'),
 		send: await readBridge(page.locator('#send'), '.sonic-slider'),
@@ -72,6 +73,7 @@ test('a label for the host, around it, or added later reaches the inner control 
 
 	expect(bridges).toEqual({
 		cutoff: { bridged: 1, labels: 1 },
+		link: { bridged: 1, labels: 1 },
 		mode: { bridged: 1, labels: 1 },
 		mute: { bridged: 1, labels: 1 },
 		send: { bridged: 1, labels: 1 },
@@ -99,7 +101,7 @@ test('a label for the host, around it, or added later reaches the inner control 
 
 	const names = await readNames(page);
 	const labelled = names.filter((name) =>
-		/: (Cutoff|Send|Sync|Tempo|Mute|Mode|Touch|Late)$/.test(name),
+		/: (Cutoff|Send|Sync|Link|Tempo|Mute|Mode|Touch|Late)$/.test(name),
 	);
 
 	expect(labelled.toSorted((first, second) => first.localeCompare(second))).toEqual([
@@ -110,6 +112,7 @@ test('a label for the host, around it, or added later reaches the inner control 
 		'slider: Send',
 		'slider: Touch',
 		'spinbutton: Tempo',
+		'switch: Link',
 		'switch: Sync',
 	]);
 });
@@ -125,6 +128,9 @@ test('a label click focuses the value control and the segmented control, flips a
 
 	await page.locator('label[for="sync"]').click();
 	await expect(page.locator('#sync [role="switch"]')).toHaveAttribute('aria-checked', 'true');
+
+	await page.locator('label[for="link"]').click();
+	await expect(page.locator('#link [role="switch"]')).toHaveAttribute('aria-checked', 'true');
 
 	const button = page.locator('#mute .sonic-button');
 
@@ -146,6 +152,7 @@ test('the form submits each value, a latching button only when pressed, and a re
 		['solo', 'yes'],
 		['mode', 'lp'],
 		['assign', 'x'],
+		['route', 'in'],
 		['late', '10'],
 		['touch.x', '40'],
 		['touch.y', '60'],
@@ -162,6 +169,8 @@ test('the form submits each value, a latching button only when pressed, and a re
 	await page.getByRole('radio', { name: 'HP' }).click();
 	await page.locator('#sync [role="switch"]').click();
 	await page.getByRole('radio', { name: 'Y' }).click();
+	await page.locator('#link [role="switch"]').click();
+	await page.getByRole('radio', { name: 'Out' }).click();
 	await page.locator('#touch [data-sonic-axis="x"]').press('ArrowUp');
 	await page.locator('#touch [data-sonic-axis="y"]').press('ArrowRight');
 	await page.locator('#position .sonic-wavestrip').press('ArrowRight');
@@ -175,6 +184,8 @@ test('the form submits each value, a latching button only when pressed, and a re
 		['mode', 'hp'],
 		['sync', 'on'],
 		['assign', 'y'],
+		['link', 'on'],
+		['route', 'out'],
 		['late', '10'],
 		['touch.x', '45'],
 		['touch.y', '61'],
@@ -194,6 +205,8 @@ test('the form submits each value, a latching button only when pressed, and a re
 		[page.getByRole('radio', { name: 'LP' }), 'aria-checked', 'true'],
 		[page.locator('#sync [role="switch"]'), 'aria-checked', 'false'],
 		[page.getByRole('radio', { name: 'X' }), 'aria-checked', 'true'],
+		[page.locator('#link [role="switch"]'), 'aria-checked', 'false'],
+		[page.getByRole('radio', { exact: true, name: 'In' }), 'aria-checked', 'true'],
 		[page.locator('#touch [data-sonic-axis="x"]'), 'aria-valuenow', '40'],
 		[page.locator('#touch [data-sonic-axis="y"]'), 'aria-valuenow', '60'],
 		[page.locator('#position .sonic-wavestrip'), 'aria-valuenow', '150'],
@@ -293,4 +306,17 @@ test('back navigation restores what each control held, never what another held',
 		expect([original[control], changed[control]], control).toContain(held[control]);
 	}
 	if (browserName !== 'firefox') expect(held).toEqual(changed);
+});
+
+test('a value whose position is disabled afterwards is still submitted', async ({ page }) => {
+	await page.locator('#route > [data-sonic-value="in"]').evaluate((child) => {
+		child.toggleAttribute('data-sonic-disabled', true);
+	});
+	await expect(page.getByRole('radio', { name: 'In' })).toBeDisabled();
+
+	const route = await page
+		.locator('#route')
+		.evaluate((control) => new FormData(control.closest('form') ?? undefined).get('route'));
+
+	expect(route).toBe('in');
 });

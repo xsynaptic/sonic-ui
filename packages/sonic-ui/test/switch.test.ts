@@ -425,3 +425,75 @@ test('a drag that keeps going the same way flips a switch once', async () => {
 
 	expect(flips).toEqual([true, false]);
 });
+
+test('a press on either label of a two-position switch holds its momentary position', async () => {
+	const children = /* HTML */ `
+		<span data-sonic-value="off">Off</span>
+		<span data-sonic-momentary data-sonic-value="duck">Duck</span>
+	`;
+	const { control, group, positions } = await mountSwitch('value="off"', children);
+	const changes = recordChanges(control);
+
+	pointer(positionAt(positions, 0), 'pointerdown');
+	expect(changes).toEqual(['duck']);
+
+	pointer(group, 'pointerup');
+	expect(changes).toEqual(['duck', 'off']);
+});
+
+const middleOut = /* HTML */ `
+	<span data-sonic-value="a">A</span>
+	<span data-sonic-disabled data-sonic-value="off">Off</span>
+	<span data-sonic-value="b">B</span>
+	<span data-sonic-disabled data-sonic-value="c">C</span>
+`;
+
+test('the bat skips a disabled position and stops before a disabled end, by drag and by press', async () => {
+	const { control, group, positions } = await mountSwitch('value="a"', middleOut);
+	const changes = recordChanges(control);
+
+	mockBat(group);
+	pointerAt(positionAt(positions, 0), 'pointerdown', [20, 5]);
+	for (const clientY of [16, 27, 38]) pointerAt(group, 'pointermove', [20, clientY]);
+	pointerAt(group, 'pointerup', [20, 38]);
+	expect(changes).toEqual(['b']);
+
+	pointerAt(positionAt(positions, 2), 'pointerdown', [20, 30]);
+	pointerAt(group, 'pointerup', [20, 30]);
+	expect(changes).toEqual(['b', 'a']);
+});
+
+test('a press on a disabled position, and an arrow toward it, pass it by', async () => {
+	const { control, group, positions } = await mountSwitch('value="a"', middleOut);
+	const first = positionAt(positions, 0);
+
+	expect(positions.map((position) => position.disabled)).toEqual([false, true, false, true]);
+
+	pointer(positionAt(positions, 1), 'pointerdown');
+	pointer(group, 'pointerup');
+	expect(control.value).toBe('a');
+
+	first.focus();
+	pressKey(first, 'ArrowDown');
+	expect(control.value).toBe('b');
+
+	pressKey(positionAt(positions, 2), 'End');
+	expect(control.value).toBe('b');
+});
+
+test.each(['data-sonic-disabled', 'data-sonic-disabled data-sonic-momentary'])(
+	'a press on the rest label of a two-position switch leaves a position marked %s alone',
+	async (marks) => {
+		const children = /* HTML */ `
+			<span data-sonic-value="off">Off</span>
+			<span ${marks} data-sonic-value="on">On</span>
+		`;
+		const { control, group, positions } = await mountSwitch('value="off"', children);
+		const changes = recordChanges(control);
+
+		pointer(positionAt(positions, 0), 'pointerdown');
+		pointer(group, 'pointerup');
+
+		expect(changes).toEqual([]);
+	},
+);

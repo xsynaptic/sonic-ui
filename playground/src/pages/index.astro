@@ -16,6 +16,7 @@ import SliderSpecimens from '#components/specimens/slider.astro';
 import SpectrumSpecimens from '#components/specimens/spectrum.astro';
 import SplitSpecimens from '#components/specimens/split.astro';
 import SwitchSpecimens from '#components/specimens/switch.astro';
+import ToggleSpecimens from '#components/specimens/toggle.astro';
 import Tuner from '#components/specimens/tuner.astro';
 import WaveformSpecimens from '#components/specimens/waveform.astro';
 import WavestripSpecimens from '#components/specimens/wavestrip.astro';
@@ -27,6 +28,7 @@ const sections = [
 	{ id: 'slider', label: 'Slider' },
 	{ id: 'button', label: 'Button' },
 	{ id: 'switch', label: 'Switch' },
+	{ id: 'toggle', label: 'Toggle' },
 	{ id: 'segmented', label: 'Segmented' },
 	{ id: 'number', label: 'Number box' },
 	{ id: 'led', label: 'LED' },
@@ -83,6 +85,9 @@ const sections = [
 	</Section>
 	<Section id="switch" title="Switch">
 		<SwitchSpecimens />
+	</Section>
+	<Section id="toggle" title="Toggle">
+		<ToggleSpecimens />
 	</Section>
 	<Section id="segmented" title="Segmented">
 		<SegmentedSpecimens />

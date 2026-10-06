@@ -5,7 +5,8 @@ import { expect, test } from '@playwright/test';
 import { expectEdge, paintedLine, paintedRuns } from './paint-probe.ts';
 
 // One flat colour for every zone, so a lit pixel is told from a dim one whichever zone it sits in
-const flatZones = 'sonic-meter { --sonic-lit: #0f0; --sonic-hot: #0f0; --sonic-clip: #0f0; }';
+const flatZones =
+	'sonic-meter { --sonic-lit: #0f0; --sonic-lit-warning: #0f0; --sonic-lit-danger: #0f0; }';
 
 test.beforeEach(async ({ page }) => {
 	await page.clock.install({ time: 0 });

@@ -84,7 +84,7 @@
 		transition-delay: var(--sonic-button-busy-delay, 0s);
 	}
 
-	.sonic-button:active:where(:not(:disabled, [aria-disabled='true'])),
+	.sonic-button:is(:active, [data-sonic-pressed]):where(:not(:disabled, [aria-disabled='true'])),
 	.sonic-button:is([aria-pressed='true'], :where([momentary]:state(pressed)) > *) {
 		--_sonic-keycap-shift: calc(var(--_sonic-keycap-depth) / 2);
 		--_sonic-keycap-scale: var(--_sonic-button-press-scale);
@@ -126,7 +126,7 @@
 			[aria-disabled='true'],
 			:where([momentary]:state(pressed), [armed]) > *,
 			:where([busy]) > :not(:has(.sonic-led))
-		):is(:focus-visible, :active) {
+		):is(:focus-visible, :active, [data-sonic-pressed]) {
 		color: var(--_sonic-ink-lift);
 	}
 

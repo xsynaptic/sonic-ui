@@ -16,22 +16,22 @@ import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 	<Cell id="led-green" label="Green">
 		<span class="sonic-led [--sonic-lit:#22c55e]" data-sonic-lit></span>
 	</Cell>
-	<Cell id="led-alt" label="Alt">
-		<span class="sonic-led" data-sonic-lit="alt"></span>
+	<Cell id="led-ok" label="Ok">
+		<span class="sonic-led" data-sonic-lit="ok"></span>
 	</Cell>
-	<Cell id="led-dim" label="Dim">
-		<span class="sonic-led" data-sonic-lit="dim"></span>
+	<Cell id="led-idle" label="Idle">
+		<span class="sonic-led" data-sonic-lit="idle"></span>
 	</Cell>
-	<Cell id="led-hot" label="Hot">
-		<span class="sonic-led" data-sonic-lit="hot"></span>
+	<Cell id="led-warning" label="Warning">
+		<span class="sonic-led" data-sonic-lit="warning"></span>
 	</Cell>
-	<Cell id="led-clip" label="Clip">
-		<span class="sonic-led" data-sonic-lit="clip"></span>
+	<Cell id="led-danger" label="Danger">
+		<span class="sonic-led" data-sonic-lit="danger"></span>
 	</Cell>
 	<Cell id="led-status" label="Status">
 		<span class="sonic-led" data-sonic-lit></span>
-		<span class="sonic-led" data-sonic-lit="hot"></span>
-		<span class="sonic-led" data-sonic-lit="clip"></span>
+		<span class="sonic-led" data-sonic-lit="warning"></span>
+		<span class="sonic-led" data-sonic-lit="danger"></span>
 	</Cell>
 	<Cell id="led-input" label="Phono or line">
 		<sonic-button
@@ -40,7 +40,7 @@ import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 			data-two-colour
 			latching
 		>
-			<span class="sonic-led" data-sonic-lit="alt"></span>
+			<span class="sonic-led" data-sonic-lit="ok"></span>
 			<span aria-hidden="true">PH</span>
 		</sonic-button>
 	</Cell>
@@ -74,8 +74,8 @@ import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 			<Power aria-hidden="true" />
 		</sonic-button>
 	</Cell>
-	<Cell id="led-large-alt" label="Alt, large">
-		<span class="sonic-led [--sonic-led-size:2rem]" data-sonic-lit="alt"></span>
+	<Cell id="led-large-ok" label="Ok, large">
+		<span class="sonic-led [--sonic-led-size:2rem]" data-sonic-lit="ok"></span>
 	</Cell>
 	<Cell id="led-large-on" label="On, large">
 		<span class="sonic-led [--sonic-led-size:2rem]" data-sonic-lit></span>

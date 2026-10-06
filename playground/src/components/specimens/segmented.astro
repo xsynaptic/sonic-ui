@@ -16,6 +16,15 @@ import TransportModes from '#components/specimens/transport-modes.astro';
 			<TransportModes />
 		</sonic-segmented>
 	</Cell>
+	<Cell id="segmented-option-disabled" isWide={true} label="One option disabled">
+		<sonic-segmented aria-labelledby="segmented-option-disabled" class="font-mono" value="lp">
+			<span data-sonic-value="lp">LP</span>
+			<span data-sonic-disabled data-sonic-value="bp">
+				BP
+			</span>
+			<span data-sonic-value="hp">HP</span>
+		</sonic-segmented>
+	</Cell>
 	<Cell id="segmented-disabled" isWide={true} label="Disabled">
 		<sonic-segmented aria-labelledby="segmented-disabled" class="font-mono" disabled value="bp">
 			<FilterModes hasNotch={false} />
