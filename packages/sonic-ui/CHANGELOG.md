@@ -1,5 +1,11 @@
 # @xsynaptic/sonic-ui
 
+## 0.12.0
+
+### Minor Changes
+
+- Wave controls: `requestPeaks` may return one promise or an iterable of them, each repainting once however often it is returned, and its `PeaksRequest` type is exported. A write to `pending` or `peaks` inside the call no longer asks again for the same window, and `pending` ignores an unchanged list. The waveform now asks when its window moves, its data is written or a promise settles, not on every repaint. `<sonic-wavestrip>` gains `clientXOf(value)`, the viewport x where a value sits.
+
 ## 0.11.0
 
 ### Minor Changes
