@@ -186,7 +186,7 @@ The words this library uses for its controls, their parts and their values. Wher
 
 **Glass**: The dark glazed material behind screens, readouts and wave controls. _Avoid_: Screen (that is the display), backdrop
 
-**Target**: The region around a press control that takes its presses. It is the control's own box unless `--sonic-target-size` makes it larger. _Avoid_: Hit area, touch target, tap target, hitbox
+**Target**: The region around a press control that takes its presses, or across a slider's breadth that takes its drags. It is the control's own box unless `--sonic-target-size` makes it larger. _Avoid_: Hit area, touch target, tap target, hitbox
 
 **Relief**: How strongly the light models a surface: its bevels, ridges, grooves, sheen and cast shadows. `--sonic-relief` scales it from 0, flat, to 1. _Avoid_: Depth (one part's own token), elevation, shadow
 

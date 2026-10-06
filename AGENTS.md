@@ -23,7 +23,7 @@ Tokens, hook classes, attributes, events and `:state()` names are the API. Renam
 ## Design rules
 
 - Drawn parts, styles and ARIA stay in the light DOM; the mirror's shadow root is the only one.
-- Layout stays inside the control's box; only focus and the readout popover paint past it, and only a press control's target (`--sonic-target-size`, unset by default) takes presses past it.
+- Layout stays inside the control's box; only focus and the readout popover paint past it, and only a target (`--sonic-target-size`, unset by default; a press control's, or a slider's across its breadth) takes presses past it.
 - A touch outside the part that owns a gesture still scrolls the page.
 - Forced colours: drawn parts opt out and take system colours; the focusable element stays forced so its outline paints.
 - A private value that script or a canvas reads is registered with `@property`; a raw token does not resolve there.
