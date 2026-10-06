@@ -719,6 +719,20 @@ test('spoken-step rounds aria-valuenow to its multiples and leaves the value alo
 	expect(control.getAttribute('aria-valuenow')).toBe('61.3');
 });
 
+test('formatSpokenValue is given the value spoken-step rounded, so the text agrees with aria-valuenow', () => {
+	installCanvasFakes();
+
+	const { control, wavestrip } = mountWavestrip(
+		'max="300" step="0" spoken-step="0.5" value="61.3"',
+	);
+
+	wavestrip.formatSpokenValue = (value) => `${String(value)} seconds`;
+	expect(control.getAttribute('aria-valuetext')).toBe('61.5 seconds');
+
+	wavestrip.spokenStep = undefined;
+	expect(control.getAttribute('aria-valuetext')).toBe('61.3 seconds');
+});
+
 test('the current marker follows playback, and reports only when it changes', () => {
 	installCanvasFakes();
 

@@ -94,7 +94,7 @@
 	.sonic-led:is(
 		[data-sonic-lit]:where(:not([data-sonic-lit='idle'])),
 		:where(
-				.sonic-button[aria-pressed='true'],
+				.sonic-button:is([aria-pressed='true'], [aria-expanded='true']),
 				[momentary]:state(pressed) > .sonic-button,
 				.sonic-segmented-option[aria-checked='true'],
 				.sonic-toggle:has(

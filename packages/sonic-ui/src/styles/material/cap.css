@@ -16,6 +16,7 @@
 		--_sonic-focus: var(--sonic-focus, oklch(90% 0.23 128deg));
 		--_sonic-ink: var(--sonic-ink, currentcolor);
 		--_sonic-etch: color-mix(in oklab, var(--_sonic-ink) 30%, transparent);
+		--_sonic-ink-disabled: var(--sonic-ink-disabled, var(--_sonic-etch));
 		--_sonic-ink-lift: var(--sonic-ink-hover, color-mix(in oklab, var(--_sonic-ink) 60%, #fff));
 		--_sonic-lit-disabled: color-mix(in oklab, var(--_sonic-ink) 25%, var(--_sonic-unlit));
 		--_sonic-skirt: linear-gradient(
@@ -126,6 +127,7 @@
 		) {
 			--_sonic-ink: ButtonText;
 			--_sonic-etch: ButtonText;
+			--_sonic-ink-disabled: var(--_sonic-etch);
 			--_sonic-lit-disabled: GrayText;
 			--_sonic-skirt: ButtonFace;
 			--_sonic-face: ButtonFace;

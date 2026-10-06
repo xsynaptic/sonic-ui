@@ -437,6 +437,28 @@ test('a ctrl wheel zooms, is cancelled and fires sonic-zoom; a write to zoom fir
 	expect(zooms).toHaveLength(1);
 });
 
+function gestureAt(control: HTMLElement, type: string, scale: number): Event {
+	const event = Object.assign(new Event(type, { bubbles: true, cancelable: true }), { scale });
+
+	control.dispatchEvent(event);
+
+	return event;
+}
+
+test('a Safari gesture scales the zoom it started at, is cancelled, and gives way to a touch', () => {
+	const { control, waveform } = mountWaveform('zoomable zoom="60"');
+	const zooms = zoomEvents(waveform);
+
+	gestureAt(control, 'gesturestart', 1);
+	expect(gestureAt(control, 'gesturechange', 1.5).defaultPrevented).toBe(true);
+	gestureAt(control, 'gesturechange', 2);
+	expect(zooms).toEqual([90, 120]);
+
+	touchAt(control, 'pointerdown', [1, 100]);
+	expect(gestureAt(control, 'gesturechange', 3).defaultPrevented).toBe(false);
+	expect(zooms).toHaveLength(2);
+});
+
 test('a plain wheel is left to the page, and so is a ctrl wheel without zoomable', () => {
 	const { control, waveform } = mountWaveform('zoomable zoom="60"');
 	const zooms = zoomEvents(waveform);

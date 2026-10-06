@@ -243,6 +243,18 @@ test('with spring, an arrow moves it while held and it springs back on keyup, an
 	expect(entry?.hidden).toBe(true);
 });
 
+test('with entry="none", Enter is left to the page and opens nothing, until the attribute goes', () => {
+	const { control, slider } = mountSlider('entry="none" value="40"');
+	const entry = control.querySelector('input');
+
+	expect(pressKey(control, 'Enter').defaultPrevented).toBe(false);
+	expect(entry?.hidden).toBe(true);
+
+	slider.entry = undefined;
+	expect(pressKey(control, 'Enter').defaultPrevented).toBe(true);
+	expect(entry?.hidden).toBe(false);
+});
+
 test('with spring and a list of positions, the slider springs back to the first position', () => {
 	const { control, slider } = mountSlider('spring positions="-12 -6 0 6" value="-12"');
 

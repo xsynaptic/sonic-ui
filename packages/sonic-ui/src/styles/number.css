@@ -53,7 +53,7 @@
 	}
 
 	:disabled > .sonic-number {
-		color: var(--_sonic-etch);
+		color: var(--_sonic-ink-disabled);
 		cursor: default;
 	}
 

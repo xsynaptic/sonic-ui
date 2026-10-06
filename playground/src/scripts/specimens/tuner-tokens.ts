@@ -61,6 +61,7 @@ export const tokenGroups: Array<TokenGroup> = [
 			colour('cap', '--sonic-cap'),
 			colour('cap hover', '--sonic-cap-hover'),
 			colour('ink', '--sonic-ink', { resolved: '--_sonic-ink' }),
+			colour('ink disabled', '--sonic-ink-disabled', { resolved: '--_sonic-ink-disabled' }),
 			colour('focus', '--sonic-focus'),
 			colour('dimmed', '--sonic-dimmed', { resolved: '--_sonic-lit-off' }),
 			colour('modulation', '--sonic-modulation', {

@@ -382,7 +382,7 @@
 	}
 
 	:disabled > .sonic-dial > .sonic-dial-indicator::before {
-		background: var(--_sonic-etch);
+		background: var(--_sonic-ink-disabled);
 	}
 
 	@media (forced-colors: active) {

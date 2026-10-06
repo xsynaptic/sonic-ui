@@ -86,14 +86,24 @@
 		transition-delay: var(--sonic-button-busy-delay, 0s);
 	}
 
-	.sonic-button:is(:active, [data-sonic-pressed]):where(:not(:disabled, [aria-disabled='true'])),
-	.sonic-button:is([aria-pressed='true'], :where([momentary]:state(pressed)) > *) {
+	/* fallow-ignore-next-line code-duplication -- one pressed state across the cap's parts */
+	.sonic-button:is(
+		[aria-pressed='true'],
+		[aria-expanded='true'],
+		:where([momentary]:state(pressed)) > *
+	),
+	.sonic-button:is(:active, [data-sonic-pressed]):where(:not(:disabled, [aria-disabled='true'])) {
 		--_sonic-keycap-shift: calc(var(--_sonic-keycap-depth) / 2);
 		--_sonic-keycap-scale: var(--_sonic-button-press-scale);
 		--_sonic-keycap-drop: var(--_sonic-press-drop);
 	}
 
-	.sonic-button:is([aria-pressed='true'], :where([momentary]:state(pressed)) > *) {
+	/* fallow-ignore-next-line code-duplication -- one pressed state across the cap's parts */
+	.sonic-button:is(
+		[aria-pressed='true'],
+		[aria-expanded='true'],
+		:where([momentary]:state(pressed)) > *
+	) {
 		--_sonic-keycap-glow: var(--_sonic-keycap-lit-glow);
 
 		color: var(--_sonic-lit);
@@ -118,12 +128,13 @@
 	.sonic-button:is(:disabled, [aria-disabled='true']) {
 		--_sonic-lit: var(--_sonic-lit-disabled);
 
-		color: var(--_sonic-etch);
+		color: var(--_sonic-ink-disabled);
 		cursor: default;
 	}
 
 	.sonic-button:not(
 			[aria-pressed='true'],
+			[aria-expanded='true'],
 			:disabled,
 			[aria-disabled='true'],
 			:where([momentary]:state(pressed), [armed]) > *,
@@ -136,6 +147,7 @@
 		/* fallow-ignore-next-line code-duplication -- `:hover` and `:focus-visible` split by `(hover: hover)` */
 		.sonic-button:not(
 				[aria-pressed='true'],
+				[aria-expanded='true'],
 				:disabled,
 				[aria-disabled='true'],
 				:where([momentary]:state(pressed), [armed]) > *,
@@ -145,12 +157,14 @@
 		}
 	}
 
-	.sonic-button[aria-pressed='true']:not(:disabled, [aria-disabled='true']):focus-visible {
+	.sonic-button[aria-pressed='true']:not(:disabled, [aria-disabled='true']):focus-visible,
+	.sonic-button[aria-expanded='true']:not(:disabled, [aria-disabled='true']):focus-visible {
 		color: var(--sonic-lit-hover, var(--_sonic-lit));
 	}
 
 	@media (hover: hover) {
-		.sonic-button[aria-pressed='true']:not(:disabled, [aria-disabled='true']):hover {
+		.sonic-button[aria-pressed='true']:not(:disabled, [aria-disabled='true']):hover,
+		.sonic-button[aria-expanded='true']:not(:disabled, [aria-disabled='true']):hover {
 			color: var(--sonic-lit-hover, var(--_sonic-lit));
 		}
 	}
@@ -167,7 +181,7 @@
 			color-mix(in oklab, currentcolor 35%, transparent)
 		);
 
-		&:is([aria-pressed='true'], :where([momentary]:state(pressed)) > *) {
+		&:is([aria-pressed='true'], [aria-expanded='true'], :where([momentary]:state(pressed)) > *) {
 			--_sonic-blank-edge: var(--_sonic-blank-edge-off, currentcolor);
 		}
 
@@ -213,17 +227,30 @@
 		block-size: calc(var(--_sonic-button-size) * var(--_sonic-button-led-icon-ratio));
 	}
 
-	.sonic-button:is([aria-pressed='true'], :where([momentary]:state(pressed)) > *)
+	/* fallow-ignore-next-line code-duplication -- one pressed state across the cap's parts */
+	.sonic-button:is(
+			[aria-pressed='true'],
+			[aria-expanded='true'],
+			:where([momentary]:state(pressed)) > *
+		)
 		.sonic-button-cap
 		> svg {
 		filter: var(--_sonic-engraving) var(--_sonic-legend-glow);
 	}
 
 	/* fallow-ignore-next-line code-duplication -- one pressed state across the cap's parts */
-	.sonic-button:is([aria-pressed='true'], :where([momentary]:state(pressed)) > *)
+	.sonic-button:is(
+			[aria-pressed='true'],
+			[aria-expanded='true'],
+			:where([momentary]:state(pressed)) > *
+		)
 		.sonic-button-cap
 		> [data-sonic-when='released'],
-	.sonic-button:not([aria-pressed='true'], :where([momentary]:state(pressed)) > *)
+	.sonic-button:not(
+			[aria-pressed='true'],
+			[aria-expanded='true'],
+			:where([momentary]:state(pressed)) > *
+		)
 		.sonic-button-cap
 		> [data-sonic-when='pressed'] {
 		display: none;
@@ -252,7 +279,12 @@
 			mask: none;
 		}
 
-		.sonic-button:is([aria-pressed='true'], :where([momentary]:state(pressed)) > *) {
+		/* fallow-ignore-next-line code-duplication -- one pressed state across the cap's parts */
+		.sonic-button:is(
+			[aria-pressed='true'],
+			[aria-expanded='true'],
+			:where([momentary]:state(pressed)) > *
+		) {
 			--_sonic-skirt: var(--_sonic-lit);
 			--_sonic-face: var(--_sonic-lit);
 			--_sonic-ink: HighlightText;

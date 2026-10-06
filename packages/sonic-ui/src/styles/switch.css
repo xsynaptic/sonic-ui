@@ -130,7 +130,7 @@
 	}
 
 	.sonic-switch-position:disabled > .sonic-switch-label {
-		color: color-mix(in oklab, currentcolor 30%, transparent);
+		color: var(--sonic-ink-disabled, color-mix(in oklab, currentcolor 30%, transparent));
 	}
 
 	.sonic-switch[data-sonic-position-count] {

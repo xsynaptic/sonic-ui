@@ -117,6 +117,16 @@
 		}
 	}
 
+	.sonic-slider::before {
+		position: absolute;
+		inset: min(0px, calc((100% - var(--sonic-target-size, 100%)) / 2)) 0;
+		content: '';
+	}
+
+	[orientation='vertical'] > .sonic-slider::before {
+		inset: 0 min(0px, calc((100% - var(--sonic-target-size, 100%)) / 2));
+	}
+
 	[orientation='vertical'] > .sonic-slider {
 		--_sonic-slider-toward: to top;
 		--_sonic-slider-across: to right;
@@ -467,7 +477,7 @@
 	}
 
 	:disabled > .sonic-slider > .sonic-slider-cap::after {
-		background: var(--_sonic-etch);
+		background: var(--_sonic-ink-disabled);
 	}
 
 	[groove-press='none'] > .sonic-slider > .sonic-slider-cap {

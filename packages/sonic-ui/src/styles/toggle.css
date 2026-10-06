@@ -160,8 +160,8 @@
 
 	.sonic-toggle:not(:has(> .sonic-toggle-position:not(:disabled))) {
 		--_sonic-lit: var(--_sonic-lit-disabled);
-		--_sonic-toggle-disc: var(--_sonic-etch);
-		--_sonic-toggle-ink-set: color-mix(in oklab, var(--sonic-cap) 0%, var(--_sonic-etch));
+		--_sonic-toggle-disc: var(--_sonic-ink-disabled);
+		--_sonic-toggle-ink-set: color-mix(in oklab, var(--sonic-cap) 0%, var(--_sonic-ink-disabled));
 		--_sonic-legend-lit: color-mix(in oklab, var(--sonic-cap) 0%, var(--_sonic-lit));
 	}
 
@@ -359,7 +359,7 @@
 		}
 
 		& > .sonic-toggle-position:disabled > .sonic-toggle-legend {
-			color: color-mix(in oklab, currentcolor 30%, transparent);
+			color: var(--sonic-ink-disabled, color-mix(in oklab, currentcolor 30%, transparent));
 		}
 
 		& > .sonic-toggle-position:last-child > .sonic-toggle-legend {

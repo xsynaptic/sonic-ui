@@ -52,6 +52,38 @@ test("a press just outside a button lands only with a target size set, and only 
 	expect(await clicks()).toBe(2);
 });
 
+test("a press just past a slider's breadth lands only with a target size set, and only within it; a press past its length never lands", async ({
+	page,
+}) => {
+	await page.goto('/fixtures/');
+
+	const host = page.locator('#send');
+	const slider = page.getByRole('slider', { name: 'Send' });
+
+	await slider.scrollIntoViewIfNeeded();
+
+	const box = await slider.boundingBox();
+	if (!box) throw new Error('The slider has no box');
+
+	const value = async (): Promise<number> => Number(await slider.getAttribute('aria-valuenow'));
+
+	await page.mouse.click(box.x + box.width * 0.75, box.y - 4);
+	expect(await value()).toBe(0);
+
+	await host.evaluate((element) => {
+		element.style.setProperty('--sonic-target-size', '44px');
+	});
+	await page.mouse.click(box.x + box.width * 0.75, box.y - 4);
+
+	const landed = await value();
+
+	expect(landed).toBeGreaterThan(60);
+
+	await page.mouse.click(box.x + box.width * 0.25, box.y - 10);
+	await page.mouse.click(box.x + box.width + 4, box.y + box.height / 2);
+	expect(await value()).toBe(landed);
+});
+
 test.describe('forced colours', () => {
 	test.use({ forcedColors: 'active' });
 

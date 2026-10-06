@@ -29,6 +29,7 @@ interface GestureHost {
 	entryId: string;
 	entryText: () => string;
 	forwardNaming: (target: Element, isNamed: boolean) => void;
+	hasEntry: () => boolean;
 	holdChanged: () => void;
 	input: (next: number) => boolean;
 	isDisabled: () => boolean;
@@ -243,7 +244,7 @@ export class ValueGestures {
 
 				host.toggleState('springing', false);
 				if (event.key === 'Enter') {
-					if (host.springTarget() !== undefined) return;
+					if (host.springTarget() !== undefined || !host.hasEntry()) return;
 
 					event.preventDefault();
 					entry.open();
@@ -379,7 +380,7 @@ export class ValueGestures {
 		const gesture = host.doublePress();
 
 		if (gesture === 'reset') this.#reset();
-		else if (gesture === 'entry') entry.open();
+		else if (gesture === 'entry' && host.hasEntry()) entry.open();
 	}
 
 	#releaseDrag(drag: ValueDrag): void {

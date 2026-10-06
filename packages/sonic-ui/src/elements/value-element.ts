@@ -150,6 +150,14 @@ export abstract class SonicValueElement extends SonicFormElement {
 		return this.hasState('dragging');
 	}
 
+	get entry(): 'none' | undefined {
+		return this.getAttribute('entry') === 'none' ? 'none' : undefined;
+	}
+
+	set entry(gesture: 'none' | undefined) {
+		this.reflect('entry', gesture);
+	}
+
 	get formatEntry(): ((value: number) => string) | undefined {
 		return this.#formatEntry;
 	}
@@ -363,6 +371,7 @@ export abstract class SonicValueElement extends SonicFormElement {
 			'default',
 			'dimmed',
 			'doublePress',
+			'entry',
 			'max',
 			'midpoint',
 			'min',
@@ -409,6 +418,7 @@ export abstract class SonicValueElement extends SonicFormElement {
 				forwardNaming: (target, isNamed) => {
 					this.forwardNaming(target, isNamed);
 				},
+				hasEntry: () => this.entry !== 'none',
 				holdChanged: () => {
 					this.#renderHold();
 				},
@@ -635,7 +645,7 @@ export abstract class SonicValueElement extends SonicFormElement {
 		writeAttribute(
 			control,
 			'aria-valuetext',
-			(this.#formatSpokenValue ?? this.#formatValue)?.(this.#cell.value),
+			(this.#formatSpokenValue ?? this.#formatValue)?.(this.#spokenNow()),
 		);
 		this.forwardNaming(control, true);
 		this.#renderDisabled(control);

@@ -98,7 +98,7 @@
 	.sonic-segmented-option:disabled {
 		--_sonic-lit: var(--_sonic-lit-disabled);
 
-		color: var(--_sonic-etch);
+		color: var(--_sonic-ink-disabled);
 		cursor: default;
 	}
 
