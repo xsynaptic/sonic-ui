@@ -1,5 +1,12 @@
 # @xsynaptic/sonic-ui
 
+## 0.17.0
+
+### Minor Changes
+
+- - Waveform: `renderLabel(marker, element)` draws a marker's label in place of its text. A marker keeps a consumer's own keys for it to draw from.
+  - Waveform: `--sonic-waveform-label-fade-start` (0) and `--sonic-waveform-label-fade-end` (1) replace `--sonic-waveform-label-fade-ratio`. They place the parked label's fade between the next marker crossing the playhead, 0, and its label reaching the park, 1; equal values give no fade. By default the label now holds until the crossing and is gone as the next one lands.
+
 ## 0.16.0
 
 ### Minor Changes
