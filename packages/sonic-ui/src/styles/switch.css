@@ -98,8 +98,8 @@
 		}
 
 		&:focus-visible {
-			outline: 2px solid transparent;
-			outline-offset: -2px;
+			outline: var(--sonic-focus-outline, 2px solid transparent);
+			outline-offset: var(--sonic-focus-outline-offset, -2px);
 		}
 
 		&:has([data-sonic-momentary]) {

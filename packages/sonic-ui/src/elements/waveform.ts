@@ -612,7 +612,7 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 
 		let startZoom = this.zoom;
 
-		// Safari sends a trackpad pinch as gesture events, never as a ctrl wheel; on iOS they shadow a touch pinch
+		// Safari sends a trackpad pinch as gesture events, never as a ctrl wheel
 		for (const type of ['gesturestart', 'gesturechange']) {
 			this.control.addEventListener(
 				type,

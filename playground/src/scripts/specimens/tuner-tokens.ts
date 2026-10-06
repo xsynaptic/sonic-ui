@@ -63,6 +63,11 @@ export const tokenGroups: Array<TokenGroup> = [
 			colour('ink', '--sonic-ink', { resolved: '--_sonic-ink' }),
 			colour('ink disabled', '--sonic-ink-disabled', { resolved: '--_sonic-ink-disabled' }),
 			colour('focus', '--sonic-focus'),
+			{
+				...range('focus glow', '--sonic-focus-glow', [0, 1, 0.05]),
+				resolved: '--_sonic-focus-strength',
+			},
+			range('disabled opacity', '--sonic-disabled-opacity', [0.2, 1, 0.05]),
 			colour('dimmed', '--sonic-dimmed', { resolved: '--_sonic-lit-off' }),
 			colour('modulation', '--sonic-modulation', {
 				from: '.sonic-dial-modulation',
@@ -137,8 +142,11 @@ export const tokenGroups: Array<TokenGroup> = [
 			range('icon', '--sonic-button-icon-ratio', [0.2, 0.8, 0.01]),
 			range('led', '--sonic-button-led-ratio', [0.1, 0.4, 0.01]),
 			range('icon with led', '--sonic-button-led-icon-ratio', [0.15, 0.6, 0.01]),
+			range('font', '--sonic-button-font-ratio', [0.15, 0.6, 0.01]),
+			range('padding', '--sonic-button-padding-ratio', [0, 0.6, 0.01]),
 			range('depth', '--sonic-button-depth-ratio', [0, 0.1, 0.005]),
 			range('press scale', '--sonic-button-press-scale', [0.85, 1, 0.005]),
+			range('latched scale', '--sonic-button-latched-scale', [0.85, 1, 0.005]),
 		],
 	},
 	{
@@ -193,7 +201,9 @@ export const tokenGroups: Array<TokenGroup> = [
 			range('bevel', '--sonic-segmented-bevel-ratio', [0, 0.25, 0.005]),
 			range('depth', '--sonic-segmented-depth-ratio', [0, 0.1, 0.005]),
 			range('press scale', '--sonic-segmented-press-scale', [0.85, 1, 0.005]),
+			range('latched scale', '--sonic-segmented-latched-scale', [0.85, 1, 0.005]),
 			range('font', '--sonic-segmented-font-ratio', [0.15, 0.6, 0.01]),
+			range('padding', '--sonic-segmented-padding-ratio', [0, 0.6, 0.01]),
 			range('icon', '--sonic-segmented-icon-ratio', [0.2, 0.8, 0.01]),
 		],
 	},

@@ -14,6 +14,8 @@
 		--_sonic-cap: var(--sonic-cap, transparent);
 		--_sonic-cap-hover: var(--sonic-cap-hover, transparent);
 		--_sonic-focus: var(--sonic-focus, oklch(90% 0.23 128deg));
+		--_sonic-focus-strength: var(--sonic-focus-glow, 1);
+		--_sonic-disabled-opacity: var(--sonic-disabled-opacity, 1);
 		--_sonic-ink: var(--sonic-ink, currentcolor);
 		--_sonic-etch: color-mix(in oklab, var(--_sonic-ink) 30%, transparent);
 		--_sonic-ink-disabled: var(--sonic-ink-disabled, var(--_sonic-etch));
@@ -53,7 +55,7 @@
 		--_sonic-drop-shade: rgb(0 0 0 / calc(0.65 * var(--_sonic-relief)));
 		--_sonic-focus-shadow: 0 0 transparent;
 		--_sonic-focus-glow: 0 0 max(4px, 3 * var(--_sonic-unit)) max(1px, 0.5 * var(--_sonic-unit))
-			color-mix(in oklab, var(--_sonic-focus) 60%, transparent);
+			color-mix(in oklab, var(--_sonic-focus) calc(60% * var(--_sonic-focus-strength)), transparent);
 	}
 
 	:is(.sonic-number, .sonic-waveform, .sonic-wavestrip, .sonic-xy) {
@@ -77,6 +79,26 @@
 		}
 	}
 
+	@media not (forced-colors: active) {
+		:is(
+			:disabled
+				> :is(
+					.sonic-dial,
+					.sonic-number,
+					.sonic-slider,
+					.sonic-waveform,
+					.sonic-wavestrip,
+					.sonic-xy
+				),
+			.sonic-switch:not(:has(> .sonic-switch-position:not(:disabled))),
+			.sonic-button:is(:disabled, [aria-disabled='true']),
+			.sonic-toggle:not(:has(> .sonic-toggle-position:not(:disabled))),
+			.sonic-segmented-option:disabled
+		) {
+			opacity: var(--_sonic-disabled-opacity);
+		}
+	}
+
 	@media (hover: hover) {
 		:is(.sonic-dial, .sonic-button, .sonic-segmented-option, .sonic-slider):not(
 				:disabled,
@@ -97,9 +119,11 @@
 		.sonic-xy-axis
 	):focus-visible {
 		outline: 2px solid transparent;
-		outline-offset: -2px;
+		outline-offset: var(--sonic-focus-outline-offset, -2px);
 
 		&:not([data-sonic-pointer-focus]) {
+			outline: var(--sonic-focus-outline, 2px solid transparent);
+
 			--_sonic-cap: var(--_sonic-cap-hover);
 			--_sonic-focus-shadow: var(--_sonic-focus-glow);
 		}

@@ -31,6 +31,13 @@
 		overflow: hidden;
 	}
 
+	sonic-button:not(:defined, [hidden]):has(> :not(svg, .sonic-led)) {
+		inline-size: max-content;
+		min-inline-size: calc(var(--_sonic-button-size) * var(--_sonic-button-aspect-ratio));
+		padding-inline: calc(var(--_sonic-button-size) * var(--sonic-button-padding-ratio, 0.25));
+		white-space: nowrap;
+	}
+
 	.sonic-button {
 		--_sonic-button-gap-ratio: var(--sonic-button-gap-ratio, 0);
 		--_sonic-button-radius-ratio: var(--sonic-button-radius-ratio, 0.2);
@@ -39,8 +46,14 @@
 		--_sonic-button-icon-ratio: var(--sonic-button-icon-ratio, 0.5);
 		--_sonic-button-led-ratio: var(--sonic-button-led-ratio, 0.2);
 		--_sonic-button-led-icon-ratio: var(--sonic-button-led-icon-ratio, 0.35);
+		--_sonic-button-font-ratio: var(--sonic-button-font-ratio, 0.34);
+		--_sonic-button-padding-ratio: var(--sonic-button-padding-ratio, 0.25);
 		--_sonic-button-depth-ratio: var(--sonic-button-depth-ratio, calc(0.03 * var(--_sonic-relief)));
 		--_sonic-button-press-scale: var(--sonic-button-press-scale, 0.985);
+		--_sonic-button-latched-scale: var(
+			--sonic-button-latched-scale,
+			var(--_sonic-button-press-scale)
+		);
 		--_sonic-unit: calc(var(--_sonic-button-size) / 32);
 		--_sonic-button-corner: calc(var(--_sonic-button-size) * var(--_sonic-button-radius-ratio));
 		--_sonic-button-gap: calc(var(--_sonic-button-size) * var(--_sonic-button-gap-ratio));
@@ -59,6 +72,12 @@
 		border-radius: var(--_sonic-button-corner);
 		box-shadow: var(--_sonic-well);
 		transition: color 120ms ease-out;
+	}
+
+	/* An `auto` width stretches in a column flex or grid parent */
+	.sonic-button:where(:has(> .sonic-button-cap > :not(svg, .sonic-led))) {
+		inline-size: max-content;
+		min-inline-size: calc(var(--_sonic-button-size) * var(--_sonic-button-aspect-ratio));
 	}
 
 	:where([momentary]) > .sonic-button {
@@ -86,25 +105,17 @@
 		transition-delay: var(--sonic-button-busy-delay, 0s);
 	}
 
-	/* fallow-ignore-next-line code-duplication -- one pressed state across the cap's parts */
-	.sonic-button:is(
-		[aria-pressed='true'],
-		[aria-expanded='true'],
-		:where([momentary]:state(pressed)) > *
-	),
-	.sonic-button:is(:active, [data-sonic-pressed]):where(:not(:disabled, [aria-disabled='true'])) {
-		--_sonic-keycap-shift: calc(var(--_sonic-keycap-depth) / 2);
-		--_sonic-keycap-scale: var(--_sonic-button-press-scale);
-		--_sonic-keycap-drop: var(--_sonic-press-drop);
-	}
-
-	/* fallow-ignore-next-line code-duplication -- one pressed state across the cap's parts */
 	.sonic-button:is(
 		[aria-pressed='true'],
 		[aria-expanded='true'],
 		:where([momentary]:state(pressed)) > *
 	) {
+		--_sonic-keycap-shift: calc(var(--_sonic-keycap-depth) / 2);
+		--_sonic-keycap-scale: var(--_sonic-button-latched-scale);
+		--_sonic-keycap-drop: var(--_sonic-press-drop);
 		--_sonic-keycap-glow: var(--_sonic-keycap-lit-glow);
+		--_sonic-blank-edge-lit: currentcolor;
+		--_sonic-button-legend-glow: var(--_sonic-legend-glow);
 
 		color: var(--_sonic-lit);
 		background: var(
@@ -123,6 +134,28 @@
 				)
 			)
 		);
+
+		& .sonic-button-cap > [data-sonic-when='released'] {
+			display: none;
+		}
+
+		@media (forced-colors: active) {
+			--_sonic-skirt: var(--_sonic-lit);
+			--_sonic-face: var(--_sonic-lit);
+			--_sonic-ink: HighlightText;
+
+			&:is(:disabled, [aria-disabled='true']) {
+				--_sonic-ink: ButtonFace;
+			}
+		}
+	}
+
+	.sonic-button:is(:active, [data-sonic-pressed], :where([momentary]:state(pressed)) > *):where(
+			:not(:disabled, [aria-disabled='true'])
+		) {
+		--_sonic-keycap-shift: calc(var(--_sonic-keycap-depth) / 2);
+		--_sonic-keycap-scale: var(--_sonic-button-press-scale);
+		--_sonic-keycap-drop: var(--_sonic-press-drop);
 	}
 
 	.sonic-button:is(:disabled, [aria-disabled='true']) {
@@ -178,12 +211,8 @@
 		);
 		--_sonic-blank-edge: var(
 			--_sonic-blank-edge-off,
-			color-mix(in oklab, currentcolor 35%, transparent)
+			var(--_sonic-blank-edge-lit, color-mix(in oklab, currentcolor 35%, transparent))
 		);
-
-		&:is([aria-pressed='true'], [aria-expanded='true'], :where([momentary]:state(pressed)) > *) {
-			--_sonic-blank-edge: var(--_sonic-blank-edge-off, currentcolor);
-		}
 
 		@media (forced-colors: active) {
 			--_sonic-blank-edge: transparent;
@@ -209,10 +238,20 @@
 			);
 		}
 
+		& > :not(.sonic-led) {
+			filter: var(--_sonic-engraving) var(--_sonic-button-legend-glow,);
+		}
+
+		& > :not(svg, .sonic-led) {
+			padding-inline: calc(var(--_sonic-button-size) * var(--_sonic-button-padding-ratio));
+			font-size: calc(var(--_sonic-button-size) * var(--_sonic-button-font-ratio));
+			line-height: 1;
+			white-space: nowrap;
+		}
+
 		& > svg {
 			inline-size: calc(var(--_sonic-button-size) * var(--_sonic-button-icon-ratio));
 			block-size: calc(var(--_sonic-button-size) * var(--_sonic-button-icon-ratio));
-			filter: var(--_sonic-engraving);
 			mask-image: linear-gradient(
 				var(--_sonic-light-fall),
 				#000 15%,
@@ -222,30 +261,18 @@
 		}
 	}
 
+	.sonic-button-cap:has(> :not(svg, .sonic-led)) {
+		position: relative;
+		inset: auto;
+		block-size: calc(var(--_sonic-button-size) - 2 * var(--_sonic-button-gap));
+		margin: var(--_sonic-button-gap);
+	}
+
 	.sonic-button-cap:has(> .sonic-led) > svg {
 		inline-size: calc(var(--_sonic-button-size) * var(--_sonic-button-led-icon-ratio));
 		block-size: calc(var(--_sonic-button-size) * var(--_sonic-button-led-icon-ratio));
 	}
 
-	/* fallow-ignore-next-line code-duplication -- one pressed state across the cap's parts */
-	.sonic-button:is(
-			[aria-pressed='true'],
-			[aria-expanded='true'],
-			:where([momentary]:state(pressed)) > *
-		)
-		.sonic-button-cap
-		> svg {
-		filter: var(--_sonic-engraving) var(--_sonic-legend-glow);
-	}
-
-	/* fallow-ignore-next-line code-duplication -- one pressed state across the cap's parts */
-	.sonic-button:is(
-			[aria-pressed='true'],
-			[aria-expanded='true'],
-			:where([momentary]:state(pressed)) > *
-		)
-		.sonic-button-cap
-		> [data-sonic-when='released'],
 	.sonic-button:not(
 			[aria-pressed='true'],
 			[aria-expanded='true'],
@@ -274,28 +301,9 @@
 	}
 
 	@media (forced-colors: active) {
-		.sonic-button-cap > svg {
+		.sonic-button-cap > :not(.sonic-led) {
 			filter: none;
 			mask: none;
-		}
-
-		/* fallow-ignore-next-line code-duplication -- one pressed state across the cap's parts */
-		.sonic-button:is(
-			[aria-pressed='true'],
-			[aria-expanded='true'],
-			:where([momentary]:state(pressed)) > *
-		) {
-			--_sonic-skirt: var(--_sonic-lit);
-			--_sonic-face: var(--_sonic-lit);
-			--_sonic-ink: HighlightText;
-
-			&:is(:disabled, [aria-disabled='true']) {
-				--_sonic-ink: ButtonFace;
-			}
-
-			& .sonic-button-cap > svg {
-				filter: none;
-			}
 		}
 	}
 }

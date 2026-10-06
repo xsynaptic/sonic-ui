@@ -33,7 +33,12 @@
 			calc(0.03 * var(--_sonic-relief))
 		);
 		--_sonic-segmented-press-scale: var(--sonic-segmented-press-scale, 0.985);
+		--_sonic-segmented-latched-scale: var(
+			--sonic-segmented-latched-scale,
+			var(--_sonic-segmented-press-scale)
+		);
 		--_sonic-segmented-font-ratio: var(--sonic-segmented-font-ratio, 0.34);
+		--_sonic-segmented-padding-ratio: var(--sonic-segmented-padding-ratio, 0.25);
 		--_sonic-segmented-icon-ratio: var(--sonic-segmented-icon-ratio, 0.5);
 		--_sonic-unit: calc(var(--_sonic-segmented-size) / 32);
 		--_sonic-segmented-corner: calc(
@@ -83,8 +88,12 @@
 	.sonic-segmented-option:where([data-sonic-pressed]):not(:disabled),
 	.sonic-segmented-option[aria-checked='true'] {
 		--_sonic-keycap-shift: calc(var(--_sonic-keycap-depth) / 2);
-		--_sonic-keycap-scale: var(--_sonic-segmented-press-scale);
+		--_sonic-keycap-scale: var(--_sonic-segmented-latched-scale);
 		--_sonic-keycap-drop: var(--_sonic-press-drop);
+	}
+
+	.sonic-segmented-option:where([data-sonic-pressed]):not(:disabled) {
+		--_sonic-keycap-scale: var(--_sonic-segmented-press-scale);
 	}
 
 	.sonic-segmented-option[aria-checked='true'] {
@@ -143,7 +152,7 @@
 		);
 
 		position: relative;
-		padding-inline: calc(var(--_sonic-segmented-size) * 0.25);
+		padding-inline: calc(var(--_sonic-segmented-size) * var(--_sonic-segmented-padding-ratio));
 
 		& > * {
 			filter: var(--_sonic-engraving);

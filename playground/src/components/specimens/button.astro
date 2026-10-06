@@ -43,7 +43,7 @@ const hotCues = ['oklch(76.9% 0.165 70deg)', '#22c55e', '#38bdf8', '#e879f9'];
 			<sonic-button
 				aria-label={`Hot cue ${String(index + 1)}`}
 				armed
-				class="font-mono text-[0.625rem]"
+				class="font-mono"
 				latching
 				pressed={index === 1 || undefined}
 				style={{ '--sonic-lit': colour }}
@@ -51,6 +51,23 @@ const hotCues = ['oklch(76.9% 0.165 70deg)', '#22c55e', '#38bdf8', '#e879f9'];
 				<span aria-hidden="true">{index + 1}</span>
 			</sonic-button>
 		))}
+	</Cell>
+	<Cell id="button-labels" isWide={true} label="Labels">
+		<sonic-button latching pressed>
+			<span>Shuffle</span>
+		</sonic-button>
+		<sonic-button>
+			<span>Clear</span>
+		</sonic-button>
+		<sonic-button
+			class="[--sonic-button-face-radius-ratio:0.5] [--sonic-button-font-ratio:0.6] [--sonic-button-padding-ratio:0.5] [--sonic-button-radius-ratio:0.5] [--sonic-button-size:1.25rem]"
+			latching
+		>
+			<span>Shuffle</span>
+		</sonic-button>
+		<sonic-button class="[--sonic-button-face-radius-ratio:0.5] [--sonic-button-font-ratio:0.6] [--sonic-button-padding-ratio:0.5] [--sonic-button-radius-ratio:0.5] [--sonic-button-size:1.25rem]">
+			<span>Clear</span>
+		</sonic-button>
 	</Cell>
 	<Cell id="button-loading" label="Loading">
 		<sonic-button aria-labelledby="button-loading" busy>

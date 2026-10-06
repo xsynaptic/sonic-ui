@@ -31,6 +31,7 @@ test('a button is lit while expanded, as a latched one is', async ({ page }) => 
 
 test.describe('forced colours', () => {
 	test.use({ forcedColors: 'active' });
+	test.skip(({ browserName }) => browserName === 'webkit', 'WebKit has no forced-colours mode');
 
 	test('a disabled button takes the system colour over the disabled ink', async ({ page }) => {
 		const colours = await page.locator('#next').evaluate((element) => {
