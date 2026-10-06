@@ -1,3 +1,5 @@
+@layer sonic.material, sonic.control;
+
 @property --_sonic-slider-size {
 	syntax: '<length>';
 	inherits: true;
@@ -22,7 +24,7 @@
 	initial-value: 0;
 }
 
-@layer sonic {
+@layer sonic.control {
 	:is(sonic-slider, .sonic-slider) {
 		--_sonic-slider-size: var(--sonic-slider-size, 2rem);
 		--_sonic-slider-length: var(--sonic-slider-length, 8rem);

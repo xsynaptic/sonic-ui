@@ -1,3 +1,5 @@
+@layer sonic.material, sonic.control;
+
 @property --_sonic-dial-size {
 	syntax: '<length>';
 	inherits: true;
@@ -16,7 +18,7 @@
 	initial-value: 160px;
 }
 
-@layer sonic {
+@layer sonic.control {
 	:is(sonic-dial, .sonic-dial) {
 		--_sonic-dial-size: var(--sonic-dial-size, 2.5rem);
 	}

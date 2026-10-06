@@ -103,7 +103,7 @@ export abstract class SonicDisplayElement<
 			},
 			signal,
 		});
-		this.checkStyles(control, this.sheet);
+		this.checkStyles(control, this.sheet, ['glass', 'pane', 'well']);
 		this.#syncFill = bindFill(control, this.sizeProperty, signal);
 		this.#syncFill(this.fill);
 	}

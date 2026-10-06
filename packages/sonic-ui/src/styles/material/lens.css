@@ -1,0 +1,11 @@
+@layer sonic.material {
+	:is(.sonic-led, .sonic-meter) {
+		--_sonic-lens-glint: linear-gradient(
+			var(--_sonic-light-fall),
+			rgb(255 255 255 / calc(0.1 * var(--_sonic-relief))),
+			transparent 60%
+		);
+		--_sonic-lens-glass: var(--sonic-lens, color-mix(in oklab, var(--_sonic-unlit) 60%, #000));
+		--_sonic-lens: var(--_sonic-lens-glint), var(--_sonic-lens-glass);
+	}
+}

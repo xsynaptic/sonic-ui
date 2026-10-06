@@ -26,7 +26,11 @@ export class SonicSegmented extends SonicRadioGroupElement {
 
 	protected override connect(signal: AbortSignal): void {
 		super.connect(signal);
-		this.checkStyles(this.group, 'segmented.css');
+		this.checkStyles(this.group, 'segmented.css', [
+			'well',
+			'keycap',
+			['cap', '.sonic-segmented-option'],
+		]);
 	}
 
 	protected renderOption(): HTMLButtonElement {

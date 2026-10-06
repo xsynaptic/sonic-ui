@@ -1,10 +1,12 @@
+@layer sonic.material, sonic.control;
+
 @property --_sonic-envelope-size {
 	syntax: '<length>';
 	inherits: true;
 	initial-value: 80px;
 }
 
-@layer sonic {
+@layer sonic.control {
 	:is(sonic-envelope, .sonic-envelope) {
 		--_sonic-envelope-size: var(--sonic-envelope-size, 5rem);
 		--_sonic-envelope-aspect-ratio: var(--sonic-envelope-aspect-ratio, 3);

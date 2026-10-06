@@ -204,7 +204,7 @@ export class SonicMeter extends SonicElement {
 		this.#renderSegments();
 		this.#render(now);
 		this.#schedule(now);
-		this.checkStyles(this.#meter, 'meter.css');
+		this.checkStyles(this.#meter, 'meter.css', ['lens', 'groove']);
 		signal.addEventListener(
 			'abort',
 			() => {

@@ -1,8 +1,8 @@
 ---
 import Document from '#components/document.astro';
-import { solos } from '#scripts/solos.ts';
+import { sheetMaterial, solos } from '#scripts/solos.ts';
 
-const styles = import.meta.glob<string>('../../../../../packages/sonic-ui/dist/styles/*.css', {
+const styles = import.meta.glob<string>('../../../../../packages/sonic-ui/dist/styles/**/*.css', {
 	eager: true,
 	import: 'default',
 	query: '?raw',
@@ -17,8 +17,11 @@ const entry = solos[solo];
 
 if (!entry) throw new Error(`No solo named ${solo}`);
 
-const { markup, sheets } = entry;
-const css = ['material', ...sheets]
+const { markup, sheets, warns } = entry;
+// The left-out sheet's material still loads, so the warning names that sheet alone
+const drawn = warns === undefined ? sheets : [...sheets, warns.replace('.css', '')];
+const material = new Set(drawn.flatMap((sheet) => sheetMaterial[sheet] ?? []));
+const css = [...[...material].map((name) => `material/${name}`), ...sheets]
 	.map((sheet) => styles[`../../../../../packages/sonic-ui/dist/styles/${sheet}.css`])
 	.join('\n');
 

@@ -1,10 +1,12 @@
+@layer sonic.material, sonic.control;
+
 @property --_sonic-ring-size {
 	syntax: '<length>';
 	inherits: true;
 	initial-value: 40px;
 }
 
-@layer sonic {
+@layer sonic.control {
 	.sonic-ring {
 		--_sonic-ring-size: var(--sonic-ring-size, 2.5rem);
 		--_sonic-ring-ratio: var(--sonic-ring-ratio, 0.075);

@@ -1,0 +1,43 @@
+@property --_sonic-detent-zone {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 8px;
+}
+
+@layer sonic.material {
+	:is(.sonic-dial, .sonic-number, .sonic-slider, .sonic-waveform, .sonic-wavestrip) {
+		--_sonic-detent-zone: var(--sonic-detent-zone, 8px);
+	}
+
+	:is(
+		.sonic-dial-entry,
+		.sonic-number-entry,
+		.sonic-slider-entry,
+		.sonic-waveform-entry,
+		.sonic-wavestrip-entry
+	) {
+		inline-size: 6ch;
+		padding: 0;
+		font: inherit;
+		color: inherit;
+		text-align: center;
+		background: transparent;
+		border: 0;
+
+		&::selection {
+			color: var(--_sonic-lit);
+			background: transparent;
+		}
+
+		&:focus-visible {
+			outline: 2px solid transparent;
+			outline-offset: -2px;
+		}
+
+		@supports (field-sizing: content) {
+			inline-size: auto;
+			min-inline-size: 3ch;
+			field-sizing: content;
+		}
+	}
+}

@@ -27,6 +27,39 @@ A display takes its signal as data: `spectrum.analyser = node`, or `spectrum.pus
 
 Under a hydrating framework, register the definitions once hydration is done (in React, from an effect); a control owns one child of its host and uses only the children it documents.
 
+## Loading less
+
+`controls.css` loads everything. To load less, import each control's sheet and the material sheets it needs, in any order:
+
+```css
+@import '@xsynaptic/sonic-ui/material/core.css';
+@import '@xsynaptic/sonic-ui/material/lens.css';
+@import '@xsynaptic/sonic-ui/material/groove.css';
+@import '@xsynaptic/sonic-ui/meter.css';
+```
+
+| Sheet           | Needs from `material/`                          |
+| --------------- | ----------------------------------------------- |
+| `button.css`    | core, cap, well, keycap                         |
+| `dial.css`      | core, cap, glass, readout, value, arc, scale    |
+| `envelope.css`  | core, glass, pane, well, readout, bracket       |
+| `led.css`       | core, lens                                      |
+| `meter.css`     | core, lens, groove                              |
+| `number.css`    | core, cap, glass, pane, well, value             |
+| `panel.css`     | core                                            |
+| `ring.css`      | core, arc                                       |
+| `screen.css`    | core, glass, pane, well                         |
+| `segmented.css` | core, cap, well, keycap                         |
+| `slider.css`    | core, cap, glass, readout, value, groove, scale |
+| `spectrum.css`  | core, glass, pane, well                         |
+| `switch.css`    | core, cap                                       |
+| `toggle.css`    | core, cap, well, keycap                         |
+| `waveform.css`  | core, cap, glass, pane, well, readout, value    |
+| `wavestrip.css` | core, cap, glass, pane, well, readout, value    |
+| `xy.css`        | core, cap, glass, pane, well, readout, bracket  |
+
+An LED inside a control also needs `led.css`, and a button inside a ring needs `button.css`. The development build warns about a missing sheet.
+
 ## Wave controls
 
 `<sonic-wavestrip>` is the overview of a track, scrubbed to seek; `<sonic-waveform>` is the close-up that scrolls under a fixed playhead. Both are value controls in seconds that take their data as properties (`peaks`, `markers`); the types list the rest.

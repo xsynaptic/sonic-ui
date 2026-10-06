@@ -1,0 +1,10 @@
+@layer sonic.material {
+	:is(.sonic-meter, .sonic-slider) {
+		--_sonic-groove:
+			inset var(--_sonic-cast-x) var(--_sonic-cast-y) calc(0.75 * var(--_sonic-unit))
+				rgb(0 0 0 / calc(0.55 * var(--_sonic-relief))),
+			inset 0 0 calc(0.5 * var(--_sonic-unit)) rgb(0 0 0 / calc(0.3 * var(--_sonic-relief))),
+			calc(0.5 * var(--_sonic-cast-x)) calc(0.5 * var(--_sonic-cast-y)) 0
+				rgb(255 255 255 / calc(0.06 * var(--_sonic-relief)));
+	}
+}

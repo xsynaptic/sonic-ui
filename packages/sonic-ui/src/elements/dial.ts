@@ -87,7 +87,13 @@ export class SonicDial extends SonicValueElement {
 			signal,
 		);
 		this.render();
-		this.checkStyles(dial, 'dial.css');
+		this.checkStyles(dial, 'dial.css', [
+			'cap',
+			'readout',
+			'value',
+			['glass', '.sonic-dial-readout'],
+			['arc', '.sonic-dial-ring'],
+		]);
 		this.bindGestures(dial, signal, () => ({
 			position: (event) => -event.clientY,
 			travelPx: this.travelPx(dial, '--_sonic-dial-travel'),

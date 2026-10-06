@@ -1,0 +1,21 @@
+@layer sonic.material {
+	/* On the parts, since a recipe's `var()`s resolve where it is declared */
+
+	.sonic-dial-ring,
+	.sonic-dial-modulation,
+	.sonic-ring::before {
+		--_sonic-arc-mask: radial-gradient(
+			closest-side,
+			transparent calc(100% - var(--_sonic-arc-width) - 0.5px),
+			#000 calc(100% - var(--_sonic-arc-width)),
+			#000 calc(100% - var(--_sonic-arc-inset) - 0.5px),
+			transparent calc(100% - var(--_sonic-arc-inset))
+		);
+		--_sonic-arc-shade: radial-gradient(
+			closest-side,
+			rgb(0 0 0 / calc(0.55 * var(--_sonic-relief))) calc(100% - var(--_sonic-arc-width)),
+			transparent calc(100% - var(--_sonic-arc-width) * 0.4),
+			rgb(0 0 0 / calc(0.25 * var(--_sonic-relief))) 100%
+		);
+	}
+}

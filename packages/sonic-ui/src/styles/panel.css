@@ -1,3 +1,5 @@
+@layer sonic.material, sonic.control;
+
 @property --_sonic-panel-depth {
 	syntax: '<length>';
 	inherits: true;
@@ -10,7 +12,7 @@
 	initial-value: 12px;
 }
 
-@layer sonic {
+@layer sonic.control {
 	:is(.sonic-panel, .sonic-panel-title, .sonic-panel-rule) {
 		--_sonic-panel-line: color-mix(in oklab, currentcolor 20%, transparent);
 	}

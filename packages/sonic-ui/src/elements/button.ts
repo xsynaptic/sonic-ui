@@ -169,7 +169,7 @@ export class SonicButton extends SonicFormElement {
 			signal,
 		);
 		this.render();
-		this.checkStyles(button, 'button.css');
+		this.checkStyles(button, 'button.css', ['cap', 'well', 'keycap']);
 
 		button.addEventListener(
 			'click',

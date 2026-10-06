@@ -1,0 +1,30 @@
+@layer sonic.material {
+	:is(.sonic-dial-scale, .sonic-slider-scale) {
+		position: absolute;
+		inset: 0;
+		line-height: 1;
+		white-space: nowrap;
+		pointer-events: none;
+
+		& > * {
+			position: absolute;
+		}
+
+		& svg {
+			display: block;
+			inline-size: 1em;
+			block-size: 1em;
+		}
+
+		& > .sonic-scale-tick {
+			background: var(--sonic-scale, var(--_sonic-etch));
+		}
+	}
+
+	@media (forced-colors: active) {
+		:is(.sonic-dial-scale, .sonic-slider-scale) > .sonic-scale-tick {
+			forced-color-adjust: none;
+			background: var(--_sonic-etch);
+		}
+	}
+}

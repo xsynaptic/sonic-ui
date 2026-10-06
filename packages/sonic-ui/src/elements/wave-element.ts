@@ -107,7 +107,7 @@ export abstract class SonicWaveElement<
 			signal,
 		});
 		this.render();
-		this.checkStyles(control, this.sheet);
+		this.checkStyles(control, this.sheet, ['cap', 'glass', 'pane', 'well', 'readout', 'value']);
 		this.#syncFill = bindFill(control, this.sizeProperty, signal);
 		this.#syncFill(this.fill);
 	}

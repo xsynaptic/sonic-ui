@@ -190,4 +190,14 @@ The words this library uses for its controls, their parts and their values. Wher
 
 **Relief**: How strongly the light models a surface: its bevels, ridges, grooves, sheen and cast shadows. `--sonic-relief` scales it from 0, flat, to 1. _Avoid_: Depth (one part's own token), elevation, shadow
 
+**Material**: The shared look every control is drawn from. It ships as material sheets, one per shared thing such as the keycap or the glass, beside each control's own sheet. _Avoid_: Base styles, theme; part, partial, recipe or module for a material sheet
+
+**Core**: The material sheet every control needs: the light, the relief and the lit and unlit colours. _Avoid_: Base, surface
+
+**Pane**: A box of glass that a control or a display draws on. _Avoid_: Cell, glass (that is the material), screen (that is the display)
+
+**Keycap**: The modelled cap of a button, an option or a toggle, which goes down into its well. The word names the material sheet; the part is still a cap. _Avoid_: "key" for a button
+
+**Arc**: The curved band a ring is drawn with. The word names the material sheet; the part is still a ring. _Avoid_: "arc" for the part
+
 **Mirror**: The copy a control makes of its own light-DOM children in order to draw them inside itself. _Avoid_: Clone, slot content

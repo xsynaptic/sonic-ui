@@ -1,10 +1,12 @@
+@layer sonic.material, sonic.control;
+
 @property --_sonic-led-size {
 	syntax: '<length>';
 	inherits: true;
 	initial-value: 8px;
 }
 
-@layer sonic {
+@layer sonic.control {
 	.sonic-led {
 		--_sonic-led-size: var(--sonic-led-size, 0.5rem);
 		--_sonic-led-lens-ratio: var(--sonic-led-lens-ratio, calc(0.8 - 0.175 * var(--_sonic-relief)));

@@ -1,3 +1,5 @@
+@layer sonic.material, sonic.control;
+
 @property --_sonic-number-size {
 	syntax: '<length>';
 	inherits: true;
@@ -10,7 +12,7 @@
 	initial-value: 160px;
 }
 
-@layer sonic {
+@layer sonic.control {
 	:is(sonic-number, .sonic-number) {
 		--_sonic-number-size: var(--sonic-number-size, 1.75rem);
 		--_sonic-number-aspect-ratio: var(--sonic-number-aspect-ratio, 3);

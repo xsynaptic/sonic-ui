@@ -167,7 +167,13 @@ export class SonicSlider extends SonicValueElement {
 			},
 		});
 		this.render();
-		this.checkStyles(slider, 'slider.css');
+		this.checkStyles(slider, 'slider.css', [
+			'cap',
+			'readout',
+			'value',
+			'groove',
+			['glass', '.sonic-slider-readout'],
+		]);
 		this.bindGestures(slider, signal, (event) => {
 			const axis = this.#axis(slider, cap);
 			if (event.target instanceof Node && cap.contains(event.target)) return axis;

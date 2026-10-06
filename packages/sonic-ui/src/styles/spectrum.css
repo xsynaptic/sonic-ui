@@ -1,3 +1,5 @@
+@layer sonic.material, sonic.control;
+
 @property --_sonic-spectrum-size {
 	syntax: '<length>';
 	inherits: true;
@@ -46,7 +48,7 @@
 	initial-value: -3;
 }
 
-@layer sonic {
+@layer sonic.control {
 	:is(sonic-spectrum, .sonic-spectrum) {
 		--_sonic-spectrum-size: var(--sonic-spectrum-size, 6rem);
 		--_sonic-spectrum-length: var(--sonic-spectrum-length, 20rem);

@@ -55,6 +55,7 @@
 		},
 		"./controls.css": "./dist/styles/controls.css",
 		"./material.css": "./dist/styles/material.css",
+		"./material/*.css": "./dist/styles/material/*.css",
 		"./button.css": "./dist/styles/button.css",
 		"./dial.css": "./dist/styles/dial.css",
 		"./envelope.css": "./dist/styles/envelope.css",

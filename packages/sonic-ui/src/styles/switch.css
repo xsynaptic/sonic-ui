@@ -1,3 +1,5 @@
+@layer sonic.material, sonic.control;
+
 @property --_sonic-switch-size {
 	syntax: '<length>';
 	inherits: true;
@@ -10,7 +12,7 @@
 	initial-value: 0;
 }
 
-@layer sonic {
+@layer sonic.control {
 	:is(sonic-switch, .sonic-switch) {
 		--_sonic-switch-size: var(--sonic-switch-size, 2rem);
 	}

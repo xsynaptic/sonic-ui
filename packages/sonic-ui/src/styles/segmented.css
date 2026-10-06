@@ -1,10 +1,12 @@
+@layer sonic.material, sonic.control;
+
 @property --_sonic-segmented-size {
 	syntax: '<length>';
 	inherits: true;
 	initial-value: 32px;
 }
 
-@layer sonic {
+@layer sonic.control {
 	:is(sonic-segmented, .sonic-segmented) {
 		--_sonic-segmented-size: var(--sonic-segmented-size, 2rem);
 	}

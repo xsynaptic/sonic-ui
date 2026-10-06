@@ -1,3 +1,5 @@
+@layer sonic.material, sonic.control;
+
 @property --_sonic-button-size {
 	syntax: '<length>';
 	inherits: true;
@@ -10,7 +12,7 @@
 	}
 }
 
-@layer sonic {
+@layer sonic.control {
 	:is(sonic-button, .sonic-button) {
 		--_sonic-button-size: var(--sonic-button-size, 2rem);
 		--_sonic-button-aspect-ratio: var(--sonic-button-aspect-ratio, 1);

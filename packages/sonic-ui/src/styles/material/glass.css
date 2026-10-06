@@ -1,0 +1,62 @@
+@layer sonic.material {
+	:is(
+		.sonic-dial-readout,
+		.sonic-envelope,
+		.sonic-envelope-readout,
+		.sonic-number,
+		.sonic-screen,
+		.sonic-slider-readout,
+		.sonic-spectrum,
+		.sonic-waveform,
+		.sonic-waveform-readout,
+		.sonic-wavestrip,
+		.sonic-wavestrip-readout,
+		.sonic-xy,
+		.sonic-xy-readout
+	) {
+		--_sonic-glass-slab: color-mix(in oklab, var(--_sonic-unlit) 45%, #000);
+		--_sonic-glass-base: var(
+			--sonic-glass,
+			color-mix(
+				in oklab,
+				var(--_sonic-glass-slab) calc(100% * var(--_sonic-relief)),
+				light-dark(oklch(97% 0.003 286deg), var(--_sonic-glass-slab))
+			)
+		);
+		--_sonic-glass: var(--_sonic-glass-own, var(--_sonic-glass-base));
+		--_sonic-glass-fill: radial-gradient(
+				closest-side,
+				color-mix(
+					in oklab,
+					var(--_sonic-glass) calc(100% - 12% * var(--_sonic-glass-depth, var(--_sonic-relief))),
+					#fff
+				),
+				var(--_sonic-glass)
+			)
+			var(--_sonic-glass);
+		--_sonic-glass-text: var(
+			--sonic-glass-text,
+			color-mix(
+				in oklab,
+				var(--_sonic-glass) 20%,
+				oklch(from var(--_sonic-glass) clamp(0, (0.6 - l) * 1000, 1) 0 0deg / 100%)
+			)
+		);
+
+		/* Invalid with the token unset, so the default takes over */
+		--_sonic-glass-edge-colour: var(--_sonic-glass-edge-colour-own, var(--sonic-glass-edge));
+		--_sonic-glass-edge-width: var(--_sonic-glass-edge-width-own, var(--sonic-glass-edge-width));
+		--_sonic-glass-edge-set: var(--_sonic-glass-edge-width, 1px) solid
+			var(--_sonic-glass-edge-colour);
+		--_sonic-glass-edge: var(
+			--_sonic-glass-edge-set,
+			var(--_sonic-glass-edge-width, calc(1px * (1 - var(--_sonic-relief)))) solid
+				color-mix(in oklab, currentcolor 35%, transparent)
+		);
+
+		/* Glass is forced to Canvas like the page, so only a border shows its edge */
+		@media (forced-colors: active) {
+			--_sonic-glass-edge: 1px solid CanvasText;
+		}
+	}
+}

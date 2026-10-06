@@ -1,0 +1,95 @@
+@layer sonic.material {
+	:is(.sonic-button, .sonic-segmented, .sonic-toggle) {
+		--_sonic-well-floor: var(
+			--sonic-well,
+			linear-gradient(
+				var(--_sonic-light-fall),
+				color-mix(
+					in oklab,
+					color-mix(in oklab, var(--_sonic-unlit) 55%, #000) calc(100% * var(--_sonic-relief)),
+					transparent
+				),
+				color-mix(
+					in oklab,
+					color-mix(in oklab, var(--_sonic-unlit) 85%, #000) calc(100% * var(--_sonic-relief)),
+					transparent
+				)
+			)
+		);
+		--_sonic-engraving: drop-shadow(
+				calc(-0.4 * var(--_sonic-cast-x)) calc(-0.4 * var(--_sonic-cast-y))
+					calc(0.4 * var(--_sonic-unit)) rgb(0 0 0 / calc(0.3 * var(--_sonic-relief)))
+			)
+			drop-shadow(
+				calc(0.3 * var(--_sonic-cast-x)) calc(0.3 * var(--_sonic-cast-y)) 0
+					rgb(255 255 255 / calc(0.07 * var(--_sonic-relief)))
+			);
+	}
+
+	/* On the option rather than the strip, where forced colours clear the drop shade */
+
+	:is(.sonic-button, .sonic-segmented-option, .sonic-toggle) {
+		--_sonic-press-drop: calc(0.5 * var(--_sonic-cast-x)) calc(0.5 * var(--_sonic-cast-y))
+			var(--_sonic-unit) var(--_sonic-drop-shade);
+		--_sonic-keycap-shift: calc(var(--_sonic-keycap-depth) / -2);
+		--_sonic-keycap-scale: 1;
+		--_sonic-keycap-drop: calc(1.5 * var(--_sonic-cast-x)) calc(1.5 * var(--_sonic-cast-y))
+			calc(2 * var(--_sonic-unit)) var(--_sonic-drop-shade);
+		--_sonic-keycap-glow: transparent;
+		--_sonic-keycap-lit-glow: color-mix(
+			in oklab,
+			var(--_sonic-lit) calc(15% * var(--_sonic-relief)),
+			transparent
+		);
+		--_sonic-legend-glow: drop-shadow(
+			0 0 var(--_sonic-unit)
+				color-mix(in oklab, var(--_sonic-lit) calc(24% * var(--_sonic-relief)), transparent)
+		);
+		--_sonic-legend-lit-from: var(--_sonic-lit);
+		--_sonic-legend-lit: color-mix(
+			in oklab,
+			var(--sonic-cap) 0%,
+			oklch(
+				from
+					color-mix(
+						in oklab,
+						oklch(from var(--_sonic-ink) l c h / clamp(0, (0.6 - l) * 1000, 1)),
+						oklch(from var(--_sonic-legend-lit-from) l c h / 0.1%)
+					)
+					l c h / 100%
+			)
+		);
+	}
+
+	/* Each sheet maps its own depth, corner, bevel and face corner onto the `keycap` tokens */
+
+	:is(.sonic-button-cap, .sonic-segmented-cap, .sonic-toggle-cap) {
+		display: grid;
+		place-items: center;
+		background: var(--_sonic-skirt);
+		border-radius: var(--_sonic-keycap-corner);
+		box-shadow:
+			var(--_sonic-keycap-drop),
+			var(--_sonic-rim),
+			0 0 0 var(--_sonic-rim-width) var(--_sonic-blank-edge, transparent),
+			var(--_sonic-focus-shadow);
+		scale: var(--_sonic-keycap-scale);
+		translate: 0 var(--_sonic-keycap-shift);
+		transition: var(--_sonic-press-transition);
+
+		&::before {
+			position: absolute;
+			inset: var(--_sonic-keycap-bevel);
+			content: '';
+			background:
+				radial-gradient(closest-side, var(--_sonic-keycap-glow), transparent), var(--_sonic-sheen),
+				var(--_sonic-face);
+			border-radius: var(--_sonic-keycap-face-corner);
+			box-shadow: var(--_sonic-face-shadow);
+		}
+
+		& > * {
+			position: relative;
+		}
+	}
+}

@@ -1,3 +1,5 @@
+@layer sonic.material, sonic.control;
+
 @property --_sonic-meter-size {
 	syntax: '<length>';
 	inherits: true;
@@ -16,7 +18,7 @@
 	initial-value: 4px;
 }
 
-@layer sonic {
+@layer sonic.control {
 	:is(sonic-meter, .sonic-meter) {
 		--_sonic-meter-size: var(--sonic-meter-size, 0.5rem);
 		--_sonic-meter-length: var(--sonic-meter-length, 8rem);

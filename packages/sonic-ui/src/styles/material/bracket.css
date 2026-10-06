@@ -1,0 +1,31 @@
+@layer sonic.material {
+	.sonic-xy-bracket,
+	.sonic-envelope-bracket::before {
+		box-sizing: border-box;
+		inline-size: var(--_sonic-bracket-size);
+		block-size: var(--_sonic-bracket-size);
+		pointer-events: none;
+		content: '';
+		border: max(1px, 0.06 * var(--_sonic-bracket-size)) solid
+			color-mix(in oklab, var(--_sonic-glass-text) 45%, transparent);
+		border-radius: 50%;
+		opacity: 0;
+		mask: conic-gradient(
+			from 10deg,
+			#000 0 70deg,
+			transparent 0 180deg,
+			#000 0 250deg,
+			transparent 0
+		);
+		scale: 0.6;
+		transition:
+			opacity 120ms ease-out,
+			scale 120ms ease-out;
+	}
+
+	:state(dragging) > * > .sonic-xy-bracket,
+	:state(dragging) > * > .sonic-envelope-bracket::before {
+		opacity: calc(1 - var(--_sonic-relief));
+		scale: 1;
+	}
+}

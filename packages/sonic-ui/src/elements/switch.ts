@@ -68,7 +68,7 @@ export class SonicSwitch extends SonicPositionGroupElement {
 		const group = this.group;
 
 		super.connect(signal);
-		this.checkStyles(group, 'switch.css');
+		this.checkStyles(group, 'switch.css', ['cap']);
 
 		this.bare.addEventListener(
 			'click',

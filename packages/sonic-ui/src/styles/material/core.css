@@ -1,0 +1,103 @@
+@property --_sonic-reveal-delay {
+	syntax: '<time>';
+	inherits: true;
+	initial-value: 250ms;
+}
+
+@layer sonic.material {
+	:is(
+		.sonic-dial,
+		.sonic-dial-readout,
+		.sonic-envelope,
+		.sonic-envelope-readout,
+		.sonic-button,
+		.sonic-led,
+		.sonic-switch,
+		.sonic-toggle,
+		.sonic-meter,
+		.sonic-number,
+		.sonic-panel,
+		.sonic-ring,
+		.sonic-screen,
+		.sonic-segmented,
+		.sonic-slider,
+		.sonic-slider-readout,
+		.sonic-spectrum,
+		.sonic-waveform,
+		.sonic-waveform-readout,
+		.sonic-wavestrip,
+		.sonic-wavestrip-readout,
+		.sonic-xy,
+		.sonic-xy-readout
+	) {
+		--_sonic-unlit: var(--sonic-unlit, oklch(27.4% 0.005 286deg));
+		--_sonic-relief: var(--sonic-relief, 0);
+		--_sonic-light-tilt: var(--sonic-light-tilt, 17deg);
+		--_sonic-light-fall: calc(180deg - var(--_sonic-light-tilt));
+		--_sonic-cast-x: calc(sin(var(--_sonic-light-tilt)) * var(--_sonic-unit));
+		--_sonic-cast-y: calc(cos(var(--_sonic-light-tilt)) * var(--_sonic-unit));
+		--_sonic-snap: 1px;
+
+		@media (resolution >= 2dppx) {
+			--_sonic-snap: 0.5px;
+		}
+
+		@media (resolution >= 3dppx) {
+			--_sonic-snap: calc(1px / 3);
+		}
+	}
+
+	:is(
+		.sonic-dial,
+		.sonic-envelope,
+		.sonic-button,
+		.sonic-led,
+		.sonic-meter,
+		.sonic-number,
+		.sonic-ring,
+		.sonic-segmented-option,
+		.sonic-slider,
+		.sonic-spectrum,
+		.sonic-toggle,
+		.sonic-waveform,
+		.sonic-wavestrip,
+		.sonic-xy
+	) {
+		--_sonic-lit: var(--sonic-lit, oklch(76.9% 0.165 70deg));
+	}
+
+	:is(.sonic-led, .sonic-meter, .sonic-spectrum, .sonic-toggle) {
+		--_sonic-lit-ok: var(--sonic-lit-ok, oklch(79% 0.2 150deg));
+		--_sonic-lit-warning: var(--sonic-lit-warning, oklch(70.5% 0.187 48deg));
+		--_sonic-lit-danger: var(--sonic-lit-danger, oklch(63.7% 0.208 25deg));
+	}
+
+	:is(
+		.sonic-dial,
+		.sonic-envelope,
+		.sonic-number,
+		.sonic-slider,
+		.sonic-waveform,
+		.sonic-wavestrip,
+		.sonic-xy
+	) {
+		--_sonic-reveal-delay: var(--sonic-reveal-delay, 250ms);
+	}
+
+	@media (forced-colors: active) {
+		:is(
+			.sonic-dial,
+			.sonic-button,
+			.sonic-led,
+			.sonic-meter,
+			.sonic-number,
+			.sonic-ring,
+			.sonic-segmented-option,
+			.sonic-slider,
+			.sonic-toggle
+		) {
+			--_sonic-lit: Highlight;
+			--_sonic-unlit: GrayText;
+		}
+	}
+}

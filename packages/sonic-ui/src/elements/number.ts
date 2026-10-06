@@ -47,7 +47,7 @@ export class SonicNumber extends SonicValueElement {
 
 		this.keepControl(number, signal);
 		this.render();
-		this.checkStyles(number, 'number.css');
+		this.checkStyles(number, 'number.css', ['cap', 'glass', 'pane', 'well', 'value']);
 		this.bindGestures(number, signal, () => ({
 			position: (event) => -event.clientY,
 			travelPx: this.travelPx(number, '--_sonic-number-travel'),

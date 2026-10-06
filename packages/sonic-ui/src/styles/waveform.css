@@ -1,3 +1,5 @@
+@layer sonic.material, sonic.control;
+
 @property --_sonic-waveform-size {
 	syntax: '<length>';
 	inherits: true;
@@ -64,7 +66,7 @@
 	initial-value: rgb(200 200 208);
 }
 
-@layer sonic {
+@layer sonic.control {
 	:is(sonic-waveform, .sonic-waveform) {
 		--_sonic-waveform-size: var(--sonic-waveform-size, 6rem);
 		--_sonic-waveform-length: var(--sonic-waveform-length, 20rem);

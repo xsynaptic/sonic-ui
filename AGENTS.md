@@ -4,7 +4,7 @@
 
 Plans in `.claude/tasks/` (gitignored) carry a frontmatter `status`; only `ready` is live work.
 
-Vocabulary: `.claude/glossary.md` defines each control, part and value term and the words it replaces; read it before naming anything.
+Vocabulary: `.claude/glossary.md` defines each control, part and value term and the words it replaces; read it before naming anything. Pick the most accurate name for a new thing. If the glossary already uses or avoids that word, ask which meaning should keep it rather than settling for a weaker name.
 
 ## Public repo
 
@@ -32,7 +32,10 @@ Tokens, hook classes, attributes, events and `:state()` names are the API. Renam
 
 ## Build gotchas
 
-- `material.css` loads once, before any control's sheet; control sheets leave it out.
+- Material sheets (`styles/material/`) sit in `sonic.material` and control sheets in `sonic.control`. Every control sheet opens with `@layer sonic.material, sonic.control;`, so sheets load in any order.
+- Sheets never import each other, because bundlers duplicate a shared import. Only `material.css` and `controls.css` are import lists.
+- Two material sheets never set the same private property on the same class. When one needs a say in another's, it sets a property of its own that the other reads (see `--_sonic-glass-own`).
+- A control's material sheets are listed in its `checkStyles` call, in `sheetMaterial` (`playground/src/scripts/solos.ts`) and in the README table; `solo.spec.ts` fails if a list is short.
 - `sideEffects` lists `./src/define*`; without it the built `define` entries come out empty.
 - Development-only code sits behind `__DEV__`, never `process.env.NODE_ENV`.
 

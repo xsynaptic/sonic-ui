@@ -248,7 +248,7 @@ export class SonicEnvelope extends SonicElement {
 		this.#signal = signal;
 		this.keepControl(envelope, signal);
 		this.#bind();
-		this.checkStyles(envelope, 'envelope.css');
+		this.checkStyles(envelope, 'envelope.css', ['glass', 'pane', 'well', 'readout']);
 		this.#bindPointer(envelope, signal);
 		signal.addEventListener(
 			'abort',

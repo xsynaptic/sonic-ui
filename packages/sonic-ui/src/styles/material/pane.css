@@ -1,0 +1,97 @@
+@keyframes sonic-glass-breathe {
+	to {
+		opacity: calc(0.4 * min(1, var(--_sonic-glass-texture)));
+	}
+}
+
+@layer sonic.material {
+	/* A definite cell, so percentage-sized content fills the glass; a canvas sized to its own box would feed back */
+
+	:is(
+		.sonic-envelope,
+		.sonic-number,
+		.sonic-screen,
+		.sonic-spectrum,
+		.sonic-waveform,
+		.sonic-wavestrip,
+		.sonic-xy
+	) {
+		--_sonic-glass-depth: var(--sonic-glass-depth, var(--_sonic-relief));
+		--_sonic-glass-texture: var(--sonic-glass-texture, var(--_sonic-relief));
+		--_sonic-glass-pitch: max(2px, round(2 * var(--_sonic-unit), 1px));
+
+		position: relative;
+		box-sizing: border-box;
+		display: grid;
+		flex-shrink: 0;
+		grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+		place-items: center;
+		font-family: var(--sonic-glass-font, inherit);
+		color: var(--_sonic-glass-text);
+		user-select: none;
+		background: var(--_sonic-glass-fill);
+		border: var(--_sonic-glass-edge);
+
+		@media (forced-colors: active) {
+			--_sonic-glass-texture: 0;
+		}
+
+		&::after {
+			position: absolute;
+			inset: 0;
+			pointer-events: none;
+			content: '';
+			background:
+				linear-gradient(
+					var(--_sonic-light-fall),
+					rgb(255 255 255 / calc(0.07 * var(--_sonic-glass-depth))),
+					transparent 45%
+				),
+				radial-gradient(
+					farthest-corner,
+					transparent 55%,
+					rgb(0 0 0 / calc(0.4 * var(--_sonic-glass-texture)))
+				),
+				repeating-linear-gradient(
+					to bottom,
+					rgb(0 0 0 / calc(0.025 * var(--_sonic-glass-texture))) 0
+						calc(var(--_sonic-glass-pitch) / 2),
+					transparent 0 var(--_sonic-glass-pitch)
+				);
+			border-radius: inherit;
+			box-shadow:
+				var(--_sonic-well),
+				inset 0 0 calc(3 * var(--_sonic-glass-depth) * var(--_sonic-unit)) rgb(0 0 0 / 45%);
+		}
+
+		@media (forced-colors: none) {
+			/* No var() beside the tile, which would parse the url() again on every style recalculation */
+			&::before {
+				position: absolute;
+				inset: 0;
+				color: color-mix(in oklab, var(--_sonic-glass-text) 7.5%, transparent);
+				pointer-events: none;
+				content: '';
+				background:
+					radial-gradient(closest-side, currentcolor, transparent) no-repeat,
+					url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='128'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.056 -0.01925'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")
+						0 0 / 128px 128px repeat;
+				border-radius: inherit;
+				opacity: min(1, var(--_sonic-glass-texture));
+			}
+
+			@media (prefers-reduced-motion: no-preference) {
+				&:is(:focus-visible, :focus-within)::before,
+				:state(dragging) > &::before {
+					animation: sonic-glass-breathe 3s ease-in-out infinite alternate;
+				}
+
+				@media (hover: hover) {
+					&:hover::before {
+						animation: sonic-glass-breathe 3s ease-in-out infinite alternate;
+					}
+				}
+			}
+		}
+	}
+}

@@ -23,6 +23,7 @@ export default defineConfig([
 		...shared,
 		copy: [
 			{ from: 'src/styles/*.css', to: 'dist/styles' },
+			{ from: 'src/styles/material/*.css', to: 'dist/styles/material' },
 			{ from: 'src/skins/*.css', to: 'dist/skins' },
 		],
 		define: { __DEV__: 'false' },

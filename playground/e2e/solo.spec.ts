@@ -9,14 +9,24 @@ import { collectConsole } from './console-messages.ts';
 
 const stylesFolder = path.join(import.meta.dirname, '../../packages/sonic-ui/dist/styles');
 
-async function readEverySheet(): Promise<string> {
-	const index = await readFile(path.join(stylesFolder, 'controls.css'), 'utf8');
-	const files = [...index.matchAll(/@import '\.\/(.+?)';/g)].map(([, file = '']) => file);
+async function readImports(sheet: string): Promise<Array<string>> {
+	const index = await readFile(path.join(stylesFolder, sheet), 'utf8');
+
+	return [...index.matchAll(/@import '\.\/(.+?)';/g)].map(([, file = '']) => file);
+}
+
+async function readSheets(files: Array<string>): Promise<string> {
 	const sheets = await Promise.all(
 		files.map((file) => readFile(path.join(stylesFolder, file), 'utf8')),
 	);
 
 	return sheets.join('\n');
+}
+
+async function readEverySheet(): Promise<string> {
+	const [material = '', ...controls] = await readImports('controls.css');
+
+	return readSheets([...(await readImports(material)), ...controls]);
 }
 
 function readPaint(page: Page): Promise<Record<string, string>> {
@@ -45,7 +55,7 @@ function readPaint(page: Page): Promise<Record<string, string>> {
 }
 
 const warnings = [
-	{ path: '/fixtures/bare/', warning: 'material.css' },
+	{ path: '/fixtures/bare/', warning: 'material/core.css' },
 	...Object.entries(solos).flatMap(([solo, { warns }]) =>
 		warns === undefined
 			? []
@@ -74,7 +84,9 @@ test('a control without the material, or without a sheet its markup needs, warns
 for (const [solo, { warns }] of Object.entries(solos)) {
 	if (warns !== undefined) continue;
 
-	test(`${solo} paints with the material and its own sheet alone`, async ({ page }) => {
+	test(`${solo} paints with its material sheets and its own sheet alone, and the material holds in any order`, async ({
+		page,
+	}) => {
 		const messages = collectConsole(page);
 
 		await page.goto(`/fixtures/solo/${solo}/`);
@@ -92,6 +104,14 @@ for (const [solo, { warns }] of Object.entries(solos)) {
 		expect(changed.map((key) => `${key}: ${String(alone[key])} -> ${String(whole[key])}`)).toEqual(
 			[],
 		);
+
+		const material = await readImports('material.css');
+
+		await page.addStyleTag({ content: await readSheets(material.toReversed()) });
+
+		const reversed = await readPaint(page);
+
+		expect(Object.keys(whole).filter((key) => whole[key] !== reversed[key])).toEqual([]);
 		expect(messages).toEqual([]);
 	});
 }

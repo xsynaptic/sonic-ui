@@ -338,7 +338,7 @@ export class SonicXy extends SonicFormElement {
 
 		this.keepControl(xy, signal);
 		this.render();
-		this.checkStyles(xy, 'xy.css');
+		this.checkStyles(xy, 'xy.css', ['cap', 'glass', 'pane', 'well', 'readout']);
 		this.#bindPointer(xy, signal);
 		this.#bindKeys(xy, signal);
 	}

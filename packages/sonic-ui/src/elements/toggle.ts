@@ -72,7 +72,7 @@ export class SonicToggle extends SonicPositionGroupElement {
 
 	protected override connect(signal: AbortSignal): void {
 		super.connect(signal);
-		this.checkStyles(this.group, 'toggle.css');
+		this.checkStyles(this.group, 'toggle.css', ['cap', 'well', 'keycap']);
 		this.bare.addEventListener(
 			'click',
 			(event) => {

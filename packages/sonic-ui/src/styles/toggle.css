@@ -1,3 +1,5 @@
+@layer sonic.material, sonic.control;
+
 @property --_sonic-toggle-size {
 	syntax: '<length>';
 	inherits: true;
@@ -22,7 +24,7 @@
 	initial-value: transparent;
 }
 
-@layer sonic {
+@layer sonic.control {
 	:is(sonic-toggle, .sonic-toggle) {
 		--_sonic-toggle-size: var(--sonic-toggle-size, 2rem);
 	}
