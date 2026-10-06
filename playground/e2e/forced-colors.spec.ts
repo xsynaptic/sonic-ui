@@ -118,6 +118,14 @@ test('every drawn part opts out of forced colours and paints, and every focusabl
 	expect(adjusts).toEqual(focusable.map(() => 'auto'));
 });
 
+test('a slider’s indicator keeps to the ink whatever colour it is given', async ({ page }) => {
+	const colour = await page
+		.locator('#edge-strip .sonic-slider-cap')
+		.evaluate((cap) => getComputedStyle(cap, '::after').backgroundColor);
+
+	expect(colour).toBe(await systemColour(page, 'ButtonText'));
+});
+
 test('a toggle draws its cap in CanvasText, and its well in Canvas until a lit position is chosen', async ({
 	page,
 }) => {

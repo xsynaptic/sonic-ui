@@ -22,7 +22,7 @@ function grooveStop(proportion: number): string {
 	if (proportion <= 0) return '0%';
 	if (proportion >= 1) return '100%';
 
-	return `calc(${String(proportion)} * var(--_sonic-slider-travel) + var(--_sonic-slider-groove) / 2)`;
+	return `calc(${String(proportion)} * var(--_sonic-slider-travel) + var(--_sonic-slider-groove-end))`;
 }
 
 const renderSlider = template(

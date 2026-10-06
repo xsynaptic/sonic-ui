@@ -54,6 +54,9 @@
 		--_sonic-slider-radius-ratio: var(--sonic-slider-radius-ratio, 0.15);
 		--_sonic-slider-bevel-ratio: var(--sonic-slider-bevel-ratio, 0.075);
 		--_sonic-slider-indicator-ratio: var(--sonic-slider-indicator-ratio, 0.07);
+		--_sonic-slider-indicator: var(--sonic-slider-indicator, var(--_sonic-ink));
+		--_sonic-slider-groove-radius-ratio: var(--sonic-slider-groove-radius-ratio, 0.5);
+		--_sonic-slider-groove-anchor: var(--sonic-slider-groove-anchor, 0.5);
 		--_sonic-slider-scale-ratio: var(--sonic-slider-scale-ratio, 0.4);
 		--_sonic-slider-scale-font-ratio: var(--sonic-slider-scale-font-ratio, 0.18);
 		--_sonic-slider-scale-band: 0px;
@@ -69,6 +72,14 @@
 		--_sonic-slider-across: to bottom;
 		--_sonic-slider-cursor: ew-resize;
 		--_sonic-slider-groove: calc(var(--_sonic-slider-breadth) * var(--_sonic-slider-groove-ratio));
+		--_sonic-slider-groove-end: calc(
+			var(--_sonic-slider-groove) * clamp(0, var(--_sonic-slider-groove-radius-ratio), 0.5)
+		);
+		--_sonic-slider-groove-mid: calc(
+			var(--_sonic-slider-scale-band) + var(--_sonic-slider-groove) / 2 +
+				(var(--_sonic-slider-breadth) - var(--_sonic-slider-groove)) *
+				clamp(0, var(--_sonic-slider-groove-anchor), 1)
+		);
 		--_sonic-slider-cap: calc(var(--_sonic-slider-breadth) * var(--_sonic-slider-cap-ratio));
 		--_sonic-slider-travel: calc(100cqi - var(--_sonic-slider-cap));
 		--_sonic-slider-offset: calc(var(--_sonic-slider-value, 0) * var(--_sonic-slider-travel));
@@ -197,6 +208,9 @@
 		--_sonic-slider-notch-lip: calc(
 			var(--_sonic-slider-groove) / 2 + var(--_sonic-slider-breadth) * 0.1
 		);
+		--_sonic-slider-notch-mid: calc(
+			var(--_sonic-slider-groove-mid) - var(--_sonic-slider-scale-band)
+		);
 
 		position: absolute;
 		inset: var(--_sonic-slider-scale-band) calc((var(--_sonic-slider-cap) - var(--_sonic-unit)) / 2)
@@ -209,8 +223,8 @@
 		mask: linear-gradient(
 			var(--_sonic-slider-across),
 			transparent 15%,
-			#000 0 calc(50% - var(--_sonic-slider-notch-lip)),
-			transparent 0 calc(50% + var(--_sonic-slider-notch-lip)),
+			#000 0 calc(var(--_sonic-slider-notch-mid) - var(--_sonic-slider-notch-lip)),
+			transparent 0 calc(var(--_sonic-slider-notch-mid) + var(--_sonic-slider-notch-lip)),
 			#000 0 85%,
 			transparent 0
 		);
@@ -262,9 +276,9 @@
 		--_sonic-slider-lit-high: max(var(--_sonic-slider-origin, 0), var(--_sonic-slider-lit-to));
 
 		position: absolute;
-		inset: calc(50% + var(--_sonic-slider-scale-band) / 2 - var(--_sonic-slider-groove) / 2)
-			calc((var(--_sonic-slider-cap) - var(--_sonic-slider-groove)) / 2)
-			calc(50% - var(--_sonic-slider-scale-band) / 2 - var(--_sonic-slider-groove) / 2);
+		inset: calc(var(--_sonic-slider-groove-mid) - var(--_sonic-slider-groove) / 2)
+			calc(var(--_sonic-slider-cap) / 2 - var(--_sonic-slider-groove-end))
+			calc(100% - var(--_sonic-slider-groove-mid) - var(--_sonic-slider-groove) / 2);
 		background:
 			var(--_sonic-slider-scrub-region, none),
 			linear-gradient(
@@ -272,25 +286,25 @@
 				transparent
 					calc(
 						var(--_sonic-slider-lit-low) * var(--_sonic-slider-travel) +
-							var(--_sonic-slider-groove) / 2 * sign(var(--_sonic-slider-lit-low))
+							var(--_sonic-slider-groove-end) * sign(var(--_sonic-slider-lit-low))
 					),
 				var(--_sonic-slider-lit) 0
 					calc(
 						var(--_sonic-slider-lit-high) * var(--_sonic-slider-travel) +
-							var(--_sonic-slider-groove) / 2 * (2 - sign(1 - var(--_sonic-slider-lit-high)))
+							var(--_sonic-slider-groove-end) * (2 - sign(1 - var(--_sonic-slider-lit-high)))
 					),
 				transparent 0
 			),
 			var(--_sonic-slider-buffered-regions, none), var(--_sonic-unlit);
-		border-radius: calc(var(--_sonic-slider-groove) / 2);
+		border-radius: var(--_sonic-slider-groove-end);
 		box-shadow: var(--_sonic-groove), var(--_sonic-focus-shadow);
 	}
 
 	[orientation='vertical'] > .sonic-slider > .sonic-slider-groove {
-		inset: calc((var(--_sonic-slider-cap) - var(--_sonic-slider-groove)) / 2)
-			calc(50% - var(--_sonic-slider-scale-band) / 2 - var(--_sonic-slider-groove) / 2)
-			calc((var(--_sonic-slider-cap) - var(--_sonic-slider-groove)) / 2)
-			calc(50% + var(--_sonic-slider-scale-band) / 2 - var(--_sonic-slider-groove) / 2);
+		inset: calc(var(--_sonic-slider-cap) / 2 - var(--_sonic-slider-groove-end))
+			calc(100% - var(--_sonic-slider-groove-mid) - var(--_sonic-slider-groove) / 2)
+			calc(var(--_sonic-slider-cap) / 2 - var(--_sonic-slider-groove-end))
+			calc(var(--_sonic-slider-groove-mid) - var(--_sonic-slider-groove) / 2);
 	}
 
 	.sonic-slider-modulation {
@@ -309,10 +323,8 @@
 		);
 
 		position: absolute;
-		inset: calc(
-				50% + var(--_sonic-slider-scale-band) / 2 - var(--_sonic-slider-modulation-band) / 2
-			)
-			auto auto var(--_sonic-slider-modulation-start);
+		inset: calc(var(--_sonic-slider-groove-mid) - var(--_sonic-slider-modulation-band) / 2) auto
+			auto var(--_sonic-slider-modulation-start);
 		inline-size: var(--_sonic-slider-modulation-length);
 		block-size: var(--_sonic-slider-modulation-band);
 		background: var(--_sonic-slider-modulation);
@@ -321,7 +333,7 @@
 
 	[orientation='vertical'] > .sonic-slider > .sonic-slider-modulation {
 		inset: auto auto var(--_sonic-slider-modulation-start)
-			calc(50% + var(--_sonic-slider-scale-band) / 2 - var(--_sonic-slider-modulation-band) / 2);
+			calc(var(--_sonic-slider-groove-mid) - var(--_sonic-slider-modulation-band) / 2);
 		inline-size: var(--_sonic-slider-modulation-band);
 		block-size: var(--_sonic-slider-modulation-length);
 	}
@@ -435,7 +447,7 @@
 		&::after {
 			inset: var(--_sonic-slider-indicator-inset)
 				calc(50% - var(--_sonic-slider-indicator-width) / 2);
-			background: var(--_sonic-ink);
+			background: var(--_sonic-slider-indicator);
 			border-radius: calc(var(--_sonic-slider-indicator-width) / 2);
 			box-shadow: inset 0 0 calc(0.75 * var(--_sonic-unit))
 				rgb(0 0 0 / calc(0.55 * var(--_sonic-relief)));
@@ -492,6 +504,7 @@
 
 		.sonic-slider {
 			--_sonic-slider-buffered: color-mix(in srgb, CanvasText 50%, GrayText);
+			--_sonic-slider-indicator: var(--_sonic-ink);
 			--_sonic-slider-scrub: CanvasText;
 		}
 
