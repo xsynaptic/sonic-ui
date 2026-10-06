@@ -22,7 +22,10 @@ declare global {
 
 type Colour = keyof typeof colours;
 
-type PeaksRequest = (fromSeconds: number, toSeconds: number) => unknown;
+export type PeaksRequest = (
+	fromSeconds: number,
+	toSeconds: number,
+) => Iterable<Promise<unknown>> | Promise<unknown> | undefined;
 
 interface Scene extends View {
 	colours: SurfaceLook<Colour>['colours'];
@@ -182,7 +185,7 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 	set peaks(peaks: undefined | WaveformPeaks) {
 		this.#peaks = peaks;
 		this.renderEmpty();
-		this.surface()?.invalidate();
+		this.#repaint();
 	}
 
 	get pending(): Array<[number, number]> {
@@ -190,10 +193,13 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 	}
 
 	set pending(regions: TimeRegions | undefined) {
+		const pending = regions ? readRegions(regions) : [];
+		if (String(pending) === String(this.#pending)) return;
+
 		const listedMs = this.#pendingListedMs;
 		const nowMs = performance.now();
 
-		this.#pending = regions ? readRegions(regions) : [];
+		this.#pending = pending;
 		this.#pendingListedMs = new Map(
 			this.#pending.map((region) => {
 				const key = region.join(':');
@@ -201,7 +207,7 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 				return [key, listedMs.get(key) ?? nowMs];
 			}),
 		);
-		this.surface()?.invalidate();
+		this.#repaint();
 	}
 
 	get pendingDelay(): number {
@@ -253,6 +259,7 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 
 	set requestPeaks(request: PeaksRequest | undefined) {
 		this.#requestPeaks = request;
+		this.#askedKey = undefined;
 		this.surface()?.invalidate();
 	}
 
@@ -282,7 +289,9 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 
 	protected readonly sizeProperty = '--_sonic-waveform-size';
 
-	readonly #asked = new Set<Promise<unknown>>();
+	readonly #asked = new WeakSet<Promise<unknown>>();
+
+	#askedKey: string | undefined;
 
 	readonly #clock = createTrackingClock();
 
@@ -291,6 +300,8 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 	readonly #ghost = requireChild(this.control, '.sonic-waveform-ghost', HTMLDivElement);
 
 	#grabbed: Drawn | undefined;
+
+	#isAsking = false;
 
 	#kindColours = new Map<string, string>();
 
@@ -421,11 +432,27 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 	}
 
 	#ask(wanted: [number, number]): void {
-		const asked = this.#requestPeaks?.(...wanted);
-		if (!(asked instanceof Promise) || this.#asked.has(asked)) return;
+		const key = wanted.join(':');
+		if (key === this.#askedKey) return;
 
-		this.#asked.add(asked);
-		void this.#repaintAfter(asked);
+		let asked: ReturnType<PeaksRequest>;
+
+		this.#askedKey = key;
+		this.#isAsking = true;
+		try {
+			asked = this.#requestPeaks?.(...wanted);
+		} finally {
+			this.#isAsking = false;
+		}
+
+		const promises = asked instanceof Promise ? [asked] : (asked ?? []);
+
+		for (const promise of promises) {
+			if (this.#asked.has(promise)) continue;
+
+			this.#asked.add(promise);
+			void this.#repaintAfter(promise);
+		}
 	}
 
 	#duePending(): Array<[number, number]> {
@@ -520,10 +547,15 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 		return new Map(kinds.map((kind, index) => [kind, read[index] ?? '']));
 	}
 
+	// A write from inside the consumer's call repaints without asking for the same window again
+	#repaint(): void {
+		if (!this.#isAsking) this.#askedKey = undefined;
+		this.surface()?.invalidate();
+	}
+
 	async #repaintAfter(asked: Promise<unknown>): Promise<void> {
 		await Promise.allSettled([asked]);
-		this.#asked.delete(asked);
-		this.surface()?.invalidate();
+		this.#repaint();
 	}
 
 	#sourceSeconds(): number {

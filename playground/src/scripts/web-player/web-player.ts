@@ -128,7 +128,7 @@ function renderPosition(state: StreamState, bar: Bar): void {
 	bar.wave.buffered = state.buffered;
 	if (bar.detail.playing !== isPlaying) bar.detail.playing = isPlaying;
 	if (bar.detail.playbackRate !== state.rate) bar.detail.playbackRate = state.rate;
-	if (String(state.pending) !== String(bar.detail.pending)) bar.detail.pending = state.pending;
+	bar.detail.pending = state.pending;
 }
 
 function bindControls(root: Element, stream: ReturnType<typeof createStream>, bar: Bar): void {

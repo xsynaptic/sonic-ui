@@ -10,6 +10,7 @@ export { SonicSplit } from '#elements/split.ts';
 export { SonicSwitch } from '#elements/switch.ts';
 export { SonicToggle } from '#elements/toggle.ts';
 export type { WaveMarker } from '#elements/wave-element.ts';
+export type { PeaksRequest } from '#elements/waveform.ts';
 export { SonicWaveform } from '#elements/waveform.ts';
 export { SonicWavestrip } from '#elements/wavestrip.ts';
 export { SonicXy } from '#elements/xy.ts';

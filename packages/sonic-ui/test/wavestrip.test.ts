@@ -741,3 +741,16 @@ test('the current marker follows playback, and reports only when it changes', ()
 
 	expect(seen).toEqual(['First', 'Second', undefined]);
 });
+
+test('clientXOf places a value along the canvas, clamped to the bounds', () => {
+	installCanvasFakes();
+
+	const { control, wavestrip } = mountWavestrip('min="30" max="330" step="0" value="30"');
+	const canvas = control.querySelector('canvas');
+	if (!canvas) throw new Error('The wavestrip has no canvas');
+
+	vi.spyOn(canvas, 'getBoundingClientRect').mockReturnValue(new DOMRect(40, 0, 200, 48));
+
+	expect(wavestrip.clientXOf(105)).toBeCloseTo(90, 9);
+	expect(wavestrip.clientXOf(500)).toBeCloseTo(240, 9);
+});

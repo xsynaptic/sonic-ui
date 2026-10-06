@@ -1,4 +1,4 @@
-import { afterEach, expect, test } from 'vitest';
+import { afterEach, expect, test, vi } from 'vitest';
 
 import type { SonicWaveform } from '#elements/waveform.ts';
 
@@ -274,4 +274,125 @@ test('a waveform that opens out of view reports the marker it starts on', () => 
 	waveform.markers = [{ label: 'First', start: 30 }];
 
 	expect(waveform.currentMarker?.label).toBe('First');
+});
+
+function countPaints(waveform: SonicWaveform): () => number {
+	const context = waveform.querySelector('canvas')?.getContext('2d');
+	if (!context) throw new Error('The waveform has no canvas context');
+
+	const cleared = vi.spyOn(context, 'clearRect');
+
+	return () => cleared.mock.calls.length;
+}
+
+test('a requestPeaks that lists the same pending each call is asked once', () => {
+	const { flushFrames } = installCanvasFakes();
+	const { waveform } = mountWaveform('max="300" step="0" value="100"');
+	let asks = 0;
+
+	waveform.requestPeaks = () => {
+		asks += 1;
+		waveform.pending = [[90, 110]];
+	};
+	for (let frame = 0; frame < 4; frame += 1) flushFrames();
+
+	expect(asks).toBe(1);
+});
+
+test('a requestPeaks that assigns peaks each call is asked once, and the peaks paint', () => {
+	const { flushFrames } = installCanvasFakes();
+	const { waveform } = mountWaveform('max="300" step="0" value="100"');
+	const paints = countPaints(waveform);
+	let asks = 0;
+
+	waveform.requestPeaks = () => {
+		asks += 1;
+		waveform.peaks = { fullScale: 1, pairsPerSecond: 10, samples: new Float32Array(8) };
+	};
+	for (let frame = 0; frame < 4; frame += 1) flushFrames();
+
+	expect(asks).toBe(1);
+	expect(paints()).toBe(2);
+});
+
+test('peaks written from outside the call ask again', () => {
+	const { flushFrames } = installCanvasFakes();
+	const { waveform } = mountWaveform('max="300" step="0" value="100"');
+	let asks = 0;
+
+	waveform.requestPeaks = () => {
+		asks += 1;
+	};
+	flushFrames();
+	flushFrames();
+	waveform.peaks = { fullScale: 1, pairsPerSecond: 10, samples: new Float32Array(8) };
+	flushFrames();
+	flushFrames();
+
+	expect(asks).toBe(2);
+});
+
+test('an unchanged pending list written from outside paints nothing', () => {
+	const { flushFrames } = installCanvasFakes();
+	const { waveform } = mountWaveform('max="300" step="0" value="100"');
+	const paints = countPaints(waveform);
+
+	waveform.pending = [[90, 110]];
+	flushFrames();
+	waveform.pending = [[90, 110]];
+	flushFrames();
+	expect(paints()).toBe(1);
+
+	waveform.pending = [[90, 120]];
+	flushFrames();
+	expect(paints()).toBe(2);
+});
+
+test('one settled promise returned on every call is asked twice, not every frame', async () => {
+	const { flushFrames } = installCanvasFakes();
+	const { waveform } = mountWaveform('max="300" step="0" value="100"');
+	const loaded = Promise.resolve();
+	let asks = 0;
+
+	waveform.requestPeaks = () => {
+		asks += 1;
+
+		return loaded;
+	};
+	for (let frame = 0; frame < 4; frame += 1) {
+		flushFrames();
+		await nextTask();
+	}
+
+	expect(asks).toBe(2);
+});
+
+test('two promises returned together each repaint as they settle', async () => {
+	const { flushFrames } = installCanvasFakes();
+	const { waveform } = mountWaveform('max="300" step="0" value="100"');
+	const settles: Array<() => void> = [];
+	const chunks = [0, 1].map(
+		() =>
+			new Promise<void>((resolve) => {
+				settles.push(resolve);
+			}),
+	);
+	let asks = 0;
+
+	waveform.requestPeaks = () => {
+		asks += 1;
+
+		return chunks;
+	};
+	flushFrames();
+	flushFrames();
+	expect(asks).toBe(1);
+
+	for (const [index, settle] of settles.entries()) {
+		settle();
+		await nextTask();
+		flushFrames();
+		flushFrames();
+		expect(asks).toBe(index + 2);
+	}
 });

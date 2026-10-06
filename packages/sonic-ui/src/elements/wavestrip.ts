@@ -130,6 +130,12 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 
 	#peaks: ArrayLike<number> | undefined;
 
+	clientXOf(value: number): number {
+		const { startPx, travelPx } = this.#axis();
+
+		return startPx + this.mapping().proportionOf(value) * travelPx;
+	}
+
 	override connectedCallback(): void {
 		this.upgradeProperties('buffered', 'cancellable', 'peaks');
 		super.connectedCallback();
