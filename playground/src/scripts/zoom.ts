@@ -7,13 +7,6 @@ interface Zoom {
 	waveform: SonicWaveform;
 }
 
-const wheelRate = 0.01;
-const linePx = 16;
-
-function clamp(value: number, low: number, high: number): number {
-	return Math.min(Math.max(value, low), high);
-}
-
 function nextRung(ladder: Array<number>, zoom: number, direction: number): number {
 	const rung =
 		direction > 0 ? ladder.find((step) => step > zoom) : ladder.findLast((step) => step < zoom);
@@ -46,20 +39,12 @@ export function bindZoom({ buttons, ladder, start, waveform }: Zoom): void {
 			render();
 		});
 	}
-	waveform.querySelector<HTMLElement>('.sonic-waveform')?.addEventListener(
-		'wheel',
-		(event) => {
-			if (!event.ctrlKey && !event.metaKey) return;
-
-			event.preventDefault();
-
-			const pixels =
-				event.deltaMode === WheelEvent.DOM_DELTA_LINE ? event.deltaY * linePx : event.deltaY;
-
-			zoom = clamp(zoom * Math.exp(-pixels * wheelRate), lowest, highest);
-			render();
-		},
-		{ passive: false },
-	);
+	waveform.zoomable = true;
+	waveform.zoomMin = lowest;
+	waveform.zoomMax = highest;
+	waveform.addEventListener('sonic-zoom', () => {
+		zoom = waveform.zoom;
+		render();
+	});
 	render();
 }

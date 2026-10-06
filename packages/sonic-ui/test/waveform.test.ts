@@ -396,3 +396,170 @@ test('two promises returned together each repaint as they settle', async () => {
 		expect(asks).toBe(index + 2);
 	}
 });
+
+function zoomEvents(waveform: SonicWaveform): Array<number> {
+	const zooms: Array<number> = [];
+
+	document.body.addEventListener('sonic-zoom', () => {
+		zooms.push(waveform.zoom);
+	});
+
+	return zooms;
+}
+
+// happy-dom's WheelEvent is a UIEvent and drops the modifier keys from its init
+function wheelAt(control: HTMLElement, init: WheelEventInit): WheelEvent {
+	const event = new WheelEvent('wheel', { bubbles: true, cancelable: true, ...init });
+
+	Object.defineProperties(event, {
+		ctrlKey: { value: init.ctrlKey === true },
+		metaKey: { value: init.metaKey === true },
+	});
+	control.dispatchEvent(event);
+
+	return event;
+}
+
+function touchAt(control: HTMLElement, type: string, [pointerId, clientX]: [number, number]): void {
+	pointerAt(control, type, { clientX, pointerId, pointerType: 'touch' });
+}
+
+test('a ctrl wheel zooms, is cancelled and fires sonic-zoom; a write to zoom fires nothing', () => {
+	const { control, waveform } = mountWaveform('zoomable zoom="60"');
+	const zooms = zoomEvents(waveform);
+	const wheel = wheelAt(control, { ctrlKey: true, deltaY: -10 });
+
+	expect(wheel.defaultPrevented).toBe(true);
+	expect(zooms).toEqual([66.31]);
+
+	waveform.zoom = 90;
+	waveform.setAttribute('zoom', '100');
+	expect(zooms).toHaveLength(1);
+});
+
+test('a plain wheel is left to the page, and so is a ctrl wheel without zoomable', () => {
+	const { control, waveform } = mountWaveform('zoomable zoom="60"');
+	const zooms = zoomEvents(waveform);
+
+	expect(wheelAt(control, { deltaY: -10 }).defaultPrevented).toBe(false);
+
+	waveform.zoomable = false;
+	expect(wheelAt(control, { ctrlKey: true, deltaY: -10 }).defaultPrevented).toBe(false);
+	expect(waveform.zoom).toBe(60);
+	expect(zooms).toEqual([]);
+
+	waveform.zoomable = true;
+	wheelAt(control, { deltaY: -10, metaKey: true });
+	expect(zooms).toEqual([66.31]);
+});
+
+test('a gesture stops at zoom-min and zoom-max, fires nothing once there, and brings a written zoom back inside', () => {
+	const { control, waveform } = mountWaveform('zoomable zoom="150" zoom-max="160" zoom-min="30"');
+	const zooms = zoomEvents(waveform);
+
+	wheelAt(control, { ctrlKey: true, deltaY: -100 });
+	wheelAt(control, { ctrlKey: true, deltaY: -100 });
+	expect(zooms).toEqual([160]);
+
+	waveform.zoom = 12;
+	expect(waveform.zoom).toBe(12);
+	wheelAt(control, { ctrlKey: true, deltaY: 100 });
+	expect(zooms).toEqual([160, 30]);
+});
+
+test.each([
+	['zoom-min="-5"', [20, 280]],
+	['zoom-min="400"', [400, 400]],
+	['zoom-max="0" zoom-min="35"', [35, 280]],
+])('with %s the bounds are %j', (attributes, bounds) => {
+	const { waveform } = mountWaveform(attributes);
+
+	expect([waveform.zoomMin, waveform.zoomMax]).toEqual(bounds);
+});
+
+test('+ and - step the zoom and come back; with ctrl held, or without zoomable, they are left alone', () => {
+	const { control, waveform } = mountWaveform('zoomable zoom="60"');
+	const zooms = zoomEvents(waveform);
+
+	expect(pressKey(control, '+').defaultPrevented).toBe(true);
+	pressKey(control, '-');
+	pressKey(control, '-');
+	pressKey(control, '=');
+	expect(zooms).toEqual([77.04, 60, 46.73, 60]);
+
+	const browserZoom = new KeyboardEvent('keydown', {
+		bubbles: true,
+		cancelable: true,
+		ctrlKey: true,
+		key: '+',
+	});
+
+	control.dispatchEvent(browserZoom);
+	expect(browserZoom.defaultPrevented).toBe(false);
+
+	waveform.zoomable = false;
+	expect(pressKey(control, '+').defaultPrevented).toBe(false);
+	expect(zooms).toHaveLength(4);
+});
+
+test('a second finger puts the scrub back with no change, and the pinch follows the fingers from where they are', () => {
+	const { flushFrames } = installCanvasFakes();
+	const { control, waveform } = mountWaveform('max="300" step="0" value="100" zoom="60" zoomable');
+	const events = recordEvents(document.body);
+	const zooms = zoomEvents(waveform);
+
+	flushFrames();
+	touchAt(control, 'pointerdown', [1, 200]);
+	touchAt(control, 'pointermove', [1, 140]);
+	expect(waveform.value).toBeCloseTo(101, 9);
+
+	touchAt(control, 'pointerdown', [2, 240]);
+	expect(waveform.value).toBe(100);
+	expect(waveform.dragging).toBe(false);
+
+	touchAt(control, 'pointermove', [2, 290]);
+	expect(zooms).toEqual([90]);
+
+	touchAt(control, 'pointermove', [1, 215]);
+	expect(zooms).toEqual([90, 45]);
+
+	touchAt(control, 'pointerup', [1, 215]);
+	touchAt(control, 'pointerup', [2, 290]);
+	expect(waveform.value).toBe(100);
+	expect(events).not.toContain('change');
+});
+
+test('after one finger of a pinch lifts, the other neither scrubs nor zooms, and a fresh touch scrubs again', () => {
+	const { flushFrames } = installCanvasFakes();
+	const { control, waveform } = mountWaveform('max="300" step="0" value="100" zoom="60" zoomable');
+	const zooms = zoomEvents(waveform);
+
+	flushFrames();
+	touchAt(control, 'pointerdown', [1, 200]);
+	touchAt(control, 'pointerdown', [2, 300]);
+	touchAt(control, 'pointerup', [2, 300]);
+	touchAt(control, 'pointermove', [1, 80]);
+	touchAt(control, 'pointerdown', [3, 300]);
+	touchAt(control, 'pointermove', [3, 180]);
+	expect(waveform.value).toBe(100);
+	expect(zooms).toEqual([]);
+
+	touchAt(control, 'pointerup', [3, 180]);
+	touchAt(control, 'pointerup', [1, 80]);
+	touchAt(control, 'pointerdown', [4, 200]);
+	touchAt(control, 'pointermove', [4, 140]);
+	expect(waveform.value).toBeCloseTo(101, 9);
+});
+
+test('without zoomable a second finger leaves the scrub alone', () => {
+	const { flushFrames } = installCanvasFakes();
+	const { control, waveform } = mountWaveform('max="300" step="0" value="100" zoom="60"');
+
+	flushFrames();
+	touchAt(control, 'pointerdown', [1, 200]);
+	touchAt(control, 'pointerdown', [2, 300]);
+	touchAt(control, 'pointermove', [1, 140]);
+
+	expect(waveform.value).toBeCloseTo(101, 9);
+	expect(waveform.zoom).toBe(60);
+});

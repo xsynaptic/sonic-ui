@@ -85,6 +85,15 @@ export class ValueGestures {
 		this.#control = control;
 	}
 
+	abandon(): void {
+		const drag = this.#dragging();
+		if (!drag) return;
+
+		this.#host.input(drag.fromValue);
+		this.#entry?.forgetPress();
+		this.#pointerDrag?.end();
+	}
+
 	bind(signal: AbortSignal, grab: (event: PointerEvent) => undefined | ValueAxis): void {
 		const control = this.#control;
 		const host = this.#host;

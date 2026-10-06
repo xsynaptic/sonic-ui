@@ -118,6 +118,7 @@ for (const { name, role, selector, value } of [
 for (const { name, selector } of [
 	{ name: 'Position', selector: '#wavestrip .sonic-wavestrip' },
 	{ name: 'Detail', selector: '#waveform .sonic-waveform' },
+	{ name: 'Zoomable', selector: '#waveform-zoomable .sonic-waveform' },
 ]) {
 	test(`a mostly vertical swipe from ${name}, off its center, scrolls the page and leaves the value`, async ({
 		page,

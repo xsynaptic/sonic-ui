@@ -209,6 +209,21 @@ import '#styles/playground.css';
 				value="150"
 			></sonic-waveform>
 		</div>
+		<div class="w-72" id="waveform-zoomable-box">
+			<sonic-waveform
+				aria-label="Zoomable"
+				class="[--sonic-waveform-length:100%]"
+				data-samples="3"
+				id="waveform-zoomable"
+				max="300"
+				step="0"
+				value="150"
+				zoom="60"
+				zoom-max="160"
+				zoom-min="30"
+				zoomable
+			></sonic-waveform>
+		</div>
 		<div class="flex h-24 w-72" id="wavestrip-fill-box">
 			<sonic-wavestrip
 				aria-label="Filled"

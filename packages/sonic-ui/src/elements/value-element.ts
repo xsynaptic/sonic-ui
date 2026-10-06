@@ -384,6 +384,10 @@ export abstract class SonicValueElement extends SonicFormElement {
 		super.connectedCallback();
 	}
 
+	protected abandonHold(): void {
+		this.#gestures?.abandon();
+	}
+
 	protected bindGestures(
 		control: HTMLElement,
 		signal: AbortSignal,

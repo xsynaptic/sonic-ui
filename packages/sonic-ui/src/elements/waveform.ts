@@ -8,13 +8,19 @@ import { SonicWaveElement } from '#elements/wave-element.ts';
 import { frameTimeline } from '#lib/frame-timeline.ts';
 import { isKind, writeKind } from '#lib/marker-band.ts';
 import { createLabelRider } from '#lib/marker-rider.ts';
-import { clamp } from '#lib/math.ts';
+import { clamp, roundTo } from '#lib/math.ts';
+import { capturePointer } from '#lib/pointer-drag.ts';
 import { requireChild, template } from '#lib/render.ts';
 import { dueRegions, readRegions } from '#lib/time-regions.ts';
 import { createTrackingClock } from '#lib/tracking-clock.ts';
 import { waveformBuckets } from '#lib/waveform-buckets.ts';
+import { pinchFactor, wheelFactor, zoomKeyFactor } from '#lib/zoom-gesture.ts';
 
 declare global {
+	interface HTMLElementEventMap {
+		'sonic-zoom': Event;
+	}
+
 	interface HTMLElementTagNameMap {
 		'sonic-waveform': SonicWaveform;
 	}
@@ -26,6 +32,12 @@ export type PeaksRequest = (
 	fromSeconds: number,
 	toSeconds: number,
 ) => Iterable<Promise<unknown>> | Promise<unknown> | undefined;
+
+interface Pinch {
+	pointerIds: [number, number];
+	startSpanPx: number;
+	startZoom: number;
+}
 
 interface Scene extends View {
 	colours: SurfaceLook<Colour>['colours'];
@@ -41,6 +53,14 @@ const colours = {
 } as const;
 
 const defaultZoom = 70;
+const defaultZoomMin = 20;
+const defaultZoomMax = 280;
+
+const zoomKeys = new Map([
+	['+', 1],
+	['-', -1],
+	['=', 1],
+]);
 
 const amplitudeMargin = 0.94;
 
@@ -176,6 +196,9 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 		'playback-rate',
 		'reduced-motion',
 		'zoom',
+		'zoom-max',
+		'zoom-min',
+		'zoomable',
 	];
 
 	get peaks(): undefined | WaveformPeaks {
@@ -273,6 +296,34 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 		this.reflect('zoom', value);
 	}
 
+	get zoomable(): boolean {
+		return this.hasAttribute('zoomable');
+	}
+
+	set zoomable(isZoomable: boolean) {
+		this.reflect('zoomable', isZoomable);
+	}
+
+	get zoomMax(): number {
+		const zoomMax = this.numberAttribute('zoom-max', defaultZoomMax);
+
+		return Math.max(this.zoomMin, zoomMax > 0 ? zoomMax : defaultZoomMax);
+	}
+
+	set zoomMax(value: number | undefined) {
+		this.reflect('zoom-max', value);
+	}
+
+	get zoomMin(): number {
+		const zoomMin = this.numberAttribute('zoom-min', defaultZoomMin);
+
+		return zoomMin > 0 ? zoomMin : defaultZoomMin;
+	}
+
+	set zoomMin(value: number | undefined) {
+		this.reflect('zoom-min', value);
+	}
+
 	protected readonly control = renderWaveform();
 
 	protected readonly canvas = requireChild(
@@ -295,6 +346,8 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 
 	readonly #clock = createTrackingClock();
 
+	#connection: AbortSignal | undefined;
+
 	#drawn: Drawn | undefined;
 
 	readonly #ghost = requireChild(this.control, '.sonic-waveform-ghost', HTMLDivElement);
@@ -302,6 +355,8 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 	#grabbed: Drawn | undefined;
 
 	#isAsking = false;
+
+	#isPinchSpent = false;
 
 	#kindColours = new Map<string, string>();
 
@@ -312,6 +367,8 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 	#pending: Array<[number, number]> = [];
 
 	#pendingListedMs = new Map<string, number>();
+
+	#pinch: Pinch | undefined;
 
 	readonly #playhead = requireChild(this.control, '.sonic-waveform-playhead', HTMLDivElement);
 
@@ -327,6 +384,15 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 		parkProperty: '--_sonic-waveform-label-park',
 	});
 
+	readonly #touches = new Map<number, number>();
+
+	#wheel: AbortController | undefined;
+
+	override attributeChangedCallback(name: string): void {
+		super.attributeChangedCallback(name);
+		if (name === 'zoomable') this.#bindWheel();
+	}
+
 	override connectedCallback(): void {
 		this.upgradeProperties(
 			'peaks',
@@ -338,13 +404,28 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 			'reducedMotion',
 			'requestPeaks',
 			'zoom',
+			'zoomable',
+			'zoomMax',
+			'zoomMin',
 		);
 		super.connectedCallback();
 	}
 
 	protected override connect(signal: AbortSignal): void {
 		super.connect(signal);
+		this.#connection = signal;
+		signal.addEventListener(
+			'abort',
+			() => {
+				this.#connection = undefined;
+				this.#bindWheel();
+			},
+			{ once: true },
+		);
+		this.#bindWheel();
+		this.#bindPinch(signal);
 		this.bindGestures(this.control, signal, () => this.#grab());
+		this.#bindZoomKeys(signal);
 		if (!('fonts' in document)) return;
 
 		document.fonts.addEventListener(
@@ -455,6 +536,95 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 		}
 	}
 
+	#bindPinch(signal: AbortSignal): void {
+		const control = this.control;
+
+		this.#touches.clear();
+		this.#pinch = undefined;
+		this.#isPinchSpent = false;
+		control.addEventListener(
+			'pointerdown',
+			(event) => {
+				if (event.pointerType !== 'touch' || !this.zoomable || this.isDisabled()) return;
+
+				this.#touches.set(event.pointerId, event.clientX);
+				if (this.#pinch || this.#isPinchSpent) return;
+
+				const pointerIds = this.#touchPair();
+				if (!pointerIds) return;
+
+				this.abandonHold();
+				capturePointer(control, event.pointerId);
+				this.#pinch = { pointerIds, startSpanPx: this.#spanPx(pointerIds), startZoom: this.zoom };
+			},
+			{ signal },
+		);
+		control.addEventListener(
+			'pointermove',
+			(event) => {
+				if (!this.#touches.has(event.pointerId)) return;
+
+				this.#touches.set(event.pointerId, event.clientX);
+
+				const pinch = this.#pinch;
+				if (!pinch?.pointerIds.includes(event.pointerId)) return;
+
+				this.#zoomTo(
+					pinch.startZoom * pinchFactor(pinch.startSpanPx, this.#spanPx(pinch.pointerIds)),
+				);
+			},
+			{ signal },
+		);
+		for (const type of ['pointerup', 'pointercancel'] as const) {
+			control.addEventListener(
+				type,
+				(event) => {
+					if (!this.#touches.delete(event.pointerId)) return;
+
+					if (this.#pinch?.pointerIds.includes(event.pointerId)) {
+						this.#pinch = undefined;
+						this.#isPinchSpent = true;
+					}
+					if (this.#touches.size === 0) this.#isPinchSpent = false;
+				},
+				{ signal },
+			);
+		}
+	}
+
+	#bindWheel(): void {
+		this.#wheel?.abort();
+		this.#wheel = undefined;
+		if (!this.zoomable || !this.#connection) return;
+
+		this.#wheel = new AbortController();
+		// Chromium cannot cancel a wheel heard only on the `display: contents` host
+		this.control.addEventListener(
+			'wheel',
+			(event) => {
+				if ((!event.ctrlKey && !event.metaKey) || this.isDisabled()) return;
+
+				event.preventDefault();
+				this.#zoomTo(this.zoom * wheelFactor(event.deltaY, event.deltaMode));
+			},
+			{ passive: false, signal: this.#wheel.signal },
+		);
+	}
+
+	#bindZoomKeys(signal: AbortSignal): void {
+		this.control.addEventListener(
+			'keydown',
+			(event) => {
+				const direction = this.#zoomKey(event);
+				if (direction === undefined) return;
+
+				event.preventDefault();
+				this.#zoomTo(this.zoom * zoomKeyFactor ** direction);
+			},
+			{ signal },
+		);
+	}
+
 	#duePending(): Array<[number, number]> {
 		const due = dueRegions(this.#pending, this.#pendingListedMs, [
 			performance.now(),
@@ -466,7 +636,9 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 		return due;
 	}
 
-	#grab(): ValueAxis {
+	#grab(): undefined | ValueAxis {
+		if (this.#pinch || this.#isPinchSpent) return undefined;
+
 		const drawn = this.#drawn ?? { seconds: this.value, startSeconds: this.value };
 
 		this.#grabbed = drawn;
@@ -560,5 +732,31 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 
 	#sourceSeconds(): number {
 		return this.#readTime?.() ?? this.playback();
+	}
+
+	#spanPx([first, second]: [number, number]): number {
+		return (this.#touches.get(second) ?? 0) - (this.#touches.get(first) ?? 0);
+	}
+
+	#touchPair(): [number, number] | undefined {
+		const [first, second, third] = this.#touches.keys();
+		if (first === undefined || second === undefined || third !== undefined) return undefined;
+
+		return [first, second];
+	}
+
+	#zoomKey(event: KeyboardEvent): number | undefined {
+		if (!this.zoomable || this.isDisabled() || event.target !== this.control) return undefined;
+		if (event.ctrlKey || event.metaKey || event.altKey) return undefined;
+
+		return zoomKeys.get(event.key);
+	}
+
+	#zoomTo(target: number): void {
+		const next = roundTo(clamp(target, this.zoomMin, this.zoomMax), 2);
+		if (next === this.zoom) return;
+
+		this.zoom = next;
+		this.dispatchEvent(new Event('sonic-zoom', { bubbles: true }));
 	}
 }

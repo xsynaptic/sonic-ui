@@ -70,6 +70,8 @@ The strip draws one part per marker inside `.sonic-wavestrip-markers`, in `start
 
 The waveform calls `requestPeaks(fromSeconds, toSeconds)` as its window moves, often every frame, so return at once for a span already loaded or on its way. Return a promise, or several, and the waveform repaints as each settles; an `async` function is the wrong shape, since it hands back a new settled promise each call. `pending` is yours to keep: list the spans being fetched, and clear each as it lands.
 
+With `zoomable`, a ctrl or cmd wheel, a pinch and the `+` and `-` keys set the waveform's `zoom` and fire `sonic-zoom`; a write to `zoom` fires nothing.
+
 With `fill` a control takes its container's height and its ratios follow. `--sonic-wavestrip-marker-size`, `--sonic-wavestrip-groove-size` and `--sonic-waveform-label-font-size` hold an absolute length instead.
 
 Targets current Chrome and Edge, Safari 26 and Firefox 147. MIT licensed.
