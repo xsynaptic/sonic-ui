@@ -14,9 +14,11 @@ The words this library uses for its controls, their parts and their values. Wher
 
 ### Controls
 
-**Button**: A control that is pressed. It is either momentary or latching. _Avoid_: Key, pad, toggle
+**Button**: A control that is pressed. It is either momentary or latching. _Avoid_: Key, pad, toggle (that is the control below)
 
-**Switch**: A toggle switch with a bat handle and two or three positions. _Avoid_: Lever, toggle
+**Switch**: A control with a bat handle that tilts between two or three positions. _Avoid_: Lever, toggle (that is the control below)
+
+**Toggle**: A control whose round cap slides in a well between two or three positions. _Avoid_: Slide switch (one letter from the slider), "toggle" for a button, a switch or latching
 
 **Dial**: A value control that turns. The word covers the whole thing: cap, indicator, ring and scale. _Avoid_: Knob (on hardware that is only the cap), rotary, pot
 
@@ -38,7 +40,7 @@ The words this library uses for its controls, their parts and their values. Wher
 
 **Meter**: A display of signal level, drawn as a bar or a ladder. _Avoid_: Bargraph, VU (one kind of ballistics)
 
-**LED**: A single lamp that is lit, dim or unlit. _Avoid_: Light, lamp, indicator
+**LED**: A single lamp that is lit, idle or unlit. _Avoid_: Light, lamp, indicator
 
 **Screen**: A display of text or graphics behind glass. _Avoid_: Display (the category), LCD
 
@@ -54,7 +56,7 @@ The words this library uses for its controls, their parts and their values. Wher
 
 **Cap**: The part of a control that the hand moves. On a dial it is the knob, on a slider the handle, on a button the face. _Avoid_: Thumb, knob, handle
 
-**Legend**: What is printed on a button's cap: an icon or a label, always an element. A button with no legend is blank; an LED is not a legend. _Avoid_: Label (that is the accessible name), glyph, icon (one kind of legend)
+**Legend**: What is printed on the cap of a button or a toggle: an icon or a label, always an element. A cap with no legend is blank; an LED is not a legend. _Avoid_: Label (that is the accessible name), glyph, icon (one kind of legend)
 
 **Indicator**: The line on a cap that shows where it is set. _Avoid_: Pointer (that is the mouse, pen or finger), index, marker
 
@@ -70,7 +72,7 @@ The words this library uses for its controls, their parts and their values. Wher
 
 **Edge**: The line that sets a part off from what is behind it. _Avoid_: Rim, outline, border
 
-**Well**: The recess a button or an option sits in. _Avoid_: Socket, floor, pocket
+**Well**: The recess a button or an option sits in, or a toggle's cap slides in. _Avoid_: Socket, floor, pocket
 
 **Bezel**: The surface that houses a light, such as a meter's bed or an LED's surround. _Avoid_: Bed, surround, housing
 
@@ -130,7 +132,7 @@ The words this library uses for its controls, their parts and their values. Wher
 
 **Detent**: A single value that a control catches on as it passes. _Avoid_: Snap, notch; "detent" for every stop of a stepped control
 
-**Position**: One of the fixed settings of a switch or a stepped value control. _Avoid_: Step, stop, entry; "position" for a point along continuous travel
+**Position**: One of the fixed settings of a switch, a toggle or a stepped value control. _Avoid_: Step, stop, entry; "position" for a point along continuous travel
 
 **Proportion**: How far along its travel a value sits, from 0 at one end to 1 at the other. _Avoid_: Place, unit, normalized value
 
@@ -150,7 +152,7 @@ The words this library uses for its controls, their parts and their values. Wher
 
 **Bin**: One of the evenly spaced frequencies in a frame given to a spectrum, each with a level in decibels. _Avoid_: Band (a filter's), bucket, sample
 
-**Zone**: A stretch of a level display's range with its own colour: lit, then hot, then clip. _Avoid_: Band, region (that is a stretch of a wave), range
+**Zone**: A stretch of a level display's range with its own colour: lit, then hot, then clip. The hot zone is drawn in the warning colour and the clip zone in the danger colour. _Avoid_: Warning zone, danger zone, Band, region (that is a stretch of a wave), range
 
 **Ballistics**: How quickly a meter's bar or a spectrum's bins rise and fall, following a metering standard. _Avoid_: Response, smoothing
 
@@ -177,6 +179,8 @@ The words this library uses for its controls, their parts and their values. Wher
 **Hook class**: A public class on one of a control's drawn parts. _Avoid_: Part, slot, BEM element
 
 **State**: A public custom state that a skin may select on, such as dragging or pressed. _Avoid_: Mode, status
+
+**Lit colour**: The colour a lamp shows, named for what it reports: lit (the skin's one light), ok, warning or danger. Idle is lit at a lower level. _Avoid_: Alt, secondary, accent, a colour's own name (green, red); hot and clip on a lamp (those are a meter's zones)
 
 **Ink**: The colour of anything printed or etched, such as scales, labels and icons. _Avoid_: Mark, engraving colour
 
