@@ -1,5 +1,24 @@
 # @xsynaptic/sonic-ui
 
+## 0.16.0
+
+### Minor Changes
+
+- - Button: a text legend widens the button to fit, never under `--sonic-button-aspect-ratio`. `--sonic-button-font-ratio` (0.34) and `--sonic-button-padding-ratio` (0.25) size it, replacing a font size set on the host, and it takes an icon's engraving and lit glow.
+  - Segmented: `--sonic-segmented-padding-ratio` (0.25) sets an option's inline padding.
+- - Button and segmented: `--sonic-button-latched-scale` and `--sonic-segmented-latched-scale` scale a cap that stays down; unset, the press scale. A press still dips.
+  - Focus: `--sonic-focus-glow` scales the glow, 0 to 1; `--sonic-focus-outline` and `--sonic-focus-outline-offset` draw an outline on keyboard focus.
+  - Disabled: `--sonic-disabled-opacity` fades a disabled control.
+
+## 0.15.0
+
+### Minor Changes
+
+- - Slider: `--sonic-target-size` now extends a slider's target across its breadth, so a page that already sets it gives its sliders more reach.
+  - Value controls: `entry="none"` turns typed entry off. With `spoken-step`, `formatSpokenValue` receives the rounded value that `aria-valuenow` carries.
+  - Button: a button with `expanded="true"` is drawn as a pressed one. `--sonic-ink-disabled` colours a disabled control's legend, label, digits and indicator.
+  - Waveform: a trackpad pinch in Safari zooms a `zoomable` waveform.
+
 ## 0.14.0
 
 ### Minor Changes
