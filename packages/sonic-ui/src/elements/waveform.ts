@@ -1,4 +1,5 @@
 import type { ValueAxis } from '#elements/value-gestures.ts';
+import type { WaveMarker } from '#elements/wave-element.ts';
 import type { SurfaceFrame, SurfaceLook } from '#lib/canvas-surface.ts';
 import type { Drawn, View } from '#lib/frame-timeline.ts';
 import type { TimeRegions } from '#lib/time-regions.ts';
@@ -27,6 +28,8 @@ declare global {
 }
 
 type Colour = keyof typeof colours;
+
+export type LabelRender = (marker: WaveMarker, element: HTMLElement) => void;
 
 export type PeaksRequest = (
 	fromSeconds: number,
@@ -276,6 +279,15 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 		this.reflect('reduced-motion', motion);
 	}
 
+	get renderLabel(): LabelRender | undefined {
+		return this.#renderLabel;
+	}
+
+	set renderLabel(render: LabelRender | undefined) {
+		this.#renderLabel = render;
+		if (this.isBound()) this.renderMarkers();
+	}
+
 	get requestPeaks(): PeaksRequest | undefined {
 		return this.#requestPeaks;
 	}
@@ -374,12 +386,14 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 
 	#readTime: (() => number | undefined) | undefined;
 
+	#renderLabel: LabelRender | undefined;
+
 	#requestPeaks: PeaksRequest | undefined;
 
 	readonly #rider = createLabelRider(this.control, {
 		className: 'sonic-waveform-label',
 		colourProperty: '--_sonic-waveform-marker',
-		fadeProperty: '--_sonic-waveform-label-fade',
+		fadeProperties: ['--_sonic-waveform-label-fade-start', '--_sonic-waveform-label-fade-end'],
 		insetProperty: '--_sonic-waveform-label-inset',
 		parkProperty: '--_sonic-waveform-label-park',
 	});
@@ -402,6 +416,7 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 			'playbackRate',
 			'readTime',
 			'reducedMotion',
+			'renderLabel',
 			'requestPeaks',
 			'zoom',
 			'zoomable',
@@ -454,6 +469,7 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 		{ frameMs, isDirty, isRebuilt, look, size }: SurfaceFrame<Colour>,
 	): void {
 		const held = this.#held();
+		const isPaged = look.isReducedMotion && this.reducedMotion === 'page';
 		const pending = this.#duePending();
 		const timeline = frameTimeline({
 			clockSeconds: this.#clock.read(frameMs, {
@@ -463,7 +479,7 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 			}),
 			frameMs,
 			...(held ? { held } : {}),
-			isPaged: look.isReducedMotion && this.reducedMotion === 'page',
+			isPaged,
 			isPlaying: this.playing,
 			isStill: look.isReducedMotion,
 			pending,
@@ -479,6 +495,7 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 		this.showCurrentMarker(seconds);
 		this.toggleState('pending', view.pending.length > 0);
 		this.#rider.place({
+			isPaged,
 			playheadSeconds: seconds,
 			startSeconds: view.startSeconds,
 			widthPx: view.width / view.dpr,
@@ -495,16 +512,25 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 	protected override renderMarkers(): void {
 		const bounds = this.mapping().bounds;
 
+		const render = this.#renderLabel;
+
 		this.#rider.measure(
-			this.markers.flatMap(({ dimmed, kind, label, start }) =>
-				label === undefined || label === ''
+			this.markers.flatMap((marker) =>
+				marker.label === undefined || marker.label === ''
 					? []
 					: [
 							{
-								isDimmed: dimmed === true,
-								...(kind === undefined ? {} : { kind }),
-								start: clamp(start, ...bounds),
-								text: label,
+								isDimmed: marker.dimmed === true,
+								...(marker.kind === undefined ? {} : { kind: marker.kind }),
+								start: clamp(marker.start, ...bounds),
+								text: marker.label,
+								...(render
+									? {
+											write: (element: HTMLElement) => {
+												render(marker, element);
+											},
+										}
+									: {}),
 							},
 						],
 			),

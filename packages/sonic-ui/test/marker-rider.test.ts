@@ -5,8 +5,10 @@ import type { RiderLabel, RiderView } from '#lib/marker-rider.ts';
 import { createLabelRider, layoutRider } from '#lib/marker-rider.ts';
 
 const view: RiderView = {
-	fadeShare: 0.25,
+	fadeEnd: 0,
+	fadeStart: 0,
 	insetPx: 8,
+	isPaged: false,
 	parkPx: 8,
 	playheadSeconds: 20,
 	startSeconds: 0,
@@ -51,22 +53,52 @@ test('the clip starts when the arriving label meets the parked label, not its li
 	expect(cutAt?.shownPx).toBeCloseTo(99);
 });
 
-test('the parked label fades as the next line closes on the playhead', () => {
+test('with no fade the parked label stays whole until the next line crosses the playhead', () => {
 	const markers = labels([5, 40], [30, 40]);
 
-	expect(layoutRider(markers, view).parked?.opacity).toBe(1);
-	expect(layoutRider(markers, { ...view, playheadSeconds: 25 }).parked?.opacity).toBeCloseTo(0.5);
-	expect(layoutRider(markers, { ...view, playheadSeconds: 29.9 }).parked?.opacity).toBeCloseTo(
-		0.01,
-	);
+	expect(layoutRider(markers, { ...view, playheadSeconds: 29.9 }).parked).toMatchObject({
+		index: 0,
+		opacity: 1,
+	});
 });
 
-test('a fade share of 0 keeps the parked label opaque up to the next line', () => {
-	const markers = labels([5, 40], [30, 40]);
-	const opaque = { ...view, fadeShare: 0 };
+// Park line at 10px and playhead at 200px, so the fade's scale spans 190px
+const whole: RiderView = { ...view, fadeEnd: 1, insetPx: 6, parkPx: 16 };
 
-	expect(layoutRider(markers, { ...opaque, playheadSeconds: 29.9 }).parked?.opacity).toBe(1);
-	expect(layoutRider(markers, { ...view, fadeShare: 0.5 }).parked?.opacity).toBeCloseTo(0.5);
+function parkedBefore(
+	nextStart: number,
+	fade: RiderView,
+): ReturnType<typeof layoutRider>['parked'] {
+	return layoutRider(labels([0.5, 40], [nextStart, 40]), fade).parked;
+}
+
+test('a fade over the whole scale starts as the next line crosses the playhead and ends with its label on the park', () => {
+	expect(parkedBefore(21, whole)).toMatchObject({ index: 0, opacity: 1 });
+	expect(parkedBefore(20, whole)?.opacity).toBe(1);
+	expect(parkedBefore(10.5, whole)?.opacity).toBeCloseTo(0.5);
+	expect(parkedBefore(1.01, whole)?.index).toBe(0);
+	expect(parkedBefore(1, whole)).toMatchObject({ index: 1, opacity: 1, x: 16 });
+});
+
+test('a late start holds the parked label whole while the next one rides in past the playhead', () => {
+	const late = { ...whole, fadeStart: 0.5 };
+	const layout = layoutRider(labels([0.5, 40], [15, 40]), late);
+
+	expect(layout.parked).toMatchObject({ index: 0, opacity: 1, x: 16 });
+	expect(layout.arriving).toMatchObject({ index: 1, x: 156 });
+	expect(parkedBefore(5.75, late)?.opacity).toBeCloseTo(0.5);
+});
+
+test('equal start and end give no fade, and values past the scale are held to it', () => {
+	expect(parkedBefore(1.01, { ...whole, fadeStart: 1 })).toMatchObject({ index: 0, opacity: 1 });
+	expect(parkedBefore(10.5, { ...whole, fadeEnd: 2, fadeStart: -1 })?.opacity).toBeCloseTo(0.5);
+});
+
+test('a paged window changes the label as the playhead crosses, whatever the fade', () => {
+	const paged = { ...whole, isPaged: true };
+
+	expect(parkedBefore(15, paged)).toMatchObject({ index: 1, opacity: 1 });
+	expect(parkedBefore(21, paged)).toMatchObject({ index: 0, opacity: 1 });
 });
 
 test('the far edge cuts a label, and one starting past it does not arrive', () => {
@@ -93,6 +125,8 @@ function mountRider(): {
 	const control = document.createElement('div');
 
 	control.innerHTML = '<div class="sonic-test-label"></div><div class="sonic-test-label"></div>';
+	control.style.setProperty('--_sonic-test-fade-end', '0');
+	document.body.replaceChildren(control);
 	vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue(
 		new DOMRect(0, 0, 100, 10),
 	);
@@ -100,7 +134,7 @@ function mountRider(): {
 	const rider = createLabelRider(control, {
 		className: 'sonic-test-label',
 		colourProperty: '--_sonic-test-marker',
-		fadeProperty: '--_sonic-test-fade',
+		fadeProperties: ['--_sonic-test-fade-start', '--_sonic-test-fade-end'],
 		insetProperty: '--_sonic-test-inset',
 		parkProperty: '--_sonic-test-park',
 	});
@@ -183,15 +217,20 @@ test('labels measured out of order park and arrive in order of time', () => {
 });
 
 test('a parked label fades by the written opacity, and clears it once whole again', () => {
-	const { parked, rider } = mountRider();
+	const { control, parked, rider } = mountRider();
 
+	control.style.setProperty('--_sonic-test-fade-end', '1');
+	rider.measure([
+		{ isDimmed: false, start: -2, text: 'Intro' },
+		{ isDimmed: false, start: 3, text: 'Drop' },
+	]);
 	rider.place(early);
-	expect(parked.style.opacity).toBe('0.590');
+	expect(parked.style.opacity).toBe('0.600');
 
-	rider.place({ ...early, playheadSeconds: 1.9 });
-	expect(parked.style.opacity).toBe('0.900');
+	rider.place({ ...early, playheadSeconds: 10 });
+	expect(parked.style.opacity).toBe('0.300');
 
-	rider.measure([{ isDimmed: false, start: 1, text: 'Intro' }]);
+	rider.measure([{ isDimmed: false, start: -2, text: 'Intro' }]);
 	rider.place(early);
 	expect(parked.style.opacity).toBe('');
 });
@@ -215,4 +254,35 @@ test('a label slot taken over by a marker with no kind drops the kind', () => {
 	rider.measure([{ isDimmed: false, start: 1, text: 'Intro' }]);
 	rider.place(early);
 	expect(parked.style.getPropertyValue('--_sonic-marker')).toBe('');
+});
+
+function writeTitle(element: HTMLElement): void {
+	const title = document.createElement('b');
+
+	title.textContent = 'Opening';
+	element.append('Intro', title);
+}
+
+test('a label with a write function is measured and drawn by it, and the next plain label clears what it drew', () => {
+	const { control, parked, rider } = mountRider();
+	const measured: Array<string> = [];
+
+	vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
+		this: HTMLElement,
+	) {
+		measured.push(this.getHTML());
+
+		return new DOMRect(0, 0, 100, 10);
+	});
+	rider.measure([{ isDimmed: false, start: 1, text: 'Spoken', write: writeTitle }]);
+	rider.place(early);
+
+	expect(measured).toEqual(['Intro<b>Opening</b>']);
+	expect(parked.getHTML()).toBe('Intro<b>Opening</b>');
+
+	rider.measure([{ isDimmed: false, start: 1, text: 'Intro' }]);
+	rider.place(early);
+
+	expect(parked.getHTML()).toBe('Intro');
+	expect(control.querySelectorAll('.sonic-test-label')).toHaveLength(2);
 });

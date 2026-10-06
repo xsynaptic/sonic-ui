@@ -54,10 +54,16 @@
 	initial-value: rgb(96 96 104);
 }
 
-@property --_sonic-waveform-label-fade {
+@property --_sonic-waveform-label-fade-start {
 	syntax: '<number>';
 	inherits: true;
-	initial-value: 0.25;
+	initial-value: 0;
+}
+
+@property --_sonic-waveform-label-fade-end {
+	syntax: '<number>';
+	inherits: true;
+	initial-value: 1;
 }
 
 @property --_sonic-waveform-marker {
@@ -105,7 +111,8 @@
 		--_sonic-waveform-placeholder: var(--sonic-waveform-placeholder, var(--_sonic-etch));
 		--_sonic-waveform-marker: var(--sonic-marker, var(--_sonic-ink));
 		--_sonic-waveform-label: var(--sonic-waveform-label, var(--_sonic-waveform-marker));
-		--_sonic-waveform-label-fade: var(--sonic-waveform-label-fade-ratio, 0.25);
+		--_sonic-waveform-label-fade-start: var(--sonic-waveform-label-fade-start, 0);
+		--_sonic-waveform-label-fade-end: var(--sonic-waveform-label-fade-end, 1);
 		--_sonic-waveform-label-inset: calc(
 			var(--_sonic-waveform-size) * var(--sonic-waveform-label-inset-ratio, 0.04)
 		);

@@ -234,3 +234,61 @@ test('a scrim spans the wave under the label, and a block inset lifts the label'
 	expect(boxes[1]).toEqual(boxes[0]);
 	await expect(label).toHaveCSS('bottom', '14px');
 });
+
+test('a label is drawn by renderLabel from the marker and its own keys, and goes back to the text without it', async ({
+	page,
+}) => {
+	await page.goto('/fixtures/');
+
+	const waveform = page.locator('#waveform-pinned');
+	const label = waveform.locator('.sonic-waveform-label').first();
+
+	await waveform.locator('canvas').scrollIntoViewIfNeeded();
+	await expect(label).toHaveText('Intro');
+	await waveform.evaluate((host: HTMLElementTagNameMap['sonic-waveform']) => {
+		host.markers = [{ label: 'Spoken', start: 100, title: 'Opening' }];
+		host.renderLabel = (marker, element) => {
+			const title = document.createElement('b');
+
+			title.textContent = String(marker.title);
+			element.append(`${String(marker.start)} `, title);
+		};
+	});
+
+	await expect(label).toHaveText('100 Opening');
+	await expect(label.locator('b')).toHaveText('Opening');
+	await expect(label).toHaveAttribute('aria-hidden', 'true');
+
+	await waveform.evaluate((host: HTMLElementTagNameMap['sonic-waveform']) => {
+		host.renderLabel = undefined;
+	});
+	await expect(label).toHaveText('Spoken');
+});
+
+test('the fade tokens set where the parked label gives way to a marker the playhead has crossed', async ({
+	page,
+}) => {
+	await page.goto('/fixtures/');
+
+	const waveform = page.locator('#waveform-pinned');
+	const parked = waveform.locator('.sonic-waveform-label').first();
+	const mark = (fadeEnd: string): Promise<void> =>
+		waveform.evaluate((host: HTMLElementTagNameMap['sonic-waveform'], end) => {
+			host.style.setProperty('--sonic-waveform-label-fade-end', end);
+			host.markers = [
+				{ label: 'Before', start: 100 },
+				{ label: 'Crossed', start: 149.5 },
+			];
+		}, fadeEnd);
+
+	await waveform.locator('canvas').scrollIntoViewIfNeeded();
+	await mark('1');
+	await expect(parked).toHaveText('Before');
+	await expect
+		.poll(() => parked.evaluate((label) => Number(getComputedStyle(label).opacity)))
+		.toBeLessThan(1);
+
+	await mark('0');
+	await expect(parked).toHaveText('Crossed');
+	await expect(parked).toHaveCSS('opacity', '1');
+});

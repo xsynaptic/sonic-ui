@@ -4,6 +4,7 @@ import { readPxProperty } from '#lib/read-px-property.ts';
 import { requireChild } from '#lib/render.ts';
 
 interface RiderWindow {
+	isPaged: boolean;
 	playheadSeconds: number;
 	startSeconds: number;
 	widthPx: number;
@@ -11,7 +12,8 @@ interface RiderWindow {
 }
 
 export interface RiderView extends RiderWindow {
-	fadeShare: number;
+	fadeEnd: number;
+	fadeStart: number;
 	insetPx: number;
 	parkPx: number;
 }
@@ -22,6 +24,7 @@ export interface RiderLabel {
 	start: number;
 	text: string;
 	widthPx: number;
+	write?: (element: HTMLElement) => void;
 }
 
 interface LabelPlacement {
@@ -39,6 +42,7 @@ interface RiderLayout {
 interface LabelSlot {
 	element: HTMLElement;
 	kind: string | undefined;
+	label: RiderLabel | undefined;
 	opacity: number;
 	shownPx: number;
 	x: number;
@@ -51,18 +55,19 @@ function lineX(seconds: number, view: RiderView): number {
 function parkedPlacement(
 	labels: ReadonlyArray<RiderLabel>,
 	index: number,
-	[view, arrivingX]: [RiderView, number],
+	[view, arrivingX, [startX, endX]]: [RiderView, number, [number, number]],
 ): LabelPlacement | undefined {
 	const parked = labels[index];
 	if (!parked) return undefined;
 
 	const next = labels[index + 1];
 	const x = Math.max(view.parkPx, lineX(parked.start, view) + view.insetPx);
-	const approachPx = next ? lineX(next.start, view) - lineX(view.playheadSeconds, view) : Infinity;
+	const fadePx = startX - endX;
+	const leftPx = next ? lineX(next.start, view) - endX : Infinity;
 
 	return {
 		index,
-		opacity: view.fadeShare > 0 ? clamp(approachPx / (view.widthPx * view.fadeShare), 0, 1) : 1,
+		opacity: fadePx > 0 ? clamp(leftPx / fadePx, 0, 1) : 1,
 		shownPx: Math.min(parked.widthPx, arrivingX - x, view.widthPx - x),
 		x,
 	};
@@ -72,13 +77,28 @@ function isDrawable(length: number): boolean {
 	return Number.isFinite(length) && length > 0;
 }
 
+// Where the next line is as the fade starts and ends; 0 at the playhead, 1 with its label on the park
+function fadeLines(view: RiderView): [number, number] {
+	const playheadX = lineX(view.playheadSeconds, view);
+	// Nothing rides in on a still page, so the label changes as the playhead crosses
+	if (view.isPaged) return [playheadX, playheadX];
+
+	const stretchPx = view.parkPx - view.insetPx - playheadX;
+
+	return [
+		playheadX + clamp(view.fadeStart, 0, 1) * stretchPx,
+		playheadX + clamp(view.fadeEnd, 0, 1) * stretchPx,
+	];
+}
+
 export function layoutRider(labels: ReadonlyArray<RiderLabel>, view: RiderView): RiderLayout {
 	if (!isDrawable(view.windowSeconds) || !isDrawable(view.widthPx)) return {};
 
-	const parkedIndex = labels.findLastIndex((label) => label.start <= view.playheadSeconds);
+	const fade = fadeLines(view);
+	const parkedIndex = labels.findLastIndex((label) => lineX(label.start, view) <= fade[1]);
 	const next = labels[parkedIndex + 1];
 	const arrivingX = next ? lineX(next.start, view) + view.insetPx : Infinity;
-	const parked = parkedPlacement(labels, parkedIndex, [view, arrivingX]);
+	const parked = parkedPlacement(labels, parkedIndex, [view, arrivingX, fade]);
 	const arriving: LabelPlacement | undefined =
 		next && arrivingX < view.widthPx
 			? {
@@ -93,7 +113,12 @@ export function layoutRider(labels: ReadonlyArray<RiderLabel>, view: RiderView):
 }
 
 function labelSlot(element: HTMLElement): LabelSlot {
-	return { element, kind: undefined, opacity: NaN, shownPx: NaN, x: NaN };
+	return { element, kind: undefined, label: undefined, opacity: NaN, shownPx: NaN, x: NaN };
+}
+
+function writeContent(element: HTMLElement, { text, write }: Omit<RiderLabel, 'widthPx'>): void {
+	element.textContent = write ? '' : text;
+	write?.(element);
 }
 
 function writePlacement(
@@ -131,7 +156,10 @@ function writeLabel(
 	if (element.hidden !== !label) element.hidden = !label;
 	if (!label || !placement) return;
 
-	if (element.textContent !== label.text) element.textContent = label.text;
+	if (slot.label !== label) {
+		slot.label = label;
+		writeContent(element, label);
+	}
 	element.toggleAttribute('data-sonic-dimmed', label.isDimmed);
 	if (slot.kind !== label.kind) {
 		slot.kind = label.kind;
@@ -143,13 +171,13 @@ function writeLabel(
 function measureWidths(
 	control: HTMLElement,
 	className: string,
-	texts: Array<string>,
+	labels: ReadonlyArray<Omit<RiderLabel, 'widthPx'>>,
 ): Array<number> {
-	const probes = texts.map((text) => {
+	const probes = labels.map((label) => {
 		const probe = document.createElement('div');
 
 		probe.className = className;
-		probe.textContent = text;
+		writeContent(probe, label);
 
 		return probe;
 	});
@@ -168,7 +196,7 @@ export function createLabelRider(
 	options: {
 		className: string;
 		colourProperty: `--_sonic-${string}`;
-		fadeProperty: `--_sonic-${string}`;
+		fadeProperties: [start: `--_sonic-${string}`, end: `--_sonic-${string}`];
 		insetProperty: `--_sonic-${string}`;
 		parkProperty: `--_sonic-${string}`;
 	},
@@ -176,25 +204,23 @@ export function createLabelRider(
 	measure: (labels: ReadonlyArray<Omit<RiderLabel, 'widthPx'>>) => void;
 	place: (window: RiderWindow) => void;
 } {
-	const { className, colourProperty, fadeProperty, insetProperty, parkProperty } = options;
+	const { className, colourProperty, fadeProperties, insetProperty, parkProperty } = options;
 	const parked = labelSlot(requireChild(control, `.${className}`, HTMLElement));
 	const arriving = labelSlot(requireChild(control, `.${className} + .${className}`, HTMLElement));
-	let fadeShare = 0.25;
+	let fadeStart = 0;
+	let fadeEnd = 1;
 	let insetPx = 0;
 	let parkPx = 0;
 	let measured: Array<RiderLabel> = [];
 
 	return {
 		measure: (labels) => {
-			const widths = measureWidths(
-				control,
-				className,
-				labels.map(({ text }) => text),
-			);
+			const widths = measureWidths(control, className, labels);
 
 			const styles = getComputedStyle(control);
 
-			fadeShare = readPxProperty(styles, fadeProperty, 0.25);
+			fadeStart = readPxProperty(styles, fadeProperties[0], 0);
+			fadeEnd = readPxProperty(styles, fadeProperties[1], 1);
 			insetPx = readPxProperty(styles, insetProperty, 0);
 			parkPx = readPxProperty(styles, parkProperty, 0);
 			measured = labels
@@ -202,7 +228,7 @@ export function createLabelRider(
 				.toSorted((first, second) => first.start - second.start);
 		},
 		place: (window) => {
-			const layout = layoutRider(measured, { ...window, fadeShare, insetPx, parkPx });
+			const layout = layoutRider(measured, { ...window, fadeEnd, fadeStart, insetPx, parkPx });
 
 			writeLabel(parked, [measured, colourProperty], layout.parked);
 			writeLabel(arriving, [measured, colourProperty], layout.arriving);

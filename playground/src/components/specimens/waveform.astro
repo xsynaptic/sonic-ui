@@ -14,7 +14,7 @@ const waveforms = [
 	{ format: 'seconds-tenths', id: 'waveform-seconds', label: 'Readout in seconds', seed: 15 },
 	{
 		className: [
-			'[--sonic-waveform-playhead-width:1px] [--sonic-waveform-label-fade-ratio:0]',
+			'[--sonic-waveform-playhead-width:1px] [--sonic-waveform-label-fade-end:0]',
 			'[--sonic-waveform-label-font:ui-monospace,monospace] [--sonic-waveform-label-font-ratio:0.1]',
 			'[--sonic-waveform-label-scrim:light-dark(rgb(255_255_255/60%),rgb(0_0_0/50%))]',
 		].join(' '),
@@ -30,6 +30,14 @@ const waveforms = [
 		motion: 'scroll',
 		seed: 17,
 	},
+	{
+		className: '[--sonic-waveform-label-fade-start:0.5]',
+		id: 'waveform-handover',
+		isPlaying: true,
+		label: 'Drawn label, late fade',
+		markers: '146=First_artist|Opening 151.5=Second_artist|Second_track 158=Third_artist|Outro~',
+		seed: 18,
+	},
 ];
 ---
 
@@ -40,7 +48,7 @@ const waveforms = [
 				aria-labelledby={waveform.id}
 				class:list={['[--sonic-waveform-length:20rem]', waveform.className]}
 				data-format={waveform.format ?? 'clock-tenths'}
-				data-markers="146=Intro 151.5=Second_track 158=Outro~"
+				data-markers={waveform.markers ?? '146=Intro 151.5=Second_track 158=Outro~'}
 				data-pending={waveform.pending}
 				data-samples={waveform.seed}
 				key-step="1"

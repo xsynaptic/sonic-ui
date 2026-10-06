@@ -11,6 +11,8 @@ declare global {
 }
 
 export interface WaveMarker {
+	// Open to a consumer's own keys, which `renderLabel` draws from
+	[key: string]: unknown;
 	dimmed?: boolean;
 	end?: number;
 	kind?: string;
