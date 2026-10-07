@@ -49,7 +49,7 @@ Run `pnpm test-e2e` after changing a gesture, a control's naming, or its drawn p
 
 Library changes get a changeset (`pnpm changeset`). Until 1.0, keep changesets short and grouped.
 
-The package README is written for an agent wiring the library into an app. It holds only what the built types and sheets do not say: setup, contracts between a control and its children, and behaviour that would surprise. When a change adds or breaks one of those, update the README in the same change; a new property or token needs no entry.
+The package README is written for an agent wiring the library into an app. Until 1.0 it holds setup and the contracts every control shares, and nothing about one control. A single control's behaviour, however surprising, goes in the changeset; update the README only when a change adds or breaks a contract that crosses controls, or moves a row of its material table.
 
 ## Visual checks
 

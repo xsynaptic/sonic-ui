@@ -188,7 +188,7 @@ The words this library uses for its controls, their parts and their values. Wher
 
 **Ink**: The colour of anything printed or etched, such as scales, labels and icons. _Avoid_: Mark, engraving colour
 
-**Glass**: The dark glazed material of screens, readouts and the number box. _Avoid_: Screen (that is the display), backdrop
+**Glass**: The dark glazed material of screens and readouts. _Avoid_: Screen (that is the display), backdrop
 
 **Target**: The region around a press control that takes its presses, or across a slider's breadth that takes its drags. It is the control's own box unless `--sonic-target-size` makes it larger. _Avoid_: Hit area, touch target, tap target, hitbox
 
