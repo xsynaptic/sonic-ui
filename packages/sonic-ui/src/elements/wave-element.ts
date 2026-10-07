@@ -1,4 +1,5 @@
 import type { Surface, SurfaceFrame } from '#lib/canvas-surface.ts';
+import type { Seconds } from '#lib/units.ts';
 
 import { SonicValueElement } from '#elements/value-element.ts';
 import { bindSurface } from '#lib/canvas-surface.ts';
@@ -13,10 +14,12 @@ export interface WaveMarker {
 	// Open to a consumer's own keys, which `renderLabel` draws from
 	[key: string]: unknown;
 	dimmed?: boolean;
-	end?: number;
+	/** Makes the marker a region */
+	end?: Seconds;
+	/** Lowercase letters, digits and hyphens; colours the marker through `--sonic-marker-<kind>` */
 	kind?: string;
 	label?: string;
-	start: number;
+	start: Seconds;
 }
 
 function markerKey(marker: undefined | WaveMarker): string {

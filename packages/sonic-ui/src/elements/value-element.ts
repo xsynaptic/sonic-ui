@@ -228,6 +228,7 @@ export abstract class SonicValueElement extends SonicFormElement {
 		return this.#gestures?.pointerType();
 	}
 
+	/** The values a stepped control stops at, spaced evenly along the travel whatever their spacing */
 	get positions(): Array<number> | undefined {
 		return parseNumberList(this.getAttribute('positions'));
 	}
@@ -248,6 +249,7 @@ export abstract class SonicValueElement extends SonicFormElement {
 		return this.hasState('revealed');
 	}
 
+	/** Rounds the value assistive technology hears, in value units; the value itself is untouched */
 	get spokenStep(): number | undefined {
 		return this.optionalNumberAttribute('spoken-step');
 	}

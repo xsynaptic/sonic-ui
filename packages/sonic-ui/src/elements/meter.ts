@@ -1,3 +1,5 @@
+import type { Decibels } from '#lib/units.ts';
+
 import { SonicElement } from '#elements/sonic-element.ts';
 import { ballisticsRates, fall, rise, stepNeedle } from '#lib/ballistics.ts';
 import { toNumber } from '#lib/math.ts';
@@ -68,6 +70,7 @@ export class SonicMeter extends SonicElement {
 		this.reflect('ballistics', mode);
 	}
 
+	/** Linear peak amplitude, 1 at full scale; the meter converts to decibels and applies its ballistics */
 	get level(): number {
 		return this.#level;
 	}
@@ -91,7 +94,7 @@ export class SonicMeter extends SonicElement {
 		this.#schedule(now);
 	}
 
-	get max(): number {
+	get max(): Decibels {
 		return this.numberAttribute('max', 0);
 	}
 
@@ -99,7 +102,7 @@ export class SonicMeter extends SonicElement {
 		this.reflect('max', decibels);
 	}
 
-	get min(): number {
+	get min(): Decibels {
 		return this.numberAttribute('min', -60);
 	}
 
@@ -124,18 +127,21 @@ export class SonicMeter extends SonicElement {
 		this.reflect('origin', value);
 	}
 
-	get peak(): number {
+	/** Highest level since `resetPeak()`; `-Infinity` before any signal */
+	get peak(): Decibels {
 		return this.#peak;
 	}
 
-	get segments(): Array<number> | undefined {
+	/** Ladder thresholds, one per segment; unset draws a bar */
+	get segments(): Array<Decibels> | undefined {
 		return parseNumberList(this.getAttribute('segments'));
 	}
 
-	set segments(thresholds: Array<number> | undefined) {
+	set segments(thresholds: Array<Decibels> | undefined) {
 		this.reflect('segments', thresholds?.join(' '));
 	}
 
+	/** A reading in the meter's own units, drawn as given with no ballistics; takes over from `level` while set */
 	get value(): number | undefined {
 		return this.optionalNumberAttribute('value');
 	}

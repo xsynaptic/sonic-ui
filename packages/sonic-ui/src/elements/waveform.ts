@@ -4,6 +4,7 @@ import type { SurfaceFrame } from '#lib/canvas-surface.ts';
 import type { Drawn } from '#lib/frame-timeline.ts';
 import type { PeaksRequest } from '#lib/peaks-request.ts';
 import type { TimeRegions } from '#lib/time-regions.ts';
+import type { Milliseconds, PixelsPerSecond, Seconds } from '#lib/units.ts';
 import type { WaveformPeaks } from '#lib/waveform-buckets.ts';
 import type { ZoomGesture } from '#lib/zoom-gesture.ts';
 
@@ -100,7 +101,8 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 		this.#peaksRequest.changed();
 	}
 
-	get pending(): Array<[number, number]> {
+	/** Spans being fetched; drawn as placeholders until cleared */
+	get pending(): Array<[Seconds, Seconds]> {
 		return this.#pending.map(([start, end]) => [start, end]);
 	}
 
@@ -122,11 +124,12 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 		this.#peaksRequest.changed();
 	}
 
-	get pendingDelay(): number {
+	/** How long a span stays listed in `pending` before its placeholder draws */
+	get pendingDelay(): Milliseconds {
 		return Math.max(0, this.numberAttribute('pending-delay', 0));
 	}
 
-	set pendingDelay(value: number | undefined) {
+	set pendingDelay(value: Milliseconds | undefined) {
 		this.reflect('pending-delay', value);
 	}
 
@@ -148,11 +151,12 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 		this.reflect('playing', isPlaying);
 	}
 
-	get readTime(): (() => number | undefined) | undefined {
+	/** Read every frame for the playback time, so the waveform scrolls smoother than writes to `value` arrive */
+	get readTime(): (() => Seconds | undefined) | undefined {
 		return this.#readTime;
 	}
 
-	set readTime(read: (() => number | undefined) | undefined) {
+	set readTime(read: (() => Seconds | undefined) | undefined) {
 		this.#readTime = read;
 		this.render();
 	}
@@ -183,13 +187,13 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 		this.#peaksRequest.reset();
 	}
 
-	get zoom(): number {
+	get zoom(): PixelsPerSecond {
 		const zoom = this.numberAttribute('zoom', defaultZoom);
 
 		return zoom > 0 ? zoom : defaultZoom;
 	}
 
-	set zoom(value: number | undefined) {
+	set zoom(value: PixelsPerSecond | undefined) {
 		this.reflect('zoom', value);
 	}
 
@@ -201,23 +205,23 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 		this.reflect('zoomable', isZoomable);
 	}
 
-	get zoomMax(): number {
+	get zoomMax(): PixelsPerSecond {
 		const zoomMax = this.numberAttribute('zoom-max', defaultZoomMax);
 
 		return Math.max(this.zoomMin, zoomMax > 0 ? zoomMax : defaultZoomMax);
 	}
 
-	set zoomMax(value: number | undefined) {
+	set zoomMax(value: PixelsPerSecond | undefined) {
 		this.reflect('zoom-max', value);
 	}
 
-	get zoomMin(): number {
+	get zoomMin(): PixelsPerSecond {
 		const zoomMin = this.numberAttribute('zoom-min', defaultZoomMin);
 
 		return zoomMin > 0 ? zoomMin : defaultZoomMin;
 	}
 
-	set zoomMin(value: number | undefined) {
+	set zoomMin(value: PixelsPerSecond | undefined) {
 		this.reflect('zoom-min', value);
 	}
 

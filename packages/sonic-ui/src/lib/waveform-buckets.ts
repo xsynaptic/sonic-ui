@@ -1,4 +1,4 @@
-// Interleaved min, max per channel per pair; `fullScale` is 128, 32768 or 1
+/** Interleaved min, max per channel per pair; `fullScale` is 128, 32768 or 1 */
 export interface WaveformPeaks {
 	channels?: number;
 	fullScale: number;

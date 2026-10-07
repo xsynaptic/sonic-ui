@@ -16,6 +16,7 @@ function progress(side: number, span: number): number {
 	return Math.min(1, side / span);
 }
 
+/** `position` runs from 0, all a, to 1, all b; `sharpness` from 0 to 1 shortens the overlap */
 export function crossfadeGains(position: number, options: CrossfadeOptions = {}): CrossfadeGains {
 	const at = clampProportion(position);
 	const span = 1 - clampProportion(options.sharpness ?? 0);

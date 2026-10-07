@@ -1,4 +1,5 @@
 import type { Surface, SurfaceFrame } from '#lib/canvas-surface.ts';
+import type { Decibels } from '#lib/units.ts';
 
 import { SonicElement } from '#elements/sonic-element.ts';
 import { bindSurface } from '#lib/canvas-surface.ts';
@@ -33,7 +34,7 @@ export abstract class SonicDisplayElement<
 	}
 
 	// fallow-ignore-next-line code-duplication -- one accessor pair per reflected attribute
-	get max(): number {
+	get max(): Decibels {
 		return this.numberAttribute('max', 0);
 	}
 
@@ -41,7 +42,7 @@ export abstract class SonicDisplayElement<
 		this.reflect('max', decibels);
 	}
 
-	get min(): number {
+	get min(): Decibels {
 		return this.numberAttribute('min', -90);
 	}
 
@@ -77,8 +78,9 @@ export abstract class SonicDisplayElement<
 		super.connectedCallback();
 	}
 
-	push(frame: Float32Array): void {
-		this.receive(frame);
+	/** One level per bin, as `AnalyserNode.getFloatFrequencyData` fills it */
+	push(decibels: Float32Array): void {
+		this.receive(decibels);
 		this.#surface?.requestFrame();
 	}
 

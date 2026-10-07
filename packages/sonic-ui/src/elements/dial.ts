@@ -49,6 +49,7 @@ export class SonicDial extends SonicValueElement {
 		this.reflect('endless', isEndless);
 	}
 
+	/** How far a modulation source can push the value, in value units; signed */
 	// fallow-ignore-next-line code-duplication -- one accessor pair per reflected attribute
 	get modulation(): number {
 		return this.numberAttribute('modulation', 0);
@@ -58,6 +59,7 @@ export class SonicDial extends SonicValueElement {
 		this.reflect('modulation', amount);
 	}
 
+	/** Where the value is right now with modulation applied; a property only, cheap to write every frame, fires nothing */
 	// fallow-ignore-next-line code-duplication -- one accessor pair per property
 	get modulationValue(): number | undefined {
 		return this.#modulation.value();

@@ -51,6 +51,7 @@ export function readDatHeader(buffer: ArrayBuffer): DatHeader {
 	};
 }
 
+/** An inclusive byte range for a `Range` header; `undefined` when the pairs asked for are empty */
 export function datByteRange(
 	header: DatHeader,
 	fromPair: number,

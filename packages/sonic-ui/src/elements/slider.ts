@@ -59,6 +59,7 @@ export class SonicSlider extends SonicValueElement {
 		'spring',
 	];
 
+	/** Loaded spans, in the slider's own values */
 	// fallow-ignore-next-line code-duplication -- one accessor pair per property
 	get buffered(): Array<[number, number]> {
 		return this.#buffered.map(([start, end]) => [start, end]);
@@ -77,6 +78,7 @@ export class SonicSlider extends SonicValueElement {
 		this.reflect('groove-press', gesture);
 	}
 
+	/** How far a modulation source can push the value, in value units; signed */
 	get modulation(): number {
 		return this.numberAttribute('modulation', 0);
 	}
@@ -85,6 +87,7 @@ export class SonicSlider extends SonicValueElement {
 		this.reflect('modulation', amount);
 	}
 
+	/** Where the value is right now with modulation applied; a property only, cheap to write every frame, fires nothing */
 	get modulationValue(): number | undefined {
 		return this.#modulation.value();
 	}

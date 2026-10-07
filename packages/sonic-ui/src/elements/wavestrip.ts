@@ -2,6 +2,7 @@ import type { ValueAxis } from '#elements/value-gestures.ts';
 import type { SurfaceFrame } from '#lib/canvas-surface.ts';
 import type { StripRegions } from '#lib/strip-scene.ts';
 import type { TimeRegions } from '#lib/time-regions.ts';
+import type { Seconds } from '#lib/units.ts';
 
 import { SonicWaveElement } from '#elements/wave-element.ts';
 import { createMarkerBand } from '#lib/marker-band.ts';
@@ -75,6 +76,7 @@ function fillRegion(
 }
 
 export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
+	/** Loaded spans, in seconds */
 	// fallow-ignore-next-line code-duplication -- one accessor pair per property
 	get buffered(): Array<[number, number]> {
 		return this.#buffered.map(([start, end]) => [start, end]);
@@ -93,6 +95,7 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 		this.reflect('cancellable', isCancellable);
 	}
 
+	/** One amplitude from 0 to 1 per slice of the whole track, any length; resampled to the bars and never normalised */
 	get peaks(): ArrayLike<number> | undefined {
 		return this.#peaks;
 	}
@@ -131,7 +134,8 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 
 	#peaks: ArrayLike<number> | undefined;
 
-	clientXOf(value: number): number {
+	/** Viewport x of a time, clamped to the strip */
+	clientXOf(value: Seconds): number {
 		const { startPx, travelPx } = this.#axis();
 
 		return startPx + this.mapping().proportionOf(value) * travelPx;

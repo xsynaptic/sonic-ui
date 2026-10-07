@@ -1,3 +1,4 @@
+/** Return the same promise for a span already on its way; a new promise per call repaints forever */
 export type PeaksRequest = (
 	fromSeconds: number,
 	toSeconds: number,

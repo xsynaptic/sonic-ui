@@ -77,6 +77,7 @@ export class SonicButton extends SonicFormElement {
 		this.reflect('latching', isLatching);
 	}
 
+	/** Shows the legend child whose `data-sonic-when` has this name */
 	get legend(): string | undefined {
 		return this.getAttribute('legend') ?? undefined;
 	}
@@ -111,6 +112,7 @@ export class SonicButton extends SonicFormElement {
 		this.reflect('soft-disabled', isSoftDisabled);
 	}
 
+	/** Submitted with the form while a latching button is pressed */
 	get value(): string {
 		return this.getAttribute('value') ?? 'on';
 	}

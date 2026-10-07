@@ -83,6 +83,7 @@ export class SonicSplit extends SonicElement {
 		this.reflect('mode', name);
 	}
 
+	/** What the members add up to; unset, it is their sum when they connect */
 	get total(): number | undefined {
 		return this.optionalNumberAttribute('total');
 	}

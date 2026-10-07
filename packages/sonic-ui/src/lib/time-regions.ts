@@ -1,3 +1,4 @@
+/** A media element's `buffered` or `seekable` as it is, or any list of start and end pairs */
 export type TimeRegions = Iterable<readonly [number, number]> | TimeRanges;
 
 export function readRegions(regions: TimeRegions): Array<[number, number]> {
