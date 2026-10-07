@@ -2,7 +2,6 @@ import { toNumber } from '#lib/math.ts';
 import { appendOnce, checkChildren } from '#lib/owned-control.ts';
 import { writeAttribute } from '#lib/write-attribute.ts';
 
-// eslint-disable-next-line unicorn/consistent-boolean-name -- the name bundlers and other kits use
 declare const __DEV__: boolean;
 
 const namingAttributes = ['aria-describedby', 'aria-label', 'aria-labelledby'];
@@ -10,14 +9,23 @@ const namingAttributes = ['aria-describedby', 'aria-label', 'aria-labelledby'];
 const checkedSheets = new WeakMap<object, Set<string>>();
 
 interface StyleProbe {
+	lost?: string;
+	pseudo?: string;
 	selector?: string;
 	sheet: string;
 	token: string;
 }
 
-// The bracket and the scale set no private token, so they go unprobed
+// A padding or margin the sheets leave at zero only where `ratio` is zero
+interface BoxProbe {
+	property: string;
+	ratio?: `--_sonic-${string}`;
+	selector?: string;
+}
+
 const materialTokens = {
 	arc: '--_sonic-arc-mask',
+	bracket: 'border-top-style',
 	cap: '--_sonic-cap',
 	core: '--_sonic-unlit',
 	glass: '--_sonic-glass-slab',
@@ -26,22 +34,69 @@ const materialTokens = {
 	lens: '--_sonic-lens',
 	pane: '--_sonic-glass-pitch',
 	readout: '--_sonic-readout-size',
+	scale: 'position',
 	value: '--_sonic-detent-zone',
 	well: '--_sonic-well-depth',
 } as const;
 
 type MaterialSheet = keyof typeof materialTokens;
 
-type MaterialProbe = [sheet: MaterialSheet, selector: string] | MaterialSheet;
+// The bracket and the scale set no private token, so each is read by what a standard property holds without it
+const lostValues: Partial<Record<MaterialSheet, string>> = { bracket: 'none', scale: 'static' };
+
+type MaterialProbe = [sheet: MaterialSheet, selector: string, pseudo?: string] | MaterialSheet;
 
 function materialProbe(entry: MaterialProbe): StyleProbe {
-	if (typeof entry === 'string') {
-		return { sheet: `material/${entry}.css`, token: materialTokens[entry] };
-	}
+	const [name, selector, pseudo] = typeof entry === 'string' ? [entry] : entry;
+	const lost = lostValues[name];
 
-	const [name, selector] = entry;
+	return {
+		sheet: `material/${name}.css`,
+		token: materialTokens[name],
+		...(lost === undefined ? {} : { lost }),
+		...(pseudo === undefined ? {} : { pseudo }),
+		...(selector === undefined ? {} : { selector }),
+	};
+}
 
-	return { selector, sheet: `material/${name}.css`, token: materialTokens[name] };
+interface StyleChecks {
+	box?: BoxProbe;
+	material: Array<MaterialProbe>;
+}
+
+function isLost(drawn: Element, { lost = '', pseudo, token }: StyleProbe): boolean {
+	return getComputedStyle(drawn, pseudo).getPropertyValue(token) === lost;
+}
+
+const hostBoxProperties = [
+	'margin-top',
+	'margin-right',
+	'margin-bottom',
+	'margin-left',
+	'padding-top',
+	'padding-right',
+	'padding-bottom',
+	'padding-left',
+	'width',
+	'height',
+];
+
+// An environment with no computed styles answers '', which is no box property
+function readHostBox(host: Element): string | undefined {
+	const style = getComputedStyle(host);
+	if (style.display === 'none') return undefined;
+	if (style.display !== 'contents') return 'display';
+
+	return hostBoxProperties.find(
+		(property) => !['', '0px', 'auto'].includes(style.getPropertyValue(property)),
+	);
+}
+
+function isZeroed(control: Element, { property, ratio, selector }: BoxProbe): boolean {
+	const part = selector === undefined ? control : control.querySelector(selector);
+	if (!part || getComputedStyle(part).getPropertyValue(property) !== '0px') return false;
+
+	return ratio === undefined || Number(getComputedStyle(control).getPropertyValue(ratio)) !== 0;
 }
 
 function writeLabelledBy(target: Element, labels: Array<Element>): void {
@@ -123,11 +178,7 @@ export abstract class SonicElement extends HTMLElement {
 		if (!this.isDisabled() && !this.#focused()) target.focus(options);
 	}
 
-	protected checkStyles(
-		control: HTMLElement,
-		sheet: string,
-		material: Array<MaterialProbe> = [],
-	): void {
+	protected checkStyles(control: HTMLElement, sheet: string, { box, material }: StyleChecks): void {
 		if (!__DEV__) return;
 
 		const elementClass = this.constructor;
@@ -142,7 +193,9 @@ export abstract class SonicElement extends HTMLElement {
 			{ sheet, token: '--_sonic-unit' },
 			{ selector: '.sonic-led', sheet: 'led.css', token: '--_sonic-led-lens-ratio' },
 		].filter((probe) => !checked.has(probe.sheet) && part(probe) !== undefined);
-		if (probes.length === 0) return;
+		const isResetChecked = !box || checked.has('reset');
+		const isBoxChecked = isResetChecked && checked.has('host');
+		if (isBoxChecked && probes.length === 0) return;
 
 		checkedSheets.set(elementClass, checked);
 		for (const probe of probes) checked.add(probe.sheet);
@@ -153,12 +206,14 @@ export abstract class SonicElement extends HTMLElement {
 				const drawn = control.isConnected ? part(probe) : undefined;
 
 				if (!drawn) checked.delete(probe.sheet);
-				else if (getComputedStyle(drawn).getPropertyValue(probe.token) === '') {
-					missing.push(`@xsynaptic/sonic-ui/${probe.sheet}`);
-				}
+				else if (isLost(drawn, probe)) missing.push(`@xsynaptic/sonic-ui/${probe.sheet}`);
 			}
-			if (missing.length === 0) return;
+			if (missing.length === 0) {
+				this.#checkBox(control, checked, box);
+				return;
+			}
 
+			checked.add('host').add('reset');
 			console.warn(
 				`<${this.localName}> draws blank without ${missing.join(' and ')} (or controls.css)`,
 			);
@@ -268,6 +323,33 @@ export abstract class SonicElement extends HTMLElement {
 			Reflect.deleteProperty(this, name);
 			this[name] = value;
 		}
+	}
+
+	// Once a class; a sheet that is missing has already said why the control looks wrong
+	#checkBox(control: HTMLElement, checked: Set<string>, box: BoxProbe | undefined): void {
+		if (!__DEV__ || !control.isConnected) return;
+
+		if (!checked.has('host')) this.#checkHost(checked);
+		if (!box || checked.has('reset') || !isZeroed(control, box)) return;
+
+		checked.add('reset');
+		console.warn(
+			`<${this.localName}> has lost its ${box.property} to a rule outside a layer, which beats every sonic rule; import that stylesheet into a layer declared before sonic`,
+		);
+	}
+
+	#checkHost(checked: Set<string>): void {
+		if (!__DEV__) return;
+
+		const hostBox = readHostBox(this);
+		if (hostBox === undefined) return;
+
+		checked.add('host');
+		console.warn(
+			hostBox === 'display'
+				? `<${this.localName}> is given a display, but it has to stay display: contents; lay it out through a parent or a wrapper`
+				: `<${this.localName}> is display: contents and has no box, so its ${hostBox} does nothing; set it on a parent or a wrapper`,
+		);
 	}
 
 	#focused(): HTMLElement | undefined {

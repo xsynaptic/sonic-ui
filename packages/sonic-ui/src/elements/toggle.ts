@@ -8,7 +8,6 @@ import { enabledEnds } from '#lib/positions.ts';
 import { placeChildren, requireChild, template } from '#lib/render.ts';
 import { positionAt, travelFrom } from '#lib/toggle-travel.ts';
 
-// eslint-disable-next-line unicorn/consistent-boolean-name -- the name bundlers and other kits use
 declare const __DEV__: boolean;
 
 declare global {
@@ -74,7 +73,15 @@ export class SonicToggle extends SonicPositionGroupElement {
 
 	protected override connect(signal: AbortSignal): void {
 		super.connect(signal);
-		this.checkStyles(this.group, 'toggle.css', ['cap', 'well', 'keycap']);
+		if (__DEV__)
+			this.checkStyles(this.group, 'toggle.css', {
+				box: {
+					property: 'margin-top',
+					ratio: '--_sonic-toggle-gap-ratio',
+					selector: '.sonic-toggle-cap',
+				},
+				material: ['cap', 'well', 'keycap'],
+			});
 		this.bare.addEventListener(
 			'click',
 			(event) => {

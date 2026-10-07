@@ -4,6 +4,8 @@ import type { Seconds } from '#lib/units.ts';
 import { SonicValueElement } from '#elements/value-element.ts';
 import { bindSurface } from '#lib/canvas-surface.ts';
 
+declare const __DEV__: boolean;
+
 declare global {
 	interface HTMLElementEventMap {
 		'sonic-marker': Event;
@@ -110,7 +112,14 @@ export abstract class SonicWaveElement<
 			signal,
 		});
 		this.render();
-		this.checkStyles(control, this.sheet, ['cap', 'glass', 'pane', 'well', 'readout', 'value']);
+		if (__DEV__)
+			this.checkStyles(control, this.sheet, {
+				box: {
+					property: 'margin-bottom',
+					selector: '[popover]',
+				},
+				material: ['cap', 'glass', 'pane', 'well', 'readout', 'value'],
+			});
 		this.#surface.setFill(this.fill);
 	}
 

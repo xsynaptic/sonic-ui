@@ -1,0 +1,90 @@
+---
+import Document from '#components/document.astro';
+
+const styles = import.meta.glob<string>(
+	'../../../../packages/sonic-ui/dist/{styles,styles/material,skins}/*.css',
+	{ eager: true, import: 'default', query: '?raw' },
+);
+
+// The two import lists hold no rules, and an `@import` inside a style block would be fetched
+const sheets = Object.entries(styles)
+	.filter(([file]) => !/\/(?:controls|material)\.css$/.test(file))
+	.map(([, sheet]) => sheet)
+	.join('\n');
+
+// The universal reset, a preflight's zeroed borders and bare buttons, and a media reset; none of it layered
+const reset = `
+*, ::before, ::after { box-sizing: border-box; margin: 0; padding: 0; border: 0 solid; }
+button, input { font: inherit; color: inherit; background: transparent; }
+img, svg, canvas { display: block; max-width: 100%; }
+`;
+
+// `?reset=layered` puts the reset in a layer ahead of `sonic`, and `?reset=none` takes it away
+const pick = `
+const reset = document.querySelector('#reset');
+const mode = new URLSearchParams(location.search).get('reset');
+if (mode === 'layered') reset.textContent = '@layer reset {' + reset.textContent + '}';
+if (mode === 'none') reset.remove();
+`;
+
+const icon = '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 4l14 8-14 8z" /></svg>';
+
+// The preview resolves the default tree, which has no warning, so this imports the development tree by path
+---
+
+<Document skin="amber" title="sonic-ui fixtures, a host's reset">
+	<Fragment
+		set:html={`<style id="reset">${reset}</style><script>${pick}</script><style>${sheets}</style>`}
+		slot="head"
+	/>
+	<main>
+		<h1>A host's reset</h1>
+		<div
+			id="controls"
+			style="display: flex; flex-wrap: wrap; gap: 24px; align-items: start; width: 800px"
+		>
+			<sonic-button aria-label="Tap" id="label-button">
+				<span>Tap</span>
+			</sonic-button>
+			<sonic-button aria-label="Play" id="icon-button" latching set:html={icon} />
+			<sonic-segmented aria-label="Mode" id="segmented" value="lp">
+				<span data-sonic-value="lp">LP</span>
+				<span data-sonic-value="hp">HP</span>
+			</sonic-segmented>
+			<sonic-toggle aria-label="Route" id="toggle" value="a">
+				<span data-sonic-value="a">A</span>
+				<span data-sonic-value="b">B</span>
+			</sonic-toggle>
+			<sonic-switch aria-label="Talk" id="switch" value="off">
+				<span data-sonic-value="off">Off</span>
+				<span data-sonic-value="on">On</span>
+			</sonic-switch>
+			<sonic-number
+				aria-label="Tempo"
+				id="number"
+				max="300"
+				min="20"
+				step="0.5"
+				value="120"
+			></sonic-number>
+			<sonic-dial aria-label="Level" id="dial" readout value="50"></sonic-dial>
+			<sonic-slider aria-label="Send" id="slider" readout step="5" value="35"></sonic-slider>
+			<sonic-xy aria-label="Pad" id="xy" readout x="30" y="70"></sonic-xy>
+			<sonic-envelope aria-label="Shape" id="envelope"></sonic-envelope>
+			<sonic-meter id="meter" max="0" min="-60"></sonic-meter>
+			<sonic-spectrum id="spectrum"></sonic-spectrum>
+			<sonic-wavestrip aria-label="Position" id="wavestrip" max="300" value="150"></sonic-wavestrip>
+			<sonic-waveform aria-label="Detail" id="waveform" max="300" value="150"></sonic-waveform>
+			<div class="sonic-screen" id="screen">
+				440 Hz
+			</div>
+			<span class="sonic-led" data-sonic-lit id="led"></span>
+			<section aria-label="Panel" class="sonic-panel" id="panel">
+				<h2 class="sonic-panel-title">Panel</h2>
+			</section>
+		</div>
+	</main>
+	<script>
+		import '../../../../packages/sonic-ui/dist/dev/define.js';
+	</script>
+</Document>

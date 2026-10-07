@@ -4,6 +4,8 @@ import { bindDrag } from '#lib/pointer-drag.ts';
 import { soleStep } from '#lib/positions.ts';
 import { requireChild, template } from '#lib/render.ts';
 
+declare const __DEV__: boolean;
+
 declare global {
 	interface HTMLElementTagNameMap {
 		'sonic-switch': SonicSwitch;
@@ -69,7 +71,14 @@ export class SonicSwitch extends SonicPositionGroupElement {
 		const group = this.group;
 
 		super.connect(signal);
-		this.checkStyles(group, 'switch.css', ['cap']);
+		if (__DEV__)
+			this.checkStyles(group, 'switch.css', {
+				box: {
+					property: 'padding-top',
+					selector: '.sonic-switch-label',
+				},
+				material: ['cap'],
+			});
 
 		this.bare.addEventListener(
 			'click',

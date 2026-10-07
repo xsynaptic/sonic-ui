@@ -4,6 +4,9 @@ import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 
 const markers = '30 60..95:intro 140 150 215 260~';
 
+const noGlass =
+	'[--sonic-glass:var(--color-surface)] [--sonic-glass-depth:0] [--sonic-glass-edge-width:0] [--sonic-glass-texture:0] [--sonic-wavestrip-inset-ratio:0] [--sonic-wavestrip-radius-ratio:0]';
+
 const strips = [
 	{ id: 'wavestrip-default', label: 'Default', seed: 1 },
 	{ id: 'wavestrip-dimmed', isDimmed: true, label: 'Dimmed', seed: 3 },
@@ -17,6 +20,20 @@ const strips = [
 		seed: 6,
 	},
 	{ format: 'seconds', id: 'wavestrip-seconds', label: 'Readout in seconds', seed: 7 },
+	{
+		className: '[--sonic-wavestrip-inset-ratio:0.1]',
+		id: 'wavestrip-inset',
+		label: 'Inset',
+		seed: 2,
+	},
+	{ className: noGlass, id: 'wavestrip-no-glass', label: 'No glass', seed: 10 },
+	{
+		className: noGlass,
+		id: 'wavestrip-no-glass-dimmed',
+		isDimmed: true,
+		label: 'No glass, dimmed',
+		seed: 11,
+	},
 ];
 ---
 
@@ -70,6 +87,26 @@ const strips = [
 				data-format="clock"
 				data-markers={markers}
 				data-peaks="8"
+				key-step="5"
+				max="300"
+				readout
+				value="120"
+			></sonic-wavestrip>
+		</Cell>
+	</div>
+	<div class="col-span-full">
+		<Cell id="wavestrip-large-no-glass" label="Large, no glass">
+			<sonic-wavestrip
+				aria-labelledby="wavestrip-large-no-glass"
+				cancellable
+				class:list={[
+					'[--sonic-wavestrip-length:min(48rem,80vw)] [--sonic-wavestrip-marker-ratio:0.14] [--sonic-wavestrip-size:5rem]',
+					noGlass,
+				]}
+				data-buffered="0 150 190 230"
+				data-format="clock"
+				data-markers={markers}
+				data-peaks="12"
 				key-step="5"
 				max="300"
 				readout

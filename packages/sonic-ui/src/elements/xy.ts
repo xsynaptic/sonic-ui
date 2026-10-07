@@ -16,6 +16,8 @@ import { resetKeys } from '#lib/value-mapping.ts';
 import { createValueModel } from '#lib/value-model.ts';
 import { writeAttribute } from '#lib/write-attribute.ts';
 
+declare const __DEV__: boolean;
+
 declare global {
 	interface HTMLElementTagNameMap {
 		'sonic-xy': SonicXy;
@@ -317,7 +319,11 @@ export class SonicXy extends SonicFormElement {
 
 		this.keepControl(xy, signal);
 		this.render();
-		this.checkStyles(xy, 'xy.css', ['cap', 'glass', 'pane', 'well', 'readout']);
+		if (__DEV__)
+			this.checkStyles(xy, 'xy.css', {
+				box: { property: 'margin-bottom', selector: '[popover]' },
+				material: ['cap', 'glass', 'pane', 'well', 'readout', ['bracket', '.sonic-xy-bracket']],
+			});
 		this.#bindPointer(xy, signal);
 		this.#bindKeys(xy, signal);
 	}

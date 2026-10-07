@@ -19,8 +19,8 @@
 		);
 		scale: 0.6;
 		transition:
-			opacity 120ms ease-out,
-			scale 120ms ease-out;
+			opacity var(--_sonic-fade-duration) ease-out,
+			scale var(--_sonic-fade-duration) ease-out;
 	}
 
 	:state(dragging) > * > .sonic-xy-bracket,

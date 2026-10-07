@@ -16,9 +16,9 @@
 			inset calc(var(--_sonic-well-depth) * var(--_sonic-cast-x))
 				calc(var(--_sonic-well-depth) * var(--_sonic-cast-y))
 				calc(2 * var(--_sonic-well-depth) * var(--_sonic-unit))
-				rgb(0 0 0 / calc(0.6 * var(--_sonic-relief))),
+				rgb(from var(--_sonic-shade) r g b / calc(0.6 * var(--_sonic-relief))),
 			calc(0.5 * var(--_sonic-well-depth) * var(--_sonic-cast-x))
 				calc(0.5 * var(--_sonic-well-depth) * var(--_sonic-cast-y)) 0
-				rgb(255 255 255 / calc(0.06 * var(--_sonic-relief)));
+				rgb(from var(--_sonic-shine) r g b / calc(0.06 * var(--_sonic-relief)));
 	}
 }

@@ -4,6 +4,8 @@ import type { Decibels } from '#lib/units.ts';
 import { SonicElement } from '#elements/sonic-element.ts';
 import { bindSurface } from '#lib/canvas-surface.ts';
 
+declare const __DEV__: boolean;
+
 export abstract class SonicDisplayElement<
 	Colour extends string,
 	Numeric extends string = never,
@@ -103,7 +105,7 @@ export abstract class SonicDisplayElement<
 			},
 			signal,
 		});
-		this.checkStyles(control, this.sheet, ['glass', 'pane', 'well']);
+		if (__DEV__) this.checkStyles(control, this.sheet, { material: ['glass', 'pane', 'well'] });
 		this.#surface.setFill(this.fill);
 	}
 

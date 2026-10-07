@@ -12,7 +12,6 @@ import { adsrPath, adsrShape, adsrStages, timeStages } from '#lib/adsr-shape.ts'
 import { requireChild, template } from '#lib/render.ts';
 import { writeAttribute } from '#lib/write-attribute.ts';
 
-// eslint-disable-next-line unicorn/consistent-boolean-name -- the name bundlers and other kits use
 declare const __DEV__: boolean;
 
 declare global {
@@ -240,7 +239,17 @@ export class SonicEnvelope extends SonicElement {
 		this.#signal = signal;
 		this.keepControl(envelope, signal);
 		this.#bind();
-		this.checkStyles(envelope, 'envelope.css', ['glass', 'pane', 'well', 'readout']);
+		if (__DEV__)
+			this.checkStyles(envelope, 'envelope.css', {
+				box: { property: 'margin-bottom', selector: '[popover]' },
+				material: [
+					'glass',
+					'pane',
+					'well',
+					'readout',
+					['bracket', '.sonic-envelope-bracket', '::before'],
+				],
+			});
 		this.#bindPointer(envelope, signal);
 		signal.addEventListener(
 			'abort',

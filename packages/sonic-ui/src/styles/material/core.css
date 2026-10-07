@@ -32,6 +32,10 @@
 	) {
 		--_sonic-unlit: var(--sonic-unlit, oklch(27.4% 0.005 286deg));
 		--_sonic-relief: var(--sonic-relief, 0);
+		--_sonic-shade: var(--sonic-shade, #000);
+		--_sonic-shine: var(--sonic-shine, #fff);
+		--_sonic-press-duration: var(--sonic-press-duration, 60ms);
+		--_sonic-fade-duration: var(--sonic-fade-duration, 120ms);
 		--_sonic-light-tilt: var(--sonic-light-tilt, 17deg);
 		--_sonic-light-fall: calc(180deg - var(--_sonic-light-tilt));
 		--_sonic-cast-x: calc(sin(var(--_sonic-light-tilt)) * var(--_sonic-unit));

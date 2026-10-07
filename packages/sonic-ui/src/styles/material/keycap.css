@@ -18,11 +18,12 @@
 		);
 		--_sonic-engraving: drop-shadow(
 				calc(-0.4 * var(--_sonic-cast-x)) calc(-0.4 * var(--_sonic-cast-y))
-					calc(0.4 * var(--_sonic-unit)) rgb(0 0 0 / calc(0.3 * var(--_sonic-relief)))
+					calc(0.4 * var(--_sonic-unit))
+					rgb(from var(--_sonic-shade) r g b / calc(0.3 * var(--_sonic-relief)))
 			)
 			drop-shadow(
 				calc(0.3 * var(--_sonic-cast-x)) calc(0.3 * var(--_sonic-cast-y)) 0
-					rgb(255 255 255 / calc(0.07 * var(--_sonic-relief)))
+					rgb(from var(--_sonic-shine) r g b / calc(0.07 * var(--_sonic-relief)))
 			);
 	}
 

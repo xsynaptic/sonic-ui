@@ -53,10 +53,14 @@
 		--_sonic-button-radius-ratio: var(--sonic-button-radius-ratio, 0.2);
 		--_sonic-button-bevel-ratio: var(--sonic-button-bevel-ratio, 0.075);
 		--_sonic-button-face-radius-ratio: var(--sonic-button-face-radius-ratio, 0.15);
+		--_sonic-button-face-radius-own: calc(
+			var(--_sonic-button-size) * var(--sonic-button-face-radius-ratio)
+		);
 		--_sonic-button-icon-ratio: var(--sonic-button-icon-ratio, 0.5);
 		--_sonic-button-led-ratio: var(--sonic-button-led-ratio, 0.2);
 		--_sonic-button-led-icon-ratio: var(--sonic-button-led-icon-ratio, 0.35);
 		--_sonic-button-font-ratio: var(--sonic-button-font-ratio, 0.34);
+		--_sonic-button-font-own: calc(var(--_sonic-button-size) * var(--sonic-button-font-ratio));
 		--_sonic-button-padding-ratio: var(--sonic-button-padding-ratio, 0.25);
 		--_sonic-button-depth-ratio: var(--sonic-button-depth-ratio, calc(0.03 * var(--_sonic-relief)));
 		--_sonic-button-press-scale: var(--sonic-button-press-scale, 0.985);
@@ -65,7 +69,11 @@
 			var(--_sonic-button-press-scale)
 		);
 		--_sonic-unit: calc(var(--_sonic-button-size) / 32);
-		--_sonic-button-corner: calc(var(--_sonic-button-size) * var(--_sonic-button-radius-ratio));
+		--_sonic-button-radius-own: calc(var(--_sonic-button-size) * var(--sonic-button-radius-ratio));
+		--_sonic-button-corner: var(
+			--_sonic-button-radius-own,
+			var(--sonic-radius, calc(var(--_sonic-button-size) * var(--_sonic-button-radius-ratio)))
+		);
 		--_sonic-button-gap: calc(var(--_sonic-button-size) * var(--_sonic-button-gap-ratio));
 		--_sonic-keycap-depth: calc(var(--_sonic-button-size) * var(--_sonic-button-depth-ratio));
 
@@ -81,7 +89,7 @@
 		border: 0;
 		border-radius: var(--_sonic-button-corner);
 		box-shadow: var(--_sonic-well);
-		transition: color 120ms ease-out;
+		transition: color var(--_sonic-fade-duration) ease-out;
 	}
 
 	/* An `auto` width stretches in a column flex or grid parent */
@@ -232,8 +240,18 @@
 	.sonic-button-cap {
 		--_sonic-keycap-corner: max(0px, var(--_sonic-button-corner) - var(--_sonic-button-gap));
 		--_sonic-keycap-bevel: calc(var(--_sonic-button-size) * var(--_sonic-button-bevel-ratio));
-		--_sonic-keycap-face-corner: calc(
-			var(--_sonic-button-size) * var(--_sonic-button-face-radius-ratio)
+
+		/* Invalid without the shared radius; with it the face follows the cap's corner, as an option's does */
+		--_sonic-button-face-follow: max(
+			0px,
+			var(--_sonic-keycap-corner) - var(--_sonic-keycap-bevel) + 0 * var(--sonic-radius)
+		);
+		--_sonic-keycap-face-corner: var(
+			--_sonic-button-face-radius-own,
+			var(
+				--_sonic-button-face-follow,
+				calc(var(--_sonic-button-size) * var(--_sonic-button-face-radius-ratio))
+			)
 		);
 
 		position: absolute;
@@ -254,7 +272,13 @@
 
 		& > :not(svg, .sonic-led) {
 			padding-inline: calc(var(--_sonic-button-size) * var(--_sonic-button-padding-ratio));
-			font-size: calc(var(--_sonic-button-size) * var(--_sonic-button-font-ratio));
+			font-size: var(
+				--_sonic-button-font-own,
+				var(
+					--sonic-legend-font-size,
+					calc(var(--_sonic-button-size) * var(--_sonic-button-font-ratio))
+				)
+			);
 			line-height: 1;
 			white-space: nowrap;
 		}

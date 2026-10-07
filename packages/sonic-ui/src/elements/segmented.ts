@@ -1,6 +1,8 @@
 import { SonicRadioGroupElement } from '#elements/radio-group.ts';
 import { template } from '#lib/render.ts';
 
+declare const __DEV__: boolean;
+
 declare global {
 	interface HTMLElementTagNameMap {
 		'sonic-segmented': SonicSegmented;
@@ -26,11 +28,15 @@ export class SonicSegmented extends SonicRadioGroupElement {
 
 	protected override connect(signal: AbortSignal): void {
 		super.connect(signal);
-		this.checkStyles(this.group, 'segmented.css', [
-			'well',
-			'keycap',
-			['cap', '.sonic-segmented-option'],
-		]);
+		if (__DEV__)
+			this.checkStyles(this.group, 'segmented.css', {
+				box: {
+					property: 'padding-inline-start',
+					ratio: '--_sonic-segmented-padding-ratio',
+					selector: '.sonic-segmented-cap',
+				},
+				material: ['well', 'keycap', ['cap', '.sonic-segmented-option']],
+			});
 	}
 
 	protected renderOption(): HTMLButtonElement {

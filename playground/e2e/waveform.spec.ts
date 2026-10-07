@@ -206,8 +206,8 @@ test('the playhead, ghost, label, readout and touch tokens each land on their ow
 	});
 
 	expect(inline).toBeCloseTo(16, 1);
-	// 6rem of size: the glass's 0.06 inset and the label's 0.04, untouched by the inline token
-	await expect(label).toHaveCSS('bottom', '9.6px');
+	// 6rem of size: the label's 0.04 inset on glass with none, untouched by the inline token
+	await expect(label).toHaveCSS('bottom', '3.84px');
 });
 
 test('a scrim spans the wave under the label, and a block inset lifts the label', async ({

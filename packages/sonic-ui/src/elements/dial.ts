@@ -3,6 +3,8 @@ import { bindScale } from '#elements/scale.ts';
 import { SonicValueElement } from '#elements/value-element.ts';
 import { requireChild, template } from '#lib/render.ts';
 
+declare const __DEV__: boolean;
+
 declare global {
 	interface HTMLElementTagNameMap {
 		'sonic-dial': SonicDial;
@@ -89,13 +91,18 @@ export class SonicDial extends SonicValueElement {
 			signal,
 		);
 		this.render();
-		this.checkStyles(dial, 'dial.css', [
-			'cap',
-			'readout',
-			'value',
-			['glass', '.sonic-dial-readout'],
-			['arc', '.sonic-dial-ring'],
-		]);
+		if (__DEV__)
+			this.checkStyles(dial, 'dial.css', {
+				box: { property: 'margin-bottom', selector: '[popover]' },
+				material: [
+					'cap',
+					'readout',
+					'value',
+					['glass', '.sonic-dial-readout'],
+					['arc', '.sonic-dial-ring'],
+					['scale', '.sonic-dial-scale'],
+				],
+			});
 		this.bindGestures(dial, signal, () => ({
 			position: (event) => -event.clientY,
 			travelPx: this.travelPx(dial, '--_sonic-dial-travel'),

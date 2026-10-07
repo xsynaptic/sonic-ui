@@ -29,13 +29,14 @@
 		box-shadow:
 			inset var(--_sonic-cast-x) var(--_sonic-cast-y)
 				max(var(--_sonic-panel-depth), -1 * var(--_sonic-panel-depth))
-				rgb(255 255 255 / calc(0.07 * var(--_sonic-relief))),
+				rgb(from var(--_sonic-shine) r g b / calc(0.07 * var(--_sonic-relief))),
 			inset calc(-1 * var(--_sonic-cast-x)) calc(-1 * var(--_sonic-cast-y))
 				max(var(--_sonic-panel-depth), -1 * var(--_sonic-panel-depth))
-				rgb(0 0 0 / calc(0.35 * var(--_sonic-relief))),
+				rgb(from var(--_sonic-shade) r g b / calc(0.35 * var(--_sonic-relief))),
 			calc(2 * sin(var(--_sonic-light-tilt)) * max(0px, var(--_sonic-panel-depth)))
 				calc(2 * cos(var(--_sonic-light-tilt)) * max(0px, var(--_sonic-panel-depth)))
-				calc(3 * max(0px, var(--_sonic-panel-depth))) rgb(0 0 0 / calc(0.45 * var(--_sonic-relief)));
+				calc(3 * max(0px, var(--_sonic-panel-depth)))
+				rgb(from var(--_sonic-shade) r g b / calc(0.45 * var(--_sonic-relief)));
 	}
 
 	.sonic-panel-title {

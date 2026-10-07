@@ -9,6 +9,8 @@ import { requireChild, template } from '#lib/render.ts';
 import { scrubRegions } from '#lib/scrub.ts';
 import { sortedRegions } from '#lib/time-regions.ts';
 
+declare const __DEV__: boolean;
+
 declare global {
 	interface HTMLElementTagNameMap {
 		'sonic-slider': SonicSlider;
@@ -171,13 +173,18 @@ export class SonicSlider extends SonicValueElement {
 			},
 		});
 		this.render();
-		this.checkStyles(slider, 'slider.css', [
-			'cap',
-			'readout',
-			'value',
-			'groove',
-			['glass', '.sonic-slider-readout'],
-		]);
+		if (__DEV__)
+			this.checkStyles(slider, 'slider.css', {
+				box: { property: 'margin-bottom', selector: '[popover]' },
+				material: [
+					'cap',
+					'readout',
+					'value',
+					'groove',
+					['glass', '.sonic-slider-readout'],
+					['scale', '.sonic-slider-scale'],
+				],
+			});
 		this.bindGestures(slider, signal, (event) => {
 			const axis = this.#axis(slider, cap);
 			if (event.target instanceof Node && cap.contains(event.target)) return axis;

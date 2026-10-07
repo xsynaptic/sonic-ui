@@ -70,7 +70,7 @@
 	}
 
 	.sonic-ring > * > .sonic-button {
-		--_sonic-button-radius-ratio: 0.5;
+		--_sonic-button-radius-own: calc(var(--_sonic-button-size) / 2);
 		--_sonic-button-face-radius-ratio: 0.5;
 
 		inline-size: var(--_sonic-button-size);

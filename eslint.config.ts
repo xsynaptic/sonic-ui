@@ -27,6 +27,8 @@ export default getConfig([
 			'max-lines-per-function': ['warn', { max: 100, skipBlankLines: true, skipComments: true }],
 			'max-params': ['warn', 3],
 			'max-statements': ['warn', 25],
+			// `__DEV__` is the name bundlers and other kits use for the build-time flag
+			'unicorn/consistent-boolean-name': ['error', { ignore: ['^__DEV__$'] }],
 			'unicorn/logical-assignment-operators': 'off',
 			// The shared default of 5 makes room for schema chains, which this repo has none of
 			'unicorn/max-nested-calls': ['error', { max: 4 }],

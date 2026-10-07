@@ -14,7 +14,6 @@ import { readPxProperty } from '#lib/read-px-property.ts';
 import { createValueModel } from '#lib/value-model.ts';
 import { writeAttribute } from '#lib/write-attribute.ts';
 
-// eslint-disable-next-line unicorn/consistent-boolean-name -- the name bundlers and other kits use
 declare const __DEV__: boolean;
 
 declare global {

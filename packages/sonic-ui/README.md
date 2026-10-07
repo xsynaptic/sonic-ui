@@ -34,9 +34,17 @@ import '@xsynaptic/sonic-ui/define';
 ```
 
 - Every sheet sits in the `sonic` layer, so declare it below the layer your own rules live in.
+- A rule outside any layer beats every layered one, so an unlayered reset (`* { margin: 0; padding: 0 }`, a zeroed `border`, a bare `button`) strips padding, borders, type sizes and colours from the controls. Import a reset you do not own into a layer declared before `sonic`:
+
+  ```css
+  @layer base, sonic, components;
+
+  @import 'reset.css' layer(base);
+  ```
+
 - A skin sheet does nothing until its class, `sonic-skin-<name>`, is on an ancestor of the controls. The skins are `slate`, `amber`, `ivory`, `lime` and `flat`; a wrapper with another skin's class reskins what is inside it. With no skin a control is bare: no cap and no well, drawn in the text colour around it.
 - `./define` registers every control. `./define/<control>` registers one, and `.` exports the classes and registers nothing.
-- Under a bundler that sets the `development` condition, as Vite's dev server does, the controls warn in the console about a missing sheet, a child they do not use and a binding that found nothing. Read the console before debugging.
+- Under a bundler that sets the `development` condition, as Vite's dev server does, the controls warn in the console about a missing sheet, a padding lost to an unlayered rule, a box property set on a host, a child they do not use and a binding that found nothing. Read the console before debugging.
 
 ## What every control shares
 

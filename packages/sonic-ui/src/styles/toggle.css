@@ -52,6 +52,7 @@
 		--_sonic-toggle-bevel-ratio: var(--sonic-toggle-bevel-ratio, 0.075);
 		--_sonic-toggle-depth-ratio: var(--sonic-toggle-depth-ratio, calc(0.03 * var(--_sonic-relief)));
 		--_sonic-toggle-font-ratio: var(--sonic-toggle-font-ratio, 0.26);
+		--_sonic-toggle-font-own: calc(var(--_sonic-toggle-size) * var(--sonic-toggle-font-ratio));
 		--_sonic-toggle-press-scale: var(--sonic-toggle-press-scale, 0.985);
 		--_sonic-toggle-icon-ratio: var(--sonic-toggle-icon-ratio, 0.5);
 		--_sonic-toggle-led-ratio: var(--sonic-toggle-led-ratio, 0.25);
@@ -107,7 +108,7 @@
 		user-select: none;
 		transition:
 			--_sonic-toggle-at 120ms cubic-bezier(0.4, 0, 0.2, 1),
-			--_sonic-toggle-sink 60ms cubic-bezier(0.4, 0, 0.2, 1);
+			--_sonic-toggle-sink var(--_sonic-press-duration) cubic-bezier(0.4, 0, 0.2, 1);
 	}
 
 	[orientation='vertical'] > .sonic-toggle {
@@ -122,7 +123,7 @@
 	}
 
 	:state(dragging) > .sonic-toggle {
-		transition: --_sonic-toggle-sink 60ms cubic-bezier(0.4, 0, 0.2, 1);
+		transition: --_sonic-toggle-sink var(--_sonic-press-duration) cubic-bezier(0.4, 0, 0.2, 1);
 	}
 
 	[data-sonic-lit='ok'] > .sonic-toggle:has(> [role='switch']),
@@ -205,7 +206,7 @@
 		box-shadow:
 			var(--_sonic-well),
 			inset 0 0 0 calc(1px * (1 - var(--_sonic-relief))) var(--_sonic-toggle-well-edge);
-		transition: --_sonic-toggle-well-tint 120ms ease-out;
+		transition: --_sonic-toggle-well-tint var(--_sonic-fade-duration) ease-out;
 	}
 
 	/* The position rides `--_sonic-toggle-at`, which already eases; easing the offset too would trail a drag */
@@ -219,8 +220,8 @@
 		translate: calc(var(--_sonic-toggle-along-x) * var(--_sonic-toggle-throw))
 			calc(var(--_sonic-toggle-along-y) * var(--_sonic-toggle-throw) + var(--_sonic-toggle-sink));
 		transition:
-			scale 60ms cubic-bezier(0.4, 0, 0.2, 1),
-			box-shadow 60ms cubic-bezier(0.4, 0, 0.2, 1);
+			scale var(--_sonic-press-duration) cubic-bezier(0.4, 0, 0.2, 1),
+			box-shadow var(--_sonic-press-duration) cubic-bezier(0.4, 0, 0.2, 1);
 
 		& > .sonic-led {
 			--_sonic-led-size: var(
@@ -241,7 +242,13 @@
 		position: relative;
 		padding: 0;
 		font: inherit;
-		font-size: calc(var(--_sonic-toggle-size) * var(--_sonic-toggle-font-ratio));
+		font-size: var(
+			--_sonic-toggle-font-own,
+			var(
+				--sonic-legend-font-size,
+				calc(var(--_sonic-toggle-size) * var(--_sonic-toggle-font-ratio))
+			)
+		);
 		line-height: 1;
 		color: inherit;
 		text-transform: inherit;
@@ -304,7 +311,7 @@
 		opacity: 0;
 		translate: calc(var(--_sonic-toggle-along-x) * var(--_sonic-toggle-ride))
 			calc(var(--_sonic-toggle-along-y) * var(--_sonic-toggle-ride) + var(--_sonic-toggle-sink));
-		transition: opacity 120ms ease-out;
+		transition: opacity var(--_sonic-fade-duration) ease-out;
 
 		& > * {
 			filter: var(--_sonic-engraving);

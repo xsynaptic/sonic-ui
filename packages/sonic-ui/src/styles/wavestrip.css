@@ -111,7 +111,7 @@
 		--_sonic-wavestrip-groove-size: var(--sonic-wavestrip-groove-size, 0px);
 		--_sonic-wavestrip-marker-ratio: var(--sonic-wavestrip-marker-ratio, 0.065);
 		--_sonic-wavestrip-inset: calc(
-			var(--_sonic-wavestrip-size) * var(--sonic-wavestrip-inset-ratio, 0.1)
+			var(--_sonic-wavestrip-size) * var(--sonic-wavestrip-inset-ratio, 0)
 		);
 		--_sonic-unit: calc(var(--_sonic-wavestrip-size) / 32);
 		--_sonic-wavestrip-lit: var(--_sonic-lit);
@@ -143,8 +143,15 @@
 		touch-action: var(--sonic-touch-action, pan-y);
 		cursor: ew-resize;
 
-		--_sonic-glass-radius: calc(
-			var(--_sonic-wavestrip-size) * var(--sonic-wavestrip-radius-ratio, 0.15)
+		--_sonic-wavestrip-radius-own: calc(
+			var(--_sonic-wavestrip-size) * var(--sonic-wavestrip-radius-ratio)
+		);
+		--_sonic-glass-radius: var(
+			--_sonic-wavestrip-radius-own,
+			var(
+				--sonic-radius,
+				calc(var(--_sonic-wavestrip-size) * var(--sonic-wavestrip-radius-ratio, 0.15))
+			)
 		);
 
 		border-radius: var(--_sonic-glass-radius);
@@ -170,6 +177,7 @@
 		display: block;
 		inline-size: 100%;
 		block-size: 100%;
+		border-radius: max(0px, var(--_sonic-glass-radius) - var(--_sonic-wavestrip-inset));
 	}
 
 	.sonic-wavestrip-markers {

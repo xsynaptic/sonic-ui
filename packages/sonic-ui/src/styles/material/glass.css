@@ -29,7 +29,7 @@
 				color-mix(
 					in oklab,
 					var(--_sonic-glass) calc(100% - 12% * var(--_sonic-glass-depth, var(--_sonic-relief))),
-					#fff
+					var(--_sonic-shine)
 				),
 				var(--_sonic-glass)
 			)

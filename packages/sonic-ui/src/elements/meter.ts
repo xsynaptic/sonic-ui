@@ -7,6 +7,8 @@ import { parseNumberList } from '#lib/number-list.ts';
 import { template } from '#lib/render.ts';
 import { linearTaper } from '#lib/taper.ts';
 
+declare const __DEV__: boolean;
+
 declare global {
 	interface HTMLElementTagNameMap {
 		'sonic-meter': SonicMeter;
@@ -210,7 +212,6 @@ export class SonicMeter extends SonicElement {
 		this.#renderSegments();
 		this.#render(now);
 		this.#schedule(now);
-		this.checkStyles(this.#meter, 'meter.css', ['lens', 'groove']);
 		signal.addEventListener(
 			'abort',
 			() => {
@@ -220,6 +221,7 @@ export class SonicMeter extends SonicElement {
 			},
 			{ once: true },
 		);
+		if (__DEV__) this.checkStyles(this.#meter, 'meter.css', { material: ['lens', 'groove'] });
 	}
 
 	#isSettled(now: number): boolean {

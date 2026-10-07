@@ -32,7 +32,13 @@
 		--_sonic-envelope-curve-ratio: var(--sonic-envelope-curve-ratio, 0.08);
 		--_sonic-unit: calc(var(--_sonic-envelope-size) / 64);
 		--_sonic-envelope-inset: calc(var(--_sonic-envelope-size) * var(--_sonic-envelope-inset-ratio));
-		--_sonic-glass-radius: calc(var(--_sonic-envelope-size) * var(--_sonic-envelope-radius-ratio));
+		--_sonic-envelope-radius-own: calc(
+			var(--_sonic-envelope-size) * var(--sonic-envelope-radius-ratio)
+		);
+		--_sonic-glass-radius: var(
+			--_sonic-envelope-radius-own,
+			var(--sonic-radius, calc(var(--_sonic-envelope-size) * var(--_sonic-envelope-radius-ratio)))
+		);
 
 		inline-size: calc(var(--_sonic-envelope-size) * var(--_sonic-envelope-aspect-ratio));
 		block-size: var(--_sonic-envelope-size);
@@ -124,9 +130,9 @@
 				var(--_sonic-point-halo),
 			var(--_sonic-focus-shadow, 0 0 transparent);
 		transition:
-			background-color 120ms ease-out,
-			border-color 120ms ease-out,
-			box-shadow 120ms ease-out;
+			background-color var(--_sonic-fade-duration) ease-out,
+			border-color var(--_sonic-fade-duration) ease-out,
+			box-shadow var(--_sonic-fade-duration) ease-out;
 	}
 
 	.sonic-envelope-handle {

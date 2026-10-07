@@ -23,36 +23,57 @@
 		--_sonic-lit-disabled: color-mix(in oklab, var(--_sonic-ink) 25%, var(--_sonic-unlit));
 		--_sonic-skirt: linear-gradient(
 			var(--_sonic-light-fall),
-			color-mix(in oklab, var(--_sonic-cap) calc(100% - 30% * var(--_sonic-relief)), #fff),
-			color-mix(in oklab, var(--_sonic-cap) calc(100% - 45% * var(--_sonic-relief)), #000)
+			color-mix(
+				in oklab,
+				var(--_sonic-cap) calc(100% - 30% * var(--_sonic-relief)),
+				var(--_sonic-shine)
+			),
+			color-mix(
+				in oklab,
+				var(--_sonic-cap) calc(100% - 45% * var(--_sonic-relief)),
+				var(--_sonic-shade)
+			)
 		);
 		--_sonic-face: linear-gradient(
 			var(--_sonic-light-fall),
-			color-mix(in oklab, var(--_sonic-cap) calc(100% - 15% * var(--_sonic-relief)), #000),
-			color-mix(in oklab, var(--_sonic-cap) calc(100% - 10% * var(--_sonic-relief)), #fff)
+			color-mix(
+				in oklab,
+				var(--_sonic-cap) calc(100% - 15% * var(--_sonic-relief)),
+				var(--_sonic-shade)
+			),
+			color-mix(
+				in oklab,
+				var(--_sonic-cap) calc(100% - 10% * var(--_sonic-relief)),
+				var(--_sonic-shine)
+			)
 		);
 		--_sonic-sheen: linear-gradient(
 			105deg,
 			transparent 20%,
-			rgb(255 255 255 / calc(0.1 * var(--_sonic-relief))) 45%,
+			rgb(from var(--_sonic-shine) r g b / calc(0.1 * var(--_sonic-relief))) 45%,
 			transparent 55%,
-			rgb(0 0 0 / calc(0.06 * var(--_sonic-relief))) 80%
+			rgb(from var(--_sonic-shade) r g b / calc(0.06 * var(--_sonic-relief))) 80%
 		);
 		--_sonic-press-transition:
-			scale 60ms cubic-bezier(0.4, 0, 0.2, 1), translate 60ms cubic-bezier(0.4, 0, 0.2, 1),
-			box-shadow 60ms cubic-bezier(0.4, 0, 0.2, 1);
+			scale var(--_sonic-press-duration) cubic-bezier(0.4, 0, 0.2, 1),
+			translate var(--_sonic-press-duration) cubic-bezier(0.4, 0, 0.2, 1),
+			box-shadow var(--_sonic-press-duration) cubic-bezier(0.4, 0, 0.2, 1);
 		--_sonic-face-shadow:
 			inset var(--_sonic-cast-x) var(--_sonic-cast-y) calc(1.5 * var(--_sonic-unit))
-				rgb(0 0 0 / calc(0.35 * var(--_sonic-relief))),
+				rgb(from var(--_sonic-shade) r g b / calc(0.35 * var(--_sonic-relief))),
 			calc(0.5 * var(--_sonic-cast-x)) calc(0.5 * var(--_sonic-cast-y)) var(--_sonic-unit)
-				rgb(255 255 255 / calc(0.12 * var(--_sonic-relief)));
+				rgb(from var(--_sonic-shine) r g b / calc(0.12 * var(--_sonic-relief)));
 		--_sonic-rim-width: max(1px, round(0.75 * var(--_sonic-unit), var(--_sonic-snap)));
 		--_sonic-rim: 0 0 0 var(--_sonic-rim-width)
 			var(
 				--sonic-cap-edge,
-				color-mix(in oklab, var(--_sonic-cap) calc(100% - 60% * var(--_sonic-relief)), #000)
+				color-mix(
+					in oklab,
+					var(--_sonic-cap) calc(100% - 60% * var(--_sonic-relief)),
+					var(--_sonic-shade)
+				)
 			);
-		--_sonic-drop-shade: rgb(0 0 0 / calc(0.65 * var(--_sonic-relief)));
+		--_sonic-drop-shade: rgb(from var(--_sonic-shade) r g b / calc(0.65 * var(--_sonic-relief)));
 		--_sonic-focus-shadow: 0 0 transparent;
 		--_sonic-focus-glow: 0 0 max(4px, 3 * var(--_sonic-unit)) max(1px, 0.5 * var(--_sonic-unit))
 			color-mix(in oklab, var(--_sonic-focus) calc(60% * var(--_sonic-focus-strength)), transparent);

@@ -46,16 +46,16 @@
 		border-radius: calc(0.25 * var(--_sonic-readout-size));
 		box-shadow:
 			calc(2 * var(--_sonic-cast-x)) calc(2 * var(--_sonic-cast-y)) calc(6 * var(--_sonic-unit))
-				rgb(0 0 0 / calc(0.55 * var(--_sonic-relief))),
+				rgb(from var(--_sonic-shade) r g b / calc(0.55 * var(--_sonic-relief))),
 			inset 0 0 0 max(1px, round(var(--_sonic-unit), var(--_sonic-snap)))
-				rgb(255 255 255 / calc(0.08 * var(--_sonic-relief)));
+				rgb(from var(--_sonic-shine) r g b / calc(0.08 * var(--_sonic-relief)));
 		opacity: 0;
 		translate: 0 calc(0.15 * var(--_sonic-readout-size));
 		transition:
-			opacity 120ms ease-out,
-			translate 120ms ease-out,
-			display 120ms allow-discrete,
-			overlay 120ms allow-discrete;
+			opacity var(--_sonic-fade-duration) ease-out,
+			translate var(--_sonic-fade-duration) ease-out,
+			display var(--_sonic-fade-duration) allow-discrete,
+			overlay var(--_sonic-fade-duration) allow-discrete;
 
 		/* Grid only while open; engines keep the flip a closed readout took against a filtered ancestor */
 		&:popover-open {

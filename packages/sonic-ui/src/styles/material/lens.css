@@ -2,7 +2,7 @@
 	:is(.sonic-led, .sonic-meter) {
 		--_sonic-lens-glint: linear-gradient(
 			var(--_sonic-light-fall),
-			rgb(255 255 255 / calc(0.1 * var(--_sonic-relief))),
+			rgb(from var(--_sonic-shine) r g b / calc(0.1 * var(--_sonic-relief))),
 			transparent 60%
 		);
 		--_sonic-lens-glass: var(--sonic-lens, color-mix(in oklab, var(--_sonic-unlit) 60%, #000));

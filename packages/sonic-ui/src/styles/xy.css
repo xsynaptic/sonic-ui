@@ -41,7 +41,11 @@
 		touch-action: none;
 		cursor: crosshair;
 
-		--_sonic-glass-radius: calc(var(--_sonic-xy-size) * var(--_sonic-xy-radius-ratio));
+		--_sonic-xy-radius-own: calc(var(--_sonic-xy-size) * var(--sonic-xy-radius-ratio));
+		--_sonic-glass-radius: var(
+			--_sonic-xy-radius-own,
+			var(--sonic-radius, calc(var(--_sonic-xy-size) * var(--_sonic-xy-radius-ratio)))
+		);
 
 		border-radius: var(--_sonic-glass-radius);
 	}
@@ -144,7 +148,7 @@
 
 		cursor: var(--_sonic-xy-cursor);
 		filter: drop-shadow(0 0 calc(0.15 * var(--_sonic-xy-puck)) var(--_sonic-xy-puck-glow));
-		transition: filter 120ms ease-out;
+		transition: filter var(--_sonic-fade-duration) ease-out;
 
 		&::before {
 			position: absolute;
@@ -156,9 +160,9 @@
 			border-radius: 50%;
 			box-shadow: var(--_sonic-xy-puck-ring);
 			transition:
-				background-color 120ms ease-out,
-				border-color 120ms ease-out,
-				box-shadow 120ms ease-out;
+				background-color var(--_sonic-fade-duration) ease-out,
+				border-color var(--_sonic-fade-duration) ease-out,
+				box-shadow var(--_sonic-fade-duration) ease-out;
 		}
 	}
 

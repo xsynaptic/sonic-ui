@@ -117,7 +117,11 @@
 		&::after {
 			background: radial-gradient(
 				closest-side,
-				color-mix(in oklab, var(--_sonic-lit) calc(100% - 45% * var(--_sonic-relief)), #fff),
+				color-mix(
+					in oklab,
+					var(--_sonic-lit) calc(100% - 45% * var(--_sonic-relief)),
+					var(--_sonic-shine)
+				),
 				var(--_sonic-lit)
 			);
 		}

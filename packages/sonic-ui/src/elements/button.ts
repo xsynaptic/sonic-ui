@@ -9,6 +9,8 @@ import { capturePointer } from '#lib/pointer-drag.ts';
 import { placeChildren, requireChild, template } from '#lib/render.ts';
 import { writeAttribute } from '#lib/write-attribute.ts';
 
+declare const __DEV__: boolean;
+
 declare global {
 	interface HTMLElementTagNameMap {
 		'sonic-button': SonicButton;
@@ -171,7 +173,15 @@ export class SonicButton extends SonicFormElement {
 			signal,
 		);
 		this.render();
-		this.checkStyles(button, 'button.css', ['cap', 'well', 'keycap']);
+		if (__DEV__)
+			this.checkStyles(button, 'button.css', {
+				box: {
+					property: 'padding-inline-start',
+					ratio: '--_sonic-button-padding-ratio',
+					selector: '.sonic-button-cap > :not(svg, .sonic-led)',
+				},
+				material: ['cap', 'well', 'keycap'],
+			});
 
 		button.addEventListener(
 			'click',

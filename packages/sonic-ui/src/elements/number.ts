@@ -1,6 +1,8 @@
 import { SonicValueElement } from '#elements/value-element.ts';
 import { requireChild, template } from '#lib/render.ts';
 
+declare const __DEV__: boolean;
+
 declare global {
 	interface HTMLElementTagNameMap {
 		'sonic-number': SonicNumber;
@@ -47,7 +49,14 @@ export class SonicNumber extends SonicValueElement {
 
 		this.keepControl(number, signal);
 		this.render();
-		this.checkStyles(number, 'number.css', ['cap', 'glass', 'pane', 'well', 'value']);
+		if (__DEV__)
+			this.checkStyles(number, 'number.css', {
+				box: {
+					property: 'padding-inline-start',
+					ratio: '--_sonic-number-inset-ratio',
+				},
+				material: ['cap', 'glass', 'pane', 'well', 'value'],
+			});
 		this.bindGestures(number, signal, () => ({
 			position: (event) => -event.clientY,
 			travelPx: this.travelPx(number, '--_sonic-number-travel'),

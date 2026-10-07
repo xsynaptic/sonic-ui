@@ -77,13 +77,25 @@
 
 		inline-size: var(--_sonic-spectrum-length);
 		block-size: var(--_sonic-spectrum-size);
-		padding: calc(var(--_sonic-spectrum-size) * var(--sonic-spectrum-inset-ratio, 0.06));
+
+		--_sonic-spectrum-inset: calc(
+			var(--_sonic-spectrum-size) * var(--sonic-spectrum-inset-ratio, 0.06)
+		);
+
+		padding: var(--_sonic-spectrum-inset);
 
 		/* The canvas's backing size would otherwise feed an intrinsically sized parent */
 		contain: size;
 
-		--_sonic-glass-radius: calc(
-			var(--_sonic-spectrum-size) * var(--sonic-spectrum-radius-ratio, 0.08)
+		--_sonic-spectrum-radius-own: calc(
+			var(--_sonic-spectrum-size) * var(--sonic-spectrum-radius-ratio)
+		);
+		--_sonic-glass-radius: var(
+			--_sonic-spectrum-radius-own,
+			var(
+				--sonic-radius,
+				calc(var(--_sonic-spectrum-size) * var(--sonic-spectrum-radius-ratio, 0.08))
+			)
 		);
 
 		border-radius: var(--_sonic-glass-radius);
@@ -98,6 +110,7 @@
 		display: block;
 		inline-size: 100%;
 		block-size: 100%;
+		border-radius: max(0px, var(--_sonic-glass-radius) - var(--_sonic-spectrum-inset));
 	}
 
 	/* Opaque, since a system highlight carries alpha that would blend the bars into the glass */

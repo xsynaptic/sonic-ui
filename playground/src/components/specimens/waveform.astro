@@ -5,6 +5,9 @@ import ZoomOut from '@lucide/astro/icons/zoom-out';
 import Cell from '#components/specimens/cell.astro';
 import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 
+const noGlass =
+	'[--sonic-glass:var(--color-surface)] [--sonic-glass-depth:0] [--sonic-glass-edge-width:0] [--sonic-glass-texture:0] [--sonic-waveform-radius-ratio:0]';
+
 const waveforms = [
 	{ id: 'waveform-playing', isPlaying: true, label: 'Playing', seed: 7 },
 	{ id: 'waveform-paused', label: 'Paused', seed: 8 },
@@ -38,6 +41,8 @@ const waveforms = [
 		markers: '146=First_artist|Opening 151.5=Second_artist|Second_track 158=Third_artist|Outro~',
 		seed: 18,
 	},
+	{ className: noGlass, id: 'waveform-no-glass', isPlaying: true, label: 'No glass', seed: 19 },
+	{ className: noGlass, id: 'waveform-no-glass-paused', label: 'No glass, paused', seed: 20 },
 ];
 ---
 

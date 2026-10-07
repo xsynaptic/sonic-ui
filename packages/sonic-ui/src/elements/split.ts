@@ -6,7 +6,6 @@ import { SonicElement } from '#elements/sonic-element.ts';
 import { linkValue, SonicValueElement } from '#elements/value-element.ts';
 import { distribute, splitLimits } from '#lib/distribute.ts';
 
-// eslint-disable-next-line unicorn/consistent-boolean-name -- the name bundlers and other kits use
 declare const __DEV__: boolean;
 
 declare global {

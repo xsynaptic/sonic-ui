@@ -92,7 +92,7 @@
 
 	.sonic-waveform {
 		--_sonic-waveform-inset: calc(
-			var(--_sonic-waveform-size) * var(--sonic-waveform-inset-ratio, 0.06)
+			var(--_sonic-waveform-size) * var(--sonic-waveform-inset-ratio, 0)
 		);
 		--_sonic-unit: calc(var(--_sonic-waveform-size) / 48);
 		--_sonic-glass-depth: var(--sonic-glass-depth, calc(0.6 * var(--_sonic-relief)));
@@ -104,7 +104,11 @@
 		--_sonic-waveform-wave: var(--_sonic-waveform-lit);
 		--_sonic-waveform-wave-edge: var(
 			--sonic-waveform-edge,
-			color-mix(in oklab, var(--_sonic-waveform-lit) calc(100% - 55% * var(--_sonic-relief)), #000)
+			color-mix(
+				in oklab,
+				var(--_sonic-waveform-lit) calc(100% - 55% * var(--_sonic-relief)),
+				var(--_sonic-shade)
+			)
 		);
 		--_sonic-waveform-grid: var(--sonic-waveform-grid, var(--_sonic-etch));
 		--_sonic-waveform-ends: var(--sonic-waveform-ends, var(--_sonic-etch));
@@ -135,8 +139,15 @@
 		touch-action: var(--sonic-touch-action, pan-y);
 		cursor: grab;
 
-		--_sonic-glass-radius: calc(
-			var(--_sonic-waveform-size) * var(--sonic-waveform-radius-ratio, 0.08)
+		--_sonic-waveform-radius-own: calc(
+			var(--_sonic-waveform-size) * var(--sonic-waveform-radius-ratio)
+		);
+		--_sonic-glass-radius: var(
+			--_sonic-waveform-radius-own,
+			var(
+				--sonic-radius,
+				calc(var(--_sonic-waveform-size) * var(--sonic-waveform-radius-ratio, 0.08))
+			)
 		);
 
 		border-radius: var(--_sonic-glass-radius);
