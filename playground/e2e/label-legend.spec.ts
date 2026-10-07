@@ -60,6 +60,40 @@ test('a long label widens the button by its padding and gap, and a short one kee
 	expect(await boxOf(button)).toMatchObject({ height: 40, width: 60 });
 });
 
+async function setIcon(host: Locator, viewBox: string, tokens: Record<string, string>) {
+	await host.evaluate(
+		(element, { entries, viewBox }) => {
+			const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+
+			icon.setAttribute('viewBox', viewBox);
+			element.replaceChildren(icon);
+			for (const [name, value] of entries) element.style.setProperty(name, value);
+		},
+		{ entries: Object.entries(tokens), viewBox },
+	);
+	await expect(host.locator('.sonic-button-cap > svg')).toHaveAttribute('viewBox', viewBox);
+}
+
+test('an icon keeps its proportions, and the button widens to fit it or narrows to it with no least width', async ({
+	page,
+}) => {
+	const host = page.locator('#next');
+	const button = host.locator('.sonic-button');
+	const icon = host.locator('.sonic-button-cap > svg');
+	const size = { '--sonic-button-icon-ratio': '0.6', '--sonic-button-size': '40px' };
+
+	await setIcon(host, '0 0 30 10', size);
+	expect(await boxOf(icon)).toMatchObject({ height: 24, width: 72 });
+	expect(await boxOf(button)).toMatchObject({ height: 40, width: 72 });
+
+	await setIcon(host, '0 0 5 10', size);
+	expect(await boxOf(icon)).toMatchObject({ height: 24, width: 12 });
+	expect(await boxOf(button)).toMatchObject({ height: 40, width: 40 });
+
+	await setIcon(host, '0 0 5 10', { ...size, '--sonic-button-aspect-ratio': '0' });
+	expect(await boxOf(button)).toMatchObject({ height: 40, width: 12 });
+});
+
 async function addToColumn(page: Page): Promise<Locator> {
 	await page.evaluate(() => {
 		const column = document.createElement('div');

@@ -31,11 +31,21 @@
 		overflow: hidden;
 	}
 
-	sonic-button:not(:defined, [hidden]):has(> :not(svg, .sonic-led)) {
+	sonic-button:not(:defined, [hidden]):has(> :not(.sonic-led)) {
 		inline-size: max-content;
 		min-inline-size: calc(var(--_sonic-button-size) * var(--_sonic-button-aspect-ratio));
-		padding-inline: calc(var(--_sonic-button-size) * var(--sonic-button-padding-ratio, 0.25));
 		white-space: nowrap;
+	}
+
+	sonic-button:not(:defined, [hidden]):has(> :not(svg, .sonic-led)) {
+		padding-inline: calc(var(--_sonic-button-size) * var(--sonic-button-padding-ratio, 0.25));
+	}
+
+	:where(sonic-button:not(:defined)) > svg {
+		display: block;
+		inline-size: auto;
+		block-size: calc(var(--_sonic-button-size) * var(--sonic-button-icon-ratio, 0.5));
+		aspect-ratio: auto 1;
 	}
 
 	.sonic-button {
@@ -75,7 +85,7 @@
 	}
 
 	/* An `auto` width stretches in a column flex or grid parent */
-	.sonic-button:where(:has(> .sonic-button-cap > :not(svg, .sonic-led))) {
+	.sonic-button:where(:has(> .sonic-button-cap > :not(.sonic-led))) {
 		inline-size: max-content;
 		min-inline-size: calc(var(--_sonic-button-size) * var(--_sonic-button-aspect-ratio));
 	}
@@ -250,8 +260,9 @@
 		}
 
 		& > svg {
-			inline-size: calc(var(--_sonic-button-size) * var(--_sonic-button-icon-ratio));
+			inline-size: auto;
 			block-size: calc(var(--_sonic-button-size) * var(--_sonic-button-icon-ratio));
+			aspect-ratio: auto 1;
 			mask-image: linear-gradient(
 				var(--_sonic-light-fall),
 				#000 15%,
@@ -261,7 +272,7 @@
 		}
 	}
 
-	.sonic-button-cap:has(> :not(svg, .sonic-led)) {
+	.sonic-button-cap:has(> :not(.sonic-led)) {
 		position: relative;
 		inset: auto;
 		block-size: calc(var(--_sonic-button-size) - 2 * var(--_sonic-button-gap));
@@ -269,7 +280,6 @@
 	}
 
 	.sonic-button-cap:has(> .sonic-led) > svg {
-		inline-size: calc(var(--_sonic-button-size) * var(--_sonic-button-led-icon-ratio));
 		block-size: calc(var(--_sonic-button-size) * var(--_sonic-button-led-icon-ratio));
 	}
 

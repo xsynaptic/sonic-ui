@@ -213,7 +213,7 @@
 	}
 
 	.sonic-waveform-label[data-sonic-dimmed] {
-		color: color-mix(in oklab, var(--_sonic-marker, var(--_sonic-waveform-label)) 50%, transparent);
+		filter: opacity(0.5);
 	}
 
 	/* Opaque, since a system highlight carries alpha that would blend the wave into the glass */
@@ -245,6 +245,7 @@
 
 			&[data-sonic-dimmed] {
 				color: GrayText;
+				filter: none;
 			}
 		}
 
