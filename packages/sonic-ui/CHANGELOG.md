@@ -1,5 +1,26 @@
 # @xsynaptic/sonic-ui
 
+## 0.21.0
+
+### Minor Changes
+
+- - Breaking: the number box is plain: its digits alone in the text colour, with no glass, edge or corner. Wrap it in `.sonic-screen` for the box (`--sonic-screen-size` set to the number's size and `--sonic-screen-inset-ratio: 0` gives the old one). `--sonic-number-radius-ratio` and `--sonic-number-inset-ratio` are removed, `--sonic-radius` and the glass tokens no longer reach it, and `number.css` needs only the core, cap and value material sheets.
+  - With no skin a meter no longer draws a near-black bar: its bed is clear and its unlit segments are a faint tint of the text colour, like the LED. Skins are unchanged.
+  - A screen now shrinks in a flex row; give one that holds a text readout a `min-inline-size`.
+  - A button sets `user-select: none`, as every other control does, so a text legend no longer selects under a long press on touch.
+  - A held XY puck stays solid, as a held envelope handle does; the hold shows as the glow, or as the bracket on a skin with no relief. It no longer turns hollow.
+  - `--sonic-focus-radius` rounds the focus outline and glow of the plain boxes (number box, waveform, wave strip), which have no corner of their own. Unset, they stay square.
+- - With no skin, every unlit part follows the text colour at 30%, as the LED and the meter did: a dial's ring, a slider's groove, the ring, the pad's lines, the wave strip. Glass, a disabled envelope handle and a disabled puck stay solid. Skins are unchanged.
+  - Tokens: `--sonic-touch-action` reaches the dial and the number box, so one set on a wrapper for a slider now reaches dials inside it. `--sonic-radius` reaches every readout; `--sonic-readout-radius-ratio` is new and wins when set. `--sonic-focus-radius` also rounds the focus of a slider and a switch position.
+  - Focus: a visible `--sonic-focus-outline` is drawn on the cap of a button, a segmented option and a dial, where the cap covered it.
+  - Waveform: a repeating key scrubs, as on the wave strip: `input` on each repeat and one `change` on keyup.
+  - Split: `disabled` freezes the members against gestures; a written `value` still lands.
+  - XY pad: `double-press="reset"` (default `none`), `:state(revealed)`, `dragging` and `revealed` getters, and `sonic-reveal`. A form reset during a drag is dropped.
+  - Toggle: a press that slides a few pixels is still a press. A coloured lit toggle takes system colours in forced colours.
+  - Button and switch: a key prevented in a capture listener no longer holds a momentary button, a bat press let go off the switch is cancelled, and an LED in a disabled latched button or option dims where it stayed lit.
+  - Screen: its text can be selected (a screen that is itself a button sets its own `user-select`), and its `--sonic-glass-depth` no longer flattens the well of a button inside it.
+  - The keycap sheen follows `--sonic-light-tilt`.
+
 ## 0.20.0
 
 ### Minor Changes
