@@ -378,3 +378,20 @@ test('a second finger puts the scrub back with no change, and the pinch follows 
 	expect(waveform.value).toBe(100);
 	expect(events).not.toContain('change');
 });
+
+test('with no formatter set, a waveform shows, types and speaks a clock', () => {
+	installCanvasFakes();
+	document.body.lang = 'en';
+
+	const { control, waveform } = mountWaveform('max="300" step="0" value="83.47"');
+	const entry = control.querySelector('input');
+
+	pressKey(control, 'Enter');
+	if (entry) entry.value = '2:05';
+	if (entry) pressKey(entry, 'Enter');
+
+	expect(waveform.value).toBe(125);
+	expect(waveform.valueText).toBe('2:05');
+	expect(control.getAttribute('aria-valuetext')).toBe('2 minutes, 5 seconds');
+	document.body.removeAttribute('lang');
+});

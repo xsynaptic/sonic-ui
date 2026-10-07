@@ -29,6 +29,12 @@ interface HoverBinding {
 	valueAt: (event: PointerEvent) => number | undefined;
 }
 
+export interface ValueNotation {
+	format: (value: number) => string;
+	parse: (text: string) => number;
+	speak?: (value: number) => string;
+}
+
 const fallbackTravelPx = 160;
 
 let instanceCount = 0;
@@ -298,6 +304,9 @@ export abstract class SonicValueElement extends SonicFormElement {
 		return this.#textFor(this.#model.value);
 	}
 
+	// `Number.parseFloat`, as `Number('')` is 0; an emptied field should leave the value alone
+	protected readonly notation: ValueNotation = { format: String, parse: Number.parseFloat };
+
 	#formatEntry: ((value: number) => string) | undefined;
 
 	#formatSpokenValue: ((value: number) => string) | undefined;
@@ -388,8 +397,7 @@ export abstract class SonicValueElement extends SonicFormElement {
 				isDisabled: () => this.isDisabled(),
 				keyStep: () => this.keyStep,
 				model: this.#model,
-				// eslint-disable-next-line unicorn/prefer-number-coercion -- `Number('')` is 0; an emptied field should leave the value alone
-				parse: (text) => (this.#parseValue ?? Number.parseFloat)(text),
+				parse: (text) => (this.#parseValue ?? this.notation.parse)(text),
 				render: () => {
 					this.render();
 				},
@@ -540,8 +548,8 @@ export abstract class SonicValueElement extends SonicFormElement {
 
 		if (this.#formatEntry) return this.#formatEntry(value);
 
-		// `Number.parseFloat` reads "5 kHz" as 5
-		if (!this.#parseValue) return String(value);
+		// The notation's own parser may not read a consumer's `formatValue`
+		if (!this.#parseValue) return this.notation.format(value);
 
 		const text = this.valueText;
 
@@ -585,7 +593,7 @@ export abstract class SonicValueElement extends SonicFormElement {
 		writeAttribute(
 			control,
 			'aria-valuetext',
-			(this.#formatSpokenValue ?? this.#formatValue)?.(this.#spokenNow()),
+			(this.#formatSpokenValue ?? this.#formatValue ?? this.notation.speak)?.(this.#spokenNow()),
 		);
 		this.forwardNaming(control, true);
 		this.#renderDisabled(control);
@@ -657,7 +665,7 @@ export abstract class SonicValueElement extends SonicFormElement {
 	}
 
 	#textFor(value: number): string {
-		return this.#formatValue?.(value) ?? String(value);
+		return (this.#formatValue ?? this.notation.format)(value);
 	}
 
 	#writeHeld(next: number): void {

@@ -6,6 +6,8 @@ import type {
 	SonicWavestrip,
 } from '@xsynaptic/sonic-ui';
 
+import { formatClock } from '@xsynaptic/sonic-ui';
+
 import { channelCurves, echoModes, filterTypes, tapeStyles } from '#scripts/stop-names.ts';
 
 interface Format {
@@ -64,11 +66,9 @@ function formatDecibels(value: number): string {
 	return `${value.toFixed(1).replace('-', '−')} dB`;
 }
 
-function formatClock(seconds: number, digits: number): string {
+function formatClockTenths(seconds: number): string {
 	const minutes = Math.floor(seconds / 60);
-	const rest = (seconds - minutes * 60)
-		.toFixed(digits)
-		.padStart(digits === 0 ? 2 : digits + 3, '0');
+	const rest = (seconds - minutes * 60).toFixed(1).padStart(4, '0');
 
 	return `${String(minutes)}:${rest}`;
 }
@@ -107,8 +107,8 @@ const formats = new Map<string, Format>([
 		},
 	],
 	['channel-curve', namedStops(channelCurves.labels)],
-	['clock', { format: (value) => formatClock(floorTo(value, 0), 0) }],
-	['clock-tenths', { format: (value) => formatClock(floorTo(value, 1), 1) }],
+	['clock', { format: formatClock }],
+	['clock-tenths', { format: (value) => formatClockTenths(floorTo(value, 1)) }],
 	['db', { format: formatDecibels, parse: parseNumber }],
 	[
 		'db-kill',

@@ -4,7 +4,7 @@ import { defineConfig } from 'tsdown';
 
 const shared = {
 	clean: ['dist'],
-	entry: ['src/index.ts', 'src/dat.ts', 'src/define.ts', 'src/define/*.ts'],
+	entry: ['src/index.ts', 'src/define.ts', 'src/define/*.ts'],
 	format: 'esm',
 	minify: false,
 	platform: 'browser',

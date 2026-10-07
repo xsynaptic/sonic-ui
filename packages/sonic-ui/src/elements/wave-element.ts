@@ -1,8 +1,11 @@
+import type { ValueNotation } from '#elements/value-element.ts';
 import type { Surface, SurfaceFrame } from '#lib/canvas-surface.ts';
 import type { Seconds } from '#lib/units.ts';
 
 import { SonicValueElement } from '#elements/value-element.ts';
 import { bindSurface } from '#lib/canvas-surface.ts';
+import { formatClock, parseClock } from '#lib/clock.ts';
+import { spokenDuration } from '#lib/spoken-duration.ts';
 
 declare const __DEV__: boolean;
 
@@ -68,6 +71,12 @@ export abstract class SonicWaveElement<
 	protected abstract readonly control: HTMLElement;
 
 	protected abstract readonly lengths: Record<Length, `--_sonic-${string}`>;
+
+	protected override readonly notation: ValueNotation = {
+		format: formatClock,
+		parse: parseClock,
+		speak: (seconds) => spokenDuration(seconds, this.closest<HTMLElement>('[lang]')?.lang),
+	};
 
 	protected abstract readonly sheet: string;
 

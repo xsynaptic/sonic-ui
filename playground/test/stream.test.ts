@@ -2,7 +2,7 @@ import { expect, test } from 'vitest';
 
 import type { Track } from '#scripts/web-player/stream.ts';
 
-import { pairsPerSecond } from '#scripts/seeded-dat.ts';
+import { pairsPerSecond } from '#scripts/seeded-samples.ts';
 import { createStream } from '#scripts/web-player/stream.ts';
 
 const queue: Array<Track> = [

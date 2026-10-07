@@ -1,7 +1,7 @@
-/** Interleaved min, max per channel per pair; `fullScale` is 128, 32768 or 1 */
+/** Interleaved min, max per channel per pair; `fullScale` unset follows the array: 128, 32768 or 1 */
 export interface WaveformPeaks {
 	channels?: number;
-	fullScale: number;
+	fullScale?: number;
 	pairsPerSecond: number;
 	samples: Float32Array | Int8Array | Int16Array;
 }
@@ -20,11 +20,19 @@ interface BucketView {
 	width: number;
 }
 
+function fullScaleOf({ fullScale, samples }: WaveformPeaks): number {
+	if (fullScale !== undefined) return fullScale;
+	if (samples instanceof Int8Array) return 128;
+
+	return samples instanceof Int16Array ? 32_768 : 1;
+}
+
 function foldPairs(peaks: WaveformPeaks, fromPair: number, toPair: number): [number, number] {
 	const { samples } = peaks;
 	const channels = Math.max(1, peaks.channels ?? 1);
 	const stride = channels * 2;
 	const pairsTotal = Math.floor(samples.length / stride);
+	const fullScale = fullScaleOf(peaks);
 	let low = 0;
 	let high = 0;
 
@@ -37,7 +45,7 @@ function foldPairs(peaks: WaveformPeaks, fromPair: number, toPair: number): [num
 		}
 	}
 
-	return [low / peaks.fullScale, high / peaks.fullScale];
+	return [low / fullScale, high / fullScale];
 }
 
 // Keyed to absolute pairs; keyed to the window, the same samples re-bucket every frame and judder

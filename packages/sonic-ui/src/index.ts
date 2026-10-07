@@ -14,6 +14,7 @@ export type { LabelRender, PeaksRequest } from '#elements/waveform.ts';
 export { SonicWaveform } from '#elements/waveform.ts';
 export { SonicWavestrip } from '#elements/wavestrip.ts';
 export { SonicXy } from '#elements/xy.ts';
+export { formatClock, parseClock } from '#lib/clock.ts';
 export { crossfadeGains } from '#lib/crossfade.ts';
 export { envelopeCurve } from '#lib/envelope-curve.ts';
 export { formatPercent, parsePercent } from '#lib/percent.ts';

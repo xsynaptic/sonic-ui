@@ -1,5 +1,7 @@
 import { expect, test } from 'vitest';
 
+import type { WaveformPeaks } from '#lib/waveform-buckets.ts';
+
 import { waveformBuckets } from '#lib/waveform-buckets.ts';
 
 const pairsPerSecond = 172.265625;
@@ -45,6 +47,33 @@ test('16-bit and float peaks of the same shape draw the same heights', () => {
 		float.map(({ high, low }) => [low, high]),
 	);
 	expect(wide.find((bucket) => bucket.fromPair === 0)).toMatchObject({ high: 0.25, low: -0.5 });
+});
+
+function foldOne(peaks: WaveformPeaks): undefined | { high: number; low: number } {
+	return waveformBuckets(
+		{ ...peaks, pairsPerSecond },
+		{ pixelsPerSecond: pairsPerSecond, startSeconds: 0, width: 1 },
+	).find(({ fromPair }) => fromPair === 0);
+}
+
+test('with no full scale, peaks read against their array, and a full scale that is set wins', () => {
+	const narrow = new Int8Array([-32, 64]);
+
+	expect(foldOne({ pairsPerSecond, samples: narrow })).toMatchObject({ high: 0.5, low: -0.25 });
+	expect(foldOne({ pairsPerSecond, samples: narrow })).toEqual(
+		foldOne({ fullScale: 128, pairsPerSecond, samples: narrow }),
+	);
+	expect(foldOne({ pairsPerSecond, samples: new Int16Array([-8192, 16_384]) })).toMatchObject({
+		high: 0.5,
+		low: -0.25,
+	});
+	expect(
+		foldOne({ fullScale: 2, pairsPerSecond, samples: new Float32Array([-0.5, 1]) }),
+	).toMatchObject({ high: 0.5, low: -0.25 });
+	expect(foldOne({ fullScale: 256, pairsPerSecond, samples: narrow })).toMatchObject({
+		high: 0.25,
+		low: -0.125,
+	});
 });
 
 test('two channels fold to the lowest min and the highest max', () => {

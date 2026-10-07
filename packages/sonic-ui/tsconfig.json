@@ -1,7 +1,7 @@
 {
 	"extends": "../../tsconfig.base.json",
 	"compilerOptions": {
-		"lib": ["es2023", "dom", "dom.iterable"],
+		"lib": ["es2023", "es2025.intl", "dom", "dom.iterable"],
 		"types": []
 	},
 	"include": ["src", "test", "*.ts"],

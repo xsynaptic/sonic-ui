@@ -118,7 +118,9 @@ A display takes its signal as data and never opens an `AudioContext`.
 
 ## Wave controls
 
-`<sonic-wavestrip>` is the overview of a track, scrubbed to seek; `<sonic-waveform>` is the close-up that scrolls under a fixed playhead. Both are value controls in seconds that take their data as properties (`peaks`, `markers`); the types list the rest. `./dat` reads an audiowaveform `.dat` file into `peaks`, and fetches nothing itself.
+`<sonic-wavestrip>` is the overview of a track, scrubbed to seek; `<sonic-waveform>` is the close-up that scrolls under a fixed playhead. Both are value controls in seconds that take their data as properties (`peaks`, `markers`); the types list the rest. `peaks` is `{ pairsPerSecond, samples }`, and the full scale follows the array unless `fullScale` is set.
+
+A wave control shows and reads a clock (`1:23`, typed or drawn) and speaks a duration in the language around it, the nearest `lang`. Setting `formatValue`, `parseValue` or `formatSpokenValue` replaces that part; `formatClock` and `parseClock` are the same pair, exported so your own time text matches.
 
 Their events bubble and carry no detail, so read the property when one fires: `revealed` on `sonic-reveal`, `currentMarker` on `sonic-marker`, and the strip's `hoverValue` on `sonic-hover`, which `clientXOf(value)` turns into a viewport x.
 

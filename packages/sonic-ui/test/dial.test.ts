@@ -396,6 +396,22 @@ test('a second press 3px off on both axes is too far to open the entry, and 2px 
 	expect(entryOf(control).hidden).toBe(false);
 });
 
+test('a dial with no formatter set shows and types the raw number, and speaks none', () => {
+	const { control, dial } = mountDial('step="0.01" value="83.47"');
+	const entry = entryOf(control);
+
+	expect(dial.valueText).toBe('83.47');
+	expect(control.hasAttribute('aria-valuetext')).toBe(false);
+
+	press(control);
+	press(control);
+	expect(entry.value).toBe('83.47');
+
+	entry.value = '1:23';
+	typeKey(entry, 'Enter');
+	expect(dial.value).toBe(1);
+});
+
 test('Enter commits the typed value through parseValue and hands focus back', () => {
 	const { control, dial } = mountDial('aria-label="Volume" max="1" step="0.01" value="0.5"');
 	const entry = entryOf(control);

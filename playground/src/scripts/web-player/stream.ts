@@ -1,7 +1,7 @@
 import type { SonicWaveform } from '@xsynaptic/sonic-ui';
 
-import { emptySamples, fillSamples, pairsPerSecond } from '#scripts/seeded-dat.ts';
 import { seededPeaks } from '#scripts/seeded-peaks.ts';
+import { emptySamples, fillSamples, pairsPerSecond } from '#scripts/seeded-samples.ts';
 
 interface Cue extends Marker {
 	label: string;

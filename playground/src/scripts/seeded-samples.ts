@@ -1,9 +1,5 @@
-import { readDatHeader } from '@xsynaptic/sonic-ui/dat';
-
-// audiowaveform's default in platform byte order: version 1, 8-bit, 44.1 kHz at 256 samples a pixel
-export const seededHeader = readDatHeader(Uint32Array.of(1, 1, 44_100, 256, 0).buffer);
-
-export const { pairsPerSecond } = seededHeader;
+// audiowaveform's defaults
+export const pairsPerSecond = 44_100 / 256;
 
 function grain(pair: number): number {
 	const scrambled = Math.sin(pair * 12.9898) * 43_758.5453;

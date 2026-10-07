@@ -9,6 +9,7 @@ import { mountControl, pointerAt, recordEvents } from './helpers.ts';
 
 afterEach(() => {
 	document.body.replaceChildren();
+	document.body.removeAttribute('lang');
 });
 
 function mountWavestrip(attributes: string): {
@@ -767,4 +768,131 @@ test('clientXOf places a value along the canvas, clamped to the bounds', () => {
 
 	expect(wavestrip.clientXOf(105)).toBeCloseTo(90, 9);
 	expect(wavestrip.clientXOf(500)).toBeCloseTo(240, 9);
+});
+
+function openEntry(control: HTMLElement): HTMLInputElement {
+	const entry = control.querySelector('input');
+	if (!entry) throw new Error('The wavestrip has no entry');
+
+	control.dispatchEvent(
+		new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'Enter' }),
+	);
+
+	return entry;
+}
+
+function commitEntry(entry: HTMLInputElement, text: string): void {
+	entry.value = text;
+	entry.dispatchEvent(
+		new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'Enter' }),
+	);
+}
+
+test('with no formatter set, a strip shows, types and speaks a clock in the language around it', () => {
+	installCanvasFakes();
+	document.body.lang = 'en';
+
+	const { control, wavestrip } = mountWavestrip('max="4000" step="0" value="83.47"');
+	const events = recordEvents(document.body);
+
+	expect(wavestrip.valueText).toBe('1:23');
+	expect(control.getAttribute('aria-valuetext')).toBe('1 minute, 23 seconds');
+	expect([wavestrip.formatValue, wavestrip.parseValue, wavestrip.formatSpokenValue]).toEqual([
+		undefined,
+		undefined,
+		undefined,
+	]);
+
+	const entry = openEntry(control);
+
+	expect(entry.value).toBe('1:23');
+
+	commitEntry(entry, '1:23');
+	expect(wavestrip.value).toBe(83.47);
+	expect(events).toEqual([]);
+
+	commitEntry(openEntry(control), '1:02:05');
+	expect(wavestrip.value).toBe(3725);
+	expect(events).toEqual(['input', 'change']);
+	expect(control.getAttribute('aria-valuetext')).toBe('1 hour, 2 minutes, 5 seconds');
+});
+
+test.each(['', '1:', 'abc'])('an entry left as %j changes nothing', (typed) => {
+	installCanvasFakes();
+
+	const { control, wavestrip } = mountWavestrip('max="300" step="0" value="83.47"');
+	const events = recordEvents(document.body);
+
+	commitEntry(openEntry(control), typed);
+
+	expect(wavestrip.value).toBe(83.47);
+	expect(events).toEqual([]);
+});
+
+test('a strip with nothing set at all writes a whole clock, and speaks zero as seconds', () => {
+	installCanvasFakes();
+	document.body.lang = 'en';
+
+	const { control, wavestrip } = mountWavestrip('');
+
+	expect(wavestrip.valueText).toBe('0:00');
+	expect(control.getAttribute('aria-valuetext')).toBe('0 seconds');
+	expect(openEntry(control).value).toBe('0:00');
+});
+
+test('the spoken clock follows the nearest lang, and an unreadable one falls back to the browser', () => {
+	installCanvasFakes();
+	document.body.lang = 'en';
+	document.body.innerHTML = '<div lang="fr"></div><div lang="en_US"></div>';
+
+	const [french, unreadable] = [...document.body.children].map((parent) => {
+		const strip = document.createElement('sonic-wavestrip');
+
+		strip.setAttribute('max', '4000');
+		strip.setAttribute('value', '3725');
+		parent.append(strip);
+
+		return strip.querySelector('.sonic-wavestrip')?.getAttribute('aria-valuetext');
+	});
+
+	expect(french).toMatch(/heure.+minutes.+secondes/);
+	expect(unreadable).toBe(
+		new Intl.DurationFormat(undefined, { style: 'long' }).format({
+			hours: 1,
+			minutes: 2,
+			seconds: 5,
+		}),
+	);
+});
+
+test('formatValue replaces the text and the spoken text, and the entry still opens on a clock', () => {
+	installCanvasFakes();
+
+	const { control, wavestrip } = mountWavestrip('max="300" step="0" value="83.47"');
+
+	wavestrip.formatValue = (seconds) => `${seconds.toFixed(1)} s`;
+
+	expect(wavestrip.valueText).toBe('83.5 s');
+	expect(control.getAttribute('aria-valuetext')).toBe('83.5 s');
+	expect(openEntry(control).value).toBe('1:23');
+});
+
+test('formatSpokenValue replaces only the spoken text', () => {
+	installCanvasFakes();
+
+	const { control, wavestrip } = mountWavestrip('max="300" step="0" value="83.47"');
+
+	wavestrip.formatSpokenValue = (seconds) => `${String(Math.floor(seconds))} seconds in`;
+
+	expect(wavestrip.valueText).toBe('1:23');
+	expect(control.getAttribute('aria-valuetext')).toBe('83 seconds in');
+});
+
+test('the spoken clock is given the value spoken-step rounded', () => {
+	installCanvasFakes();
+	document.body.lang = 'en';
+
+	const { control } = mountWavestrip('max="300" step="0" spoken-step="5" value="83.47"');
+
+	expect(control.getAttribute('aria-valuetext')).toBe('1 minute, 25 seconds');
 });

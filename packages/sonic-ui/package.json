@@ -38,11 +38,6 @@
 			"development": "./dist/dev/index.js",
 			"import": "./dist/default/index.js"
 		},
-		"./dat": {
-			"types": "./dist/dev/dat.d.ts",
-			"development": "./dist/dev/dat.js",
-			"import": "./dist/default/dat.js"
-		},
 		"./define": {
 			"types": "./dist/dev/define.d.ts",
 			"development": "./dist/dev/define.js",

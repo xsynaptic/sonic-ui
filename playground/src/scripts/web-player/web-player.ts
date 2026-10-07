@@ -1,4 +1,5 @@
 import {
+	formatClock,
 	formatPercent,
 	parsePercent,
 	SonicButton,
@@ -8,14 +9,13 @@ import {
 	SonicWaveform,
 	SonicWavestrip,
 } from '@xsynaptic/sonic-ui';
-import { readDatPeaks } from '@xsynaptic/sonic-ui/dat';
 
 import type { ControlsOf } from '#scripts/find.ts';
 import type { StreamState } from '#scripts/web-player/stream.ts';
 
 import { dataHook, readControls } from '#scripts/find.ts';
 import { frameLoop } from '#scripts/frame-loop.ts';
-import { seededHeader } from '#scripts/seeded-dat.ts';
+import { pairsPerSecond } from '#scripts/seeded-samples.ts';
 import { createStream, tracks } from '#scripts/web-player/stream.ts';
 import { bindZoom } from '#scripts/zoom.ts';
 
@@ -44,18 +44,6 @@ const spokenUnits = [
 	['minute', 60],
 	['second', 1],
 ] as const;
-
-function formatClock(seconds: number): string {
-	const total = Math.floor(Math.abs(seconds));
-	const hours = Math.floor(total / 3600);
-	const minutes = Math.floor(total / 60) % 60;
-	const rest = String(total % 60).padStart(2, '0');
-	const sign = seconds < 0 ? '−' : '';
-
-	if (hours === 0) return `${sign}${String(minutes)}:${rest}`;
-
-	return `${sign}${String(hours)}:${String(minutes).padStart(2, '0')}:${rest}`;
-}
 
 function formatSpokenTime(seconds: number): string {
 	let rest = Math.floor(seconds);
@@ -117,7 +105,7 @@ function renderTrack({ samples, track }: StreamState, bar: Bar): void {
 	for (const strip of [bar.seek, bar.wave, bar.detail]) strip.max = track.durationSeconds;
 	for (const strip of [bar.wave, bar.detail]) strip.markers = track.cues;
 	bar.wave.peaks = track.peaks;
-	bar.detail.peaks = readDatPeaks(seededHeader, samples.buffer);
+	bar.detail.peaks = { pairsPerSecond, samples };
 }
 
 function renderPosition(state: StreamState, bar: Bar): void {
