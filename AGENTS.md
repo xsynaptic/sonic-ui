@@ -2,9 +2,11 @@
 
 `@xsynaptic/sonic-ui`: native custom elements for audio interfaces. Light DOM, no framework, no runtime dependencies; Astro lives only in `playground/`.
 
-Plans in `.claude/tasks/` (gitignored) carry a frontmatter `status`; only `ready` is live work.
+## Where to look
 
-Vocabulary: `.claude/glossary.md` defines each control, part and value term and the words it replaces; read it before naming anything. Pick the most accurate name for a new thing. If the glossary already uses or avoids that word, ask which meaning should keep it rather than settling for a weaker name.
+- Vocabulary: `.claude/glossary.md` defines each control, part and value term and the words it replaces; read it before naming anything. Pick the most accurate name for a new thing. If the glossary already uses or avoids that word, ask which meaning should keep it rather than settling for a weaker name.
+- Reasons: `.claude/reference/controls.md` (gitignored, so it may be absent) records why each control behaves as it does. Read the control's section before changing a gesture, a default or an ARIA choice that looks arbitrary.
+- Plans: `.claude/tasks/` (gitignored); each carries a frontmatter `status`, and only `ready` is live work.
 
 ## Public repo
 
@@ -45,7 +47,9 @@ Run `pnpm fix` after a chunk of work; it autofixes, then runs `pnpm check`. `che
 
 Run `pnpm test-e2e` after changing a gesture, a control's naming, or its drawn parts; reach for `pnpm test-e2e-full` when a change is engine-specific.
 
-Library changes get a changeset (`pnpm changeset`). Until 1.0, keep changesets short and grouped, and add little to READMEs and package descriptions.
+Library changes get a changeset (`pnpm changeset`). Until 1.0, keep changesets short and grouped.
+
+The package README is written for an agent wiring the library into an app. It holds only what the built types and sheets do not say: setup, contracts between a control and its children, and behaviour that would surprise. When a change adds or breaks one of those, update the README in the same change; a new property or token needs no entry.
 
 ## Visual checks
 

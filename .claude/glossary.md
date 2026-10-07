@@ -82,7 +82,7 @@ The words this library uses for its controls, their parts and their values. Wher
 
 **Bushing**: The collar that a switch's bat pivots in. _Avoid_: Nut, base
 
-**Option**: One of the choices in a segmented control. _Avoid_: Segment, item
+**Option**: One of the choices in a segmented control. It is stepped through by the same rules as a position. _Avoid_: Segment, item
 
 **Field**: The area an XY pad's puck moves in. _Avoid_: Plane, pad, surface
 
@@ -122,7 +122,7 @@ The words this library uses for its controls, their parts and their values. Wher
 
 **Lane**: One of the rows that point markers stack in when they sit too close to share one. _Avoid_: Row, track, tier
 
-**Scrub**: To drag along a wave looking for a place to seek to. _Avoid_: Seek (the jump itself), drag
+**Scrub**: To drag along a wave, or along a slider that seeks, looking for a place to seek to. _Avoid_: Seek (the jump itself), drag
 
 ### Values
 
@@ -137,6 +137,8 @@ The words this library uses for its controls, their parts and their values. Wher
 **Proportion**: How far along its travel a value sits, from 0 at one end to 1 at the other. _Avoid_: Place, unit, normalized value
 
 **Mapping**: The rule that turns a value into a proportion and back, including where the value snaps. _Avoid_: Scale, range
+
+**Value model**: What a value control holds behind its drawing: the value, the value last asked for, its mapping and any limit put on it. _Avoid_: Cell, asked value, state (that is a skin's)
 
 **Taper**: The shape of a mapping, linear or logarithmic. _Avoid_: Law, skew, easing
 
