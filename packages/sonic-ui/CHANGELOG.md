@@ -1,5 +1,21 @@
 # @xsynaptic/sonic-ui
 
+## 0.20.0
+
+### Minor Changes
+
+- - Breaking: the wave strip, waveform, spectrum, envelope and XY pad draw no glass. Each is plain, in the text colour around it, with no fill, edge or corner. For the encased look wrap one in `<div class="sonic-screen">`, whose padding is the inset.
+  - Breaking: `.sonic-screen` is sized like a `div`. It fills a block, hugs in a flex row and is never shorter than `--sonic-screen-size`; `--sonic-screen-aspect-ratio` is removed, so a text readout sets its own width. A control with `fill` needs the screen given a height.
+  - Removed tokens: `--sonic-wavestrip-inset-ratio`, `--sonic-waveform-inset-ratio`, `--sonic-spectrum-inset-ratio`, `--sonic-xy-inset-ratio`, and the `-radius-ratio` of the wave strip, waveform, spectrum, envelope and XY pad. `--sonic-radius` no longer reaches those five, and `--sonic-glass` with its depth, texture, edge, text and font reaches only the screen, the number box and the readouts. The four relief skins drop their wave strip inset.
+  - New token: `--sonic-wavestrip-marker-edge` colours the ring round a marker, which is clear when unset. A held puck and the gap in its focus ring are clear too, and the pad's lines stop at the puck. A held or disabled envelope handle is filled in its ring's colour.
+  - A plain control takes its colour from `color`, where it took `--sonic-glass-text`, and its canvas repaints when `color` changes. It ignores `--sonic-ink`, as before.
+  - With no token set: the XY pad and the spectrum lose their default insets (0.04 and 0.06), a wave strip's regions stop at the wave's height, and a screen's well takes the full depth where the waveform's took 0.6.
+  - `spectrum.css` needs only `material/core.css`; the envelope, waveform, wave strip and XY pad sheets no longer need `pane` or `well`. Importing sheets one by one, the glass comes back with `screen.css` and `material/glass.css`, `pane.css` and `well.css`.
+
+### Patch Changes
+
+- - Development warnings name a control's own sheet and `material/core.css` when missing, and no longer any other material sheet; the README table lists what each sheet needs.
+
 ## 0.19.0
 
 ### Minor Changes
