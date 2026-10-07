@@ -94,3 +94,23 @@ test(
 		}).toPass();
 	},
 );
+
+test('the keycap sheen, drawn on a pseudo-element, turns with the light', async ({ page }) => {
+	await page.goto('/fixtures/');
+
+	const readSheen = async (): Promise<number> => {
+		const [image = ''] = await readStyles(
+			page,
+			['#kick .sonic-button-cap::before'],
+			'backgroundImage',
+		);
+		const angle = /linear-gradient\((-?[\d.]+)deg/.exec(image);
+
+		return angle ? Math.round(Number(angle[1])) : NaN;
+	};
+
+	expect(await readSheen()).toBe(105);
+
+	await page.addStyleTag({ content: `:root { --sonic-light-tilt: ${String(tilt)}deg; }` });
+	await expect.poll(readSheen).toBe(62);
+});

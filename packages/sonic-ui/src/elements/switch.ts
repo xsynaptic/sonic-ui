@@ -1,6 +1,6 @@
 import { SonicPositionGroupElement } from '#elements/position-group.ts';
 import { isUnder } from '#elements/radio-group.ts';
-import { bindDrag } from '#lib/pointer-drag.ts';
+import { bindDrag, capturePointer } from '#lib/pointer-drag.ts';
 import { soleStep } from '#lib/positions.ts';
 import { requireChild, template } from '#lib/render.ts';
 
@@ -61,7 +61,7 @@ export class SonicSwitch extends SonicPositionGroupElement {
 		const target = this.pressTarget(index);
 		if (this.isOptionDisabled(target) || !this.isMomentary(target)) return false;
 
-		this.group.setPointerCapture(event.pointerId);
+		capturePointer(this.group, event.pointerId);
 		this.hold(target, event.pointerId);
 
 		return true;
@@ -130,8 +130,11 @@ export class SonicSwitch extends SonicPositionGroupElement {
 					};
 				},
 				lift: (press, event) => {
-					if (!press.hasMoved && !this.isDisabled()) this.#pressBat(event);
 					this.#isClickSwallowed = true;
+					if (press.hasMoved || this.isDisabled()) return;
+					if (!isUnder(this.group, event.clientX, event.clientY)) return;
+
+					this.#pressBat(event);
 				},
 				move: (press, event) => {
 					if (this.isDisabled()) return;

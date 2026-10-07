@@ -1,8 +1,4 @@
-interface Press {
-	time: number;
-	x: number;
-	y: number;
-}
+import { createDoublePress } from '#lib/double-press.ts';
 
 interface ValueEntryOptions {
 	commit: (text: string) => void;
@@ -10,29 +6,16 @@ interface ValueEntryOptions {
 	toggle: (isOpen: boolean) => void;
 }
 
-// Not `dblclick`, which iOS may not deliver under `touch-action: none`
-const doublePressMs = 500;
-const doublePressPx = 4;
-
-function isDoublePress(previous: Press | undefined, next: Press): boolean {
-	if (!previous) return false;
-
-	return (
-		next.time - previous.time < doublePressMs &&
-		Math.hypot(next.x - previous.x, next.y - previous.y) < doublePressPx
-	);
-}
-
 export class ValueEntry {
 	get isOpen(): boolean {
 		return this.#isOpen;
 	}
 
+	readonly #doublePress = createDoublePress();
+
 	readonly #input: HTMLInputElement;
 
 	#isOpen = false;
-
-	#lastPress: Press | undefined;
 
 	#openedText = '';
 
@@ -94,7 +77,7 @@ export class ValueEntry {
 	}
 
 	forgetPress(): void {
-		this.#lastPress = undefined;
+		this.#doublePress.forget();
 	}
 
 	open(): void {
@@ -110,14 +93,6 @@ export class ValueEntry {
 	}
 
 	press(event: PointerEvent): boolean {
-		const press = { time: event.timeStamp, x: event.clientX, y: event.clientY };
-		const previous = this.#lastPress;
-
-		this.#lastPress = press;
-		if (!isDoublePress(previous, press)) return false;
-
-		this.#lastPress = undefined;
-
-		return true;
+		return this.#doublePress.press(event);
 	}
 }

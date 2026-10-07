@@ -180,6 +180,29 @@ test('a press that wobbles less than the drag threshold is still a press', async
 	expect(control.value).toBe('post');
 });
 
+test.each([
+	['is still a press', 4, [true]],
+	['is a drag that went nowhere', 7, []],
+])(
+	'on the cap, a wobble past the drag threshold that crosses nothing %s at %ipx',
+	async (_name, wobble, expected) => {
+		const { control, group, positions } = await mountToggle('', '');
+		const changes: Array<boolean> = [];
+
+		control.parentElement?.addEventListener('change', () => {
+			changes.push(control.checked);
+		});
+		pointerAt(positionAt(positions, 0), 'pointerdown', 116);
+		pointerAt(group, 'pointermove', 116 + wobble);
+		expect(capAt(group)).toBeCloseTo(wobble / stepPx, 9);
+
+		pointerAt(group, 'pointerup', 116 + wobble);
+
+		expect(changes).toEqual(expected);
+		expect(capAt(group)).toBe(expected.length);
+	},
+);
+
 test('a press let go off the toggle changes nothing', async () => {
 	const { control, group, positions } = await mountToggle('value="off"');
 	const changes = recordChanges(control);

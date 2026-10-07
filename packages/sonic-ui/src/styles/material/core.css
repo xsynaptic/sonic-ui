@@ -30,8 +30,16 @@
 		.sonic-xy,
 		.sonic-xy-readout
 	) {
-		--_sonic-unlit: var(--sonic-unlit, oklch(27.4% 0.005 286deg));
 		--_sonic-relief: var(--sonic-relief, 0);
+		--_sonic-unlit-solid: var(--sonic-unlit, oklch(27.4% 0.005 286deg));
+		--_sonic-unlit: var(
+			--sonic-unlit,
+			color-mix(
+				in oklab,
+				oklch(27.4% 0.005 286deg) calc(100% * var(--_sonic-relief)),
+				color-mix(in oklab, currentcolor 30%, transparent)
+			)
+		);
 		--_sonic-shade: var(--sonic-shade, #000);
 		--_sonic-shine: var(--sonic-shine, #fff);
 		--_sonic-press-duration: var(--sonic-press-duration, 60ms);

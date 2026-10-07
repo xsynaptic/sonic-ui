@@ -156,7 +156,7 @@
 	}
 
 	:is(.sonic-envelope-curve, .sonic-envelope-handle)[data-sonic-disabled] {
-		--_sonic-point-ring: var(--_sonic-unlit);
+		--_sonic-point-ring: var(--_sonic-unlit-solid);
 		--_sonic-point-core: var(--_sonic-point-ring);
 
 		cursor: default;
@@ -183,6 +183,7 @@
 		.sonic-envelope {
 			--_sonic-lit: Highlight;
 			--_sonic-unlit: GrayText;
+			--_sonic-unlit-solid: GrayText;
 		}
 
 		.sonic-envelope-graph {

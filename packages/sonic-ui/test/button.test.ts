@@ -148,6 +148,24 @@ test.each([' ', 'Enter'])(
 	},
 );
 
+test('a key a parent prevented in capture does not hold a momentary button', () => {
+	const { button, host } = mountButton('momentary');
+	const trace = holdTrace(host);
+
+	document.body.addEventListener(
+		'keydown',
+		(event) => {
+			event.preventDefault();
+		},
+		{ capture: true, once: true },
+	);
+	keyOn(button, 'keydown', { cancelable: true, key: ' ' });
+	keyOn(button, 'keyup', { key: ' ' });
+
+	expect(host.pressed).toBe(false);
+	expect(trace).toEqual([]);
+});
+
 test('a momentary button ignores another pointer while held and its click after release', () => {
 	const { button, host } = mountButton('momentary');
 	const trace = holdTrace(host);

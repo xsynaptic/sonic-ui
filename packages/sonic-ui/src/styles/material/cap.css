@@ -48,7 +48,7 @@
 			)
 		);
 		--_sonic-sheen: linear-gradient(
-			105deg,
+			calc(var(--_sonic-light-fall) - 58deg),
 			transparent 20%,
 			rgb(from var(--_sonic-shine) r g b / calc(0.1 * var(--_sonic-relief))) 45%,
 			transparent 55%,
@@ -84,7 +84,7 @@
 	}
 
 	/* A plain box has no corner of its own, so its focus outline and glow take this one */
-	:is(.sonic-number, .sonic-waveform, .sonic-wavestrip) {
+	:is(.sonic-number, .sonic-slider, .sonic-switch-position, .sonic-waveform, .sonic-wavestrip) {
 		border-radius: var(--sonic-focus-radius, 0);
 	}
 
@@ -148,10 +148,28 @@
 		outline-offset: var(--sonic-focus-outline-offset, -2px);
 
 		&:not([data-sonic-pointer-focus]) {
-			outline: var(--sonic-focus-outline, 2px solid transparent);
-
 			--_sonic-cap: var(--_sonic-cap-hover);
 			--_sonic-focus-shadow: var(--_sonic-focus-glow);
+		}
+	}
+
+	:is(
+			.sonic-number,
+			.sonic-slider,
+			.sonic-waveform,
+			.sonic-wavestrip,
+			.sonic-xy-axis
+		):focus-visible:not([data-sonic-pointer-focus]) {
+		outline: var(--sonic-focus-outline, 2px solid transparent);
+	}
+
+	@media not (forced-colors: active) {
+		:is(.sonic-dial, .sonic-button, .sonic-segmented-option):focus-visible:not(
+				[data-sonic-pointer-focus]
+			)
+			> :is(.sonic-dial-cap, .sonic-button-cap, .sonic-segmented-cap) {
+			outline: var(--sonic-focus-outline, 2px solid transparent);
+			outline-offset: var(--sonic-focus-outline-offset, -2px);
 		}
 	}
 

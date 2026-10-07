@@ -18,6 +18,9 @@
 		.sonic-xy-readout
 	) {
 		--_sonic-unit: calc(var(--_sonic-readout-size) / 32);
+		--_sonic-readout-radius-own: calc(
+			var(--_sonic-readout-size) * var(--sonic-readout-radius-ratio)
+		);
 		--_sonic-glass-own: var(--sonic-readout-glass);
 		--_sonic-glass-edge-colour-own: var(--sonic-readout-edge);
 		--_sonic-glass-edge-width-own: var(--sonic-readout-edge-width);
@@ -43,7 +46,10 @@
 		user-select: none;
 		background: var(--_sonic-glass-fill);
 		border: var(--_sonic-glass-edge);
-		border-radius: calc(0.25 * var(--_sonic-readout-size));
+		border-radius: var(
+			--_sonic-readout-radius-own,
+			var(--sonic-radius, calc(0.25 * var(--_sonic-readout-size)))
+		);
 		box-shadow:
 			calc(2 * var(--_sonic-cast-x)) calc(2 * var(--_sonic-cast-y)) calc(6 * var(--_sonic-unit))
 				rgb(from var(--_sonic-shade) r g b / calc(0.55 * var(--_sonic-relief))),

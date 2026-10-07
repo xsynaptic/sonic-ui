@@ -72,7 +72,7 @@ test.beforeEach(async ({ page }) => {
 	await page.goto('/fixtures/');
 });
 
-test('a toggle draws its cap in CanvasText, and its well in Canvas until a lit position is chosen', async ({
+test('a toggle draws its cap in CanvasText, and its well in Canvas until a lit position is chosen, a coloured one in its system colour', async ({
 	page,
 }) => {
 	const backgroundOf = (part: string): Promise<string> =>
@@ -83,6 +83,9 @@ test('a toggle draws its cap in CanvasText, and its well in Canvas until a lit p
 
 	await page.getByRole('radio', { name: 'Dry' }).click();
 	expect.soft(await backgroundOf('.sonic-toggle-well')).toBe(await systemColour(page, 'Highlight'));
+
+	await page.getByRole('radio', { name: 'Wet' }).click();
+	expect.soft(await backgroundOf('.sonic-toggle-well')).toBe(await systemColour(page, 'Mark'));
 });
 
 test('a hovered or latched cap keeps to system colours, and a disabled latched cap inks in the colour its grey fill is drawn against', async ({

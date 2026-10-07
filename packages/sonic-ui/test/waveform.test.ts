@@ -395,3 +395,50 @@ test('with no formatter set, a waveform shows, types and speaks a clock', () => 
 	expect(control.getAttribute('aria-valuetext')).toBe('2 minutes, 5 seconds');
 	document.body.removeAttribute('lang');
 });
+
+function arrowRight(control: HTMLElement, type: string, isRepeat: boolean): void {
+	control.dispatchEvent(
+		new KeyboardEvent(type, {
+			bubbles: true,
+			cancelable: true,
+			key: 'ArrowRight',
+			repeat: isRepeat,
+		}),
+	);
+}
+
+test('a repeating key scrubs: input alone on each repeat, then one change on keyup', () => {
+	const { flushFrames } = installCanvasFakes();
+	const { control, waveform } = mountWaveform('max="300" key-step="5" value="100"');
+	const events = recordEvents(document.body);
+
+	flushFrames();
+	arrowRight(control, 'keydown', false);
+	arrowRight(control, 'keydown', true);
+	arrowRight(control, 'keydown', true);
+	expect(events).toEqual(['input', 'change', 'input', 'input']);
+
+	arrowRight(control, 'keyup', false);
+	expect(events).toEqual(['input', 'change', 'input', 'input', 'change']);
+	expect(waveform.value).toBe(115);
+});
+
+test('a key scrub draws the playhead at the scrubbed value and the ghost where playback is', () => {
+	const { flushFrames } = installCanvasFakes();
+	const { control, waveform } = mountWaveform('max="300" key-step="0.5" step="0" value="100"');
+	const ghost = control.querySelector<HTMLElement>('.sonic-waveform-ghost');
+
+	waveform.markers = [{ label: 'Drop', start: 100.3 }];
+	flushFrames();
+	expect(waveform.currentMarker).toBeUndefined();
+
+	arrowRight(control, 'keydown', true);
+	flushFrames();
+	expect(waveform.currentMarker?.label).toBe('Drop');
+	expect(playheadAt(control)).toBe(50);
+	expect(ghost?.hidden).toBe(false);
+
+	arrowRight(control, 'keyup', false);
+	flushFrames();
+	expect(ghost?.hidden).toBe(true);
+});

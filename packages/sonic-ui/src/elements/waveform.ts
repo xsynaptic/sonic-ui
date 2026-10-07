@@ -432,6 +432,17 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 		this.surface()?.rebuild();
 	}
 
+	protected override scrubChanged(): void {
+		const isScrubbing = this.scrubState().from !== undefined;
+
+		this.#grabbed = isScrubbing ? (this.#grabbed ?? this.#lastDrawn()) : undefined;
+		super.scrubChanged();
+	}
+
+	protected override scrubsKeyRepeat(): boolean {
+		return true;
+	}
+
 	#duePending(): Array<[number, number]> {
 		const due = dueRegions(this.#pending, this.#pendingListedMs, [
 			performance.now(),
@@ -446,7 +457,7 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 	#grab(): undefined | ValueAxis {
 		if (this.#zoomGesture?.isPinching() === true) return undefined;
 
-		const drawn = this.#drawn ?? { seconds: this.value, startSeconds: this.value };
+		const drawn = this.#lastDrawn();
 
 		this.#grabbed = drawn;
 
@@ -467,6 +478,10 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 		if (!grabbed || from === undefined) return undefined;
 
 		return { grabbed, seconds: this.value === from ? grabbed.seconds : this.value };
+	}
+
+	#lastDrawn(): Drawn {
+		return this.#drawn ?? { seconds: this.value, startSeconds: this.value };
 	}
 
 	#readKindColours(): Map<string, string> {

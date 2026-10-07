@@ -118,4 +118,9 @@
 			}
 		}
 	}
+
+	:is(.sonic-button:is(:disabled, [aria-disabled='true']), .sonic-segmented-option:disabled)
+		.sonic-led {
+		--_sonic-lit: inherit;
+	}
 }

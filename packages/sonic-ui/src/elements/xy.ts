@@ -7,6 +7,7 @@ import { bindFieldGesture } from '#elements/field-gesture.ts';
 import { SonicFormElement } from '#elements/form-element.ts';
 import { ReadoutClaim } from '#elements/readout-claim.ts';
 import { Readout } from '#elements/readout.ts';
+import { createDoublePress } from '#lib/double-press.ts';
 import { pointerPosition } from '#lib/field.ts';
 import { focusByPointer } from '#lib/focus-by-pointer.ts';
 import { clampProportion, toNumber } from '#lib/math.ts';
@@ -83,6 +84,18 @@ export class SonicXy extends SonicFormElement {
 		'y-taper',
 	];
 
+	get doublePress(): 'none' | 'reset' {
+		return this.getAttribute('double-press') === 'reset' ? 'reset' : 'none';
+	}
+
+	set doublePress(gesture: 'none' | 'reset' | undefined) {
+		this.reflect('double-press', gesture);
+	}
+
+	get dragging(): boolean {
+		return this.hasState('dragging');
+	}
+
 	get formatValue(): ((value: number, axis: FieldAxis) => string) | undefined {
 		return this.#formatValue;
 	}
@@ -103,6 +116,10 @@ export class SonicXy extends SonicFormElement {
 
 	set readout(isEnabled: boolean) {
 		this.reflect('readout', isEnabled);
+	}
+
+	get revealed(): boolean {
+		return this.hasState('revealed');
 	}
 
 	get x(): number {
@@ -255,6 +272,8 @@ export class SonicXy extends SonicFormElement {
 
 	#currentAxis: FieldAxis = 'x';
 
+	readonly #doublePress = createDoublePress();
+
 	readonly #xy = renderXy();
 
 	readonly #field = requireChild(this.#xy, '.sonic-xy-field', HTMLDivElement);
@@ -262,6 +281,8 @@ export class SonicXy extends SonicFormElement {
 	#formatValue: ((value: number, axis: FieldAxis) => string) | undefined;
 
 	#gesture: FieldGesture<FieldHold> | undefined;
+
+	#isRevealed = false;
 
 	readonly #models: Record<FieldAxis, ValueModel> = {
 		x: createValueModel(() => this.#spec('x')),
@@ -286,6 +307,7 @@ export class SonicXy extends SonicFormElement {
 
 	override connectedCallback(): void {
 		this.upgradeProperties(
+			'doublePress',
 			'readout',
 			'xDefault',
 			'xLabel',
@@ -311,6 +333,8 @@ export class SonicXy extends SonicFormElement {
 	}
 
 	override formResetCallback(): void {
+		if (this.#gesture?.current()) return;
+
 		this.#respec(...axes);
 	}
 
@@ -371,10 +395,10 @@ export class SonicXy extends SonicFormElement {
 				if (!move && !(resetKeys.has(event.key) && this.#hasDefault())) return;
 
 				event.preventDefault();
-				if (move) this.#keyTo(...move);
-				else this.#reset();
 				this.#claim.reveal('keys');
 				this.#renderReadout();
+				if (move) this.#keyTo(...move);
+				else this.#reset();
 			},
 			{ signal },
 		);
@@ -390,7 +414,7 @@ export class SonicXy extends SonicFormElement {
 		signal.addEventListener(
 			'abort',
 			() => {
-				this.#claim.conceal('keys');
+				if (this.#claim.conceal('keys')) this.#renderReadout();
 			},
 			{ once: true },
 		);
@@ -402,6 +426,13 @@ export class SonicXy extends SonicFormElement {
 			'mousedown',
 			(event) => {
 				event.preventDefault();
+			},
+			{ signal },
+		);
+		xy.addEventListener(
+			'pointercancel',
+			() => {
+				this.#doublePress.forget();
 			},
 			{ signal },
 		);
@@ -425,6 +456,11 @@ export class SonicXy extends SonicFormElement {
 				},
 				input: (_hold, next) => {
 					if (!this.#input(next)) this.#renderReadout();
+				},
+				lift: (_hold, event) => {
+					if (!this.#doublePress.press(event) || this.doublePress !== 'reset') return;
+
+					this.#reset();
 				},
 				release: (_hold, moved) => {
 					if (moved.length > 0) this.dispatchEvent(new Event('change', { bubbles: true }));
@@ -542,11 +578,18 @@ export class SonicXy extends SonicFormElement {
 	}
 
 	#renderReadout(): void {
+		const { isRevealed } = this.#claim;
+
 		this.#readout.show({
 			anchor: this.#puck,
-			isOpen: this.#claim.isRevealed && this.readout,
+			isOpen: isRevealed && this.readout,
 			text: this.#valueText('x'),
 		});
+		if (isRevealed === this.#isRevealed) return;
+
+		this.#isRevealed = isRevealed;
+		this.toggleState('revealed', isRevealed);
+		this.dispatchEvent(new Event('sonic-reveal', { bubbles: true }));
 	}
 
 	#reset(): void {

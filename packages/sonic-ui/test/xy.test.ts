@@ -342,3 +342,65 @@ test('the readout names both axes, x first, each through its own label and forma
 	pointerAt(pad.puck, 'pointermove', { clientX: 80, clientY: 80 });
 	expect(text.textContent).toBe('Cutoff 10 Hz, Y 152%');
 });
+
+test('a form reset during a drag is dropped', () => {
+	const { puck, xy } = mountXy('x="20" y="30"');
+
+	pointerAt(puck, 'pointerdown', { clientX: 60, clientY: 80 });
+	pointerAt(puck, 'pointermove', { clientX: 140, clientY: 80 });
+	xy.formResetCallback();
+
+	expect([xy.x, xy.y]).toEqual([60, 30]);
+});
+
+test('a key reveals before the input it describes, and the reveal lapses with a second event', () => {
+	vi.useFakeTimers();
+
+	const pad = mountXy(stepped);
+	const trace: Array<string> = [];
+
+	for (const type of ['sonic-reveal', 'input', 'change']) {
+		pad.parent.addEventListener(type, () => {
+			trace.push(`${type}:${String(pad.xy.revealed)}`);
+		});
+	}
+	pressKey(partOf(pad, 'x'), 'ArrowRight');
+	expect(trace).toEqual(['sonic-reveal:true', 'input:true', 'change:true']);
+
+	vi.advanceTimersByTime(1000);
+	expect(trace.at(-1)).toBe('sonic-reveal:false');
+	expect(trace).toHaveLength(4);
+	vi.useRealTimers();
+});
+
+const defaults = `${offset} x-default="-10" y-default="110"`;
+
+test('with double-press="reset", a second press on one spot jumps there, then returns both values', () => {
+	const { box, parent, xy } = mountXy(`${defaults} double-press="reset"`);
+	const events = recordEvents(parent);
+
+	for (const type of ['pointerdown', 'pointerup']) {
+		pointerAt(box, type, { clientX: 150, clientY: 40 });
+	}
+	expect([xy.x, xy.y]).toEqual([20, 170]);
+
+	for (const type of ['pointerdown', 'pointerup']) {
+		pointerAt(box, type, { clientX: 150, clientY: 40 });
+	}
+	expect([xy.x, xy.y]).toEqual([-10, 110]);
+	expect(events).toEqual(['input', 'change', 'input', 'change']);
+});
+
+test.each([
+	['10px away', `${defaults} double-press="reset"`, 160],
+	['with no double-press', defaults, 150],
+])('a second press %s does not reset', (_name, attributes, clientX) => {
+	const { box, xy } = mountXy(attributes);
+
+	for (const type of ['pointerdown', 'pointerup']) {
+		pointerAt(box, type, { clientX: 150, clientY: 40 });
+	}
+	for (const type of ['pointerdown', 'pointerup']) pointerAt(box, type, { clientX, clientY: 40 });
+
+	expect(xy.y).toBe(170);
+});

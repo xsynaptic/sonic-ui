@@ -111,6 +111,7 @@ export class SonicSplit extends SonicElement {
 
 	attributeChangedCallback(name: string): void {
 		if ((name === 'mode' || name === 'total') && this.#signal) this.#bind();
+		if (name === 'disabled' && this.#signal) this.#limit();
 	}
 
 	override connectedCallback(): void {
@@ -235,6 +236,7 @@ export class SonicSplit extends SonicElement {
 	}
 
 	#limit(): void {
+		const isFrozen = this.isDisabled();
 		const values = this.#members.map(({ seen }) => seen);
 
 		for (const [index, member] of this.#members.entries()) {
@@ -242,7 +244,7 @@ export class SonicSplit extends SonicElement {
 			const value = values[index] ?? member.seen;
 
 			member.link.model.setLimit(
-				isLocked(member)
+				isFrozen || isLocked(member)
 					? [value, value]
 					: gridLimits(member.link.model.mapping(), splitLimits(model, index, this.#total)),
 			);

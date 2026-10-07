@@ -8,7 +8,7 @@
 		.sonic-wavestrip-readout,
 		.sonic-xy-readout
 	) {
-		--_sonic-glass-slab: color-mix(in oklab, var(--_sonic-unlit) 45%, #000);
+		--_sonic-glass-slab: color-mix(in oklab, var(--_sonic-unlit-solid) 45%, #000);
 		--_sonic-glass-base: var(
 			--sonic-glass,
 			color-mix(

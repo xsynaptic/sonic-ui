@@ -258,7 +258,8 @@ export class SonicButton extends SonicFormElement {
 		button.addEventListener(
 			'keydown',
 			(event) => {
-				if (event.repeat || !holdKeys.has(event.key) || !this.#isMomentary()) return;
+				if (event.repeat || event.defaultPrevented) return;
+				if (!holdKeys.has(event.key) || !this.#isMomentary()) return;
 
 				holding.hold(event.key);
 			},

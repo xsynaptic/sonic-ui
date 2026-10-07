@@ -41,9 +41,12 @@ const renderBare = template(
 	HTMLButtonElement,
 );
 
+const pressSlop = 2;
+
 interface CapDrag {
 	hasMoved: boolean;
 	isHolding: boolean;
+	isPress: boolean;
 	marked: HTMLButtonElement;
 	position: number;
 	start: number;
@@ -128,7 +131,7 @@ export class SonicToggle extends SonicPositionGroupElement {
 			{
 				grab: (event) => this.#grab(event),
 				lift: (drag, event) => {
-					if (drag.hasMoved || drag.isHolding || this.isDisabled()) return;
+					if (!drag.isPress || drag.isHolding || this.isDisabled()) return;
 					if (!isUnder(this.group, event.clientX, event.clientY)) return;
 
 					this.#press(drag.position);
@@ -137,11 +140,14 @@ export class SonicToggle extends SonicPositionGroupElement {
 					// A held finger wobbles, and a drag back across halfway would let go
 					if (drag.isHolding || this.isDisabled()) return;
 					const pointer = this.along(event);
-					if (!drag.hasMoved && Math.abs(pointer - drag.start) < drag.thresholdPx) return;
+					const moved = Math.abs(pointer - drag.start);
+					if (!drag.hasMoved && moved < drag.thresholdPx) return;
 
 					drag.hasMoved = true;
 					this.toggleState('dragging', true);
-					this.#slideTo(positionAt(drag.travel, pointer), event.pointerId);
+					if (moved >= pressSlop * drag.thresholdPx) drag.isPress = false;
+					if (this.#slideTo(positionAt(drag.travel, pointer), event.pointerId))
+						drag.isPress = false;
 				},
 				release: (drag) => {
 					delete drag.marked.dataset.sonicPressed;
@@ -185,6 +191,7 @@ export class SonicToggle extends SonicPositionGroupElement {
 		return {
 			hasMoved: false,
 			isHolding: this.#holdFrom(position, event.pointerId),
+			isPress: true,
 			marked,
 			position,
 			start: this.along(event),
@@ -218,19 +225,21 @@ export class SonicToggle extends SonicPositionGroupElement {
 		return Math.max(0, this.checkedIndex());
 	}
 
-	#slideTo(at: number, pointerId: number): void {
+	#slideTo(at: number, pointerId: number): boolean {
 		const crossed = Math.round(at);
 
 		this.#draggedTo = at;
 		this.#placeCap(at);
-		if (this.isChecked(crossed)) return;
+		if (this.isChecked(crossed)) return false;
 
 		this.releaseHold();
-		if (this.isOptionDisabled(crossed) || this.isChecked(crossed)) return;
+		if (this.isOptionDisabled(crossed) || this.isChecked(crossed)) return false;
 
 		if (this.isMomentary(crossed)) this.hold(crossed, pointerId);
 		else this.select(crossed);
 		this.refocusAt(crossed);
+
+		return true;
 	}
 
 	#travel(event: PointerEvent, isOnCap: boolean): ToggleTravel | undefined {

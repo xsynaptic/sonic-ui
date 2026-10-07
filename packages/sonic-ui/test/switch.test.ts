@@ -135,6 +135,19 @@ test('a click with no pointer on the momentary position springs straight back', 
 	expect(changes).toEqual(['duck', 'off']);
 });
 
+test('a pointer that cannot be captured still holds the momentary position', async () => {
+	const { control, group, positions } = await mountSwitch('value="off"');
+	const changes = recordChanges(control);
+
+	vi.spyOn(group, 'setPointerCapture').mockImplementation(() => {
+		throw new DOMException('No active pointer', 'NotFoundError');
+	});
+	pointer(positionAt(positions, 0), 'pointerdown');
+	pointer(group, 'pointerup');
+
+	expect(changes).toEqual(['duck', 'off']);
+});
+
 test('another pointer lifting leaves the hold alone', async () => {
 	const { control, group, positions } = await mountSwitch('value="off"');
 
@@ -272,6 +285,7 @@ function mockBat(group: HTMLElement): void {
 	if (!bat) throw new Error('The switch has no bat');
 
 	vi.spyOn(bat, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 40, 40));
+	vi.spyOn(group, 'getBoundingClientRect').mockReturnValue(new DOMRect(-20, -10, 80, 60));
 }
 
 function pointerAt(target: Element, type: string, [clientX, clientY]: [number, number]): void {
@@ -307,6 +321,17 @@ test.each([
 	pointerAt(group, 'pointerup', [20, clientY]);
 
 	expect(control.value).toBe(expected);
+});
+
+test('a bat press let go off the switch changes nothing', async () => {
+	const { control, group, positions } = await mountSwitch('value="off"', abc);
+	const changes = recordChanges(control);
+
+	mockBat(group);
+	pointerAt(positionAt(positions, 1), 'pointerdown', [20, 30]);
+	pointerAt(group, 'pointerup', [70, 31]);
+
+	expect(changes).toEqual([]);
 });
 
 test('a drag on the bat throws one position per quarter of its size, and stops at the end', async () => {

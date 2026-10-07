@@ -158,3 +158,30 @@ test(
 			.toBeGreaterThan((channels(restRim)[0] ?? NaN) + 0.2);
 	},
 );
+
+test('the touch action token reaches a dial and a number box from a wrapper', async ({ page }) => {
+	const dial = page.locator('#level .sonic-dial');
+	const number = page.locator('#tempo .sonic-number');
+
+	await expect(dial).toHaveCSS('touch-action', 'pan-x');
+	await expect(number).toHaveCSS('touch-action', 'pan-x');
+
+	await setTokens(page.locator('main'), { '--sonic-touch-action': 'none' });
+
+	await expect(dial).toHaveCSS('touch-action', 'none');
+	await expect(number).toHaveCSS('touch-action', 'none');
+});
+
+test('the shared radius reaches a readout, and the readout’s own ratio overrides it', async ({
+	page,
+}) => {
+	const readout = page.locator('#level .sonic-dial-readout');
+
+	await expect(readout).toHaveCSS('border-top-left-radius', '6px');
+
+	await setTokens(root(page), { '--sonic-radius': '4px' });
+	await expect(readout).toHaveCSS('border-top-left-radius', '4px');
+
+	await setTokens(page.locator('#level'), { '--sonic-readout-radius-ratio': '0.5' });
+	await expect(readout).toHaveCSS('border-top-left-radius', '12px');
+});

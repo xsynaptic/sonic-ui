@@ -27,6 +27,7 @@
 		--_sonic-xy-puck-ratio: var(--sonic-xy-puck-ratio, 0.2);
 		--_sonic-unit: calc(var(--_sonic-xy-size) / 96);
 		--_sonic-xy-lit: var(--_sonic-lit);
+		--_sonic-xy-puck-core: var(--_sonic-xy-lit);
 		--_sonic-xy-cursor: grab;
 		--_sonic-xy-puck: calc(var(--_sonic-xy-size) * var(--_sonic-xy-puck-ratio));
 		--_sonic-xy-travel-x: calc(100cqi - var(--_sonic-xy-puck));
@@ -47,6 +48,7 @@
 
 	:disabled > .sonic-xy {
 		--_sonic-xy-lit: var(--_sonic-lit-disabled);
+		--_sonic-xy-puck-core: color-mix(in oklab, var(--_sonic-ink) 25%, var(--_sonic-unlit-solid));
 		--_sonic-xy-cursor: default;
 
 		cursor: default;
@@ -134,7 +136,7 @@
 	}
 
 	.sonic-xy-puck {
-		--_sonic-xy-puck-fill: var(--_sonic-xy-lit);
+		--_sonic-xy-puck-fill: var(--_sonic-xy-puck-core);
 		--_sonic-xy-puck-edge: var(--_sonic-xy-puck-fill);
 		--_sonic-xy-puck-lift: color-mix(in oklab, var(--_sonic-xy-lit) 85%, #fff);
 		--_sonic-xy-puck-glow: transparent;

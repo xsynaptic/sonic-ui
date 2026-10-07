@@ -40,6 +40,8 @@ import '@xsynaptic/sonic-ui/define';
 ## Contracts
 
 - The host is `display: contents` and the control is an element inside it. A width, margin or transform on the host does nothing: size a control with its token (`--sonic-dial-size`, `--sonic-slider-length`), set on the host or any ancestor, and place it with its parent's layout.
+- The split is the one host with a box: `<sonic-split>` is inline until given a display, and laying it out is yours.
+- Register the classes under their stock tag names (`sonic-dial`, `sonic-split`). The sheets and the split key on them, so a split under another tag finds no members.
 - Name every control with `aria-label` or `aria-labelledby` on the host, or with a `<label>` for a form-associated one.
 - A boolean attribute is on when present, whatever its value, so `pressed="false"` latches a button. From a framework pass `undefined`, never `false`.
 - A control uses only the children it documents and adds one child of its own. Children it draws are copied, so a copy has none of your listeners; keep them static. Under a hydrating framework, register the definitions once hydration is done (in React, from an effect).

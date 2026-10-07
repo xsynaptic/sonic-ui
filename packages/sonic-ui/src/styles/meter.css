@@ -49,10 +49,7 @@
 		--_sonic-meter-clip-from: var(--sonic-meter-clip-from, -3);
 		--_sonic-unit: calc(var(--_sonic-meter-size) / 8);
 		--_sonic-meter-toward: to top;
-		--_sonic-meter-unlit: var(
-			--sonic-unlit,
-			color-mix(in oklab, var(--_sonic-unlit) var(--_sonic-lens-modelled), var(--_sonic-lens-tint))
-		);
+		--_sonic-meter-unlit: var(--_sonic-unlit);
 		--_sonic-meter-inset: calc(var(--_sonic-meter-size) * 0.125);
 		--_sonic-meter-lens: calc(var(--_sonic-meter-size) - 2 * var(--_sonic-meter-inset));
 		--_sonic-meter-clip-space: calc(var(--_sonic-meter-inset) + var(--_sonic-meter-lens));

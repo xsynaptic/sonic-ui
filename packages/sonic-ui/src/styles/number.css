@@ -45,7 +45,7 @@
 		font-size: calc(var(--_sonic-number-size) * var(--_sonic-number-text-ratio));
 		font-variant-numeric: tabular-nums;
 		line-height: 1;
-		touch-action: pan-x;
+		touch-action: var(--sonic-touch-action, pan-x);
 		cursor: ns-resize;
 		user-select: none;
 		box-shadow: var(--_sonic-focus-shadow);

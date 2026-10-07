@@ -135,6 +135,32 @@ test('a disabled member is locked as a marked one is', async () => {
 	expect(valuesOf(members)).toEqual([70, 30, 0]);
 });
 
+test('a disabled split holds every member against a gesture, still takes a written value, and frees them when enabled', async () => {
+	const { members, split } = await mountSplit('disabled', sliders(50, 30, 20));
+	const [first, second] = members;
+	if (!first || !second) throw new Error('No member');
+
+	const events = recordTargets(split, members);
+
+	await drag(first, [100]);
+	await drag(second, [60]);
+	pressKey(capOf(first).parentElement ?? first, 'ArrowRight');
+	await nextTask();
+	expect(valuesOf(members)).toEqual([50, 30, 20]);
+	expect(events).toEqual([]);
+
+	second.value = 40;
+	await nextTask();
+	expect(valuesOf(members)).toEqual([43, 40, 17]);
+
+	await drag(second, [60]);
+	expect(valuesOf(members)).toEqual([43, 40, 17]);
+
+	split.disabled = false;
+	await drag(first, [63]);
+	expect(valuesOf(members)).toEqual([63, 26, 11]);
+});
+
 test('a drag past what the siblings can give turns back at once, as it does from the end', async () => {
 	const { members } = await mountSplit(
 		'',
@@ -158,6 +184,9 @@ test('a script write on a locked member lands, the others make room, and it stay
 
 	second.value = 40;
 	await nextTask();
+	expect(valuesOf(members)).toEqual([43, 40, 17]);
+
+	await drag(second, [60]);
 	expect(valuesOf(members)).toEqual([43, 40, 17]);
 
 	await drag(second, [60]);

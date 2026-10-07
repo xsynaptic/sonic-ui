@@ -159,3 +159,37 @@ test(
 		});
 	},
 );
+
+test('a screen with no glass depth leaves the well of a button inside it alone', async ({
+	page,
+}) => {
+	await page.goto('/fixtures/');
+
+	const wellOf = (host: string): Promise<string> =>
+		page.locator(`${host} .sonic-button`).evaluate((button) => getComputedStyle(button).boxShadow);
+	const inside = await wellOf('#glass-button');
+
+	expect(inside).toMatch(/[1-9]\d*(\.\d+)?px/);
+	expect(inside).toBe(await wellOf('#next'));
+});
+
+test('the text on a screen can be selected', async ({ isMobile, page }) => {
+	test.skip(isMobile, mouseOnly);
+
+	await page.goto('/fixtures/');
+
+	// The middle of `440 Hz` is its space, so the press lands on the first figure
+	const figure = await page.locator('#screen').evaluate((screen) => {
+		const text = document.createRange();
+
+		text.selectNodeContents(screen);
+
+		const { height, left, top } = text.getBoundingClientRect();
+
+		return { x: left + 3, y: top + height / 2 };
+	});
+
+	await page.mouse.dblclick(figure.x, figure.y);
+
+	expect(await page.evaluate(() => getSelection()?.toString().trim())).toBe('440');
+});

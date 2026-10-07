@@ -90,3 +90,22 @@ test('with no origin a slider rests only at its minimum', async ({ page }) => {
 	await host.locator('.sonic-slider').press('Home');
 	expect(await readState(host, 'at-origin')).toBe(true);
 });
+
+test('an LED in a disabled latched button dims and does not go out', async ({ page }) => {
+	const host = page.locator('#power');
+	const held = host.locator('.sonic-button .sonic-led');
+	const unlit = await readLens(held);
+
+	await host.locator('.sonic-button').click();
+
+	const lit = await readLens(held);
+
+	await host.evaluate((element) => {
+		element.setAttribute('disabled', '');
+	});
+
+	const dimmed = await readLens(held);
+
+	expect(dimmed).not.toBe(lit);
+	expect(dimmed).not.toBe(unlit);
+});

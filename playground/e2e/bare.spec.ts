@@ -83,7 +83,7 @@ function readMeter(page: Page, id: string): Promise<Record<string, string>> {
 				unlitModelled: 'color-mix(in oklab, var(--_sonic-lit) 12%, var(--_sonic-unlit))',
 				// The 0% mix mirrors relief 0; without it the last digit differs
 				unlitTinted:
-					'color-mix(in oklab, var(--_sonic-lit) 12%, color-mix(in oklab, var(--_sonic-unlit) 0%, color-mix(in oklab, currentcolor 30%, transparent)))',
+					'color-mix(in oklab, var(--_sonic-lit) 12%, color-mix(in oklab, oklch(27.4% 0.005 286deg) 0%, color-mix(in oklab, currentcolor 30%, transparent)))',
 			}).map(([name, colour]) => {
 				probe.style.backgroundColor = colour;
 
@@ -208,7 +208,6 @@ test(
 			expect(bare.bed, id).toMatch(clear);
 			expect(bare.lens, id).toBe(bare.tint);
 			expect(bare.segments, id).toContain(bare.unlitTinted);
-			expect(bare.segments, id).not.toContain(bare.unlitModelled);
 		}
 
 		const amber = await readMeter(page, '#amber-meter');
@@ -255,5 +254,81 @@ test(
 		expect(await readGlass(page, '#amber-screen')).toEqual(amberLight);
 		expect(amberLight.fill).toBeLessThan(0.2);
 		expect(amberLight.text).toBeGreaterThan(0.7);
+	},
+);
+
+function readFill(page: Page, selector: string, pseudo?: string): Promise<string> {
+	return page
+		.locator(selector)
+		.evaluate((element, part) => getComputedStyle(element, part).backgroundColor, pseudo);
+}
+
+function probeColour(page: Page, selector: string, colour: string): Promise<string> {
+	return page.locator(selector).evaluate((element, expression) => {
+		const probe = document.createElement('i');
+
+		probe.style.backgroundColor = expression;
+		element.append(probe);
+
+		const computed = getComputedStyle(probe).backgroundColor;
+
+		probe.remove();
+
+		return computed;
+	}, colour);
+}
+
+const translucent = /\/ [\d.]+\)$/;
+
+test(
+	'a bare slider groove is the text colour around it at 30%, and a skinned one keeps its grey',
+	{ tag: '@mobile' },
+	async ({ page }) => {
+		const tint = await probeColour(
+			page,
+			'#bare',
+			'color-mix(in oklab, currentcolor 30%, transparent)',
+		);
+
+		expect(tint).toMatch(/\/ 0\.3\)$/);
+		expect(await readFill(page, '#bare-slider .sonic-slider-groove')).toBe(tint);
+		expect(await readFill(page, '#amber-slider .sonic-slider-groove')).toBe(
+			await probeColour(
+				page,
+				'#amber',
+				'color-mix(in oklab, oklch(27.4% 0.005 286deg) 100%, transparent)',
+			),
+		);
+	},
+);
+
+test(
+	'what must hide what is behind it stays solid with no skin: a dark readout’s glass and a disabled puck',
+	{ tag: '@mobile' },
+	async ({ page }) => {
+		await page.emulateMedia({ colorScheme: 'dark' });
+
+		const readout = await readFill(page, '#bare-xy .sonic-xy-readout');
+
+		expect(lightness(readout)).toBeLessThan(0.2);
+		expect(readout).not.toMatch(translucent);
+
+		const live = await readFill(page, '#bare-xy .sonic-xy-puck', '::before');
+
+		await page.locator('#bare-xy').evaluate((pad) => {
+			pad.setAttribute('disabled', '');
+		});
+		// The fill eases, and a reading taken mid-fade is still solid
+		await page
+			.locator('#bare-xy .sonic-xy-puck')
+			.evaluate((puck) =>
+				Promise.all(puck.getAnimations({ subtree: true }).map((animation) => animation.finished)),
+			);
+
+		const dimmed = await readFill(page, '#bare-xy .sonic-xy-puck', '::before');
+
+		expect(await readFill(page, '#bare-xy .sonic-xy-field', '::before')).toMatch(translucent);
+		expect(dimmed).not.toBe(live);
+		expect(dimmed).not.toMatch(translucent);
 	},
 );

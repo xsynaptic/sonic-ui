@@ -75,19 +75,25 @@ test('keyboard focus draws the focus outline, and no glow at strength 0', async 
 		'--sonic-focus-outline-offset': '4px',
 	});
 
-	for (const selector of [
-		'#next .sonic-button',
-		'#send .sonic-slider',
-		'#route .sonic-toggle-position[tabindex="0"]',
-		'#talk .sonic-switch-position[tabindex="0"]',
-	]) {
+	for (const [selector, ringed] of [
+		['#next .sonic-button', '.sonic-button-cap'],
+		['#mode .sonic-segmented-option[tabindex="0"]', '.sonic-segmented-cap'],
+		['#level .sonic-dial', '.sonic-dial-cap'],
+		['#send .sonic-slider', undefined],
+		['#route .sonic-toggle-position[tabindex="0"]', undefined],
+		['#talk .sonic-switch-position[tabindex="0"]', undefined],
+	] as const) {
 		const target = page.locator(selector);
+		const ring = ringed === undefined ? target : target.locator(`:scope > ${ringed}`);
 
 		await target.focus();
 		await expect(target).toBeFocused();
-		await expect(target).toHaveCSS('outline-color', 'rgb(1, 2, 3)');
-		await expect(target).toHaveCSS('outline-width', '3px');
-		await expect(target).toHaveCSS('outline-offset', '4px');
+		await expect(ring, selector).toHaveCSS('outline-color', 'rgb(1, 2, 3)');
+		await expect(ring, selector).toHaveCSS('outline-width', '3px');
+		await expect(ring, selector).toHaveCSS('outline-offset', '4px');
+		if (ringed !== undefined) {
+			await expect(target, selector).not.toHaveCSS('outline-color', 'rgb(1, 2, 3)');
+		}
 	}
 
 	const cap = page.locator('#next .sonic-button-cap');
@@ -106,7 +112,7 @@ test('keyboard focus draws the focus outline, and no glow at strength 0', async 
 	await expect.poll(glow).not.toMatch(/[/,] 0\)/);
 });
 
-test('the focus radius rounds a plain control’s box and leaves a drawn corner alone', async ({
+test('the focus radius rounds the focus of a box with no corner, a toggle position takes its well’s, and a drawn corner is left alone', async ({
 	page,
 }) => {
 	const button = page.locator('#next .sonic-button');
@@ -115,12 +121,27 @@ test('the focus radius rounds a plain control’s box and leaves a drawn corner 
 	await setTokens(page, { '--sonic-focus-radius': '5px' });
 	await expect(button).toHaveCSS('border-top-left-radius', corner);
 
-	for (const selector of ['.sonic-number', '.sonic-waveform', '.sonic-wavestrip']) {
+	for (const selector of [
+		'.sonic-number',
+		'.sonic-slider',
+		'.sonic-switch-position',
+		'.sonic-waveform',
+		'.sonic-wavestrip',
+	]) {
 		await expect(page.locator(selector).first(), selector).toHaveCSS(
 			'border-top-left-radius',
 			'5px',
 		);
 	}
+
+	const position = page.locator('#route .sonic-toggle-position[tabindex="0"]');
+	const well = await page
+		.locator('#route .sonic-toggle-well')
+		.evaluate((element) => getComputedStyle(element).borderTopLeftRadius);
+
+	await position.focus();
+	expect(well).not.toBe('0px');
+	await expect(position).toHaveCSS('border-top-left-radius', well);
 });
 
 test('a press focuses a slider without the focus outline', async ({ isMobile, page }) => {

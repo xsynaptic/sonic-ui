@@ -28,6 +28,7 @@ interface FieldGestureOptions<Hold extends FieldHold> {
 	claim: ReadoutClaim;
 	grab: (event: PointerEvent) => Hold | undefined;
 	input: (hold: Hold, next: FieldInput) => void;
+	lift?: (hold: Hold, event: PointerEvent) => void;
 	release: (hold: Hold, moved: Array<FieldAxis>) => void;
 	toggle: (isDragging: boolean) => void;
 }
@@ -99,6 +100,9 @@ export function bindFieldGesture<Hold extends FieldHold>(
 						y: startAxis(y),
 					}),
 				};
+			},
+			lift: ({ hold }, event) => {
+				options.lift?.(hold, event);
 			},
 			move: (held, event) => {
 				const { axes } = held.hold;

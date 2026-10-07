@@ -19,7 +19,6 @@
 		place-items: center;
 		font-family: var(--sonic-glass-font, inherit);
 		color: var(--_sonic-glass-text);
-		user-select: none;
 		background: var(--_sonic-glass-fill);
 		border: var(--_sonic-glass-edge);
 

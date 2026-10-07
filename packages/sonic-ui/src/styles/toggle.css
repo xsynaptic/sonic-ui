@@ -261,6 +261,7 @@
 	.sonic-toggle-position:focus-visible {
 		outline: var(--sonic-focus-outline, 2px solid transparent);
 		outline-offset: var(--sonic-focus-outline-offset, -2px);
+		border-radius: var(--_sonic-toggle-corner);
 	}
 
 	.sonic-toggle-position:disabled {
@@ -452,6 +453,9 @@
 
 	@media (forced-colors: active) {
 		.sonic-toggle {
+			--_sonic-lit-ok: Mark;
+			--_sonic-lit-warning: Highlight;
+			--_sonic-lit-danger: Mark;
 			--_sonic-skirt: CanvasText;
 			--_sonic-face: CanvasText;
 			--_sonic-rim: 0 0 0 var(--_sonic-rim-width) Canvas;
