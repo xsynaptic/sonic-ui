@@ -1,5 +1,20 @@
 # @xsynaptic/sonic-ui
 
+## 0.19.0
+
+### Minor Changes
+
+- - Shared tokens, each unset or at today's value: `--sonic-press-duration` (60ms) and `--sonic-fade-duration` (120ms) time a cap's press and every fade; `--sonic-shade` (black) and `--sonic-shine` (white) are the poles the light mixes a surface towards.
+  - `--sonic-legend-font-size` sets the text of a button, a segmented option, a switch and a toggle. `--sonic-radius` sets the outer corner of a button, a segmented control, a number box, a screen, a slider's cap, a wave strip, a waveform, a spectrum, an envelope and an XY pad. A control's own `-font-ratio` or `-radius-ratio` still wins, and under the shared radius a button's face follows its corner.
+  - Waveform and wave strip: the inset ratio now defaults to 0, so the wave fills its glass; set `--sonic-waveform-inset-ratio: 0.06` or `--sonic-wavestrip-inset-ratio: 0.1` for the inset each had. The slate, amber, ivory and lime skins keep the wave strip's 0.1, which holds its markers clear of the well's shadow.
+  - Spectrum and wave strip: the canvas is rounded to the glass, so a large radius no longer leaves corners poking out.
+  - A cast shadow or highlight now computes to `color(srgb …)` where it was `rgba()`; nothing drawn changes.
+  - In development a control warns about a box property on its host, a padding zeroed by an unlayered rule, and a missing `material/scale.css` or `material/bracket.css`. The README has the recipe for layering a reset.
+- - A waveform or a wave strip now shows, reads and speaks a clock when no formatter is set: `1:23` in the readout and the typed entry, and a duration in the nearest `lang` for assistive technology. Setting `formatValue`, `parseValue` or `formatSpokenValue` replaces that part.
+  - `formatClock` and `parseClock` are exported, so your own time text can match. A negative time is written with `−` (U+2212), not the ASCII hyphen; `parseClock` reads either.
+  - `fullScale` is optional on `peaks` and follows the array when unset.
+  - `./dat` is removed. Pass `peaks` as `{ pairsPerSecond, samples }`, where the first is a header's `sampleRate / samplesPerPixel`.
+
 ## 0.18.0
 
 ### Minor Changes
