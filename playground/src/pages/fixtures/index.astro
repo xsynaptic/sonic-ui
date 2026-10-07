@@ -227,7 +227,7 @@ import '#styles/playground.css';
 		<div class="flex h-24 w-72" id="wavestrip-fill-box">
 			<sonic-wavestrip
 				aria-label="Filled"
-				class="[--sonic-wavestrip-inset-ratio:0.1] [--sonic-wavestrip-length:100%] [--sonic-wavestrip-marker-size:4px]"
+				class="[--sonic-wavestrip-length:100%] [--sonic-wavestrip-marker-size:4px]"
 				data-markers="60 67.5"
 				fill
 				id="wavestrip-fill"
@@ -238,7 +238,7 @@ import '#styles/playground.css';
 		<div class="flex h-24 w-72" id="wavestrip-pinned-box">
 			<sonic-wavestrip
 				aria-label="Pinned"
-				class="[--sonic-glass-edge-width:0] [--sonic-readout-edge-width:2px] [--sonic-readout-edge:rgb(1_2_3)] [--sonic-wavestrip-inset-ratio:0] [--sonic-wavestrip-length:100%] [--sonic-wavestrip-marker-edge-width:1px] [--sonic-wavestrip-marker-size:4px] [--sonic-wavestrip-region-edge-width:1px]"
+				class="[--sonic-readout-edge-width:2px] [--sonic-readout-edge:rgb(1_2_3)] [--sonic-wavestrip-length:100%] [--sonic-wavestrip-marker-edge-width:1px] [--sonic-wavestrip-marker-size:4px] [--sonic-wavestrip-region-edge-width:1px]"
 				data-markers="150..180"
 				fill
 				id="wavestrip-pinned"
@@ -250,7 +250,7 @@ import '#styles/playground.css';
 		<div class="w-72" id="waveform-pinned-box">
 			<sonic-waveform
 				aria-label="Scrim"
-				class="[--sonic-glass-edge-width:0] [--sonic-waveform-inset-ratio:0] [--sonic-waveform-label-inset-block:14px] [--sonic-waveform-length:100%] [--sonic-waveform-scrim:linear-gradient(to_top,rgb(13_14_15),transparent_28px)]"
+				class="[--sonic-waveform-label-inset-block:14px] [--sonic-waveform-length:100%] [--sonic-waveform-scrim:linear-gradient(to_top,rgb(13_14_15),transparent_28px)]"
 				data-markers="100=Intro"
 				id="waveform-pinned"
 				max="300"
@@ -261,7 +261,7 @@ import '#styles/playground.css';
 		<div class="w-72" id="waveform-tokens-box">
 			<sonic-waveform
 				aria-label="Tokens"
-				class="[--sonic-readout-text:rgb(1_2_3)] [--sonic-touch-action:none] [--sonic-waveform-ghost:rgb(7_8_9)] [--sonic-waveform-label-font-size:14px] [--sonic-waveform-label-font:monospace] [--sonic-waveform-label-inset-inline:16px] [--sonic-waveform-label-line-height:1.5] [--sonic-waveform-label-scrim:rgb(4_5_6)] [--sonic-waveform-label:rgb(10_11_12)] [--sonic-waveform-length:100%] [--sonic-waveform-playhead-width:1px] [--sonic-waveform-playhead:rgb(255_0_0)]"
+				class="[--sonic-readout-text:rgb(1_2_3)] [--sonic-touch-action:none] [--sonic-waveform-ghost:rgb(7_8_9)] [--sonic-waveform-label-font-size:14px] [--sonic-waveform-label-font:monospace] [--sonic-waveform-label-inset-inline:16px] [--sonic-waveform-label-line-height:1.5] [--sonic-waveform-label-scrim:rgb(4_5_6)] [--sonic-waveform-label:rgb(240_241_242)] [--sonic-waveform-length:100%] [--sonic-waveform-playhead-width:1px] [--sonic-waveform-playhead:rgb(255_0_0)]"
 				data-markers="100=Intro"
 				id="waveform-tokens"
 				max="300"
@@ -517,6 +517,38 @@ import '#styles/playground.css';
 			</span>
 			<span data-sonic-value="high">High</span>
 		</sonic-segmented>
+		<div class="w-72">
+			<div class="sonic-screen" id="screen-block">
+				440 Hz
+			</div>
+		</div>
+		<div class="sonic-screen w-20" id="screen-tall">
+			A line of text long enough to wrap past the least height
+		</div>
+		<div class="w-72">
+			<div class="sonic-screen h-20 [--sonic-wavestrip-length:100%]" id="screen-strip">
+				<sonic-wavestrip
+					aria-label="On glass"
+					data-peaks="flat"
+					fill
+					id="wavestrip-screen"
+					max="300"
+					value="150"
+				></sonic-wavestrip>
+			</div>
+		</div>
+		<div class="sonic-skin-ivory">
+			<div class="sonic-screen" id="screen-ivory">
+				<sonic-wavestrip
+					aria-label="On ivory glass"
+					data-markers="60 150..180"
+					data-peaks="flat"
+					id="wavestrip-ivory"
+					max="300"
+					value="150"
+				></sonic-wavestrip>
+			</div>
+		</div>
 	</main>
 	<script>
 		import '@xsynaptic/sonic-ui/define';

@@ -122,18 +122,49 @@ test('a lit colour or a hot threshold set on an ancestor repaints within two fra
 	expectPixel(await pixelAt(-30), await token('--_sonic-spectrum-hot'));
 });
 
-test('with fill, the spectrum takes its row and its ratios follow the height', async ({ page }) => {
+test('the grid is a fifth of the text colour, and repaints within two frames when that changes', async ({
+	page,
+}) => {
+	const { pixelAt } = await openSpectrum(page);
+
+	await setOnBox(page, 'color', '#00ffff');
+	expectPixel(await pixelAt(-24, { column: -20 }), [0, 255, 255, 51]);
+});
+
+test('the grid follows a system text colour when the colour scheme flips', async ({ page }) => {
+	await page.emulateMedia({ colorScheme: 'light' });
+
+	const { pixelAt } = await openSpectrum(page);
+
+	await setOnBox(page, 'color-scheme', 'light dark');
+	await setOnBox(page, 'color', 'CanvasText');
+	expectPixel(await pixelAt(-24, { column: -20 }), [0, 0, 0, 51]);
+
+	await page.emulateMedia({ colorScheme: 'dark' });
+
+	// Read from the engine, since Firefox's dark CanvasText is not pure white
+	const [red = 0, green = 0, blue = 0] = await page
+		.locator('#spectrum-box')
+		.evaluate((box) => (getComputedStyle(box).color.match(/[\d.]+/g) ?? []).map(Number));
+
+	expect(red).toBeGreaterThan(200);
+	await expect(async () => {
+		expectPixel(await pixelAt(-24, { column: -20 }), [red, green, blue, 51]);
+	}).toPass();
+});
+
+test('with fill, the spectrum takes its row and its size follows the height', async ({ page }) => {
 	await page.goto('/fixtures/');
 
 	const spectrum = page.locator('#spectrum-fill .sonic-spectrum');
 
 	await spectrum.scrollIntoViewIfNeeded();
 	await expect(spectrum).toHaveCSS('block-size', '128px');
-	await expect(spectrum).toHaveCSS('padding-top', '7.68px');
+	await expect(spectrum).toHaveCSS('--_sonic-spectrum-size', '128px');
 
 	await page.locator('#spectrum-fill-box').evaluate((box) => {
 		box.style.setProperty('height', '64px');
 	});
 	await expect(spectrum).toHaveCSS('block-size', '64px');
-	await expect(spectrum).toHaveCSS('padding-top', '3.84px');
+	await expect(spectrum).toHaveCSS('--_sonic-spectrum-size', '64px');
 });

@@ -71,34 +71,21 @@
 		--_sonic-spectrum-lit: var(--_sonic-lit);
 		--_sonic-spectrum-hot: var(--_sonic-lit-warning);
 		--_sonic-spectrum-clip: var(--_sonic-lit-danger);
-		--_sonic-spectrum-grid: color-mix(in oklab, var(--_sonic-glass-text) 20%, transparent);
+		--_sonic-spectrum-grid: color-mix(in oklab, currentcolor 20%, transparent);
 		--_sonic-spectrum-hot-from: var(--sonic-spectrum-hot-from, -12);
 		--_sonic-spectrum-clip-from: var(--sonic-spectrum-clip-from, -3);
 
+		/* fallow-ignore-next-line code-duplication -- a plain box restated, since sheets never import each other */
+		position: relative;
+		display: grid;
+		flex-shrink: 0;
+		grid-template: minmax(0, 1fr) / minmax(0, 1fr);
 		inline-size: var(--_sonic-spectrum-length);
 		block-size: var(--_sonic-spectrum-size);
 
-		--_sonic-spectrum-inset: calc(
-			var(--_sonic-spectrum-size) * var(--sonic-spectrum-inset-ratio, 0.06)
-		);
-
-		padding: var(--_sonic-spectrum-inset);
-
 		/* The canvas's backing size would otherwise feed an intrinsically sized parent */
 		contain: size;
-
-		--_sonic-spectrum-radius-own: calc(
-			var(--_sonic-spectrum-size) * var(--sonic-spectrum-radius-ratio)
-		);
-		--_sonic-glass-radius: var(
-			--_sonic-spectrum-radius-own,
-			var(
-				--sonic-radius,
-				calc(var(--_sonic-spectrum-size) * var(--sonic-spectrum-radius-ratio, 0.08))
-			)
-		);
-
-		border-radius: var(--_sonic-glass-radius);
+		user-select: none;
 	}
 
 	[fill] > .sonic-spectrum,
@@ -110,10 +97,9 @@
 		display: block;
 		inline-size: 100%;
 		block-size: 100%;
-		border-radius: max(0px, var(--_sonic-glass-radius) - var(--_sonic-spectrum-inset));
 	}
 
-	/* Opaque, since a system highlight carries alpha that would blend the bars into the glass */
+	/* Opaque, since a system highlight carries alpha that would blend the bars into what is behind them */
 	@media (forced-colors: active) {
 		.sonic-spectrum {
 			--_sonic-spectrum-lit: rgb(from CanvasText r g b / 100%);

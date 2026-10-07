@@ -44,7 +44,8 @@ test('a square-ended capless groove stops at the control’s box, and anchored t
 	expect(await grooveGaps(slider)).toEqual({ end: 0, left: 0, right: 0, start: 12 });
 });
 
-// 288px of travel from 10 to 110: 35, 60 and 85 sit 72px, 144px and 216px along the groove
+// From 10 to 110, the value 35 and a region from 60 to 85 sit a quarter, a half and three quarters along
+// Taken of the groove as laid out, since a phone's width shortens the strip
 test('with square ends, the lit fill and a buffered region stop at their proportions of the control’s length', async ({
 	page,
 }) => {
@@ -65,9 +66,9 @@ test('with square ends, the lit fill and a buffered region stop at their proport
 
 	expect(runs).toHaveLength(2);
 	expectEdge(runs[0]?.[0], 0);
-	expectEdge(runs[0]?.[1], 72);
-	expectEdge(runs[1]?.[0], 144);
-	expectEdge(runs[1]?.[1], 216);
+	expectEdge(runs[0]?.[1], line.lengthPx * 0.25);
+	expectEdge(runs[1]?.[0], line.lengthPx * 0.5);
+	expectEdge(runs[1]?.[1], line.lengthPx * 0.75);
 
 	await strip.evaluate((element) => {
 		Object.assign(element, { value: 10 });
@@ -79,7 +80,7 @@ test('with square ends, the lit fill and a buffered region stop at their proport
 	);
 
 	expect(atMin).toHaveLength(1);
-	expectEdge(atMin[0]?.[0], 144);
+	expectEdge(atMin[0]?.[0], line.lengthPx * 0.5);
 });
 
 test('the indicator takes its own colour', async ({ page }) => {

@@ -24,7 +24,6 @@
 	}
 
 	.sonic-envelope {
-		--_sonic-envelope-radius-ratio: var(--sonic-envelope-radius-ratio, 0.08);
 		--_sonic-envelope-inset-ratio: var(--sonic-envelope-inset-ratio, 0.1);
 		--_sonic-envelope-handle-ratio: var(--sonic-envelope-handle-ratio, 0.14);
 		--_sonic-envelope-handle-stroke-ratio: var(--sonic-envelope-handle-stroke-ratio, 0.025);
@@ -32,18 +31,16 @@
 		--_sonic-envelope-curve-ratio: var(--sonic-envelope-curve-ratio, 0.08);
 		--_sonic-unit: calc(var(--_sonic-envelope-size) / 64);
 		--_sonic-envelope-inset: calc(var(--_sonic-envelope-size) * var(--_sonic-envelope-inset-ratio));
-		--_sonic-envelope-radius-own: calc(
-			var(--_sonic-envelope-size) * var(--sonic-envelope-radius-ratio)
-		);
-		--_sonic-glass-radius: var(
-			--_sonic-envelope-radius-own,
-			var(--sonic-radius, calc(var(--_sonic-envelope-size) * var(--_sonic-envelope-radius-ratio)))
-		);
 
+		/* fallow-ignore-next-line code-duplication -- a plain box restated, since sheets never import each other */
+		position: relative;
+		display: grid;
+		flex-shrink: 0;
+		grid-template: minmax(0, 1fr) / minmax(0, 1fr);
 		inline-size: calc(var(--_sonic-envelope-size) * var(--_sonic-envelope-aspect-ratio));
 		block-size: var(--_sonic-envelope-size);
 		container-type: size;
-		border-radius: var(--_sonic-glass-radius);
+		user-select: none;
 		isolation: isolate;
 	}
 
@@ -68,7 +65,6 @@
 		inset: 0;
 		overflow: clip;
 		pointer-events: none;
-		border-radius: inherit;
 
 		&[data-sonic-part='curve'] {
 			--_sonic-point-size: calc(
@@ -161,7 +157,7 @@
 
 	:is(.sonic-envelope-curve, .sonic-envelope-handle)[data-sonic-disabled] {
 		--_sonic-point-ring: var(--_sonic-unlit);
-		--_sonic-point-core: var(--_sonic-glass);
+		--_sonic-point-core: var(--_sonic-point-ring);
 
 		cursor: default;
 	}
@@ -175,7 +171,7 @@
 
 	:is(.sonic-envelope-curve, .sonic-envelope-handle):not([data-sonic-disabled]):active {
 		--_sonic-point-ring: var(--_sonic-lit);
-		--_sonic-point-core: var(--_sonic-glass);
+		--_sonic-point-core: var(--_sonic-point-ring);
 		--_sonic-point-halo: color-mix(
 			in oklab,
 			var(--_sonic-lit) calc(50% * var(--_sonic-relief)),
@@ -187,7 +183,6 @@
 		.sonic-envelope {
 			--_sonic-lit: Highlight;
 			--_sonic-unlit: GrayText;
-			--_sonic-glass: Canvas;
 		}
 
 		.sonic-envelope-graph {
@@ -202,6 +197,12 @@
 		}
 
 		.sonic-envelope-handle {
+			--_sonic-point-core: Canvas;
+		}
+
+		/* Spelt as the rules above are, to outrank them */
+		:is(.sonic-envelope-curve, .sonic-envelope-handle)[data-sonic-disabled],
+		:is(.sonic-envelope-curve, .sonic-envelope-handle):not([data-sonic-disabled]):active {
 			--_sonic-point-core: Canvas;
 		}
 

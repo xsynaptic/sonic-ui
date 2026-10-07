@@ -79,8 +79,12 @@
 			color-mix(in oklab, var(--_sonic-focus) calc(60% * var(--_sonic-focus-strength)), transparent);
 	}
 
-	:is(.sonic-number, .sonic-waveform, .sonic-wavestrip, .sonic-xy) {
+	.sonic-number {
 		--_sonic-ink: var(--_sonic-glass-text);
+	}
+
+	:is(.sonic-waveform, .sonic-wavestrip, .sonic-xy) {
+		--_sonic-ink: currentcolor;
 	}
 
 	:is(.sonic-dial, .sonic-slider, .sonic-waveform, .sonic-wavestrip) {

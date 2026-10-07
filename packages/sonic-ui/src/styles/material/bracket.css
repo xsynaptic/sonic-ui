@@ -7,7 +7,7 @@
 		pointer-events: none;
 		content: '';
 		border: max(1px, 0.06 * var(--_sonic-bracket-size)) solid
-			color-mix(in oklab, var(--_sonic-glass-text) 45%, transparent);
+			color-mix(in oklab, currentcolor 45%, transparent);
 		border-radius: 50%;
 		opacity: 0;
 		mask: conic-gradient(

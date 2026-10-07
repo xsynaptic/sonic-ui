@@ -5,14 +5,10 @@ import ZoomOut from '@lucide/astro/icons/zoom-out';
 import Cell from '#components/specimens/cell.astro';
 import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 
-const noGlass =
-	'[--sonic-glass:var(--color-surface)] [--sonic-glass-depth:0] [--sonic-glass-edge-width:0] [--sonic-glass-texture:0] [--sonic-waveform-radius-ratio:0]';
-
 const waveforms = [
 	{ id: 'waveform-playing', isPlaying: true, label: 'Playing', seed: 7 },
 	{ id: 'waveform-paused', label: 'Paused', seed: 8 },
 	{ id: 'waveform-pending', label: 'Pending', pending: '151 162', seed: 9 },
-	{ className: '[--sonic-glass-depth:0]', id: 'waveform-flat', label: 'Flat', seed: 10 },
 	{ id: 'waveform-rate', isPlaying: true, label: 'Double speed', rate: 2, seed: 14 },
 	{ format: 'seconds-tenths', id: 'waveform-seconds', label: 'Readout in seconds', seed: 15 },
 	{
@@ -41,30 +37,39 @@ const waveforms = [
 		markers: '146=First_artist|Opening 151.5=Second_artist|Second_track 158=Third_artist|Outro~',
 		seed: 18,
 	},
-	{ className: noGlass, id: 'waveform-no-glass', isPlaying: true, label: 'No glass', seed: 19 },
-	{ className: noGlass, id: 'waveform-no-glass-paused', label: 'No glass, paused', seed: 20 },
+	{ hasGlass: true, id: 'waveform-glass', isPlaying: true, label: 'On glass', seed: 19 },
+	{ hasGlass: true, id: 'waveform-glass-paused', label: 'On glass, paused', seed: 20 },
+	{
+		hasGlass: true,
+		id: 'waveform-glass-flat',
+		label: 'On flat glass',
+		screenClass: '[--sonic-glass-depth:0]',
+		seed: 10,
+	},
 ];
 ---
 
 <SpecimenGrid isLarge={true}>
 	{waveforms.map((waveform) => (
 		<Cell id={waveform.id} isWide={true} label={waveform.label}>
-			<sonic-waveform
-				aria-labelledby={waveform.id}
-				class:list={['[--sonic-waveform-length:20rem]', waveform.className]}
-				data-format={waveform.format ?? 'clock-tenths'}
-				data-markers={waveform.markers ?? '146=Intro 151.5=Second_track 158=Outro~'}
-				data-pending={waveform.pending}
-				data-samples={waveform.seed}
-				key-step="1"
-				max="300"
-				playback-rate={waveform.rate}
-				playing={waveform.isPlaying}
-				readout
-				reduced-motion={waveform.motion}
-				step="0"
-				value="150"
-			></sonic-waveform>
+			<div class:list={[waveform.hasGlass && 'sonic-screen', waveform.screenClass]}>
+				<sonic-waveform
+					aria-labelledby={waveform.id}
+					class:list={['[--sonic-waveform-length:20rem]', waveform.className]}
+					data-format={waveform.format ?? 'clock-tenths'}
+					data-markers={waveform.markers ?? '146=Intro 151.5=Second_track 158=Outro~'}
+					data-pending={waveform.pending}
+					data-samples={waveform.seed}
+					key-step="1"
+					max="300"
+					playback-rate={waveform.rate}
+					playing={waveform.isPlaying}
+					readout
+					reduced-motion={waveform.motion}
+					step="0"
+					value="150"
+				></sonic-waveform>
+			</div>
 		</Cell>
 	))}
 	<Cell id="waveform-zoom" isWide={true} label="Zoom">

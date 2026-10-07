@@ -81,8 +81,8 @@ async function readGlass(
 		return {
 			edge: style.borderTopWidth,
 			fill: style.backgroundColor,
-			inner: element.clientWidth,
-			outer: (element as HTMLElement).offsetWidth,
+			inner: element.clientHeight,
+			outer: (element as HTMLElement).offsetHeight,
 			text: style.color,
 		};
 	});

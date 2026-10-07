@@ -1,17 +1,12 @@
 @layer sonic.material {
 	:is(
 		.sonic-dial-readout,
-		.sonic-envelope,
 		.sonic-envelope-readout,
 		.sonic-number,
 		.sonic-screen,
 		.sonic-slider-readout,
-		.sonic-spectrum,
-		.sonic-waveform,
 		.sonic-waveform-readout,
-		.sonic-wavestrip,
 		.sonic-wavestrip-readout,
-		.sonic-xy,
 		.sonic-xy-readout
 	) {
 		--_sonic-glass-slab: color-mix(in oklab, var(--_sonic-unlit) 45%, #000);

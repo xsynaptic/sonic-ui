@@ -322,7 +322,7 @@ export class SonicXy extends SonicFormElement {
 		if (__DEV__)
 			this.checkStyles(xy, 'xy.css', {
 				box: { property: 'margin-bottom', selector: '[popover]' },
-				material: ['cap', 'glass', 'pane', 'well', 'readout', ['bracket', '.sonic-xy-bracket']],
+				material: ['cap', ['glass', '[popover]'], 'readout', ['bracket', '.sonic-xy-bracket']],
 			});
 		this.#bindPointer(xy, signal);
 		this.#bindKeys(xy, signal);
@@ -400,7 +400,7 @@ export class SonicXy extends SonicFormElement {
 	}
 
 	#bindPointer(xy: HTMLElement, signal: AbortSignal): void {
-		// A press on the glass would take focus off the axis part and select the page's text
+		// A press on the field would take focus off the axis part and select the page's text
 		xy.addEventListener(
 			'mousedown',
 			(event) => {

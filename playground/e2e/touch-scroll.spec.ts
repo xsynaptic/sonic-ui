@@ -161,9 +161,9 @@ test('a swipe on an envelope handle turns its dials and never the page, and one 
 	const box = await page.locator('#envelope .sonic-envelope').boundingBox();
 	if (!box) throw new Error('The envelope has no box');
 
-	const glass = { x: box.x + box.width - 20, y: box.y + 20 };
+	const offHandle = { x: box.x + box.width - 20, y: box.y + 20 };
 
-	await swipe(page, glass, { x: glass.x + 30, y: glass.y - 150 });
+	await swipe(page, offHandle, { x: offHandle.x + 30, y: offHandle.y - 150 });
 
 	await expect.poll(() => readScrollAlong(page, 'y')).toBeGreaterThan(scrolled.y);
 	await expect(decay).toHaveAttribute('aria-valuenow', held ?? '');

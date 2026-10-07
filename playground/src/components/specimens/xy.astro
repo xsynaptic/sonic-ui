@@ -7,6 +7,11 @@ import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 	<Cell id="xy-plain" label="Plain">
 		<sonic-xy aria-labelledby="xy-plain" x="30" y="60"></sonic-xy>
 	</Cell>
+	<Cell id="xy-glass" label="On glass">
+		<div class="sonic-screen">
+			<sonic-xy aria-labelledby="xy-glass" readout x="30" y="60"></sonic-xy>
+		</div>
+	</Cell>
 	<Cell id="xy-bipolar" label="Origin">
 		<sonic-xy
 			aria-labelledby="xy-bipolar"
@@ -41,7 +46,7 @@ import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 				y-step="0.5"
 			></sonic-xy>
 			<div
-				class="sonic-screen font-mono text-[0.625rem] [--sonic-screen-aspect-ratio:5.3] [--sonic-screen-size:1.5rem]"
+				class="sonic-screen font-mono text-[0.625rem] min-w-32 [--sonic-screen-size:1.5rem]"
 				data-xy-screen
 			></div>
 		</div>

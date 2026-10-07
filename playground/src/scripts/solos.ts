@@ -7,7 +7,7 @@ interface Solo {
 export const sheetMaterial: Record<string, Array<string>> = {
 	button: ['core', 'cap', 'well', 'keycap'],
 	dial: ['core', 'cap', 'glass', 'readout', 'value', 'arc', 'scale'],
-	envelope: ['core', 'glass', 'pane', 'well', 'readout', 'bracket'],
+	envelope: ['core', 'glass', 'readout', 'bracket'],
 	led: ['core', 'lens'],
 	meter: ['core', 'lens', 'groove'],
 	number: ['core', 'cap', 'glass', 'pane', 'well', 'value'],
@@ -16,12 +16,12 @@ export const sheetMaterial: Record<string, Array<string>> = {
 	screen: ['core', 'glass', 'pane', 'well'],
 	segmented: ['core', 'cap', 'well', 'keycap'],
 	slider: ['core', 'cap', 'glass', 'readout', 'value', 'groove', 'scale'],
-	spectrum: ['core', 'glass', 'pane', 'well'],
+	spectrum: ['core'],
 	switch: ['core', 'cap'],
 	toggle: ['core', 'cap', 'well', 'keycap'],
-	waveform: ['core', 'cap', 'glass', 'pane', 'well', 'readout', 'value'],
-	wavestrip: ['core', 'cap', 'glass', 'pane', 'well', 'readout', 'value'],
-	xy: ['core', 'cap', 'glass', 'pane', 'well', 'readout', 'bracket'],
+	waveform: ['core', 'cap', 'glass', 'readout', 'value'],
+	wavestrip: ['core', 'cap', 'glass', 'readout', 'value'],
+	xy: ['core', 'cap', 'glass', 'readout', 'bracket'],
 };
 
 const icon = '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 4l14 8-14 8z" /></svg>';

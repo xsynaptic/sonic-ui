@@ -75,31 +75,33 @@ const corners = [
 	{ host: '#mode', part: '.sonic-segmented', size: '--sonic-segmented-size' },
 	{ host: '#tempo', part: '.sonic-number', size: '--sonic-number-size' },
 	{ host: '#send', part: '.sonic-slider-cap', size: '--sonic-slider-size' },
-	{ host: '#xy', part: '.sonic-xy', size: '--sonic-xy-size' },
-	{ host: '#envelope', part: '.sonic-envelope', size: '--sonic-envelope-size' },
-	{ host: '#spectrum', part: '.sonic-spectrum', size: '--sonic-spectrum-size' },
+	{ host: '#screen', part: '', size: '--sonic-screen-size' },
+];
+const plain = [
+	'#wavestrip .sonic-wavestrip',
+	'#waveform .sonic-waveform',
+	'#spectrum .sonic-spectrum',
+	'#xy .sonic-xy',
+	'#envelope .sonic-envelope',
 ];
 
-test('the shared radius reaches the outer corner of controls of different sizes, and a control’s own ratio overrides it', async ({
+test('the shared radius reaches the outer corner of five controls of different sizes and no plain one, and a control’s own ratio overrides it', async ({
 	page,
 }) => {
 	await setTokens(root(page), { '--sonic-radius': '5px' });
 
-	// The face sits a bevel of 0.075 inside a 32px cap, and the canvas an inset of 0.06 inside 96px glass
+	// The face sits a bevel of 0.075 inside a 32px cap
 	expect(
 		await page
 			.locator('#kick .sonic-button-cap')
 			.evaluate((cap) => getComputedStyle(cap, '::before').borderTopLeftRadius),
 	).toBe('2.6px');
-	await setTokens(page.locator('#spectrum'), { '--sonic-radius': '20px' });
-	await expect(page.locator('#spectrum .sonic-spectrum-canvas')).toHaveCSS(
-		'border-top-left-radius',
-		'14.24px',
-	);
-	await setTokens(page.locator('#spectrum'), { '--sonic-radius': '5px' });
+	for (const selector of plain) {
+		await expect(page.locator(selector), selector).toHaveCSS('border-top-left-radius', '0px');
+	}
 
 	for (const { host, part, size } of corners) {
-		const corner = page.locator(`${host} ${part}`).first();
+		const corner = page.locator(`${host} ${part}`.trim()).first();
 
 		await expect(corner, host).toHaveCSS('border-top-left-radius', '5px');
 

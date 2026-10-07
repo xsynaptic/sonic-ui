@@ -8,6 +8,7 @@ type Stage = 'attack' | 'decay' | 'delay' | 'hold' | 'release' | 'sustain';
 interface Rig {
 	control: Control;
 	hasCurves: boolean;
+	hasGlass?: boolean;
 	id: string;
 	stages: Array<Stage>;
 	title: string;
@@ -52,6 +53,7 @@ function build(rig: Rig) {
 				Tag: 'sonic-dial' as const,
 			})),
 		],
+		hasGlass: rig.hasGlass ?? false,
 		title: rig.title,
 	};
 }
@@ -73,6 +75,14 @@ const rigs: Array<Rig> = [
 		stages: adsr,
 		title: 'Over sliders',
 	},
+	{
+		control: 'sonic-dial',
+		hasCurves: true,
+		hasGlass: true,
+		id: 'envelope-glass',
+		stages: adsr,
+		title: 'On glass',
+	},
 ];
 
 const panels = rigs.map((rig) => build(rig));
@@ -84,7 +94,9 @@ const panels = rigs.map((rig) => build(rig));
 			<p class="justify-self-start font-mono text-[0.625rem] tracking-[0.16em] text-text-muted uppercase">
 				{panel.title}
 			</p>
-			<sonic-envelope {...panel.bindings} readout />
+			<div class:list={[panel.hasGlass && 'sonic-screen']}>
+				<sonic-envelope {...panel.bindings} readout />
+			</div>
 			<div class="flex flex-wrap justify-center gap-5">
 				{panel.dials.map(({ attributes, label, Tag }) => (
 					<Cell id={`${attributes.id}-label`} label={label}>

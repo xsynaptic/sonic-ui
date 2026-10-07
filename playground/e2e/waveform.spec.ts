@@ -185,7 +185,7 @@ test('the playhead, ghost, label, readout and touch tokens each land on their ow
 		'rgb(7, 8, 9)',
 	);
 	await expect(label).toHaveText('Intro');
-	await expect(label).toHaveCSS('color', 'rgb(10, 11, 12)');
+	await expect(label).toHaveCSS('color', 'rgb(240, 241, 242)');
 	await expect(label).toHaveCSS('background-color', 'rgb(4, 5, 6)');
 	await expect(label).toHaveCSS('font-family', 'monospace');
 	await expect(label).toHaveCSS('font-size', '14px');
@@ -206,8 +206,11 @@ test('the playhead, ghost, label, readout and touch tokens each land on their ow
 	});
 
 	expect(inline).toBeCloseTo(16, 1);
-	// 6rem of size: the label's 0.04 inset on glass with none, untouched by the inline token
-	await expect(label).toHaveCSS('bottom', '3.84px');
+	// 6rem of size: the label's 0.04 inset, untouched by the inline token
+	// Firefox lays out in sixtieths of a pixel and reports 3.83333px
+	const lift = await label.evaluate((parked) => getComputedStyle(parked).bottom);
+
+	expect(Number(lift.replace('px', ''))).toBeCloseTo(3.84, 1);
 });
 
 test('a scrim spans the wave under the label, and a block inset lifts the label', async ({

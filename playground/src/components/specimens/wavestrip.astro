@@ -4,15 +4,11 @@ import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 
 const markers = '30 60..95:intro 140 150 215 260~';
 
-const noGlass =
-	'[--sonic-glass:var(--color-surface)] [--sonic-glass-depth:0] [--sonic-glass-edge-width:0] [--sonic-glass-texture:0] [--sonic-wavestrip-inset-ratio:0] [--sonic-wavestrip-radius-ratio:0]';
-
 const strips = [
 	{ id: 'wavestrip-default', label: 'Default', seed: 1 },
 	{ id: 'wavestrip-dimmed', isDimmed: true, label: 'Dimmed', seed: 3 },
 	{ id: 'wavestrip-disabled', isDisabled: true, label: 'Disabled', seed: 4 },
 	{ id: 'wavestrip-empty', label: 'Empty' },
-	{ className: '[--sonic-glass-depth:0]', id: 'wavestrip-flat', label: 'Flat', seed: 5 },
 	{
 		id: 'wavestrip-stacked',
 		label: 'Stacked markers',
@@ -20,19 +16,20 @@ const strips = [
 		seed: 6,
 	},
 	{ format: 'seconds', id: 'wavestrip-seconds', label: 'Readout in seconds', seed: 7 },
+	{ hasGlass: true, id: 'wavestrip-glass', label: 'On glass', seed: 10 },
 	{
-		className: '[--sonic-wavestrip-inset-ratio:0.1]',
-		id: 'wavestrip-inset',
-		label: 'Inset',
-		seed: 2,
-	},
-	{ className: noGlass, id: 'wavestrip-no-glass', label: 'No glass', seed: 10 },
-	{
-		className: noGlass,
-		id: 'wavestrip-no-glass-dimmed',
+		hasGlass: true,
+		id: 'wavestrip-glass-dimmed',
 		isDimmed: true,
-		label: 'No glass, dimmed',
+		label: 'On glass, dimmed',
 		seed: 11,
+	},
+	{
+		hasGlass: true,
+		id: 'wavestrip-glass-flat',
+		label: 'On flat glass',
+		screenClass: '[--sonic-glass-depth:0]',
+		seed: 5,
 	},
 ];
 ---
@@ -40,21 +37,23 @@ const strips = [
 <SpecimenGrid isLarge={true}>
 	{strips.map((strip) => (
 		<Cell id={strip.id} isWide={true} label={strip.label}>
-			<sonic-wavestrip
-				aria-labelledby={strip.id}
-				cancellable
-				class:list={['[--sonic-wavestrip-length:20rem]', strip.className]}
-				data-buffered="0 150 190 230"
-				data-format={strip.format ?? 'clock'}
-				data-markers={strip.markers ?? markers}
-				data-peaks={strip.seed}
-				dimmed={strip.isDimmed}
-				disabled={strip.isDisabled}
-				key-step="5"
-				max="300"
-				readout
-				value="120"
-			></sonic-wavestrip>
+			<div class:list={[strip.hasGlass && 'sonic-screen', strip.screenClass]}>
+				<sonic-wavestrip
+					aria-labelledby={strip.id}
+					cancellable
+					class="[--sonic-wavestrip-length:20rem]"
+					data-buffered="0 150 190 230"
+					data-format={strip.format ?? 'clock'}
+					data-markers={strip.markers ?? markers}
+					data-peaks={strip.seed}
+					dimmed={strip.isDimmed}
+					disabled={strip.isDisabled}
+					key-step="5"
+					max="300"
+					readout
+					value="120"
+				></sonic-wavestrip>
+			</div>
 		</Cell>
 	))}
 </SpecimenGrid>
@@ -77,6 +76,21 @@ const strips = [
 			></sonic-wavestrip>
 		</div>
 	</Cell>
+	<Cell id="wavestrip-glass-fill" isWide={true} label="On glass, fills its row">
+		<div class="sonic-screen h-24 w-80 [--sonic-wavestrip-length:100%]">
+			<sonic-wavestrip
+				aria-labelledby="wavestrip-glass-fill"
+				data-format="clock"
+				data-markers={markers}
+				data-peaks="13"
+				fill
+				key-step="5"
+				max="300"
+				readout
+				value="120"
+			></sonic-wavestrip>
+		</div>
+	</Cell>
 	<div class="col-span-full">
 		<Cell id="wavestrip-large" label="Large">
 			<sonic-wavestrip
@@ -95,23 +109,22 @@ const strips = [
 		</Cell>
 	</div>
 	<div class="col-span-full">
-		<Cell id="wavestrip-large-no-glass" label="Large, no glass">
-			<sonic-wavestrip
-				aria-labelledby="wavestrip-large-no-glass"
-				cancellable
-				class:list={[
-					'[--sonic-wavestrip-length:min(48rem,80vw)] [--sonic-wavestrip-marker-ratio:0.14] [--sonic-wavestrip-size:5rem]',
-					noGlass,
-				]}
-				data-buffered="0 150 190 230"
-				data-format="clock"
-				data-markers={markers}
-				data-peaks="12"
-				key-step="5"
-				max="300"
-				readout
-				value="120"
-			></sonic-wavestrip>
+		<Cell id="wavestrip-large-glass" label="Large, on glass">
+			<div class="sonic-screen [--sonic-screen-size:5rem]">
+				<sonic-wavestrip
+					aria-labelledby="wavestrip-large-glass"
+					cancellable
+					class="[--sonic-wavestrip-length:min(48rem,80vw)] [--sonic-wavestrip-marker-ratio:0.14] [--sonic-wavestrip-size:5rem]"
+					data-buffered="0 150 190 230"
+					data-format="clock"
+					data-markers={markers}
+					data-peaks="12"
+					key-step="5"
+					max="300"
+					readout
+					value="120"
+				></sonic-wavestrip>
+			</div>
 		</Cell>
 	</div>
 </SpecimenGrid>

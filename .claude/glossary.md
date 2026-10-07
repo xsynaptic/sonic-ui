@@ -42,7 +42,7 @@ The words this library uses for its controls, their parts and their values. Wher
 
 **LED**: A single lamp that is lit, idle or unlit. _Avoid_: Light, lamp, indicator
 
-**Screen**: A display of text or graphics behind glass. _Avoid_: Display (the category), LCD
+**Screen**: A box of glass that holds text, graphics or a control. _Avoid_: Display (the category), LCD
 
 **Panel**: A titled section that groups related controls and displays. _Avoid_: Plate, faceplate, card, surface
 
@@ -188,7 +188,7 @@ The words this library uses for its controls, their parts and their values. Wher
 
 **Ink**: The colour of anything printed or etched, such as scales, labels and icons. _Avoid_: Mark, engraving colour
 
-**Glass**: The dark glazed material behind screens, readouts and wave controls. _Avoid_: Screen (that is the display), backdrop
+**Glass**: The dark glazed material of screens, readouts and the number box. _Avoid_: Screen (that is the display), backdrop
 
 **Target**: The region around a press control that takes its presses, or across a slider's breadth that takes its drags. It is the control's own box unless `--sonic-target-size` makes it larger. _Avoid_: Hit area, touch target, tap target, hitbox
 
@@ -202,7 +202,7 @@ The words this library uses for its controls, their parts and their values. Wher
 
 **Core**: The material sheet every control needs: the light, the relief and the lit and unlit colours. _Avoid_: Base, surface
 
-**Pane**: A box of glass that a control or a display draws on. _Avoid_: Cell, glass (that is the material), screen (that is the display)
+**Pane**: A box of glass that a control or a display draws on. The word names the material sheet; the part is a screen. _Avoid_: Cell, glass (that is the material), screen (that is the display)
 
 **Keycap**: The modelled cap of a button, an option or a toggle, which goes down into its well. The word names the material sheet; the part is still a cap. _Avoid_: "key" for a button
 

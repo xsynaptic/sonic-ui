@@ -20,12 +20,7 @@ img, svg, canvas { display: block; max-width: 100%; }
 `;
 
 // `?reset=layered` puts the reset in a layer ahead of `sonic`, and `?reset=none` takes it away
-const pick = `
-const reset = document.querySelector('#reset');
-const mode = new URLSearchParams(location.search).get('reset');
-if (mode === 'layered') reset.textContent = '@layer reset {' + reset.textContent + '}';
-if (mode === 'none') reset.remove();
-`;
+// The script is an element of its own; Vite's dependency scan parses a script tag written inside a string
 
 const icon = '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 4l14 8-14 8z" /></svg>';
 
@@ -33,10 +28,13 @@ const icon = '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 4l14 8-14 
 ---
 
 <Document skin="amber" title="sonic-ui fixtures, a host's reset">
-	<Fragment
-		set:html={`<style id="reset">${reset}</style><script>${pick}</script><style>${sheets}</style>`}
-		slot="head"
-	/>
+	<Fragment set:html={`<style id="reset">${reset}</style><style>${sheets}</style>`} slot="head" />
+	<script is:inline slot="head">
+		const reset = document.querySelector('#reset');
+		const mode = new URLSearchParams(location.search).get('reset');
+		if (mode === 'layered') reset.textContent = '@layer reset {' + reset.textContent + '}';
+		else if (mode === 'none') reset.remove();
+	</script>
 	<main>
 		<h1>A host's reset</h1>
 		<div

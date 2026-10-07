@@ -1,16 +1,5 @@
 @layer sonic.material {
-	:is(
-		.sonic-envelope,
-		.sonic-button,
-		.sonic-number,
-		.sonic-screen,
-		.sonic-segmented,
-		.sonic-spectrum,
-		.sonic-toggle,
-		.sonic-waveform,
-		.sonic-wavestrip,
-		.sonic-xy
-	) {
+	:is(.sonic-button, .sonic-number, .sonic-screen, .sonic-segmented, .sonic-toggle) {
 		--_sonic-well-depth: var(--_sonic-glass-depth, 1);
 		--_sonic-well:
 			inset calc(var(--_sonic-well-depth) * var(--_sonic-cast-x))

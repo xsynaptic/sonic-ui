@@ -8,6 +8,5 @@
 		--sonic-ink: color-mix(in oklab, var(--sonic-cap) 30%, #fff);
 		--sonic-dial-ring-ratio: 0.12;
 		--sonic-dial-gap-ratio: 0.07;
-		--sonic-wavestrip-inset-ratio: 0.1;
 	}
 }

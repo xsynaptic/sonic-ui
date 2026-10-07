@@ -13,8 +13,8 @@ interface Box {
 
 test.beforeEach(async ({ page }) => {
 	await page.goto('/fixtures/');
-	await page.locator('#xy .sonic-xy').evaluate((glass) => {
-		glass.scrollIntoView({ block: 'center' });
+	await page.locator('#xy .sonic-xy').evaluate((pad) => {
+		pad.scrollIntoView({ block: 'center' });
 	});
 });
 
@@ -38,13 +38,13 @@ function expectInside(inner: Box, outer: Box): void {
 	expect(inner.y + inner.height).toBeLessThanOrEqual(outer.y + outer.height);
 }
 
-test('a drag from the puck moves both values, and the puck stays inside the glass at both corners', async ({
+test('a drag from the puck moves both values, and the puck travels to the corners of the pad and no further', async ({
 	isMobile,
 	page,
 }) => {
 	test.skip(isMobile, mouseOnly);
 
-	const glass = await boxOf(page.locator('#xy .sonic-xy'));
+	const pad = await boxOf(page.locator('#xy .sonic-xy'));
 	const puck = page.locator('#xy .sonic-xy-puck');
 	const start = await centerOf(puck);
 
@@ -59,29 +59,37 @@ test('a drag from the puck moves both values, and the puck stays inside the glas
 	expect(y).toBeGreaterThan(50);
 	expect(x).toBeGreaterThan(y);
 
-	await page.mouse.move(glass.x + glass.width + 60, glass.y - 60, { steps: 4 });
+	await page.mouse.move(pad.x + pad.width + 60, pad.y - 60, { steps: 4 });
 	expect(await readValues(page)).toEqual(['100', '100']);
-	expectInside(await boxOf(puck), glass);
 
-	await page.mouse.move(glass.x - 60, glass.y + glass.height + 60, { steps: 4 });
+	const atEnd = await boxOf(puck);
+
+	expect(atEnd.x + atEnd.width).toBeCloseTo(pad.x + pad.width, 1);
+	expect(atEnd.y).toBeCloseTo(pad.y, 1);
+
+	await page.mouse.move(pad.x - 60, pad.y + pad.height + 60, { steps: 4 });
 	await page.mouse.up();
 	expect(await readValues(page)).toEqual(['0', '0']);
-	expectInside(await boxOf(puck), glass);
+
+	const atStart = await boxOf(puck);
+
+	expect(atStart.x).toBeCloseTo(pad.x, 1);
+	expect(atStart.y + atStart.height).toBeCloseTo(pad.y + pad.height, 1);
 });
 
-test("a press on the glass reports dragging by its first input and brings the puck's center under the pointer, and a corner clamps it inside", async ({
+test("a press on the field reports dragging by its first input and brings the puck's center under the pointer, and a corner clamps it inside", async ({
 	isMobile,
 	page,
 }) => {
 	test.skip(isMobile, mouseOnly);
 
 	const xy = page.locator('#xy');
-	const glass = await boxOf(page.locator('#xy .sonic-xy'));
+	const pad = await boxOf(page.locator('#xy .sonic-xy'));
 	const puck = page.locator('#xy .sonic-xy-puck');
 	// Whole pixels, since Firefox and WebKit round the pointer
 	const at = {
-		x: Math.round(glass.x + glass.width * 0.3),
-		y: Math.round(glass.y + glass.height * 0.25),
+		x: Math.round(pad.x + pad.width * 0.3),
+		y: Math.round(pad.y + pad.height * 0.25),
 	};
 
 	await xy.evaluate((element) => {
@@ -105,17 +113,17 @@ test("a press on the glass reports dragging by its first input and brings the pu
 	expect(Math.abs(center.y - at.y)).toBeLessThanOrEqual(1);
 	await expect(page.locator('#xy [data-sonic-axis="x"]')).toBeFocused();
 
-	await page.mouse.click(glass.x + glass.width - 6, glass.y + 6);
+	await page.mouse.click(pad.x + pad.width - 6, pad.y + 6);
 	expect(await readValues(page)).toEqual(['100', '100']);
-	expectInside(await boxOf(puck), glass);
+	expectInside(await boxOf(puck), pad);
 });
 
 test('a disabled XY pad takes no press and no focus', async ({ isMobile, page }) => {
 	test.skip(isMobile, mouseOnly);
 
-	const glass = await boxOf(page.locator('#xy-disabled .sonic-xy'));
+	const pad = await boxOf(page.locator('#xy-disabled .sonic-xy'));
 
-	await page.mouse.click(glass.x + 10, glass.y + 10);
+	await page.mouse.click(pad.x + 10, pad.y + 10);
 
 	await expect(page.locator('#xy-disabled [data-sonic-axis="x"]')).toHaveAttribute(
 		'aria-valuenow',

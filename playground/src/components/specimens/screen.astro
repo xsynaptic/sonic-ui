@@ -12,7 +12,7 @@ const screens = [
 <SpecimenGrid>
 	{screens.map((screen) => (
 		<Cell id={screen.id} isWide={true} label={screen.label}>
-			<div aria-labelledby={screen.id} class="sonic-screen font-mono text-sm" role="group">
+			<div aria-labelledby={screen.id} class="sonic-screen min-w-30 font-mono text-sm" role="group">
 				{screen.text}
 			</div>
 		</Cell>
@@ -22,7 +22,7 @@ const screens = [
 	<Cell id="screen-large-frequency" isWide={true} label="Frequency, large">
 		<div
 			aria-labelledby="screen-large-frequency"
-			class="sonic-screen font-mono text-4xl [--sonic-screen-size:6rem]"
+			class="sonic-screen min-w-72 font-mono text-4xl [--sonic-screen-size:6rem]"
 			role="group"
 		>
 			440 Hz

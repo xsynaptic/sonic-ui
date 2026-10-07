@@ -179,8 +179,6 @@ export const tokenGroups: Array<TokenGroup> = [
 			colour('wave', '--sonic-wave', { resolved: '--_sonic-wavestrip-wave' }),
 			colour('scrub', '--sonic-scrub', { resolved: '--_sonic-wavestrip-scrub' }),
 			range('cancel zone', '--sonic-cancel-zone', [0, 120, 4, 'px']),
-			range('glass depth', '--sonic-glass-depth', [0, 1, 0.05]),
-			range('glass texture', '--sonic-glass-texture', [0, 1, 0.25]),
 		],
 	},
 	{
@@ -258,8 +256,6 @@ export const tokenGroups: Array<TokenGroup> = [
 			range('size', '--sonic-xy-size', [3, 16, 0.25, 'rem']),
 			range('aspect', '--sonic-xy-aspect-ratio', [0.5, 3, 0.05]),
 			range('puck', '--sonic-xy-puck-ratio', [0.05, 0.4, 0.005]),
-			range('corner', '--sonic-xy-radius-ratio', [0, 0.5, 0.01]),
-			range('inset', '--sonic-xy-inset-ratio', [0, 0.2, 0.005]),
 		],
 	},
 	{
@@ -268,7 +264,6 @@ export const tokenGroups: Array<TokenGroup> = [
 		tokens: [
 			range('size', '--sonic-envelope-size', [3, 10, 0.25, 'rem']),
 			range('aspect', '--sonic-envelope-aspect-ratio', [1, 6, 0.1]),
-			range('corner', '--sonic-envelope-radius-ratio', [0, 0.5, 0.01]),
 			range('inset', '--sonic-envelope-inset-ratio', [0, 0.3, 0.01]),
 			range('handle', '--sonic-envelope-handle-ratio', [0.05, 0.4, 0.005]),
 			range('handle ring', '--sonic-envelope-handle-stroke-ratio', [0.005, 0.1, 0.005]),
@@ -310,9 +305,10 @@ export const tokenGroups: Array<TokenGroup> = [
 		name: 'Screen',
 		tokens: [
 			range('size', '--sonic-screen-size', [1.5, 6, 0.25, 'rem']),
-			range('aspect', '--sonic-screen-aspect-ratio', [1, 6, 0.25]),
 			range('corner', '--sonic-screen-radius-ratio', [0, 0.5, 0.01]),
 			range('inset', '--sonic-screen-inset-ratio', [0, 0.3, 0.01]),
+			range('glass depth', '--sonic-glass-depth', [0, 1, 0.05]),
+			range('glass texture', '--sonic-glass-texture', [0, 1, 0.25]),
 		],
 	},
 	{

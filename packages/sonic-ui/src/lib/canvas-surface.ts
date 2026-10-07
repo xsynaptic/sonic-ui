@@ -199,7 +199,8 @@ class CanvasSurface<
 	#armTransitions(): void {
 		const { canvas, colours, numbers = {} } = this.#options;
 		const { style } = canvas;
-		const watched = [...Object.values(colours), ...Object.values(numbers)];
+		// A colour mixed from `currentcolor` computes to the same text whatever `color` is
+		const watched = ['color', ...Object.values(colours), ...Object.values(numbers)];
 
 		style.setProperty('transition-property', watched.join(', '));
 		style.setProperty('transition-duration', '0.001ms');

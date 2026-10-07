@@ -325,7 +325,7 @@ test('numbers read their properties as numbers, and a change to one repaints as 
 
 	expect(looks.at(-1)).toEqual({ from: -4.5 });
 	expect(canvas.style.getPropertyValue('transition-property')).toBe(
-		'--_sonic-test-colour, --_sonic-test-from',
+		'color, --_sonic-test-colour, --_sonic-test-from',
 	);
 });
 

@@ -48,9 +48,13 @@ test('the canvas backs every device pixel, bars and gaps land where the grid put
 	const lit = await canvas.evaluate((element) =>
 		getComputedStyle(element).getPropertyValue('--_sonic-lit'),
 	);
-	const wave = await canvas.evaluate((element) =>
-		getComputedStyle(element).getPropertyValue('--_sonic-wavestrip-wave'),
-	);
+	const wave = await canvas.evaluate((element) => {
+		const style = getComputedStyle(element);
+
+		return style
+			.getPropertyValue('--_sonic-wavestrip-wave')
+			.replaceAll('currentcolor', () => style.color);
+	});
 
 	expect(Math.abs(device - css * 2)).toBeLessThanOrEqual(1);
 	expect(inBar?.[3]).toBe(255);
@@ -70,7 +74,7 @@ function setOnBox(page: Page, tokens: Record<string, string>): Promise<void> {
 	}, Object.entries(tokens));
 }
 
-test('a lit colour set on an ancestor repaints within two frames, as does an ink of currentcolor, from the text colour on the glass', async ({
+test('a lit colour set on an ancestor repaints within two frames, as does a text colour, which the wave is mixed from', async ({
 	page,
 }) => {
 	const { canvas } = await openWavestrip(page);
@@ -79,7 +83,7 @@ test('a lit colour set on an ancestor repaints within two frames, as does an ink
 	await setOnBox(page, { '--sonic-lit': '#0080ff' });
 	expectPixel(await pixelAt(canvas, 1), [0, 128, 255, 255]);
 
-	await setOnBox(page, { '--sonic-glass-text': '#0080ff', '--sonic-ink': 'currentcolor' });
+	await setOnBox(page, { color: '#0080ff' });
 
 	const unlit = await canvas.evaluate((element) =>
 		getComputedStyle(element).getPropertyValue('--_sonic-unlit'),
@@ -91,7 +95,7 @@ test('a lit colour set on an ancestor repaints within two frames, as does an ink
 	);
 });
 
-test('empty peaks draw a plain groove, set the empty state, and a ratio of 0 leaves only the glass', async ({
+test('empty peaks draw a plain groove, set the empty state, and a ratio of 0 draws nothing', async ({
 	page,
 }) => {
 	const { canvas, wavestrip } = await openWavestrip(page);
@@ -175,10 +179,9 @@ test('a long readout stays inside the strip at both ends, on one line and on gla
 	const look = await readout.evaluate((bubble) => ({
 		fill: getComputedStyle(bubble).backgroundColor,
 		isOneLine: bubble.scrollHeight <= bubble.clientHeight,
-		strip: getComputedStyle(bubble.parentElement ?? bubble).backgroundColor,
 	}));
 
-	expect(look).toEqual({ fill: 'rgb(10, 20, 30)', isOneLine: true, strip: 'rgba(0, 0, 0, 0)' });
+	expect(look).toEqual({ fill: 'rgb(10, 20, 30)', isOneLine: true });
 
 	await wavestrip.evaluate((element) => {
 		Object.assign(element, { formatValue: () => '' });
@@ -227,7 +230,7 @@ test('with fill, the strip takes its row and its ratios follow the height, while
 
 	await strip.scrollIntoViewIfNeeded();
 	await expect(strip).toHaveCSS('block-size', '96px');
-	await expect(strip).toHaveCSS('padding-top', '9.6px');
+	await expect(strip).toHaveCSS('--_sonic-wavestrip-size', '96px');
 	await expect(dots.first()).toHaveCSS('inline-size', '4px');
 
 	// 6.7px apart: one lane for 4px dots, where the 96px strip's own 6.2px dots would take two
@@ -239,7 +242,7 @@ test('with fill, the strip takes its row and its ratios follow the height, while
 		box.style.setProperty('height', '48px');
 	});
 	await expect(strip).toHaveCSS('block-size', '48px');
-	await expect(strip).toHaveCSS('padding-top', '4.8px');
+	await expect(strip).toHaveCSS('--_sonic-wavestrip-size', '48px');
 	await expect(dots.first()).toHaveCSS('inline-size', '4px');
 });
 

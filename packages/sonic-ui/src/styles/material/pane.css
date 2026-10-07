@@ -7,15 +7,7 @@
 @layer sonic.material {
 	/* A definite cell, so percentage-sized content fills the glass; a canvas sized to its own box would feed back */
 
-	:is(
-		.sonic-envelope,
-		.sonic-number,
-		.sonic-screen,
-		.sonic-spectrum,
-		.sonic-waveform,
-		.sonic-wavestrip,
-		.sonic-xy
-	) {
+	:is(.sonic-number, .sonic-screen) {
 		--_sonic-glass-depth: var(--sonic-glass-depth, var(--_sonic-relief));
 		--_sonic-glass-texture: var(--sonic-glass-texture, var(--_sonic-relief));
 		--_sonic-glass-pitch: max(2px, round(2 * var(--_sonic-unit), 1px));
@@ -83,6 +75,7 @@
 
 			@media (prefers-reduced-motion: no-preference) {
 				&:is(:focus-visible, :focus-within)::before,
+				&:has(:state(dragging))::before,
 				:state(dragging) > &::before {
 					animation: sonic-glass-breathe 3s ease-in-out infinite alternate;
 				}

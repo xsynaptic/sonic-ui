@@ -9,9 +9,13 @@ interface PaintedLine {
 	pixels: Array<Colour>;
 }
 
-function pixelLine(page: Page, shot: Buffer, axis: 'x' | 'y'): Promise<Array<Colour>> {
+function pixelLine(
+	page: Page,
+	shot: Buffer,
+	{ across, axis }: { across: number; axis: 'x' | 'y' },
+): Promise<Array<Colour>> {
 	return page.evaluate(
-		async ([data, axis]) => {
+		async ([data, axis, across]) => {
 			const image = new Image();
 
 			image.src = `data:image/png;base64,${data}`;
@@ -30,8 +34,8 @@ function pixelLine(page: Page, shot: Buffer, axis: 'x' | 'y'): Promise<Array<Col
 			const { height, width } = canvas;
 			const { data: line } =
 				axis === 'x'
-					? context.getImageData(0, Math.floor(height / 2), width, 1)
-					: context.getImageData(Math.floor(width / 2), 0, 1, height);
+					? context.getImageData(0, Math.floor(height * across), width, 1)
+					: context.getImageData(Math.floor(width * across), 0, 1, height);
 
 			return Array.from({ length: line.length / 4 }, (_pixel, index): [number, number, number] => [
 				line[index * 4] ?? 0,
@@ -39,17 +43,21 @@ function pixelLine(page: Page, shot: Buffer, axis: 'x' | 'y'): Promise<Array<Col
 				line[index * 4 + 2] ?? 0,
 			]);
 		},
-		[shot.toString('base64'), axis] as const,
+		[shot.toString('base64'), axis, across] as const,
 	);
 }
 
 // Screenshotted rather than read from styles, so the masks and gradients are the engine's own
-export async function paintedLine(target: Locator, axis: 'x' | 'y'): Promise<PaintedLine> {
+export async function paintedLine(
+	target: Locator,
+	axis: 'x' | 'y',
+	across = 0.5,
+): Promise<PaintedLine> {
 	const shot = await target.screenshot();
 	const box = await target.boundingBox();
 	if (!box) throw new Error('The target has no box');
 
-	const pixels = await pixelLine(target.page(), shot, axis);
+	const pixels = await pixelLine(target.page(), shot, { across, axis });
 
 	return { lengthPx: axis === 'x' ? box.width : box.height, pixels };
 }
@@ -80,4 +88,16 @@ export function expectEdge(actual: number | undefined, expected: number): void {
 	const distance = Math.abs((actual ?? NaN) - expected);
 
 	expect(distance, `${String(actual)} against ${String(expected)}`).toBeLessThanOrEqual(1.5);
+}
+
+export function expectRuns(
+	actual: Array<[number, number]>,
+	expected: Array<[number, number]>,
+): void {
+	expect(actual).toHaveLength(expected.length);
+
+	for (const [index, [from, to]] of expected.entries()) {
+		expectEdge(actual[index]?.[0], from);
+		expectEdge(actual[index]?.[1], to);
+	}
 }

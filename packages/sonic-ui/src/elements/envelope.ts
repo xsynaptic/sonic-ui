@@ -243,9 +243,7 @@ export class SonicEnvelope extends SonicElement {
 			this.checkStyles(envelope, 'envelope.css', {
 				box: { property: 'margin-bottom', selector: '[popover]' },
 				material: [
-					'glass',
-					'pane',
-					'well',
+					['glass', '[popover]'],
 					'readout',
 					['bracket', '.sonic-envelope-bracket', '::before'],
 				],

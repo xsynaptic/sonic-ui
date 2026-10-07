@@ -100,7 +100,8 @@ The LED, the panel, the ring and the screen have no behaviour, so they are class
 
 - `<span class="sonic-led">` is unlit until it carries `data-sonic-lit`, whose value picks the colour: empty, `idle`, `ok`, `warning` or `danger`. Inside a latching button or a toggle's cap it lights with the control.
 - `class="sonic-ring"` draws a lit arc around its one child, from `--sonic-ring-from` to `--sonic-ring-to`, each 0 to 1. Give it your own `role="progressbar"`.
-- `class="sonic-screen"` is a pane of glass for your own text or canvas, and `class="sonic-panel"` groups controls under a `sonic-panel-title`.
+- `class="sonic-screen"` is a box of glass that holds your own text, a canvas or a control, and is sized like a `div`: it fills a block, hugs in a flex row, and is never shorter than `--sonic-screen-size`. A wave strip, waveform, spectrum, envelope or XY pad draws no glass of its own, so wrap one in a screen for the encased look; its padding is the inset, and it centres what it holds, so a control that should span it is given its length (`--sonic-wavestrip-length: 100%`). A control with `fill` needs the screen given a height.
+- `class="sonic-panel"` groups controls under a `sonic-panel-title`.
 
 ## Displays
 
@@ -159,7 +160,7 @@ A skin is one rule that sets tokens on a class; copy `dist/skins/flat.css` to st
 | --------------- | ----------------------------------------------- |
 | `button.css`    | core, cap, well, keycap                         |
 | `dial.css`      | core, cap, glass, readout, value, arc, scale    |
-| `envelope.css`  | core, glass, pane, well, readout, bracket       |
+| `envelope.css`  | core, glass, readout, bracket                   |
 | `led.css`       | core, lens                                      |
 | `meter.css`     | core, lens, groove                              |
 | `number.css`    | core, cap, glass, pane, well, value             |
@@ -168,12 +169,12 @@ A skin is one rule that sets tokens on a class; copy `dist/skins/flat.css` to st
 | `screen.css`    | core, glass, pane, well                         |
 | `segmented.css` | core, cap, well, keycap                         |
 | `slider.css`    | core, cap, glass, readout, value, groove, scale |
-| `spectrum.css`  | core, glass, pane, well                         |
+| `spectrum.css`  | core                                            |
 | `switch.css`    | core, cap                                       |
 | `toggle.css`    | core, cap, well, keycap                         |
-| `waveform.css`  | core, cap, glass, pane, well, readout, value    |
-| `wavestrip.css` | core, cap, glass, pane, well, readout, value    |
-| `xy.css`        | core, cap, glass, pane, well, readout, bracket  |
+| `waveform.css`  | core, cap, glass, readout, value                |
+| `wavestrip.css` | core, cap, glass, readout, value                |
+| `xy.css`        | core, cap, glass, readout, bracket              |
 
 An LED inside a control also needs `led.css`, and a button inside a ring needs `button.css`.
 

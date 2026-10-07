@@ -127,7 +127,7 @@ export abstract class SonicWaveElement<
 					property: 'margin-bottom',
 					selector: '[popover]',
 				},
-				material: ['cap', 'glass', 'pane', 'well', 'readout', 'value'],
+				material: ['cap', ['glass', '[popover]'], 'readout', 'value'],
 			});
 		this.#surface.setFill(this.fill);
 	}

@@ -11,7 +11,7 @@ vi.hoisted(() => {
 });
 
 interface Pad {
-	glass: HTMLElement;
+	box: HTMLElement;
 	parent: HTMLElement;
 	puck: HTMLElement;
 	xy: SonicXy;
@@ -28,7 +28,7 @@ function mountXy(attributes: string): Pad {
 	vi.spyOn(puck, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 20, 20));
 
 	return {
-		glass: requireChild(parent, '.sonic-xy', HTMLDivElement),
+		box: requireChild(parent, '.sonic-xy', HTMLDivElement),
 		parent,
 		puck,
 		xy: requireChild(parent, 'sonic-xy', SonicXy),
@@ -38,21 +38,21 @@ function mountXy(attributes: string): Pad {
 const offset =
 	'x="0" x-min="-50" x-max="50" x-step="0.5" y="150" y-min="100" y-max="200" y-step="2"';
 
-test('a press on the glass puts each value at the pointer, on its own mapping, with up as more', () => {
-	const { glass, xy } = mountXy(
+test('a press on the field puts each value at the pointer, on its own mapping, with up as more', () => {
+	const { box, xy } = mountXy(
 		'x-min="20" x-max="20000" x-taper="log" y-min="-24" y-max="24" y-step="0.5"',
 	);
 
-	pointerAt(glass, 'pointerdown', { clientX: 110, clientY: 35 });
+	pointerAt(box, 'pointerdown', { clientX: 110, clientY: 35 });
 
 	expect([xy.x, xy.y]).toEqual([632, 12]);
 });
 
 test('each value and origin is drawn at its proportion of its own range, an unset origin at the minimum', () => {
-	const { glass } = mountXy(
+	const { box } = mountXy(
 		'x="-25" x-min="-50" x-max="50" y="180" y-min="100" y-max="200" y-origin="125"',
 	);
-	const style = (name: string): string => glass.style.getPropertyValue(`--_sonic-xy-${name}`);
+	const style = (name: string): string => box.style.getPropertyValue(`--_sonic-xy-${name}`);
 
 	expect([style('x'), style('y')]).toEqual(['0.25', '0.8']);
 	expect([style('x-origin'), style('y-origin')]).toEqual(['0', '0.25']);
@@ -69,10 +69,10 @@ test('a pad set up before it is appended holds its values, and then draws as one
 
 	document.body.replaceChildren(xy);
 	const appended = drawnMarkup(xy.querySelector('.sonic-xy'));
-	const { glass, xy: mounted } = mountXy(offset);
+	const { box, xy: mounted } = mountXy(offset);
 
 	mounted.y = 171;
-	expect(appended).toBe(drawnMarkup(glass));
+	expect(appended).toBe(drawnMarkup(box));
 });
 
 test('a value waits for its range, and an unset value rests at its own minimum', () => {
@@ -144,17 +144,17 @@ test('Alt holds the drag to one axis, and Shift moves both a tenth as far', () =
 });
 
 test('off Apple platforms, a Ctrl-click returns only the axis that has a default, as one change', () => {
-	const { glass, parent, xy } = mountXy(`${offset} x-default="25"`);
+	const { box, parent, xy } = mountXy(`${offset} x-default="25"`);
 	const events = recordEvents(parent);
 
-	pointerAt(glass, 'pointerdown', { clientX: 200, clientY: 20, ctrlKey: true });
+	pointerAt(box, 'pointerdown', { clientX: 200, clientY: 20, ctrlKey: true });
 
 	expect([xy.x, xy.y]).toEqual([25, 150]);
 	expect(events).toEqual(['input', 'change']);
 });
 
 test('a press and a Ctrl-click each report their pointer type through input and change, then drop it', () => {
-	const { glass, parent, xy } = mountXy(`${offset} x-default="25"`);
+	const { box, parent, xy } = mountXy(`${offset} x-default="25"`);
 	const reported: Array<string> = [];
 
 	for (const type of ['input', 'change']) {
@@ -162,12 +162,12 @@ test('a press and a Ctrl-click each report their pointer type through input and 
 			reported.push(`${type}:${String(xy.pointerType)}`);
 		});
 	}
-	pointerAt(glass, 'pointerdown', { clientX: 200, clientY: 20, pointerType: 'pen' });
-	pointerAt(glass, 'pointerup', { clientX: 200, clientY: 20, pointerType: 'pen' });
+	pointerAt(box, 'pointerdown', { clientX: 200, clientY: 20, pointerType: 'pen' });
+	pointerAt(box, 'pointerup', { clientX: 200, clientY: 20, pointerType: 'pen' });
 	expect(reported).toEqual(['input:pen', 'change:pen']);
 	expect(xy.pointerType).toBeUndefined();
 
-	pointerAt(glass, 'pointerdown', {
+	pointerAt(box, 'pointerdown', {
 		clientX: 200,
 		clientY: 20,
 		ctrlKey: true,
@@ -178,18 +178,18 @@ test('a press and a Ctrl-click each report their pointer type through input and 
 });
 
 test('off Apple platforms, a press with the Meta key down is an ordinary press', () => {
-	const { glass, xy } = mountXy(`${offset} x-default="25"`);
+	const { box, xy } = mountXy(`${offset} x-default="25"`);
 
-	pointerAt(glass, 'pointerdown', { clientX: 60, clientY: 40, metaKey: true });
+	pointerAt(box, 'pointerdown', { clientX: 60, clientY: 40, metaKey: true });
 
 	expect([xy.x, xy.y]).toEqual([-25, 170]);
 });
 
-test('a secondary button on the glass moves nothing', () => {
-	const { glass, xy } = mountXy(offset);
+test('a secondary button on the field moves nothing', () => {
+	const { box, xy } = mountXy(offset);
 
-	pointerAt(glass, 'pointerdown', { button: 2, clientX: 200, clientY: 20 });
-	pointerAt(glass, 'pointermove', { clientX: 180, clientY: 40 });
+	pointerAt(box, 'pointerdown', { button: 2, clientX: 200, clientY: 20 });
+	pointerAt(box, 'pointermove', { clientX: 180, clientY: 40 });
 
 	expect([xy.x, xy.y]).toEqual([0, 150]);
 });
@@ -208,7 +208,7 @@ test('lostpointercapture alone ends the drag with a change', () => {
 });
 
 test('disabled mid-drag ends the drag with a change, and a later press does nothing', () => {
-	const { glass, parent, puck, xy } = mountXy(offset);
+	const { box, parent, puck, xy } = mountXy(offset);
 	const events = recordEvents(parent);
 
 	pointerAt(puck, 'pointerdown', { clientX: 60, clientY: 80 });
@@ -216,7 +216,7 @@ test('disabled mid-drag ends the drag with a change, and a later press does noth
 	xy.disabled = true;
 	expect(events).toEqual(['input', 'change']);
 
-	pointerAt(glass, 'pointerdown', { clientX: 200, clientY: 20 });
+	pointerAt(box, 'pointerdown', { clientX: 200, clientY: 20 });
 	expect([xy.x, xy.y]).toEqual([10, 150]);
 });
 

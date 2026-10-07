@@ -94,14 +94,78 @@ test('a screen is cut from the glass a number box is, and sizes every edge from 
 			const style = getComputedStyle(screen);
 			const box = screen.getBoundingClientRect();
 
-			return [box.width, box.height, style.paddingTop, style.borderTopLeftRadius].join(' ');
+			return [box.height, style.paddingTop, style.borderTopLeftRadius].join(' ');
 		});
 
 	expect(await readPane('#screen')).toEqual(await readPane('#tempo .sonic-number'));
-	expect(await readBox()).toBe('120 40 4px 6px');
+	expect(await readBox()).toBe('40 4px 6px');
 
 	await page.locator('#screen').evaluate((screen) => {
 		screen.style.setProperty('--sonic-screen-size', '5rem');
 	});
-	expect(await readBox()).toBe('240 80 8px 12px');
+	expect(await readBox()).toBe('80 8px 12px');
+});
+
+test('a screen is sized like a div: it fills a block, hugs in a flex row and grows with what it holds', async ({
+	page,
+}) => {
+	await page.goto('/fixtures/');
+
+	const boxOf = (selector: string) =>
+		page.locator(selector).evaluate((screen) => {
+			const { height, width } = screen.getBoundingClientRect();
+
+			return { height, row: screen.parentElement?.clientWidth, width };
+		});
+	const hugging = await boxOf('#screen');
+	const tall = await boxOf('#screen-tall');
+
+	const block = await boxOf('#screen-block');
+
+	expect(block.width).toBe(block.row);
+	expect(block.height).toBe(40);
+	expect(hugging.height).toBe(40);
+	expect(hugging.width).toBeGreaterThan(20);
+	expect(hugging.width).toBeLessThan(120);
+	expect(tall.width).toBe(80);
+	expect(tall.height).toBeGreaterThan(60);
+});
+
+test('a strip that fills a screen with a height takes its content box, and keeps it', async ({
+	page,
+}) => {
+	await page.goto('/fixtures/');
+
+	const screen = page.locator('#screen-strip');
+
+	await screen.scrollIntoViewIfNeeded();
+	await expect(screen.locator('canvas')).toBeVisible();
+
+	const readBoxes = () =>
+		screen.evaluate(async (glass) => {
+			for (let frame = 0; frame < 10; frame++) {
+				await new Promise((resolve) => {
+					requestAnimationFrame(resolve);
+				});
+			}
+
+			const strip = glass.querySelector('.sonic-wavestrip');
+			if (!strip) throw new Error('The screen holds no strip');
+
+			const style = getComputedStyle(glass);
+			const outer = glass.getBoundingClientRect();
+			const inner = strip.getBoundingClientRect();
+			const edge = glass.clientTop + Number(style.paddingTop.replace('px', ''));
+
+			return {
+				content: [outer.x + edge, outer.y + edge, outer.width - 2 * edge, outer.height - 2 * edge],
+				row: glass.parentElement?.clientWidth,
+				strip: [inner.x, inner.y, inner.width, inner.height],
+			};
+		});
+	const first = await readBoxes();
+
+	expect(first.content.slice(2)).toEqual([(first.row ?? 0) - 8, 72]);
+	expect(first.strip).toEqual(first.content);
+	expect(await readBoxes()).toEqual(first);
 });

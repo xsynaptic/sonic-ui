@@ -31,7 +31,7 @@ function laneTops(host: Locator, edgeWidth: string): Promise<Array<string>> {
 	}, edgeWidth);
 }
 
-test("with no edge width and no inset the canvas is the strip's own box, while its regions and readout keep their own edges", async ({
+test("the canvas is the strip's own box, its regions and readout keep their own edges, and forced colours edge a screen but not the strip in it", async ({
 	page,
 }) => {
 	const { host, strip } = await openPinned(page);
@@ -58,9 +58,18 @@ test("with no edge width and no inset the canvas is the strip's own box, while i
 	await expect(readout).toHaveCSS('border-top-width', '2px');
 	await expect(readout).toHaveCSS('border-top-color', 'rgb(1, 2, 3)');
 
+	const screen = page.locator('#screen-strip');
+
+	await screen.evaluate((glass) => {
+		glass.style.setProperty('--sonic-glass-edge-width', '0');
+	});
+	await expect(screen).toHaveCSS('border-top-width', '0px');
+
 	// Forced colours keep an edge on glass that asked for none
 	await page.emulateMedia({ forcedColors: 'active' });
-	await expect(strip).toHaveCSS('border-top-width', '1px');
+	await expect(screen).toHaveCSS('border-top-width', '1px');
+	await expect(screen.locator('.sonic-wavestrip')).toHaveCSS('border-top-width', '0px');
+	await expect(strip).toHaveCSS('border-top-width', '0px');
 });
 
 test('a marker edge width sets the lane step on a filled strip', async ({ page }) => {

@@ -4,8 +4,8 @@ import { drag, mouseOnly } from './pointer.ts';
 
 test.beforeEach(async ({ page }) => {
 	await page.goto('/fixtures/');
-	await page.locator('#envelope .sonic-envelope').evaluate((glass) => {
-		glass.scrollIntoView({ block: 'center' });
+	await page.locator('#envelope .sonic-envelope').evaluate((envelope) => {
+		envelope.scrollIntoView({ block: 'center' });
 	});
 });
 

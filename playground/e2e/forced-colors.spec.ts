@@ -3,6 +3,7 @@ import type { Page } from '@playwright/test';
 import { expect, test } from '@playwright/test';
 
 import { canvasPixels, expectPixel, middleOf, paintedColour, pixelAt } from './canvas-probe.ts';
+import { mouseOnly } from './pointer.ts';
 
 // A part paints at all only if it opts out; forced colours drop gradients and force backgrounds to Canvas
 const drawnParts = [
@@ -358,6 +359,60 @@ test('each part at rest paints in its system colours', async ({ page }) => {
 	});
 });
 
+test('a held or disabled point keeps a Canvas core under its ring, as does a held puck', async ({
+	isMobile,
+	page,
+}) => {
+	test.skip(isMobile, mouseOnly);
+
+	await page.addStyleTag({ content: '*, *::before { transition: none !important; }' });
+
+	const [canvas, grayText, highlight] = [
+		await systemColour(page, 'Canvas'),
+		await systemColour(page, 'GrayText'),
+		await systemColour(page, 'Highlight'),
+	];
+	const points = [
+		'#envelope .sonic-envelope-handle[data-sonic-stage="decay"]',
+		'#envelope-curves .sonic-envelope-curve[data-sonic-stage="decay"]',
+	];
+
+	for (const selector of points) {
+		await page.locator(selector).hover();
+		await page.mouse.down();
+
+		const held = await readPoint(page, selector);
+
+		await page.mouse.up();
+		expect.soft(held, selector).toEqual({ fill: canvas, ring: highlight });
+	}
+
+	const puck = page.locator('#xy .sonic-xy-puck');
+
+	await puck.hover();
+	await page.mouse.down();
+
+	const heldPuck = await puck.evaluate(
+		(element) => getComputedStyle(element, '::before').backgroundColor,
+	);
+
+	await page.mouse.up();
+	expect.soft(heldPuck).toBe(canvas);
+
+	for (const id of ['env-decay', 'env-sustain', 'env-decay-curve']) {
+		await page.locator(`#${id}`).evaluate((dial) => {
+			dial.setAttribute('disabled', '');
+		});
+	}
+
+	for (const selector of points) {
+		await expect(page.locator(selector)).toHaveAttribute('data-sonic-disabled', '');
+		expect
+			.soft(await readPoint(page, selector), selector)
+			.toEqual({ fill: canvas, ring: grayText });
+	}
+});
+
 test('a live modulation paints its tick in CanvasText', async ({ page }) => {
 	const canvasText = await systemColour(page, 'CanvasText');
 
@@ -457,4 +512,11 @@ test('each focusable element focused by a key paints its outline outside its box
 		expect.soft(outline.colour, name).not.toMatch(/^(rgba\(0, 0, 0, 0\)|transparent)$/);
 		expect.soft(outline, name).toMatchObject({ offset: '2px', style: 'solid' });
 	}
+
+	// The XY part is still focused, and its outline is the pad's only focus ring
+	const puckRing = await page
+		.locator('#xy .sonic-xy-puck')
+		.evaluate((puck) => getComputedStyle(puck, '::before').outlineStyle);
+
+	expect.soft(puckRing).toBe('none');
 });

@@ -91,11 +91,7 @@
 	}
 
 	.sonic-waveform {
-		--_sonic-waveform-inset: calc(
-			var(--_sonic-waveform-size) * var(--sonic-waveform-inset-ratio, 0)
-		);
 		--_sonic-unit: calc(var(--_sonic-waveform-size) / 48);
-		--_sonic-glass-depth: var(--sonic-glass-depth, calc(0.6 * var(--_sonic-relief)));
 		--_sonic-waveform-line: var(
 			--sonic-waveform-playhead-width,
 			max(1px, round(var(--_sonic-unit), var(--_sonic-snap)))
@@ -129,28 +125,20 @@
 			var(--_sonic-waveform-label-inset)
 		);
 
+		/* fallow-ignore-next-line code-duplication -- a plain box restated, since sheets never import each other */
+		position: relative;
+		display: grid;
+		flex-shrink: 0;
+		grid-template: minmax(0, 1fr) / minmax(0, 1fr);
 		inline-size: var(--_sonic-waveform-length);
 		block-size: var(--_sonic-waveform-size);
-		padding: var(--_sonic-waveform-inset);
 		container-type: size;
 
 		/* A label riding in from the far side would otherwise widen the page */
 		overflow: hidden;
 		touch-action: var(--sonic-touch-action, pan-y);
 		cursor: grab;
-
-		--_sonic-waveform-radius-own: calc(
-			var(--_sonic-waveform-size) * var(--sonic-waveform-radius-ratio)
-		);
-		--_sonic-glass-radius: var(
-			--_sonic-waveform-radius-own,
-			var(
-				--sonic-radius,
-				calc(var(--_sonic-waveform-size) * var(--sonic-waveform-radius-ratio, 0.08))
-			)
-		);
-
-		border-radius: var(--_sonic-glass-radius);
+		user-select: none;
 		box-shadow: var(--_sonic-focus-shadow);
 	}
 
@@ -181,15 +169,15 @@
 
 	.sonic-waveform-scrim {
 		position: absolute;
-		inset: var(--_sonic-waveform-inset);
+		inset: 0;
 		pointer-events: none;
 		background: var(--sonic-waveform-scrim, none);
 	}
 
 	:is(.sonic-waveform-playhead, .sonic-waveform-ghost) {
 		position: absolute;
-		inset-block: var(--_sonic-waveform-inset);
-		inset-inline-start: calc(var(--_sonic-waveform-inset) - var(--_sonic-waveform-line) / 2);
+		inset-block: 0;
+		inset-inline-start: calc(var(--_sonic-waveform-line) / -2);
 		inline-size: var(--_sonic-waveform-line);
 		pointer-events: none;
 		translate: 50cqi;
@@ -205,8 +193,8 @@
 
 	.sonic-waveform-label {
 		position: absolute;
-		inset-block-end: calc(var(--_sonic-waveform-inset) + var(--_sonic-waveform-label-lift));
-		inset-inline-start: var(--_sonic-waveform-inset);
+		inset-block-end: var(--_sonic-waveform-label-lift);
+		inset-inline-start: 0;
 		padding: 0.2em 0.35em;
 		margin: -0.2em -0.35em;
 		font-family: var(--sonic-waveform-label-font, inherit);
@@ -227,7 +215,7 @@
 		filter: opacity(0.5);
 	}
 
-	/* Opaque, since a system highlight carries alpha that would blend the wave into the glass */
+	/* Opaque, since a system highlight carries alpha that would blend the wave into what is behind it */
 	@media (forced-colors: active) {
 		.sonic-waveform {
 			--_sonic-waveform-wave: rgb(from CanvasText r g b / 100%);
