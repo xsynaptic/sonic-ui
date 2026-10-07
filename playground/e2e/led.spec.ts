@@ -17,33 +17,35 @@ function readLens(led: Locator): Promise<string> {
 	});
 }
 
-test('each lens differs from the rest, and a button lights the LED it holds: idle while armed, lit once latched', async ({
-	page,
-}) => {
-	const lenses = await Promise.all(
-		['#led', '#led-lit', '#led-warning', '#led-danger', '#led-idle', '#led-ok'].map((selector) =>
-			readLens(page.locator(selector)),
-		),
-	);
-	const [unlit, lit] = lenses;
-	const idle = lenses[4];
+test(
+	'each lens differs from the rest, and a button lights the LED it holds: idle while armed, lit once latched',
+	{ tag: '@mobile' },
+	async ({ page }) => {
+		const lenses = await Promise.all(
+			['#led', '#led-lit', '#led-warning', '#led-danger', '#led-idle', '#led-ok'].map((selector) =>
+				readLens(page.locator(selector)),
+			),
+		);
+		const [unlit, lit] = lenses;
+		const idle = lenses[4];
 
-	expect(new Set(lenses).size).toBe(lenses.length);
+		expect(new Set(lenses).size).toBe(lenses.length);
 
-	const held = page.locator('#power .sonic-button .sonic-led');
+		const held = page.locator('#power .sonic-button .sonic-led');
 
-	expect(await readLens(held)).toBe(unlit);
+		expect(await readLens(held)).toBe(unlit);
 
-	await page.locator('#power .sonic-button').click();
-	expect(await readLens(held)).toBe(lit);
+		await page.locator('#power .sonic-button').click();
+		expect(await readLens(held)).toBe(lit);
 
-	const armed = page.locator('#armed-led .sonic-button .sonic-led');
+		const armed = page.locator('#armed-led .sonic-button .sonic-led');
 
-	expect(await readLens(armed)).toBe(idle);
+		expect(await readLens(armed)).toBe(idle);
 
-	await page.locator('#armed-led .sonic-button').click();
-	expect(await readLens(armed)).toBe(lit);
-});
+		await page.locator('#armed-led .sonic-button').click();
+		expect(await readLens(armed)).toBe(lit);
+	},
+);
 
 test('a slider is at its origin, and its child LED lights only there', async ({
 	isMobile,

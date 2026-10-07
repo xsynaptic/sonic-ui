@@ -2,7 +2,7 @@ import type { Page } from '@playwright/test';
 
 import { expect, test } from '@playwright/test';
 
-import { centerOf, mouseOnly } from './pointer.ts';
+import { boxOf, centerOf, mouseOnly } from './pointer.ts';
 
 test.beforeEach(async ({ page }) => {
 	await page.goto('/fixtures/');
@@ -20,8 +20,7 @@ test('a trusted press holds the momentary position and a release springs it back
 }) => {
 	test.skip(isMobile, mouseOnly);
 
-	const box = await page.getByRole('radio', { name: 'Duck' }).boundingBox();
-	if (!box) throw new Error('Duck has no box');
+	const box = await boxOf(page.getByRole('radio', { name: 'Duck' }));
 
 	await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
 	await page.mouse.down();

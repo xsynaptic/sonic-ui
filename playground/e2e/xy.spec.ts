@@ -1,15 +1,10 @@
-import type { Locator, Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
 
 import { expect, test } from '@playwright/test';
 
-import { centerOf, mouseOnly } from './pointer.ts';
+import type { Box } from './pointer.ts';
 
-interface Box {
-	height: number;
-	width: number;
-	x: number;
-	y: number;
-}
+import { boxOf, centerOf, mouseOnly } from './pointer.ts';
 
 test.beforeEach(async ({ page }) => {
 	await page.goto('/fixtures/');
@@ -17,13 +12,6 @@ test.beforeEach(async ({ page }) => {
 		pad.scrollIntoView({ block: 'center' });
 	});
 });
-
-async function boxOf(target: Locator): Promise<Box> {
-	const box = await target.boundingBox();
-	if (!box) throw new Error('The target has no box');
-
-	return box;
-}
 
 function readValues(page: Page): Promise<Array<null | string>> {
 	return page

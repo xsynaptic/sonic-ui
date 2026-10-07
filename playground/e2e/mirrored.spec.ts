@@ -41,74 +41,79 @@ function expectGreen([red = 0, green = 0, blue = 0]: Array<number>): void {
 	expect(Math.max(red, blue)).toBeLessThan(100);
 }
 
-test('an icon whose ids repeat later on the page paints in the button and after it, as does one styled through its prefixed id', async ({
-	page,
-}) => {
-	for (const name of ['gradient', 'use', 'encoded']) {
-		await test.step(name, async () => {
-			expectGreen(await centerPixel(page, page.locator(`#${name} .sonic-button-cap svg`)));
-			expectGreen(await centerPixel(page, page.locator(`#${name}-twin`)));
-		});
-	}
-	expectGreen(await centerPixel(page, page.locator('#styled .sonic-button-cap svg')));
-});
+test(
+	'an icon whose ids repeat later on the page paints in the button and after it, as does one styled through its prefixed id',
+	{ tag: '@mobile' },
+	async ({ page }) => {
+		for (const name of ['gradient', 'use', 'encoded']) {
+			await test.step(name, async () => {
+				expectGreen(await centerPixel(page, page.locator(`#${name} .sonic-button-cap svg`)));
+				expectGreen(await centerPixel(page, page.locator(`#${name}-twin`)));
+			});
+		}
+		expectGreen(await centerPixel(page, page.locator('#styled .sonic-button-cap svg')));
+	},
+);
 
-test('a mirrored original takes no room, no pointer, and no place in the accessibility tree', async ({
-	browserName,
-	page,
-}) => {
-	const button = page.locator('#gradient');
-	const original = button.locator(':scope > svg');
+test(
+	'a mirrored original takes no room, no pointer, and no place in the accessibility tree',
+	{ tag: '@mobile' },
+	async ({ browserName, page }) => {
+		const button = page.locator('#gradient');
+		const original = button.locator(':scope > svg');
 
-	await expect(original).toBeHidden();
-	expect(await original.evaluate((icon) => getComputedStyle(icon).visibility)).toBe('hidden');
-	expect(
-		await button.evaluate((host) => {
-			const box = host.querySelector('.sonic-button')?.getBoundingClientRect();
-			if (!box) throw new Error('No button');
+		await expect(original).toBeHidden();
+		expect(await original.evaluate((icon) => getComputedStyle(icon).visibility)).toBe('hidden');
+		expect(
+			await button.evaluate((host) => {
+				const box = host.querySelector('.sonic-button')?.getBoundingClientRect();
+				if (!box) throw new Error('No button');
 
-			const hit = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2);
+				const hit = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2);
 
-			return hit?.closest('.sonic-button') !== null;
-		}),
-	).toBe(true);
-	expect(
+				return hit?.closest('.sonic-button') !== null;
+			}),
+		).toBe(true);
+		expect(
+			await page.evaluate(() => {
+				const root = document.documentElement;
+
+				return root.scrollWidth <= root.clientWidth && root.scrollHeight <= root.clientHeight;
+			}),
+		).toBe(true);
+
+		// Playwright's own tree counts a text node by its parent's style, so this reads the browser's tree over CDP
+		if (browserName !== 'chromium') return;
+
+		const session = await page.context().newCDPSession(page);
+		const { nodes } = await session.send('Accessibility.getFullAXTree');
+
+		await session.detach();
+
+		expect(
+			nodes.filter(
+				(node) => !node.ignored && node.role?.value === 'StaticText' && node.name?.value === 'Go',
+			),
+		).toHaveLength(1);
+	},
+);
+
+test(
+	'buttons cloned or written back from their own markup hold one native button and still paint',
+	{ tag: '@mobile' },
+	async ({ page }) => {
 		await page.evaluate(() => {
-			const root = document.documentElement;
+			const main = document.querySelector('main');
+			const worded = document.querySelector('#worded');
+			if (!main || !worded) throw new Error('The fixture is missing');
 
-			return root.scrollWidth <= root.clientWidth && root.scrollHeight <= root.clientHeight;
-		}),
-	).toBe(true);
+			main.innerHTML = main.getHTML();
+			main.append(worded.cloneNode(true));
+		});
 
-	// Playwright's own tree counts a text node by its parent's style, so this reads the browser's tree over CDP
-	if (browserName !== 'chromium') return;
-
-	const session = await page.context().newCDPSession(page);
-	const { nodes } = await session.send('Accessibility.getFullAXTree');
-
-	await session.detach();
-
-	expect(
-		nodes.filter(
-			(node) => !node.ignored && node.role?.value === 'StaticText' && node.name?.value === 'Go',
-		),
-	).toHaveLength(1);
-});
-
-test('buttons cloned or written back from their own markup hold one native button and still paint', async ({
-	page,
-}) => {
-	await page.evaluate(() => {
-		const main = document.querySelector('main');
-		const worded = document.querySelector('#worded');
-		if (!main || !worded) throw new Error('The fixture is missing');
-
-		main.innerHTML = main.getHTML();
-		main.append(worded.cloneNode(true));
-	});
-
-	await expect(page.locator('sonic-button')).toHaveCount(6);
-	await expect(page.locator('sonic-button button')).toHaveCount(6);
-	await expect(page.locator('#worded .sonic-button-cap').last()).toHaveText('Go');
-	expectGreen(await centerPixel(page, page.locator('#gradient .sonic-button-cap svg')));
-});
+		await expect(page.locator('sonic-button')).toHaveCount(6);
+		await expect(page.locator('sonic-button button')).toHaveCount(6);
+		await expect(page.locator('#worded .sonic-button-cap').last()).toHaveText('Go');
+		expectGreen(await centerPixel(page, page.locator('#gradient .sonic-button-cap svg')));
+	},
+);

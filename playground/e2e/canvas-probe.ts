@@ -54,12 +54,20 @@ export async function paintedColour(canvas: Locator, colour: string): Promise<Pi
 }
 
 // Engines differ by up to 2 a channel on the same colour
-export function expectPixel(actual: Pixel | undefined, expected: Pixel): void {
+function checkPixel(check: typeof expect.soft, actual: Pixel | undefined, expected: Pixel): void {
 	const isClose = actual?.every(
 		(channel, index) => Math.abs(channel - (expected[index] ?? 0)) <= 2,
 	);
 
-	expect(isClose, `${String(actual)} against ${String(expected)}`).toBe(true);
+	check(isClose, `${String(actual)} against ${String(expected)}`).toBe(true);
+}
+
+export function expectPixel(actual: Pixel | undefined, expected: Pixel): void {
+	checkPixel(expect, actual, expected);
+}
+
+export function softPixel(actual: Pixel | undefined, expected: Pixel): void {
+	checkPixel(expect.soft, actual, expected);
 }
 
 export async function pixelAt(canvas: Locator, x: number): Promise<Pixel | undefined> {

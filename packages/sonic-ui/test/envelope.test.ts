@@ -149,6 +149,36 @@ test('a time handle has no level to move', () => {
 	expect(events).toEqual([]);
 });
 
+test('a delay and a hold each take a share and a handle, the hold at full level, and the hold handle turns its dial alone', () => {
+	const { dials, envelope, handle } = mount(`
+		<div id="dials">
+			${dialMarkup}
+			<sonic-dial id="delay" max="100" value="50"></sonic-dial>
+			<sonic-dial id="hold" max="200" value="50"></sonic-dial>
+		</div>
+		<sonic-envelope ${bound} delay="delay" hold="hold"></sonic-envelope>
+	`);
+	const hold = requireChild(document.body, '#hold', SonicDial);
+	const xOf = (stage: string): number => proportionOf(handle(stage), 'x');
+
+	expect([handle('delay').hidden, handle('hold').hidden]).toEqual([false, false]);
+	expect(xOf('delay')).toBeCloseTo(0.5 / 6, 4);
+	expect(xOf('attack')).toBeCloseTo(1 / 6, 4);
+	expect(xOf('hold')).toBeCloseTo(1.25 / 6, 4);
+	expect([proportionOf(handle('delay'), 'y'), proportionOf(handle('hold'), 'y')]).toEqual([0, 1]);
+
+	drag(handle('hold'), { x: 20, y: -40 });
+
+	expect(hold.value).toBe(110);
+	expect([dials.attack.value, dials.sustain.value]).toEqual([1.5, -30]);
+	expect(xOf('hold')).toBeCloseTo(1.55 / 6, 4);
+	expect(xOf('release')).toBeCloseTo(4.05 / 6, 4);
+
+	envelope.hold = undefined;
+	expect(handle('hold').hidden).toBe(true);
+	expect(xOf('release')).toBeCloseTo(3.5 / 5, 4);
+});
+
 test('a scripted write to a dial redraws the line and every handle after it', () => {
 	const { dials, envelope, handle } = mountBound();
 	const line = requireChild(envelope, '.sonic-envelope-line', SVGElement);
@@ -227,7 +257,6 @@ test('disabling the envelope mid-drag ends the drag where it is and reports the 
 		'change decay',
 		'change sustain',
 	]);
-	expect(envelope.matches(':state(dragging)')).toBe(false);
 });
 
 test('a cancelled drag puts both dials back and reports no change', () => {

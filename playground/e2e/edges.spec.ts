@@ -31,59 +31,65 @@ function laneTops(host: Locator, edgeWidth: string): Promise<Array<string>> {
 	}, edgeWidth);
 }
 
-test("the canvas is the strip's own box, its regions and readout keep their own edges, and forced colours edge a screen but not the strip in it", async ({
-	page,
-}) => {
-	const { host, strip } = await openPinned(page);
-	const readout = host.locator('.sonic-wavestrip-readout');
+test(
+	"the canvas is the strip's own box, its regions and readout keep their own edges, and forced colours edge a screen but not the strip in it",
+	{ tag: '@mobile' },
+	async ({ page }) => {
+		const { host, strip } = await openPinned(page);
+		const readout = host.locator('.sonic-wavestrip-readout');
 
-	await expect(strip).toHaveCSS('border-top-width', '0px');
+		await expect(strip).toHaveCSS('border-top-width', '0px');
 
-	const boxes = await strip.evaluate((control) => {
-		const canvas = control.querySelector('canvas');
-		if (!canvas) throw new Error('The strip has no canvas');
+		const boxes = await strip.evaluate((control) => {
+			const canvas = control.querySelector('canvas');
+			if (!canvas) throw new Error('The strip has no canvas');
 
-		return [control, canvas].map((part) => {
-			const { height, width, x, y } = part.getBoundingClientRect();
+			return [control, canvas].map((part) => {
+				const { height, width, x, y } = part.getBoundingClientRect();
 
-			return [x, y, width, height];
+				return [x, y, width, height];
+			});
 		});
-	});
 
-	expect(boxes[1]).toEqual(boxes[0]);
-	await expect(host.locator('.sonic-wavestrip-region')).toHaveCSS(
-		'border-inline-start-width',
-		'1px',
-	);
-	await expect(readout).toHaveCSS('border-top-width', '2px');
-	await expect(readout).toHaveCSS('border-top-color', 'rgb(1, 2, 3)');
+		expect(boxes[1]).toEqual(boxes[0]);
+		await expect(host.locator('.sonic-wavestrip-region')).toHaveCSS(
+			'border-inline-start-width',
+			'1px',
+		);
+		await expect(readout).toHaveCSS('border-top-width', '2px');
+		await expect(readout).toHaveCSS('border-top-color', 'rgb(1, 2, 3)');
 
-	const screen = page.locator('#screen-strip');
+		const screen = page.locator('#screen-strip');
 
-	await screen.evaluate((glass) => {
-		glass.style.setProperty('--sonic-glass-edge-width', '0');
-	});
-	await expect(screen).toHaveCSS('border-top-width', '0px');
+		await screen.evaluate((glass) => {
+			glass.style.setProperty('--sonic-glass-edge-width', '0');
+		});
+		await expect(screen).toHaveCSS('border-top-width', '0px');
 
-	// Forced colours keep an edge on glass that asked for none
-	await page.emulateMedia({ forcedColors: 'active' });
-	await expect(screen).toHaveCSS('border-top-width', '1px');
-	await expect(screen.locator('.sonic-wavestrip')).toHaveCSS('border-top-width', '0px');
-	await expect(strip).toHaveCSS('border-top-width', '0px');
-});
+		// Forced colours keep an edge on glass that asked for none
+		await page.emulateMedia({ forcedColors: 'active' });
+		await expect(screen).toHaveCSS('border-top-width', '1px');
+		await expect(screen.locator('.sonic-wavestrip')).toHaveCSS('border-top-width', '0px');
+		await expect(strip).toHaveCSS('border-top-width', '0px');
+	},
+);
 
-test('a marker edge width sets the lane step on a filled strip', async ({ page }) => {
-	const { host } = await openPinned(page);
+test(
+	'a marker edge width sets the lane step on a filled strip',
+	{ tag: '@mobile' },
+	async ({ page }) => {
+		const { host } = await openPinned(page);
 
-	expect(await laneTops(host, '1px')).toEqual(['0px', '0px']);
-	await expect(host.locator('.sonic-wavestrip-marker').first()).toHaveCSS(
-		'box-shadow',
-		/0px 0px 0px 1px$/,
-	);
+		expect(await laneTops(host, '1px')).toEqual(['0px', '0px']);
+		await expect(host.locator('.sonic-wavestrip-marker').first()).toHaveCSS(
+			'box-shadow',
+			/0px 0px 0px 1px$/,
+		);
 
-	const ratio = await page.evaluate(() => devicePixelRatio);
+		const ratio = await page.evaluate(() => devicePixelRatio);
 
-	const [, lane = ''] = await laneTops(host, 'initial');
+		const [, lane = ''] = await laneTops(host, 'initial');
 
-	expect(Number(lane.replace('px', ''))).toBeCloseTo(4 + Math.round(1.5 * ratio) / ratio, 3);
-});
+		expect(Number(lane.replace('px', ''))).toBeCloseTo(4 + Math.round(1.5 * ratio) / ratio, 3);
+	},
+);

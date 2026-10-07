@@ -2,6 +2,8 @@ import type { Locator, Page } from '@playwright/test';
 
 import { expect } from '@playwright/test';
 
+import { boxOf } from './pointer.ts';
+
 type Colour = [number, number, number];
 
 interface PaintedLine {
@@ -54,8 +56,7 @@ export async function paintedLine(
 	across = 0.5,
 ): Promise<PaintedLine> {
 	const shot = await target.screenshot();
-	const box = await target.boundingBox();
-	if (!box) throw new Error('The target has no box');
+	const box = await boxOf(target);
 
 	const pixels = await pixelLine(target.page(), shot, { across, axis });
 
@@ -83,21 +84,43 @@ export function paintedRuns(
 	return runs;
 }
 
+type Check = typeof expect.soft;
+
 // A screenshot rounds its box out to whole pixels, and an edge antialiases across one more
-export function expectEdge(actual: number | undefined, expected: number): void {
+function checkEdge(check: Check, actual: number | undefined, expected: number): void {
 	const distance = Math.abs((actual ?? NaN) - expected);
 
-	expect(distance, `${String(actual)} against ${String(expected)}`).toBeLessThanOrEqual(1.5);
+	check(distance, `${String(actual)} against ${String(expected)}`).toBeLessThanOrEqual(1.5);
+}
+
+function checkRuns(
+	check: Check,
+	actual: Array<[number, number]>,
+	expected: Array<[number, number]>,
+): void {
+	check(actual).toHaveLength(expected.length);
+
+	for (const [index, [from, to]] of expected.entries()) {
+		checkEdge(check, actual[index]?.[0], from);
+		checkEdge(check, actual[index]?.[1], to);
+	}
+}
+
+export function expectEdge(actual: number | undefined, expected: number): void {
+	checkEdge(expect, actual, expected);
+}
+
+export function softEdge(actual: number | undefined, expected: number): void {
+	checkEdge(expect.soft, actual, expected);
 }
 
 export function expectRuns(
 	actual: Array<[number, number]>,
 	expected: Array<[number, number]>,
 ): void {
-	expect(actual).toHaveLength(expected.length);
+	checkRuns(expect, actual, expected);
+}
 
-	for (const [index, [from, to]] of expected.entries()) {
-		expectEdge(actual[index]?.[0], from);
-		expectEdge(actual[index]?.[1], to);
-	}
+export function softRuns(actual: Array<[number, number]>, expected: Array<[number, number]>): void {
+	checkRuns(expect.soft, actual, expected);
 }

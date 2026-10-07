@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 
-import { drag, mouseOnly } from './pointer.ts';
+import { boxOf, drag, mouseOnly } from './pointer.ts';
+import { valueNow } from './state.ts';
 
 test.beforeEach(async ({ page }) => {
 	await page.goto('/fixtures/');
@@ -22,17 +23,12 @@ test('a drag on the decay handle turns the decay and sustain dials', async ({ is
 		page.getByRole('slider', { exact: true, name: 'Envelope decay' }),
 		page.getByRole('slider', { name: 'Envelope sustain' }),
 	];
-	const box = await handle.boundingBox();
-	if (!box) throw new Error('The handle has no box');
+	const box = await boxOf(handle);
 
 	await drag(page, handle, { x: 20, y: 12 });
 
-	await expect
-		.poll(async () => Number(await decay.getAttribute('aria-valuenow')))
-		.toBeGreaterThan(45);
-	await expect
-		.poll(async () => Number(await sustain.getAttribute('aria-valuenow')))
-		.toBeLessThan(0.6);
+	await expect.poll(() => valueNow(decay)).toBeGreaterThan(45);
+	await expect.poll(() => valueNow(sustain)).toBeLessThan(0.6);
 
 	const moved = await handle.boundingBox();
 
@@ -53,9 +49,7 @@ test('a curve handle bows its stage and turns only its curve dial', async ({ isM
 	await expect(page.locator('#envelope-curves .sonic-envelope-curve:not([hidden])')).toHaveCount(2);
 	await drag(page, curveHandle, { x: 0, y: -12 });
 
-	await expect
-		.poll(async () => Number(await curve.getAttribute('aria-valuenow')))
-		.toBeGreaterThan(3);
+	await expect.poll(() => valueNow(curve)).toBeGreaterThan(3);
 	await expect(page.getByRole('slider', { exact: true, name: 'Envelope decay' })).toHaveAttribute(
 		'aria-valuenow',
 		'45',

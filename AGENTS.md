@@ -64,4 +64,5 @@ To check your own work, take one look at the running dev server in a single brow
 - Listen for `input` and `change` on a parent, as consumers do; bubbling is API.
 - happy-dom has no layout, computed styles, canvas, popover or `ElementInternals`. Test geometry as pure functions and mock `getBoundingClientRect` for pointer maths.
 - E2E covers only what needs a real engine: trusted input, computed CSS, focus, forced colours, forms.
+- The phone project runs only tests tagged `@mobile`. A new test that depends on touch, viewport width, 3dppx or a pointer that cannot hover must carry the tag; when unsure, tag it.
 - `pnpm stryker` audits test strength on demand; read the survivors, not the score.

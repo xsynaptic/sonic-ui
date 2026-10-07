@@ -1,5 +1,12 @@
 import type { Locator, Page } from '@playwright/test';
 
+export interface Box {
+	height: number;
+	width: number;
+	x: number;
+	y: number;
+}
+
 export interface Point {
 	x: number;
 	y: number;
@@ -7,9 +14,15 @@ export interface Point {
 
 export const mouseOnly = 'The mouse drives this gesture';
 
-export async function centerOf(target: Locator): Promise<Point> {
+export async function boxOf(target: Locator): Promise<Box> {
 	const box = await target.boundingBox();
 	if (!box) throw new Error('The target has no box');
+
+	return box;
+}
+
+export async function centerOf(target: Locator): Promise<Point> {
+	const box = await boxOf(target);
 
 	return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
 }

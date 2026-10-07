@@ -4,18 +4,16 @@ import { expect, test } from '@playwright/test';
 
 import type { Point } from './pointer.ts';
 
-import { centerOf, mouseOnly } from './pointer.ts';
+import { boxOf, centerOf, mouseOnly } from './pointer.ts';
+import { valueNow } from './state.ts';
 
-async function valueOf(page: Page, name: string): Promise<number> {
-	const slider = page.getByRole('slider', { exact: true, name });
-
-	return Number(await slider.getAttribute('aria-valuenow'));
+function valueOf(page: Page, name: string): Promise<number> {
+	return valueNow(page.getByRole('slider', { exact: true, name }));
 }
 
 async function capBox(page: Page, id: string): Promise<{ cap: Point; grooveRight: number }> {
 	const cap = await centerOf(page.locator(`#${id} .sonic-slider-cap`));
-	const groove = await page.locator(`#${id} .sonic-slider`).boundingBox();
-	if (!groove) throw new Error(`#${id} has no box`);
+	const groove = await boxOf(page.locator(`#${id} .sonic-slider`));
 
 	return { cap, grooveRight: groove.x + groove.width };
 }

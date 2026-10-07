@@ -2,6 +2,9 @@ import type { Locator, Page } from '@playwright/test';
 
 import { expect, test } from '@playwright/test';
 
+import { boxOf } from './pointer.ts';
+import { valueNow } from './state.ts';
+
 async function openButton(page: Page): Promise<{ button: Locator; clicks: () => Promise<number> }> {
 	await page.goto('/fixtures/');
 
@@ -22,67 +25,69 @@ async function openButton(page: Page): Promise<{ button: Locator; clicks: () => 
 }
 
 async function pressBeside(page: Page, button: Locator, outsidePx: number): Promise<void> {
-	const box = await button.locator('.sonic-button').boundingBox();
-	if (!box) throw new Error('The button has no box');
+	const box = await boxOf(button.locator('.sonic-button'));
 
 	await page.mouse.click(box.x - outsidePx, box.y + box.height / 2);
 }
 
-test("a press just outside a button lands only with a target size set, and only within it, and a target size under the button's own leaves its edge pressable", async ({
-	page,
-}) => {
-	const { button, clicks } = await openButton(page);
+test(
+	"a press just outside a button lands only with a target size set, and only within it, and a target size under the button's own leaves its edge pressable",
+	{ tag: '@mobile' },
+	async ({ page }) => {
+		const { button, clicks } = await openButton(page);
 
-	await pressBeside(page, button, 4);
-	expect(await clicks()).toBe(0);
+		await pressBeside(page, button, 4);
+		expect(await clicks()).toBe(0);
 
-	await button.evaluate((element) => {
-		element.style.setProperty('--sonic-target-size', '44px');
-	});
-	await pressBeside(page, button, 4);
-	expect(await clicks()).toBe(1);
+		await button.evaluate((element) => {
+			element.style.setProperty('--sonic-target-size', '44px');
+		});
+		await pressBeside(page, button, 4);
+		expect(await clicks()).toBe(1);
 
-	await pressBeside(page, button, 8);
-	expect(await clicks()).toBe(1);
+		await pressBeside(page, button, 8);
+		expect(await clicks()).toBe(1);
 
-	await button.evaluate((element) => {
-		element.style.setProperty('--sonic-target-size', '8px');
-	});
-	await pressBeside(page, button, -2);
-	expect(await clicks()).toBe(2);
-});
+		await button.evaluate((element) => {
+			element.style.setProperty('--sonic-target-size', '8px');
+		});
+		await pressBeside(page, button, -2);
+		expect(await clicks()).toBe(2);
+	},
+);
 
-test("a press just past a slider's breadth lands only with a target size set, and only within it; a press past its length never lands", async ({
-	page,
-}) => {
-	await page.goto('/fixtures/');
+test(
+	"a press just past a slider's breadth lands only with a target size set, and only within it; a press past its length never lands",
+	{ tag: '@mobile' },
+	async ({ page }) => {
+		await page.goto('/fixtures/');
 
-	const host = page.locator('#send');
-	const slider = page.getByRole('slider', { name: 'Send' });
+		const host = page.locator('#send');
+		const slider = page.getByRole('slider', { name: 'Send' });
 
-	await slider.scrollIntoViewIfNeeded();
+		await slider.scrollIntoViewIfNeeded();
 
-	const box = await slider.boundingBox();
-	if (!box) throw new Error('The slider has no box');
+		const box = await boxOf(slider);
 
-	const value = async (): Promise<number> => Number(await slider.getAttribute('aria-valuenow'));
+		const value = (): Promise<number> => valueNow(slider);
 
-	await page.mouse.click(box.x + box.width * 0.75, box.y - 4);
-	expect(await value()).toBe(0);
+		await page.mouse.click(box.x + box.width * 0.75, box.y - 4);
+		expect(await value()).toBe(0);
 
-	await host.evaluate((element) => {
-		element.style.setProperty('--sonic-target-size', '44px');
-	});
-	await page.mouse.click(box.x + box.width * 0.75, box.y - 4);
+		await host.evaluate((element) => {
+			element.style.setProperty('--sonic-target-size', '44px');
+		});
+		await page.mouse.click(box.x + box.width * 0.75, box.y - 4);
 
-	const landed = await value();
+		const landed = await value();
 
-	expect(landed).toBeGreaterThan(60);
+		expect(landed).toBeGreaterThan(60);
 
-	await page.mouse.click(box.x + box.width * 0.25, box.y - 10);
-	await page.mouse.click(box.x + box.width + 4, box.y + box.height / 2);
-	expect(await value()).toBe(landed);
-});
+		await page.mouse.click(box.x + box.width * 0.25, box.y - 10);
+		await page.mouse.click(box.x + box.width + 4, box.y + box.height / 2);
+		expect(await value()).toBe(landed);
+	},
+);
 
 test.describe('forced colours', () => {
 	test.use({ forcedColors: 'active' });

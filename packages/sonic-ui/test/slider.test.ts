@@ -175,6 +175,22 @@ test('with groove-press="none" and double-press="reset", a double press on the g
 	expect(slider.value).toBe(40);
 });
 
+test('with groove-press="none" and double-press="reset", a double press on the cap resets to the default and opens no entry', () => {
+	const { control, slider } = mountSlider(
+		'value="20" default="50" double-press="reset" groove-press="none"',
+	);
+	const cap = capOf(control);
+
+	layOut(control, new DOMRect(100, 0, 220, 40), new DOMRect(140, 0, 20, 40));
+	for (let presses = 0; presses < 2; presses += 1) {
+		pointerAt(cap, 'pointerdown', { clientX: 150 });
+		pointerAt(cap, 'pointerup', { clientX: 150 });
+	}
+
+	expect(slider.value).toBe(50);
+	expect(control.querySelector('input')?.hidden).toBe(true);
+});
+
 test('groove-press reads jump while unset, and jump is a valid value', () => {
 	expect(mountSlider('value="40"').slider.groovePress).toBe('jump');
 

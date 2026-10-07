@@ -4,7 +4,8 @@ import { expect, test } from '@playwright/test';
 
 import type { Point } from './pointer.ts';
 
-import { centerOf } from './pointer.ts';
+import { boxOf, centerOf } from './pointer.ts';
+import { valueNow } from './state.ts';
 
 test.skip(({ browserName }) => browserName !== 'chromium', 'A touch swipe needs CDP');
 test.use({ hasTouch: true, viewport: { height: 400, width: 400 } });
@@ -57,9 +58,7 @@ test('a horizontal swipe on a horizontal slider moves the value and not the page
 
 	const slider = page.getByRole('slider', { name: 'Send' });
 
-	await expect
-		.poll(async () => Number(await slider.getAttribute('aria-valuenow')))
-		.toBeGreaterThan(0);
+	await expect.poll(() => valueNow(slider)).toBeGreaterThan(0);
 	expect(await page.evaluate(() => window.scrollY)).toBe(scrolled);
 });
 
@@ -73,9 +72,7 @@ test('a swipe on an XY pad moves both values and never the page', async ({ page 
 
 	const pad = page.getByRole('slider', { exact: true, name: 'Pad' });
 
-	await expect
-		.poll(async () => Number(await pad.getAttribute('aria-valuenow')))
-		.toBeGreaterThan(50);
+	await expect.poll(() => valueNow(pad)).toBeGreaterThan(50);
 	await expect(pad).toHaveAttribute('aria-valuetext', /^X \d+, Y (5[1-9]|[6-9]\d)$/);
 	expect(await page.evaluate(() => window.scrollY)).toBe(scrolled);
 });
@@ -152,14 +149,11 @@ test('a swipe on an envelope handle turns its dials and never the page, and one 
 
 	await swipe(page, handle, { x: handle.x + 30, y: handle.y - 30 });
 
-	await expect
-		.poll(async () => Number(await decay.getAttribute('aria-valuenow')))
-		.toBeGreaterThan(45);
+	await expect.poll(() => valueNow(decay)).toBeGreaterThan(45);
 	expect(await readScroll(page)).toEqual(scrolled);
 
 	const held = await decay.getAttribute('aria-valuenow');
-	const box = await page.locator('#envelope .sonic-envelope').boundingBox();
-	if (!box) throw new Error('The envelope has no box');
+	const box = await boxOf(page.locator('#envelope .sonic-envelope'));
 
 	const offHandle = { x: box.x + box.width - 20, y: box.y + 20 };
 

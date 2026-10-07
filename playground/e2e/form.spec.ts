@@ -308,6 +308,66 @@ test('back navigation restores what each control held, never what another held',
 	if (browserName !== 'firefox') expect(held).toEqual(changed);
 });
 
+test('back navigation restores an XY pad, a bare switch and toggle, a number box and both wave controls', async ({
+	browserName,
+	page,
+}) => {
+	const reads = {
+		detail: ['#detail .sonic-waveform', 'aria-valuenow'],
+		link: ['#link [role="switch"]', 'aria-checked'],
+		position: ['#position .sonic-wavestrip', 'aria-valuenow'],
+		sync: ['#sync [role="switch"]', 'aria-checked'],
+		tempo: ['#tempo .sonic-number', 'aria-valuenow'],
+		touchX: ['#touch [data-sonic-axis="x"]', 'aria-valuenow'],
+		touchY: ['#touch [data-sonic-axis="y"]', 'aria-valuenow'],
+	} as const;
+	const original = {
+		detail: '90',
+		link: 'false',
+		position: '150',
+		sync: 'false',
+		tempo: '120',
+		touchX: '40',
+		touchY: '60',
+	};
+	const changed = {
+		detail: '92',
+		link: 'true',
+		position: '155',
+		sync: 'true',
+		tempo: '120.5',
+		touchX: '45',
+		touchY: '61',
+	};
+
+	await page.locator('#tempo .sonic-number').press('ArrowUp');
+	await page.locator('#touch [data-sonic-axis="x"]').press('ArrowRight');
+	await page.locator('#touch [data-sonic-axis="x"]').press('ArrowUp');
+	await page.locator('#position .sonic-wavestrip').press('ArrowRight');
+	await page.locator('#detail .sonic-waveform').press('ArrowRight');
+	await page.locator('#sync [role="switch"]').click();
+	await page.locator('#link [role="switch"]').click();
+	await page.goto('/fixtures/docked/');
+	await page.goBack();
+	await expect(page.locator('#tempo .sonic-number')).toHaveAttribute('aria-valuenow');
+
+	const controls = ['detail', 'link', 'position', 'sync', 'tempo', 'touchX', 'touchY'] as const;
+	const held = Object.fromEntries(
+		await Promise.all(
+			controls.map(async (control) => {
+				const [selector, name] = reads[control];
+
+				return [control, await page.locator(selector).getAttribute(name)] as const;
+			}),
+		),
+	);
+
+	for (const control of controls) {
+		expect([original[control], changed[control]], control).toContain(held[control]);
+	}
+	if (browserName !== 'firefox') expect(held).toEqual(changed);
+});
+
 test('a value whose position is disabled afterwards is still submitted', async ({ page }) => {
 	await page.locator('#route > [data-sonic-value="in"]').evaluate((child) => {
 		child.toggleAttribute('data-sonic-disabled', true);

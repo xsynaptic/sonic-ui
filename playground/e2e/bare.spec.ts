@@ -2,7 +2,7 @@ import type { Locator, Page } from '@playwright/test';
 
 import { expect, test } from '@playwright/test';
 
-const clear = /^(transparent|rgba\(0, 0, 0, 0\))|\/ 0\)$/;
+import { clear } from './colour.ts';
 
 test.beforeEach(async ({ page }) => {
 	await page.goto('/fixtures/no-skin/');
@@ -142,48 +142,52 @@ test('the edge follows a legend added or removed later, and lights at full stren
 	expect(latched.text).not.toBe(rest.text);
 });
 
-test('a bare unlit LED is a tint of the text around it with no bezel, and a skinned one keeps its glass', async ({
-	page,
-}) => {
-	const bare = await readLed(page, '#bare-led');
-	const amber = await readLed(page, '#amber-led');
+test(
+	'a bare unlit LED is a tint of the text around it with no bezel, and a skinned one keeps its glass',
+	{ tag: '@mobile' },
+	async ({ page }) => {
+		const bare = await readLed(page, '#bare-led');
+		const amber = await readLed(page, '#amber-led');
 
-	expect(bare.lens).toBe(bare.tint);
-	expect(bare.bezel).toMatch(clear);
-	expect(bare.inset).toBe('2px');
+		expect(bare.lens).toBe(bare.tint);
+		expect(bare.bezel).toMatch(clear);
+		expect(bare.inset).toBe('2px');
 
-	expect(amber.lens).toBe(amber.glass);
-	expect(amber.bezel).not.toMatch(clear);
-	expect(amber.inset).toBe('3.75px');
-});
+		expect(amber.lens).toBe(amber.glass);
+		expect(amber.bezel).not.toMatch(clear);
+		expect(amber.inset).toBe('3.75px');
+	},
+);
 
-test('bare glass has an edge and follows the colour scheme, and skinned glass does neither', async ({
-	page,
-}) => {
-	await page.emulateMedia({ colorScheme: 'light' });
+test(
+	'bare glass has an edge and follows the colour scheme, and skinned glass does neither',
+	{ tag: '@mobile' },
+	async ({ page }) => {
+		await page.emulateMedia({ colorScheme: 'light' });
 
-	const light = await readGlass(page, '#bare-screen');
-	const amberLight = await readGlass(page, '#amber-screen');
-	const flat = await readGlass(page, '#flat-screen');
-	const own = await readGlass(page, '#own-glass');
+		const light = await readGlass(page, '#bare-screen');
+		const amberLight = await readGlass(page, '#amber-screen');
+		const flat = await readGlass(page, '#flat-screen');
+		const own = await readGlass(page, '#own-glass');
 
-	expect(light.edge).toBe('1px');
-	expect(amberLight.edge).toBe('0px');
-	expect(amberLight.inner).toBe(amberLight.outer);
-	expect(flat.edge).toBe('1px');
-	expect(light.outer).toBe(amberLight.outer);
+		expect(light.edge).toBe('1px');
+		expect(amberLight.edge).toBe('0px');
+		expect(amberLight.inner).toBe(amberLight.outer);
+		expect(flat.edge).toBe('1px');
+		expect(light.outer).toBe(amberLight.outer);
 
-	expect(light.fill).toBeGreaterThan(0.9);
-	expect(light.text).toBeLessThan(0.3);
-	expect(own.text).toBeGreaterThan(0.7);
+		expect(light.fill).toBeGreaterThan(0.9);
+		expect(light.text).toBeLessThan(0.3);
+		expect(own.text).toBeGreaterThan(0.7);
 
-	await page.emulateMedia({ colorScheme: 'dark' });
+		await page.emulateMedia({ colorScheme: 'dark' });
 
-	const dark = await readGlass(page, '#bare-screen');
+		const dark = await readGlass(page, '#bare-screen');
 
-	expect(dark.fill).toBeLessThan(0.2);
-	expect(dark.text).toBeGreaterThan(0.7);
-	expect(await readGlass(page, '#amber-screen')).toEqual(amberLight);
-	expect(amberLight.fill).toBeLessThan(0.2);
-	expect(amberLight.text).toBeGreaterThan(0.7);
-});
+		expect(dark.fill).toBeLessThan(0.2);
+		expect(dark.text).toBeGreaterThan(0.7);
+		expect(await readGlass(page, '#amber-screen')).toEqual(amberLight);
+		expect(amberLight.fill).toBeLessThan(0.2);
+		expect(amberLight.text).toBeGreaterThan(0.7);
+	},
+);

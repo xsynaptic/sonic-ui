@@ -4,6 +4,7 @@ import { expect, test } from '@playwright/test';
 
 import { expectRuns, paintedLine, paintedRuns } from './paint-probe.ts';
 import { mouseOnly } from './pointer.ts';
+import { stillTransitions } from './state.ts';
 
 interface DiscSizes {
 	edge: number;
@@ -30,7 +31,7 @@ function differsFrom(backdrop: Colour | undefined): (colour: Colour) => boolean 
 // Enlarged through its size token: at 8rem the ring, its gap and the lines are a pixel or two wide
 async function openLargePad(page: Page): Promise<{ disc: DiscSizes; puck: Locator }> {
 	await page.goto('/fixtures/');
-	await page.addStyleTag({ content: '*, *::before, *::after { transition: none !important; }' });
+	await stillTransitions(page);
 	await page.locator('#xy').evaluate((pad) => {
 		pad.style.setProperty('--sonic-xy-size', '16rem');
 		pad.style.setProperty('--sonic-relief', '0');
@@ -55,7 +56,7 @@ test('a handle and a curve handle brighten on hover and keep their ring while he
 	test.skip(isMobile, mouseOnly);
 
 	await page.goto('/fixtures/');
-	await page.addStyleTag({ content: '* { transition: none !important; }' });
+	await stillTransitions(page);
 
 	for (const selector of points) {
 		const point = page.locator(selector);
@@ -91,7 +92,7 @@ test('a held handle keeps its core, and a relief skin gives it a glow, not a bra
 	test.skip(isMobile, mouseOnly);
 
 	await page.goto('/fixtures/');
-	await page.addStyleTag({ content: '*, *::before { transition: none !important; }' });
+	await stillTransitions(page);
 
 	const handle = page.locator(points[0] ?? '');
 	const read = () =>
@@ -133,7 +134,7 @@ test('the puck lifts on hover and is a glowing ring round a clear fill while hel
 	test.skip(isMobile, mouseOnly);
 
 	await page.goto('/fixtures/');
-	await page.addStyleTag({ content: '*, *::before { transition: none !important; }' });
+	await stillTransitions(page);
 
 	const puck = page.locator('#xy .sonic-xy-puck');
 	const read = () =>
@@ -164,30 +165,34 @@ test('the puck lifts on hover and is a glowing ring round a clear fill while hel
 	expect(held.glow).not.toBe(rest.glow);
 });
 
-test('a key-focused puck is ringed by a circle that stands clear of its disc', async ({ page }) => {
-	const { disc, puck } = await openLargePad(page);
+test(
+	'a key-focused puck is ringed by a circle that stands clear of its disc',
+	{ tag: '@mobile' },
+	async ({ page }) => {
+		const { disc, puck } = await openLargePad(page);
 
-	await page.addStyleTag({ content: '#xy .sonic-xy-field { visibility: hidden; }' });
-	await page.locator('#xy [data-sonic-axis="x"]').press('Shift');
+		await page.addStyleTag({ content: '#xy .sonic-xy-field { visibility: hidden; }' });
+		await page.locator('#xy [data-sonic-axis="x"]').press('Shift');
 
-	const across = await paintedLine(puck, 'x');
-	const size = across.lengthPx;
-	const runs = paintedRuns(across, differsFrom(across.pixels[0]));
+		const across = await paintedLine(puck, 'x');
+		const size = across.lengthPx;
+		const runs = paintedRuns(across, differsFrom(across.pixels[0]));
 
-	expect(disc.gap).toBeGreaterThanOrEqual(2);
-	expectRuns(runs, [
-		[size * 0.25 - disc.gap - disc.ring, size * 0.25 - disc.gap],
-		[size * 0.25, size * 0.75],
-		[size * 0.75 + disc.gap, size * 0.75 + disc.gap + disc.ring],
-	]);
+		expect(disc.gap).toBeGreaterThanOrEqual(2);
+		expectRuns(runs, [
+			[size * 0.25 - disc.gap - disc.ring, size * 0.25 - disc.gap],
+			[size * 0.25, size * 0.75],
+			[size * 0.75 + disc.gap, size * 0.75 + disc.gap + disc.ring],
+		]);
 
-	// Through the top of the ring a circle is a short chord, where a square outline would span the disc
-	const top = await paintedLine(puck, 'x', (size * 0.25 - disc.gap - disc.ring / 2) / size);
-	const chords = paintedRuns(top, differsFrom(top.pixels[0])).map(([from, to]) => to - from);
+		// Through the top of the ring a circle is a short chord, where a square outline would span the disc
+		const top = await paintedLine(puck, 'x', (size * 0.25 - disc.gap - disc.ring / 2) / size);
+		const chords = paintedRuns(top, differsFrom(top.pixels[0])).map(([from, to]) => to - from);
 
-	expect(chords).toHaveLength(1);
-	expect(chords[0]).toBeLessThan(size / 2);
-});
+		expect(chords).toHaveLength(1);
+		expect(chords[0]).toBeLessThan(size / 2);
+	},
+);
 
 test('each of the pad’s lines stops inside the ring of a held puck, and leaves its centre clear', async ({
 	isMobile,

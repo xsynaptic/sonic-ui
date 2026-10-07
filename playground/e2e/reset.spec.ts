@@ -75,21 +75,23 @@ async function readFacts(page: Page, reset: string): Promise<Record<string, stri
 	});
 }
 
-test('a reset in a layer declared before sonic moves and recolours no part of any control', async ({
-	page,
-}) => {
-	const messages = collectConsole(page);
-	const bare = await readFacts(page, 'none');
-	const layered = await readFacts(page, 'layered');
+test(
+	'a reset in a layer declared before sonic moves and recolours no part of any control',
+	{ tag: '@mobile' },
+	async ({ page }) => {
+		const messages = collectConsole(page);
+		const bare = await readFacts(page, 'none');
+		const layered = await readFacts(page, 'layered');
 
-	expect(Object.keys(bare).length).toBeGreaterThan(500);
-	expect(
-		Object.keys(bare)
-			.filter((fact) => bare[fact] !== layered[fact])
-			.map((fact) => `${fact}: ${String(bare[fact])} -> ${String(layered[fact])}`),
-	).toEqual([]);
-	expect(messages).toEqual([]);
-});
+		expect(Object.keys(bare).length).toBeGreaterThan(500);
+		expect(
+			Object.keys(bare)
+				.filter((fact) => bare[fact] !== layered[fact])
+				.map((fact) => `${fact}: ${String(bare[fact])} -> ${String(layered[fact])}`),
+		).toEqual([]);
+		expect(messages).toEqual([]);
+	},
+);
 
 test('an unlayered reset zeroes the sheets’ padding, and each control it breaks says so once', async ({
 	page,
@@ -117,4 +119,22 @@ test('a margin on a host is reported, since the host has no box', async ({ page 
 	await expect
 		.poll(() => messages)
 		.toEqual([expect.stringContaining('<sonic-meter> is display: contents and has no box')]);
+});
+
+test('a display on a host is reported, since the host has to stay display: contents', async ({
+	page,
+}) => {
+	const messages = collectConsole(page);
+
+	await page.goto('/fixtures/reset/?reset=none');
+	await page.locator('#controls').evaluate((root) => {
+		root.insertAdjacentHTML(
+			'beforeend',
+			'<sonic-meter max="0" min="-60" style="display: block"></sonic-meter>',
+		);
+	});
+
+	await expect
+		.poll(() => messages)
+		.toEqual([expect.stringContaining('<sonic-meter> is given a display')]);
 });

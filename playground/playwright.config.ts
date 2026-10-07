@@ -10,7 +10,7 @@ export default defineConfig({
 		{ name: 'chromium', use: { ...devices['Desktop Chrome'] } },
 		{ name: 'firefox', use: { ...devices['Desktop Firefox'] } },
 		{ name: 'webkit', use: { ...devices['Desktop Safari'] } },
-		{ name: 'mobile-webkit', use: { ...devices['iPhone 17'] } },
+		{ grep: /@mobile/, name: 'mobile-webkit', use: { ...devices['iPhone 17'] } },
 	],
 	reporter: [['list'], ['html', { open: 'never', outputFolder: './temp/playwright-report' }]],
 	retries: 0,

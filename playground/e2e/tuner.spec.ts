@@ -2,6 +2,8 @@ import { expect, test } from '@playwright/test';
 
 import { resolvedProperty, tokenGroups } from '../src/scripts/specimens/tuner-tokens.ts';
 
+test.skip(({ browserName }) => browserName !== 'chromium', 'The tuner is the playground’s own');
+
 test('every tuner baseline resolves on its part', async ({ page }) => {
 	await page.goto('/');
 

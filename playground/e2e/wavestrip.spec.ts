@@ -2,7 +2,8 @@ import type { Locator, Page } from '@playwright/test';
 
 import { expect, test } from '@playwright/test';
 
-import { alphaAt, canvasPixels, expectPixel, paintedColour, pixelAt } from './canvas-probe.ts';
+import { alphaAt, canvasPixels, paintedColour, pixelAt, softPixel } from './canvas-probe.ts';
+import { boxOf } from './pointer.ts';
 import { readState } from './state.ts';
 
 // At DPR 2 the default 3px pitch and 0.33 gap make 6 device px a bar: 4 drawn, then 2 of gap
@@ -33,36 +34,6 @@ function readWidth(canvas: Locator): Promise<{ css: number; device: number }> {
 	});
 }
 
-test('the canvas backs every device pixel, bars and gaps land where the grid puts them, and the played side paints the lit colour and the rest the wave colour', async ({
-	page,
-}) => {
-	const { canvas } = await openWavestrip(page);
-	const { css, device } = await readWidth(canvas);
-	const edgeBar = Math.floor(device / 2 / pitch);
-	const [inBar, inGap, played, unplayed] = await canvasPixels(canvas, [
-		10 * pitch + 1,
-		10 * pitch + bar,
-		(edgeBar - 4) * pitch + 1,
-		(edgeBar + 4) * pitch + 1,
-	]);
-	const lit = await canvas.evaluate((element) =>
-		getComputedStyle(element).getPropertyValue('--_sonic-lit'),
-	);
-	const wave = await canvas.evaluate((element) => {
-		const style = getComputedStyle(element);
-
-		return style
-			.getPropertyValue('--_sonic-wavestrip-wave')
-			.replaceAll('currentcolor', () => style.color);
-	});
-
-	expect(Math.abs(device - css * 2)).toBeLessThanOrEqual(1);
-	expect(inBar?.[3]).toBe(255);
-	expect(inGap?.[3]).toBe(0);
-	expectPixel(played, await paintedColour(canvas, lit));
-	expectPixel(unplayed, await paintedColour(canvas, wave));
-});
-
 function setOnBox(page: Page, tokens: Record<string, string>): Promise<void> {
 	return page.evaluate(async (entries) => {
 		const box = document.querySelector<HTMLElement>('#wavestrip-box');
@@ -74,74 +45,114 @@ function setOnBox(page: Page, tokens: Record<string, string>): Promise<void> {
 	}, Object.entries(tokens));
 }
 
-test('a lit colour set on an ancestor repaints within two frames, as does a text colour, which the wave is mixed from', async ({
-	page,
-}) => {
-	const { canvas } = await openWavestrip(page);
-	const { device } = await readWidth(canvas);
+test(
+	'the wavestrip paints its bars on the device grid in the lit and wave colours, and repaints when either changes',
+	{ tag: '@mobile' },
+	async ({ page }) => {
+		const { canvas } = await openWavestrip(page);
 
-	await setOnBox(page, { '--sonic-lit': '#0080ff' });
-	expectPixel(await pixelAt(canvas, 1), [0, 128, 255, 255]);
+		await test.step('the canvas backs every device pixel, bars and gaps land where the grid puts them, and the played side paints the lit colour and the rest the wave colour', async () => {
+			const { css, device } = await readWidth(canvas);
+			const edgeBar = Math.floor(device / 2 / pitch);
+			const [inBar, inGap, played, unplayed] = await canvasPixels(canvas, [
+				10 * pitch + 1,
+				10 * pitch + bar,
+				(edgeBar - 4) * pitch + 1,
+				(edgeBar + 4) * pitch + 1,
+			]);
+			const lit = await canvas.evaluate((element) =>
+				getComputedStyle(element).getPropertyValue('--_sonic-lit'),
+			);
+			const wave = await canvas.evaluate((element) => {
+				const style = getComputedStyle(element);
 
-	await setOnBox(page, { color: '#0080ff' });
+				return style
+					.getPropertyValue('--_sonic-wavestrip-wave')
+					.replaceAll('currentcolor', () => style.color);
+			});
 
-	const unlit = await canvas.evaluate((element) =>
-		getComputedStyle(element).getPropertyValue('--_sonic-unlit'),
-	);
+			expect.soft(Math.abs(device - css * 2)).toBeLessThanOrEqual(1);
+			expect.soft(inBar?.[3]).toBe(255);
+			expect.soft(inGap?.[3]).toBe(0);
+			softPixel(played, await paintedColour(canvas, lit));
+			softPixel(unplayed, await paintedColour(canvas, wave));
+		});
 
-	expectPixel(
-		await pixelAt(canvas, (Math.floor(device / 2 / pitch) + 4) * pitch + 1),
-		await paintedColour(canvas, `color-mix(in oklab, #0080ff 30%, ${unlit})`),
-	);
-});
+		await test.step('a lit colour set on an ancestor repaints within two frames, as does a text colour, which the wave is mixed from', async () => {
+			const { device } = await readWidth(canvas);
 
-test('empty peaks draw a plain groove, set the empty state, and a ratio of 0 draws nothing', async ({
-	page,
-}) => {
-	const { canvas, wavestrip } = await openWavestrip(page);
-	const { device } = await readWidth(canvas);
-	const middle = Math.floor(device / 2);
+			await setOnBox(page, { '--sonic-lit': '#0080ff' });
+			softPixel(await pixelAt(canvas, 1), [0, 128, 255, 255]);
 
-	await wavestrip.evaluate((element) => {
-		Object.assign(element, { peaks: [] });
-	});
+			await setOnBox(page, { color: '#0080ff' });
 
-	const alphaNearTop = async (): Promise<number | undefined> => {
-		const [pixel] = await canvasPixels(canvas, [middle], 0.1);
+			const unlit = await canvas.evaluate((element) =>
+				getComputedStyle(element).getPropertyValue('--_sonic-unlit'),
+			);
 
-		return pixel?.[3];
-	};
+			softPixel(
+				await pixelAt(canvas, (Math.floor(device / 2 / pitch) + 4) * pitch + 1),
+				await paintedColour(canvas, `color-mix(in oklab, #0080ff 30%, ${unlit})`),
+			);
+		});
+	},
+);
 
-	await expect
-		.poll(async () => [await alphaNearTop(), await alphaAt(canvas, middle)])
-		.toEqual([0, 255]);
-	expect(await readState(wavestrip, 'empty')).toBe(true);
+test(
+	'empty peaks draw a plain groove, set the empty state, and a ratio of 0 draws nothing',
+	{ tag: '@mobile' },
+	async ({ page }) => {
+		const { canvas, wavestrip } = await openWavestrip(page);
+		const { device } = await readWidth(canvas);
+		const middle = Math.floor(device / 2);
 
-	await wavestrip.evaluate((element) => {
-		element.style.setProperty('--sonic-wavestrip-groove-ratio', '0');
-		element.toggleAttribute('dimmed', true);
-	});
-	await expect.poll(() => alphaAt(canvas, middle)).toBe(0);
-});
+		await wavestrip.evaluate((element) => {
+			Object.assign(element, { peaks: [] });
+		});
 
-test('a groove size sets the empty groove in CSS pixels, whatever the ratio', async ({ page }) => {
-	const { canvas, wavestrip } = await openWavestrip(page);
-	const { device } = await readWidth(canvas);
-	const alphaAtRow = async (rowFraction: number): Promise<number | undefined> => {
-		const [pixel] = await canvasPixels(canvas, [Math.floor(device / 2)], rowFraction);
+		const alphaNearTop = async (): Promise<number | undefined> => {
+			const [pixel] = await canvasPixels(canvas, [middle], 0.1);
 
-		return pixel?.[3];
-	};
+			return pixel?.[3];
+		};
 
-	// 20px of a 44.8px wave reaches a row the default 0.15 ratio leaves clear
-	await wavestrip.evaluate((element) => {
-		element.style.setProperty('--sonic-wavestrip-groove-size', '20px');
-		element.toggleAttribute('dimmed', true);
-		Object.assign(element, { peaks: [] });
-	});
+		await expect
+			.poll(async () => [await alphaNearTop(), await alphaAt(canvas, middle)])
+			.toEqual([0, 255]);
+		expect(await readState(wavestrip, 'empty')).toBe(true);
 
-	await expect.poll(async () => [await alphaAtRow(0.2), await alphaAtRow(0.35)]).toEqual([0, 255]);
-});
+		await wavestrip.evaluate((element) => {
+			element.style.setProperty('--sonic-wavestrip-groove-ratio', '0');
+			element.toggleAttribute('dimmed', true);
+		});
+		await expect.poll(() => alphaAt(canvas, middle)).toBe(0);
+	},
+);
+
+test(
+	'a groove size sets the empty groove in CSS pixels, whatever the ratio',
+	{ tag: '@mobile' },
+	async ({ page }) => {
+		const { canvas, wavestrip } = await openWavestrip(page);
+		const { device } = await readWidth(canvas);
+		const alphaAtRow = async (rowFraction: number): Promise<number | undefined> => {
+			const [pixel] = await canvasPixels(canvas, [Math.floor(device / 2)], rowFraction);
+
+			return pixel?.[3];
+		};
+
+		// 20px of a 44.8px wave reaches a row the default 0.15 ratio leaves clear
+		await wavestrip.evaluate((element) => {
+			element.style.setProperty('--sonic-wavestrip-groove-size', '20px');
+			element.toggleAttribute('dimmed', true);
+			Object.assign(element, { peaks: [] });
+		});
+
+		await expect
+			.poll(async () => [await alphaAtRow(0.2), await alphaAtRow(0.35)])
+			.toEqual([0, 255]);
+	},
+);
 
 test('a long readout stays inside the strip at both ends, on one line and on glass of its own colour, and an empty string hides it', async ({
 	isMobile,
@@ -150,8 +161,7 @@ test('a long readout stays inside the strip at both ends, on one line and on gla
 	test.skip(isMobile, 'Touch shows the readout only once a drag reveals it');
 
 	const { wavestrip } = await openWavestrip(page);
-	const strip = await wavestrip.locator('.sonic-wavestrip').boundingBox();
-	if (!strip) throw new Error('The wavestrip has no box');
+	const strip = await boxOf(wavestrip.locator('.sonic-wavestrip'));
 
 	const readout = wavestrip.locator('.sonic-wavestrip-readout');
 	const middle = strip.y + strip.height / 2;
@@ -197,8 +207,7 @@ test('a cancellable drag past its zone matches cancelling, and revealed only whi
 	test.skip(isMobile, 'The mouse drives this gesture');
 
 	const { wavestrip } = await openWavestrip(page);
-	const strip = await wavestrip.locator('.sonic-wavestrip').boundingBox();
-	if (!strip) throw new Error('The wavestrip has no box');
+	const strip = await boxOf(wavestrip.locator('.sonic-wavestrip'));
 
 	const states = async (): Promise<Array<boolean>> => [
 		await readState(wavestrip, 'revealed'),
@@ -220,31 +229,33 @@ test('a cancellable drag past its zone matches cancelling, and revealed only whi
 	await expect(wavestrip).toHaveJSProperty('value', 150);
 });
 
-test('with fill, the strip takes its row and its ratios follow the height, while a marker size holds the dots still and sets their lanes', async ({
-	page,
-}) => {
-	await page.goto('/fixtures/');
+test(
+	'with fill, the strip takes its row and its ratios follow the height, while a marker size holds the dots still and sets their lanes',
+	{ tag: '@mobile' },
+	async ({ page }) => {
+		await page.goto('/fixtures/');
 
-	const strip = page.locator('#wavestrip-fill .sonic-wavestrip');
-	const dots = page.locator('#wavestrip-fill .sonic-wavestrip-marker');
+		const strip = page.locator('#wavestrip-fill .sonic-wavestrip');
+		const dots = page.locator('#wavestrip-fill .sonic-wavestrip-marker');
 
-	await strip.scrollIntoViewIfNeeded();
-	await expect(strip).toHaveCSS('block-size', '96px');
-	await expect(strip).toHaveCSS('--_sonic-wavestrip-size', '96px');
-	await expect(dots.first()).toHaveCSS('inline-size', '4px');
+		await strip.scrollIntoViewIfNeeded();
+		await expect(strip).toHaveCSS('block-size', '96px');
+		await expect(strip).toHaveCSS('--_sonic-wavestrip-size', '96px');
+		await expect(dots.first()).toHaveCSS('inline-size', '4px');
 
-	// 6.7px apart: one lane for 4px dots, where the 96px strip's own 6.2px dots would take two
-	const tops = await dots.evaluateAll((parts) => parts.map((part) => getComputedStyle(part).top));
+		// 6.7px apart: one lane for 4px dots, where the 96px strip's own 6.2px dots would take two
+		const tops = await dots.evaluateAll((parts) => parts.map((part) => getComputedStyle(part).top));
 
-	expect(tops).toEqual(['0px', '0px']);
+		expect(tops).toEqual(['0px', '0px']);
 
-	await page.locator('#wavestrip-fill-box').evaluate((box) => {
-		box.style.setProperty('height', '48px');
-	});
-	await expect(strip).toHaveCSS('block-size', '48px');
-	await expect(strip).toHaveCSS('--_sonic-wavestrip-size', '48px');
-	await expect(dots.first()).toHaveCSS('inline-size', '4px');
-});
+		await page.locator('#wavestrip-fill-box').evaluate((box) => {
+			box.style.setProperty('height', '48px');
+		});
+		await expect(strip).toHaveCSS('block-size', '48px');
+		await expect(strip).toHaveCSS('--_sonic-wavestrip-size', '48px');
+		await expect(dots.first()).toHaveCSS('inline-size', '4px');
+	},
+);
 
 test('the hover readout opens over the pointer, and Escape dismisses it', async ({
 	isMobile,
@@ -253,8 +264,7 @@ test('the hover readout opens over the pointer, and Escape dismisses it', async 
 	test.skip(isMobile, 'Touch shows the readout only once a drag reveals it');
 
 	const { canvas, wavestrip } = await openWavestrip(page);
-	const box = await canvas.boundingBox();
-	if (!box) throw new Error('The wavestrip has no box');
+	const box = await boxOf(canvas);
 
 	const pointerX = box.x + box.width / 4;
 
@@ -282,8 +292,7 @@ test('a press reports dragging by its first input, and the hovered value returns
 	test.skip(isMobile, 'Touch reports no hovered value');
 
 	const { canvas, wavestrip } = await openWavestrip(page);
-	const box = await canvas.boundingBox();
-	if (!box) throw new Error('The wavestrip has no box');
+	const box = await boxOf(canvas);
 
 	const read = (name: 'hoverValue' | 'value'): Promise<unknown> =>
 		wavestrip.evaluate((element, property) => {
@@ -318,8 +327,7 @@ test('a press reports dragging by its first input, and the hovered value returns
 });
 
 async function pressBy(page: Page, dot: Locator, by: { x: number; y: number }): Promise<void> {
-	const box = await dot.boundingBox();
-	if (!box) throw new Error('The marker has no box');
+	const box = await boxOf(dot);
 
 	await page.mouse.click(box.x + box.width / 2 + by.x, box.y + box.height / 2 + by.y);
 }
@@ -328,25 +336,30 @@ function readValue(wavestrip: Locator): Promise<number> {
 	return wavestrip.evaluate((element) => ('value' in element ? Number(element.value) : NaN));
 }
 
-test('a press on a dot snaps to its marker, in whichever lane it sits, and a press below a dot seeks to where it lands', async ({
-	page,
-}) => {
-	const { wavestrip } = await openWavestrip(page);
-	const dots = wavestrip.locator('.sonic-wavestrip-marker');
-	const [first, second] = await Promise.all([dots.nth(0).boundingBox(), dots.nth(1).boundingBox()]);
+test(
+	'a press on a dot snaps to its marker, in whichever lane it sits, and a press below a dot seeks to where it lands',
+	{ tag: '@mobile' },
+	async ({ page }) => {
+		const { wavestrip } = await openWavestrip(page);
+		const dots = wavestrip.locator('.sonic-wavestrip-marker');
+		const [first, second] = await Promise.all([
+			dots.nth(0).boundingBox(),
+			dots.nth(1).boundingBox(),
+		]);
 
-	expect(second?.y).toBeGreaterThan((first?.y ?? 0) + (first?.height ?? 0));
+		expect(second?.y).toBeGreaterThan((first?.y ?? 0) + (first?.height ?? 0));
 
-	await pressBy(page, dots.nth(0), { x: -3, y: 0 });
-	expect(await readValue(wavestrip)).toBe(60);
+		await pressBy(page, dots.nth(0), { x: -3, y: 0 });
+		expect(await readValue(wavestrip)).toBe(60);
 
-	await pressBy(page, dots.nth(1), { x: 3, y: 0 });
-	expect(await readValue(wavestrip)).toBe(62);
+		await pressBy(page, dots.nth(1), { x: 3, y: 0 });
+		expect(await readValue(wavestrip)).toBe(62);
 
-	await pressBy(page, dots.nth(0), { x: -3, y: 20 });
+		await pressBy(page, dots.nth(0), { x: -3, y: 20 });
 
-	const value = await readValue(wavestrip);
+		const value = await readValue(wavestrip);
 
-	expect(value).toBeGreaterThan(55);
-	expect(value).toBeLessThan(59);
-});
+		expect(value).toBeGreaterThan(55);
+		expect(value).toBeLessThan(59);
+	},
+);

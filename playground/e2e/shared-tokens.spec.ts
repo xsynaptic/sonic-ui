@@ -85,35 +85,37 @@ const plain = [
 	'#envelope .sonic-envelope',
 ];
 
-test('the shared radius reaches the outer corner of five controls of different sizes and no plain one, and a control’s own ratio overrides it', async ({
-	page,
-}) => {
-	await setTokens(root(page), { '--sonic-radius': '5px' });
+test(
+	'the shared radius reaches the outer corner of five controls of different sizes and no plain one, and a control’s own ratio overrides it',
+	{ tag: '@mobile' },
+	async ({ page }) => {
+		await setTokens(root(page), { '--sonic-radius': '5px' });
 
-	// The face sits a bevel of 0.075 inside a 32px cap
-	expect(
-		await page
-			.locator('#kick .sonic-button-cap')
-			.evaluate((cap) => getComputedStyle(cap, '::before').borderTopLeftRadius),
-	).toBe('2.6px');
-	for (const selector of plain) {
-		await expect(page.locator(selector), selector).toHaveCSS('border-top-left-radius', '0px');
-	}
+		// The face sits a bevel of 0.075 inside a 32px cap
+		expect(
+			await page
+				.locator('#kick .sonic-button-cap')
+				.evaluate((cap) => getComputedStyle(cap, '::before').borderTopLeftRadius),
+		).toBe('2.6px');
+		for (const selector of plain) {
+			await expect(page.locator(selector), selector).toHaveCSS('border-top-left-radius', '0px');
+		}
 
-	for (const { host, part, size } of corners) {
-		const corner = page.locator(`${host} ${part}`.trim()).first();
+		for (const { host, part, size } of corners) {
+			const corner = page.locator(`${host} ${part}`.trim()).first();
 
-		await expect(corner, host).toHaveCSS('border-top-left-radius', '5px');
+			await expect(corner, host).toHaveCSS('border-top-left-radius', '5px');
 
-		await setTokens(page.locator(host), { [size]: '80px' });
+			await setTokens(page.locator(host), { [size]: '80px' });
 
-		await expect(corner, host).toHaveCSS('border-top-left-radius', '5px');
-	}
+			await expect(corner, host).toHaveCSS('border-top-left-radius', '5px');
+		}
 
-	await setTokens(page.locator('#kick'), { '--sonic-button-radius-ratio': '0.25' });
+		await setTokens(page.locator('#kick'), { '--sonic-button-radius-ratio': '0.25' });
 
-	await expect(page.locator('#kick .sonic-button')).toHaveCSS('border-top-left-radius', '20px');
-});
+		await expect(page.locator('#kick .sonic-button')).toHaveCSS('border-top-left-radius', '20px');
+	},
+);
 
 function readCapShadows(page: Page): Promise<Array<string>> {
 	return page
@@ -126,31 +128,33 @@ function channels(colour: string | undefined): Array<number> {
 }
 
 // The cap eases its shadow, so each reading waits for the transition to land
-test('the shade pole colours a button’s cast shadow and darkens or lightens its rim', async ({
-	page,
-}) => {
-	const [, restRim] = await readCapShadows(page);
+test(
+	'the shade pole colours a button’s cast shadow and darkens or lightens its rim',
+	{ tag: '@mobile' },
+	async ({ page }) => {
+		const [, restRim] = await readCapShadows(page);
 
-	await setTokens(root(page), { '--sonic-shade': 'rgb(51 102 153)' });
+		await setTokens(root(page), { '--sonic-shade': 'rgb(51 102 153)' });
 
-	await expect
-		.poll(async () => {
-			const [drop] = await readCapShadows(page);
+		await expect
+			.poll(async () => {
+				const [drop] = await readCapShadows(page);
 
-			return channels(drop)
-				.slice(0, 3)
-				.map((channel) => Math.round(channel * 255));
-		})
-		.toEqual([51, 102, 153]);
+				return channels(drop)
+					.slice(0, 3)
+					.map((channel) => Math.round(channel * 255));
+			})
+			.toEqual([51, 102, 153]);
 
-	await setTokens(root(page), { '--sonic-shade': '#fff' });
+		await setTokens(root(page), { '--sonic-shade': '#fff' });
 
-	expect(restRim).toMatch(/^\s*oklab\(/);
-	await expect
-		.poll(async () => {
-			const [, liftedRim] = await readCapShadows(page);
+		expect(restRim).toMatch(/^\s*oklab\(/);
+		await expect
+			.poll(async () => {
+				const [, liftedRim] = await readCapShadows(page);
 
-			return channels(liftedRim)[0];
-		})
-		.toBeGreaterThan((channels(restRim)[0] ?? NaN) + 0.2);
-});
+				return channels(liftedRim)[0];
+			})
+			.toBeGreaterThan((channels(restRim)[0] ?? NaN) + 0.2);
+	},
+);

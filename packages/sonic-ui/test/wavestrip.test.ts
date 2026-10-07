@@ -288,12 +288,11 @@ test('the band holds one part per marker in the order `markers` reads back', () 
 			part.className,
 			Number(part.style.getPropertyValue('--_sonic-marker-from')) * 300 + 30,
 		]),
-	).toEqual(
-		wavestrip.markers.map(({ end, start }) => [
-			end === undefined ? 'sonic-wavestrip-marker' : 'sonic-wavestrip-region',
-			start,
-		]),
-	);
+	).toEqual([
+		['sonic-wavestrip-marker', 50],
+		['sonic-wavestrip-region', 100],
+		['sonic-wavestrip-marker', 200],
+	]);
 });
 
 test('a value write leaves the marker dots as they were built', () => {

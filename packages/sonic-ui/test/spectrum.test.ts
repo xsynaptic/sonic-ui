@@ -185,3 +185,31 @@ test('the bars stay in their columns as they fall once the analyser is unset', (
 	expect(pulled).toBeGreaterThan(0);
 	expect(spikeColumn()).toBe(pulled);
 });
+
+test('with peak-hold a spike leaves one pixel at its level while its bar falls, and without it none', () => {
+	const { flushFrames } = installCanvasFakes();
+	const { spectrum } = mountSpectrum('grid="none" min="-60" sample-rate="44100"');
+	const context = document.createElement('canvas').getContext('2d');
+	if (!context) throw new Error('The fakes gave no context');
+
+	const marks = vi.spyOn(context, 'rect');
+	const fall = (): Array<Array<number>> => {
+		flushFrames(0);
+		spectrum.push(frameOf({ 100: -6 }));
+		flushFrames(0);
+		marks.mockClear();
+		flushFrames(500);
+
+		return marks.mock.calls;
+	};
+
+	expect(fall()).toEqual([]);
+
+	spectrum.peakHold = true;
+	flushFrames(3000);
+
+	const held = fall();
+
+	expect(held).toHaveLength(1);
+	expect(held[0]?.slice(1)).toEqual([10, 1, 1]);
+});

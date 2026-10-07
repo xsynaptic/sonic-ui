@@ -2,7 +2,7 @@ import type { Locator, Page } from '@playwright/test';
 
 import { expect, test } from '@playwright/test';
 
-import { expectEdge, paintedLine, paintedRuns } from './paint-probe.ts';
+import { expectEdge, paintedLine, paintedRuns, softEdge } from './paint-probe.ts';
 
 // One flat colour for every zone, so a lit pixel is told from a dim one whichever zone it sits in
 const flatZones =
@@ -46,91 +46,57 @@ function isUnlit(runs: Array<[number, number]>, [from, to]: [number, number]): b
 }
 
 // 30 segments of 4px over 60 dB, the first starting 1px in from the end
-test('a level lights the bar to its decibels, then the bar falls away under the peak it holds', async ({
-	page,
-}) => {
-	const meter = page.locator('#meter');
+test(
+	'a level lights the bar to its decibels, then the bar falls away under the peak it holds',
+	{ tag: '@mobile' },
+	async ({ page }) => {
+		const meter = page.locator('#meter');
 
-	await setLevel(page, meter, -30);
+		await setLevel(page, meter, -30);
 
-	const risen = await litRuns(meter, 'y');
+		const risen = await litRuns(meter, 'y');
 
-	expectEdge(risen.at(0)?.[0], 1);
-	expectEdge(risen.at(-1)?.[1], 60);
-	expect(isUnlit(risen, [62, 128])).toBe(true);
+		expectEdge(risen.at(0)?.[0], 1);
+		expectEdge(risen.at(-1)?.[1], 60);
+		expect(isUnlit(risen, [62, 128])).toBe(true);
 
-	await meter.evaluate((element) => {
-		Object.assign(element, { level: 0 });
-	});
-	await page.clock.runFor(750);
+		await meter.evaluate((element) => {
+			Object.assign(element, { level: 0 });
+		});
+		await page.clock.runFor(750);
 
-	const falling = await litRuns(meter, 'y');
+		const falling = await litRuns(meter, 'y');
 
-	expectEdge(falling.at(-1)?.[1], 60);
-	expect(isUnlit(falling, [34, 56])).toBe(true);
-	expect(isUnlit(falling, [1, 28])).toBe(false);
+		expectEdge(falling.at(-1)?.[1], 60);
+		expect(isUnlit(falling, [34, 56])).toBe(true);
+		expect(isUnlit(falling, [1, 28])).toBe(false);
 
-	await page.clock.runFor(2500);
-	expect(await litRuns(meter, 'y')).toEqual([]);
-});
+		await page.clock.runFor(2500);
+		expect(await litRuns(meter, 'y')).toEqual([]);
+	},
+);
 
-test('reaching 0 dBFS lights the clip lens, which goes out once its hold is over', async ({
-	page,
-}) => {
-	const meter = page.locator('#meter');
-	const lensRuns = async (): Promise<number> => {
-		const line = await paintedLine(meter.locator('.sonic-meter-clip'), 'x');
+test(
+	'reaching 0 dBFS lights the clip lens, which goes out once its hold is over',
+	{ tag: '@mobile' },
+	async ({ page }) => {
+		const meter = page.locator('#meter');
+		const lensRuns = async (): Promise<number> => {
+			const line = await paintedLine(meter.locator('.sonic-meter-clip'), 'x');
 
-		return paintedRuns(line, isLit).length;
-	};
+			return paintedRuns(line, isLit).length;
+		};
 
-	expect(await lensRuns()).toBe(0);
+		expect(await lensRuns()).toBe(0);
 
-	await setLevel(page, meter, 0);
-	expect(await lensRuns()).toBe(1);
+		await setLevel(page, meter, 0);
+		expect(await lensRuns()).toBe(1);
 
-	await setLevel(page, meter, -30);
-	await page.clock.runFor(1500);
-	expect(await lensRuns()).toBe(0);
-});
-
-// Five segments 25.2px apart; a lens highlight can split one segment's light in two
-test('a ladder lights one segment for each threshold the level has reached', async ({ page }) => {
-	const ladder = page.locator('#ladder');
-
-	await setLevel(page, ladder, -5);
-
-	const runs = await litRuns(ladder, 'y');
-	const lit = runs.map(([from, to]) => Math.floor((from + to) / 2 / 25.2));
-
-	expect([...new Set(lit)]).toEqual([0, 1, 2]);
-});
-
-// 31 segments of 4px from -1 to 1, so the origin at 0 falls inside the segment from 61px to 65px
-test('a value lights from the origin toward it, either way, and nothing at the origin itself', async ({
-	page,
-}) => {
-	const correlation = page.locator('#correlation');
-	const lightTo = async (value: number): Promise<Array<[number, number]>> => {
-		await correlation.evaluate((element, next) => {
-			Object.assign(element, { value: next });
-		}, value);
-
-		return litRuns(correlation, 'x');
-	};
-
-	expect(await litRuns(correlation, 'x')).toEqual([]);
-
-	const above = await lightTo(0.5);
-
-	expectEdge(above.at(0)?.[0], 65);
-	expectEdge(above.at(-1)?.[1], 92);
-
-	const below = await lightTo(-1);
-
-	expectEdge(below.at(0)?.[0], 1);
-	expectEdge(below.at(-1)?.[1], 60);
-});
+		await setLevel(page, meter, -30);
+		await page.clock.runFor(1500);
+		expect(await lensRuns()).toBe(0);
+	},
+);
 
 async function partBoxes(page: Page, id: string): Promise<{ meter: DOMRect; segments: DOMRect }> {
 	return page.locator(`#${id}`).evaluate((element) => {
@@ -142,18 +108,58 @@ async function partBoxes(page: Page, id: string): Promise<{ meter: DOMRect; segm
 	});
 }
 
-test('a length of 100% fills the parent, draws the segments a fixed length does, and runs a horizontal ladder the same inset from both ends', async ({
-	page,
-}) => {
-	const percent = await partBoxes(page, 'meter-percent');
-	const fixed = await partBoxes(page, 'meter-fixed');
-	const { meter, segments } = await partBoxes(page, 'ladder-percent');
+test(
+	'a ladder lights a segment per threshold, a value lights from its origin, and a length of 100% fills the parent',
+	{ tag: '@mobile' },
+	async ({ page }) => {
+		// Five segments 25.2px apart; a lens highlight can split one segment's light in two
+		await test.step('a ladder lights one segment for each threshold the level has reached', async () => {
+			const ladder = page.locator('#ladder');
 
-	expect(percent.meter.height).toBeCloseTo(150, 1);
-	expect(percent.segments.height).toBeCloseTo(fixed.segments.height, 1);
-	expect(percent.segments.bottom).toBeCloseTo(fixed.segments.bottom, 1);
+			await setLevel(page, ladder, -5);
 
-	expect(meter.width).toBeCloseTo(150, 1);
-	expect(segments.left - meter.left).toBeGreaterThan(0);
-	expect(meter.right - segments.right).toBeCloseTo(segments.left - meter.left, 1);
-});
+			const runs = await litRuns(ladder, 'y');
+			const lit = runs.map(([from, to]) => Math.floor((from + to) / 2 / 25.2));
+
+			expect.soft([...new Set(lit)]).toEqual([0, 1, 2]);
+		});
+
+		// 31 segments of 4px from -1 to 1, so the origin at 0 falls inside the segment from 61px to 65px
+		await test.step('a value lights from the origin toward it, either way, and nothing at the origin itself', async () => {
+			const correlation = page.locator('#correlation');
+			const lightTo = async (value: number): Promise<Array<[number, number]>> => {
+				await correlation.evaluate((element, next) => {
+					Object.assign(element, { value: next });
+				}, value);
+
+				return litRuns(correlation, 'x');
+			};
+
+			expect.soft(await litRuns(correlation, 'x')).toEqual([]);
+
+			const above = await lightTo(0.5);
+
+			softEdge(above.at(0)?.[0], 65);
+			softEdge(above.at(-1)?.[1], 92);
+
+			const below = await lightTo(-1);
+
+			softEdge(below.at(0)?.[0], 1);
+			softEdge(below.at(-1)?.[1], 60);
+		});
+
+		await test.step('a length of 100% fills the parent, draws the segments a fixed length does, and runs a horizontal ladder the same inset from both ends', async () => {
+			const percent = await partBoxes(page, 'meter-percent');
+			const fixed = await partBoxes(page, 'meter-fixed');
+			const { meter, segments } = await partBoxes(page, 'ladder-percent');
+
+			expect.soft(percent.meter.height).toBeCloseTo(150, 1);
+			expect.soft(percent.segments.height).toBeCloseTo(fixed.segments.height, 1);
+			expect.soft(percent.segments.bottom).toBeCloseTo(fixed.segments.bottom, 1);
+
+			expect.soft(meter.width).toBeCloseTo(150, 1);
+			expect.soft(segments.left - meter.left).toBeGreaterThan(0);
+			expect.soft(meter.right - segments.right).toBeCloseTo(segments.left - meter.left, 1);
+		});
+	},
+);

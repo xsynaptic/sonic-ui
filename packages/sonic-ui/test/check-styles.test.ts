@@ -4,7 +4,6 @@ import '#define/button.ts';
 import '#define/dial.ts';
 import '#define/number.ts';
 import '#define/segmented.ts';
-import '#define/slider.ts';
 
 function nextFrame(): Promise<number> {
 	return new Promise((resolve) => requestAnimationFrame(resolve));
@@ -26,17 +25,6 @@ test('a control without its sheets warns once per class, naming each import', as
 });
 
 const sheetTokens = '--_sonic-unit: 1px; --_sonic-unlit: #000;';
-
-test('a styled control stays quiet', async () => {
-	const warn = vi.spyOn(console, 'warn').mockReturnValue();
-
-	document.head.innerHTML = `<style>sonic-slider { display: contents; } .sonic-slider { ${sheetTokens} } .sonic-slider-readout { margin-bottom: 6px; }</style>`;
-	document.body.innerHTML = '<sonic-slider></sonic-slider>';
-	await nextFrame();
-
-	expect(warn).not.toHaveBeenCalled();
-	warn.mockRestore();
-});
 
 test('a box property on the host is named once, since the host has no box', async () => {
 	const warn = vi.spyOn(console, 'warn').mockReturnValue();

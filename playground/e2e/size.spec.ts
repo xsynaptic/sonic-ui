@@ -41,43 +41,45 @@ function readParts(control: Locator): Promise<Record<string, Array<number>>> {
 	});
 }
 
-test('a dial, a button holding an LED, an XY pad and an envelope each scale as one piece when their size doubles', async ({
-	page,
-}) => {
-	await page.goto('/fixtures/');
+test(
+	'a dial, a button holding an LED, an XY pad and an envelope each scale as one piece when their size doubles',
+	{ tag: '@mobile' },
+	async ({ page }) => {
+		await page.goto('/fixtures/');
 
-	for (const { control, host, name, token } of controls) {
-		const target = page.locator(`${host} ${control}`);
+		for (const { control, host, name, token } of controls) {
+			const target = page.locator(`${host} ${control}`);
 
-		await target.scrollIntoViewIfNeeded();
+			await target.scrollIntoViewIfNeeded();
 
-		const before = await readParts(target);
-		const size = await target.evaluate(
-			(element, name) => getComputedStyle(element).getPropertyValue(name),
-			token.replace('--sonic', '--_sonic'),
-		);
+			const before = await readParts(target);
+			const size = await target.evaluate(
+				(element, name) => getComputedStyle(element).getPropertyValue(name),
+				token.replace('--sonic', '--_sonic'),
+			);
 
-		expect(Object.keys(before).length, name).toBeGreaterThan(2);
-		await page.locator(host).evaluate(
-			(element: HTMLElement, [name, value]) => {
-				element.style.setProperty(name, value);
-			},
-			[token, `calc(2 * ${size})`] as const,
-		);
+			expect(Object.keys(before).length, name).toBeGreaterThan(2);
+			await page.locator(host).evaluate(
+				(element: HTMLElement, [name, value]) => {
+					element.style.setProperty(name, value);
+				},
+				[token, `calc(2 * ${size})`] as const,
+			);
 
-		await expect(async () => {
-			const after = await readParts(target);
+			await expect(async () => {
+				const after = await readParts(target);
 
-			for (const [part, box] of Object.entries(before)) {
-				for (const [index, edge] of box.entries()) {
-					const doubled = after[part]?.[index] ?? NaN;
+				for (const [part, box] of Object.entries(before)) {
+					for (const [index, edge] of box.entries()) {
+						const doubled = after[part]?.[index] ?? NaN;
 
-					expect(
-						Math.abs(doubled - 2 * edge),
-						`${name}: ${part} from ${String(box)}`,
-					).toBeLessThanOrEqual(1);
+						expect(
+							Math.abs(doubled - 2 * edge),
+							`${name}: ${part} from ${String(box)}`,
+						).toBeLessThanOrEqual(1);
+					}
 				}
-			}
-		}).toPass();
-	}
-});
+			}).toPass();
+		}
+	},
+);

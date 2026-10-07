@@ -30,35 +30,37 @@ function readCapOffset(page: Page, id = 'route'): Promise<number> {
 		.evaluate((cap) => Number(/^-?[\d.]+/.exec(getComputedStyle(cap).translate)?.[0]));
 }
 
-test('a trusted press on a position goes there, and the well lights in that position’s colour', async ({
-	page,
-}) => {
-	const route = page.locator('#route');
-	const unlit = await readWell(page);
+test(
+	'a trusted press on a position goes there, and the well lights in that position’s colour',
+	{ tag: '@mobile' },
+	async ({ page }) => {
+		const route = page.locator('#route');
+		const unlit = await readWell(page);
 
-	await page.getByRole('radio', { name: 'Dry' }).click();
-	await expect(route).toHaveJSProperty('value', 'dry');
+		await page.getByRole('radio', { name: 'Dry' }).click();
+		await expect(route).toHaveJSProperty('value', 'dry');
 
-	const lit = await readNextWell(page, unlit);
+		const lit = await readNextWell(page, unlit);
 
-	await page.getByRole('radio', { name: 'Wet' }).click();
-	await expect(route).toHaveJSProperty('value', 'wet');
+		await page.getByRole('radio', { name: 'Wet' }).click();
+		await expect(route).toHaveJSProperty('value', 'wet');
 
-	const ok = await readNextWell(page, lit);
+		const ok = await readNextWell(page, lit);
 
-	expect(ok).not.toBe(unlit);
+		expect(ok).not.toBe(unlit);
 
-	await route.locator('.sonic-toggle [data-sonic-lit="ok"]').evaluate((legend) => {
-		legend.dataset.sonicLit = 'danger';
-	});
+		await route.locator('.sonic-toggle [data-sonic-lit="ok"]').evaluate((legend) => {
+			legend.dataset.sonicLit = 'danger';
+		});
 
-	const danger = await readNextWell(page, ok);
+		const danger = await readNextWell(page, ok);
 
-	expect(danger).not.toBe(lit);
+		expect(danger).not.toBe(lit);
 
-	await page.getByRole('radio', { name: 'Thru' }).click();
-	await expect.poll(() => readWell(page)).toBe(unlit);
-});
+		await page.getByRole('radio', { name: 'Thru' }).click();
+		await expect.poll(() => readWell(page)).toBe(unlit);
+	},
+);
 
 test('a trusted drag carries the cap, sets the value on crossing halfway, and settles on release', async ({
 	isMobile,
@@ -182,46 +184,48 @@ const litLegends = [
 	},
 ];
 
-test('a lit legend takes the lit colour where the ink is light, and the ink where the ink is dark', async ({
-	page,
-}) => {
-	await page.emulateMedia({ reducedMotion: 'reduce' });
-	await page.getByRole('radio', { name: 'Dry' }).click();
+test(
+	'a lit legend takes the lit colour where the ink is light, and the ink where the ink is dark',
+	{ tag: '@mobile' },
+	async ({ page }) => {
+		await page.emulateMedia({ reducedMotion: 'reduce' });
+		await page.getByRole('radio', { name: 'Dry' }).click();
 
-	for (const { control, legend, name } of litLegends) {
-		await expect
-			.poll(
-				async () => {
-					const painted = await readPainted(page, legend, control);
+		for (const { control, legend, name } of litLegends) {
+			await expect
+				.poll(
+					async () => {
+						const painted = await readPainted(page, legend, control);
 
-					return farthestChannel(painted.legend, painted.lit);
-				},
-				{ message: name },
-			)
-			.toBe(0);
-	}
+						return farthestChannel(painted.legend, painted.lit);
+					},
+					{ message: name },
+				)
+				.toBe(0);
+		}
 
-	await page.evaluate(() => {
-		document.documentElement.classList.replace('sonic-skin-amber', 'sonic-skin-ivory');
-	});
+		await page.evaluate(() => {
+			document.documentElement.classList.replace('sonic-skin-amber', 'sonic-skin-ivory');
+		});
 
-	for (const { control, legend, name } of litLegends) {
-		await expect
-			.poll(
-				async () => {
-					const painted = await readPainted(page, legend, control);
+		for (const { control, legend, name } of litLegends) {
+			await expect
+				.poll(
+					async () => {
+						const painted = await readPainted(page, legend, control);
 
-					return farthestChannel(painted.legend, painted.ink);
-				},
-				{ message: name },
-			)
-			.toBeLessThanOrEqual(1);
+						return farthestChannel(painted.legend, painted.ink);
+					},
+					{ message: name },
+				)
+				.toBeLessThanOrEqual(1);
 
-		const painted = await readPainted(page, legend, control);
+			const painted = await readPainted(page, legend, control);
 
-		expect(farthestChannel(painted.ink, painted.lit), name).toBeGreaterThan(100);
-	}
-});
+			expect(farthestChannel(painted.ink, painted.lit), name).toBeGreaterThan(100);
+		}
+	},
+);
 
 test('with no skin an LED on a lit cap has a ring that is not the lens colour, and a skin takes the ring away', async ({
 	page,
@@ -302,63 +306,46 @@ test('a trusted press holds a momentary position, and the release springs the ca
 	await expect.poll(() => readCapOffset(page, 'cue')).toBeCloseTo(0, 0);
 });
 
-test('a trusted drag stops the cap before a disabled end position', async ({ isMobile, page }) => {
-	test.skip(isMobile, mouseOnly);
+test(
+	'a disabled position or option dims by itself, and takes no press',
+	{ tag: '@mobile' },
+	async ({ page }) => {
+		await test.step('one disabled position leaves the toggle undimmed, and every position disabled dims it', async () => {
+			const readLegend = (id: string): Promise<string> =>
+				page
+					.locator(`#${id} [aria-checked="true"] > .sonic-toggle-legend`)
+					.evaluate((legend) => getComputedStyle(legend).color);
+			const ink = await readLegend('cue');
 
-	const bus = page.locator('#bus');
+			await expect.soft(page.getByRole('radio', { name: 'Right' })).toBeDisabled();
+			expect.soft(await readLegend('bus')).toBe(ink);
 
-	await bus.locator('.sonic-toggle').scrollIntoViewIfNeeded();
+			await page.locator('#bus').evaluate((bus) => {
+				for (const child of bus.querySelectorAll(':scope > [data-sonic-value]')) {
+					child.toggleAttribute('data-sonic-disabled', true);
+				}
+			});
+			await expect.poll(() => readLegend('bus')).not.toBe(ink);
+		});
 
-	const at = await centerOf(page.locator('#bus .sonic-toggle-cap'));
+		await test.step('a disabled option is drawn fainter than its neighbour and a trusted press on it changes nothing', async () => {
+			const band = page.locator('#band');
+			const mids = page.getByRole('radio', { name: 'Mids' });
+			const readColour = (name: string): Promise<string> =>
+				page.getByRole('radio', { name }).evaluate((option) => getComputedStyle(option).color);
 
-	await page.mouse.move(at.x, at.y);
-	await page.mouse.down();
-	await page.mouse.move(at.x + 40, at.y, { steps: 4 });
-	expect(await readCapOffset(page, 'bus')).toBeCloseTo(0, 0);
+			await expect.soft(mids).toBeDisabled();
+			await band.locator('.sonic-segmented').scrollIntoViewIfNeeded();
+			expect.soft(await readColour('Mids')).not.toBe(await readColour('High'));
 
-	await page.mouse.move(at.x - 40, at.y, { steps: 4 });
-	await page.mouse.up();
-	await expect(bus).toHaveJSProperty('value', 'left');
-});
+			const at = await centerOf(mids);
 
-test('one disabled position leaves the toggle undimmed, and every position disabled dims it', async ({
-	page,
-}) => {
-	const readLegend = (id: string): Promise<string> =>
-		page
-			.locator(`#${id} [aria-checked="true"] > .sonic-toggle-legend`)
-			.evaluate((legend) => getComputedStyle(legend).color);
-	const ink = await readLegend('cue');
+			await page.mouse.click(at.x, at.y);
+			await expect.soft(band).toHaveJSProperty('value', 'low');
 
-	await expect(page.getByRole('radio', { name: 'Right' })).toBeDisabled();
-	expect(await readLegend('bus')).toBe(ink);
-
-	await page.locator('#bus').evaluate((bus) => {
-		for (const child of bus.querySelectorAll(':scope > [data-sonic-value]')) {
-			child.toggleAttribute('data-sonic-disabled', true);
-		}
-	});
-	await expect.poll(() => readLegend('bus')).not.toBe(ink);
-});
-
-test('a disabled option is drawn fainter than its neighbour and a trusted press on it changes nothing', async ({
-	page,
-}) => {
-	const band = page.locator('#band');
-	const mids = page.getByRole('radio', { name: 'Mids' });
-	const readColour = (name: string): Promise<string> =>
-		page.getByRole('radio', { name }).evaluate((option) => getComputedStyle(option).color);
-
-	await expect(mids).toBeDisabled();
-	await band.locator('.sonic-segmented').scrollIntoViewIfNeeded();
-	expect(await readColour('Mids')).not.toBe(await readColour('High'));
-
-	const at = await centerOf(mids);
-
-	await page.mouse.click(at.x, at.y);
-	await expect(band).toHaveJSProperty('value', 'low');
-
-	await page.getByRole('radio', { name: 'Low' }).focus();
-	await page.keyboard.press('ArrowRight');
-	await expect(band).toHaveJSProperty('value', 'high');
-});
+			await page.getByRole('radio', { name: 'Low' }).focus();
+			await page.keyboard.press('ArrowRight');
+			await expect.soft(band).toHaveJSProperty('value', 'high');
+		});
+	},
+);

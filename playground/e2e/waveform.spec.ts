@@ -43,7 +43,7 @@ function readPlayhead(waveform: Locator): Promise<string> {
 		.evaluate((line) => getComputedStyle(line).translate);
 }
 
-test("the wave's center paints the lit colour", async ({ page }) => {
+test("the wave's center paints the lit colour", { tag: '@mobile' }, async ({ page }) => {
 	const { canvas } = await openWaveform(page);
 	const lit = await canvas.evaluate((element) =>
 		getComputedStyle(element).getPropertyValue('--_sonic-lit'),
@@ -75,40 +75,42 @@ test('a drag right walks back and seeks once', async ({ isMobile, page }) => {
 });
 
 // A page from 146.2 seconds is almost four long, so a few hundred ms of play stays on it
-test('under reduced motion the picture holds still while the playhead crosses it', async ({
-	page,
-}) => {
-	await page.emulateMedia({ reducedMotion: 'reduce' });
+test(
+	'under reduced motion the picture holds still while the playhead crosses it',
+	{ tag: '@mobile' },
+	async ({ page }) => {
+		await page.emulateMedia({ reducedMotion: 'reduce' });
 
-	const { canvas, waveform } = await openWaveform(page);
+		const { canvas, waveform } = await openWaveform(page);
 
-	await waveform.evaluate((element) => {
-		const startMs = performance.now();
+		await waveform.evaluate((element) => {
+			const startMs = performance.now();
 
-		Object.assign(element, {
-			playing: true,
-			readTime: () => 147 + (performance.now() - startMs) / 1000,
-			value: 147,
+			Object.assign(element, {
+				playing: true,
+				readTime: () => 147 + (performance.now() - startMs) / 1000,
+				value: 147,
+			});
 		});
-	});
 
-	let before = await upperRow(canvas);
+		let before = await upperRow(canvas);
 
-	await expect
-		.poll(async () => {
-			const previous = before;
+		await expect
+			.poll(async () => {
+				const previous = before;
 
-			before = await upperRow(canvas);
+				before = await upperRow(canvas);
 
-			return before === previous;
-		})
-		.toBe(true);
+				return before === previous;
+			})
+			.toBe(true);
 
-	const playheadBefore = await readPlayhead(waveform);
+		const playheadBefore = await readPlayhead(waveform);
 
-	await expect.poll(() => readPlayhead(waveform)).not.toBe(playheadBefore);
-	expect(await upperRow(canvas)).toBe(before);
-});
+		await expect.poll(() => readPlayhead(waveform)).not.toBe(playheadBefore);
+		expect(await upperRow(canvas)).toBe(before);
+	},
+);
 
 test('the pending state follows a region in the window, clears when it lands or leaves, and waits out pending-delay', async ({
 	page,
@@ -168,130 +170,123 @@ test('a host tabindex of -1 leaves the tab order, and a press still focuses the 
 	expect(await holdsFocus()).toBe(true);
 });
 
-test('the playhead, ghost, label, readout and touch tokens each land on their own part, and the parked label keeps its insets from the wave', async ({
-	page,
-}) => {
-	await page.goto('/fixtures/');
+test(
+	'a label takes its tokens, sits on a scrim, is drawn by renderLabel and fades for a crossed marker',
+	{ tag: '@mobile' },
+	async ({ page }) => {
+		await page.goto('/fixtures/');
 
-	const waveform = page.locator('#waveform-tokens');
-	const playhead = waveform.locator('.sonic-waveform-playhead');
-	const label = waveform.locator('.sonic-waveform-label').first();
+		await test.step('the playhead, ghost, label, readout and touch tokens each land on their own part, and the parked label keeps its insets from the wave', async () => {
+			const waveform = page.locator('#waveform-tokens');
+			const playhead = waveform.locator('.sonic-waveform-playhead');
+			const label = waveform.locator('.sonic-waveform-label').first();
 
-	await waveform.locator('canvas').scrollIntoViewIfNeeded();
-	await expect(playhead).toHaveCSS('inline-size', '1px');
-	await expect(playhead).toHaveCSS('background-color', 'rgb(255, 0, 0)');
-	await expect(waveform.locator('.sonic-waveform-ghost')).toHaveCSS(
-		'background-color',
-		'rgb(7, 8, 9)',
-	);
-	await expect(label).toHaveText('Intro');
-	await expect(label).toHaveCSS('color', 'rgb(240, 241, 242)');
-	await expect(label).toHaveCSS('background-color', 'rgb(4, 5, 6)');
-	await expect(label).toHaveCSS('font-family', 'monospace');
-	await expect(label).toHaveCSS('font-size', '14px');
-	await expect(label).toHaveCSS('line-height', '21px');
-	await expect(waveform.locator('.sonic-waveform-readout')).toHaveCSS('color', 'rgb(1, 2, 3)');
-	await expect(waveform.locator('.sonic-waveform')).toHaveCSS('touch-action', 'none');
+			await waveform.locator('canvas').scrollIntoViewIfNeeded();
+			await expect.soft(playhead).toHaveCSS('inline-size', '1px');
+			await expect.soft(playhead).toHaveCSS('background-color', 'rgb(255, 0, 0)');
+			await expect
+				.soft(waveform.locator('.sonic-waveform-ghost'))
+				.toHaveCSS('background-color', 'rgb(7, 8, 9)');
+			await expect.soft(label).toHaveText('Intro');
+			await expect.soft(label).toHaveCSS('color', 'rgb(240, 241, 242)');
+			await expect.soft(label).toHaveCSS('background-color', 'rgb(4, 5, 6)');
+			await expect.soft(label).toHaveCSS('font-family', 'monospace');
+			await expect.soft(label).toHaveCSS('font-size', '14px');
+			await expect.soft(label).toHaveCSS('line-height', '21px');
+			await expect
+				.soft(waveform.locator('.sonic-waveform-readout'))
+				.toHaveCSS('color', 'rgb(1, 2, 3)');
+			await expect.soft(waveform.locator('.sonic-waveform')).toHaveCSS('touch-action', 'none');
 
-	const inline = await waveform.evaluate((host) => {
-		const wave = host.querySelector('canvas')?.getBoundingClientRect();
-		const parked = host.querySelector('.sonic-waveform-label');
-		if (!wave || !parked) throw new Error('The waveform drew no label');
+			const inline = await waveform.evaluate((host) => {
+				const wave = host.querySelector('canvas')?.getBoundingClientRect();
+				const parked = host.querySelector('.sonic-waveform-label');
+				if (!wave || !parked) throw new Error('The waveform drew no label');
 
-		const text = document.createRange();
+				const text = document.createRange();
 
-		text.selectNodeContents(parked);
+				text.selectNodeContents(parked);
 
-		return text.getBoundingClientRect().left - wave.left;
-	});
+				return text.getBoundingClientRect().left - wave.left;
+			});
 
-	expect(inline).toBeCloseTo(16, 1);
-	// 6rem of size: the label's 0.04 inset, untouched by the inline token
-	// Firefox lays out in sixtieths of a pixel and reports 3.83333px
-	const lift = await label.evaluate((parked) => getComputedStyle(parked).bottom);
+			expect.soft(inline).toBeCloseTo(16, 1);
+			// 6rem of size: the label's 0.04 inset, untouched by the inline token
+			// Firefox lays out in sixtieths of a pixel and reports 3.83333px
+			const lift = await label.evaluate((parked) => getComputedStyle(parked).bottom);
 
-	expect(Number(lift.replace('px', ''))).toBeCloseTo(3.84, 1);
-});
+			expect.soft(Number(lift.replace('px', ''))).toBeCloseTo(3.84, 1);
+		});
 
-test('a scrim spans the wave under the label, and a block inset lifts the label', async ({
-	page,
-}) => {
-	await page.goto('/fixtures/');
+		await test.step('a scrim spans the wave under the label, and a block inset lifts the label', async () => {
+			const waveform = page.locator('#waveform-pinned');
+			const scrim = waveform.locator('.sonic-waveform-scrim');
+			const label = waveform.locator('.sonic-waveform-label').first();
 
-	const waveform = page.locator('#waveform-pinned');
-	const scrim = waveform.locator('.sonic-waveform-scrim');
-	const label = waveform.locator('.sonic-waveform-label').first();
+			await waveform.locator('canvas').scrollIntoViewIfNeeded();
+			await expect.soft(label).toHaveText('Intro');
+			await expect.soft(scrim).toHaveCSS('background-image', /rgb\(13, 14, 15\)/);
 
-	await waveform.locator('canvas').scrollIntoViewIfNeeded();
-	await expect(label).toHaveText('Intro');
-	await expect(scrim).toHaveCSS('background-image', /rgb\(13, 14, 15\)/);
+			const boxes = await waveform.evaluate((host) =>
+				[...host.querySelectorAll('canvas, .sonic-waveform-scrim')].map((part) => {
+					const { height, width, x, y } = part.getBoundingClientRect();
 
-	const boxes = await waveform.evaluate((host) =>
-		[...host.querySelectorAll('canvas, .sonic-waveform-scrim')].map((part) => {
-			const { height, width, x, y } = part.getBoundingClientRect();
+					return [x, y, width, height];
+				}),
+			);
 
-			return [x, y, width, height];
-		}),
-	);
+			expect.soft(boxes[1]).toEqual(boxes[0]);
+			await expect.soft(label).toHaveCSS('bottom', '14px');
+		});
 
-	expect(boxes[1]).toEqual(boxes[0]);
-	await expect(label).toHaveCSS('bottom', '14px');
-});
+		await test.step('a label is drawn by renderLabel from the marker and its own keys, and goes back to the text without it', async () => {
+			const waveform = page.locator('#waveform-pinned');
+			const label = waveform.locator('.sonic-waveform-label').first();
 
-test('a label is drawn by renderLabel from the marker and its own keys, and goes back to the text without it', async ({
-	page,
-}) => {
-	await page.goto('/fixtures/');
+			await waveform.locator('canvas').scrollIntoViewIfNeeded();
+			await expect.soft(label).toHaveText('Intro');
+			await waveform.evaluate((host: HTMLElementTagNameMap['sonic-waveform']) => {
+				host.markers = [{ label: 'Spoken', start: 100, title: 'Opening' }];
+				host.renderLabel = (marker, element) => {
+					const title = document.createElement('b');
 
-	const waveform = page.locator('#waveform-pinned');
-	const label = waveform.locator('.sonic-waveform-label').first();
+					title.textContent = String(marker.title);
+					element.append(`${String(marker.start)} `, title);
+				};
+			});
 
-	await waveform.locator('canvas').scrollIntoViewIfNeeded();
-	await expect(label).toHaveText('Intro');
-	await waveform.evaluate((host: HTMLElementTagNameMap['sonic-waveform']) => {
-		host.markers = [{ label: 'Spoken', start: 100, title: 'Opening' }];
-		host.renderLabel = (marker, element) => {
-			const title = document.createElement('b');
+			await expect.soft(label).toHaveText('100 Opening');
+			await expect.soft(label.locator('b')).toHaveText('Opening');
+			await expect.soft(label).toHaveAttribute('aria-hidden', 'true');
 
-			title.textContent = String(marker.title);
-			element.append(`${String(marker.start)} `, title);
-		};
-	});
+			await waveform.evaluate((host: HTMLElementTagNameMap['sonic-waveform']) => {
+				host.renderLabel = undefined;
+			});
+			await expect.soft(label).toHaveText('Spoken');
+		});
 
-	await expect(label).toHaveText('100 Opening');
-	await expect(label.locator('b')).toHaveText('Opening');
-	await expect(label).toHaveAttribute('aria-hidden', 'true');
+		await test.step('the fade tokens set where the parked label gives way to a marker the playhead has crossed', async () => {
+			const waveform = page.locator('#waveform-pinned');
+			const parked = waveform.locator('.sonic-waveform-label').first();
+			const mark = (fadeEnd: string): Promise<void> =>
+				waveform.evaluate((host: HTMLElementTagNameMap['sonic-waveform'], end) => {
+					host.style.setProperty('--sonic-waveform-label-fade-end', end);
+					host.markers = [
+						{ label: 'Before', start: 100 },
+						{ label: 'Crossed', start: 149.5 },
+					];
+				}, fadeEnd);
 
-	await waveform.evaluate((host: HTMLElementTagNameMap['sonic-waveform']) => {
-		host.renderLabel = undefined;
-	});
-	await expect(label).toHaveText('Spoken');
-});
+			await waveform.locator('canvas').scrollIntoViewIfNeeded();
+			await mark('1');
+			await expect.soft(parked).toHaveText('Before');
+			await expect
+				.poll(() => parked.evaluate((label) => Number(getComputedStyle(label).opacity)))
+				.toBeLessThan(1);
 
-test('the fade tokens set where the parked label gives way to a marker the playhead has crossed', async ({
-	page,
-}) => {
-	await page.goto('/fixtures/');
-
-	const waveform = page.locator('#waveform-pinned');
-	const parked = waveform.locator('.sonic-waveform-label').first();
-	const mark = (fadeEnd: string): Promise<void> =>
-		waveform.evaluate((host: HTMLElementTagNameMap['sonic-waveform'], end) => {
-			host.style.setProperty('--sonic-waveform-label-fade-end', end);
-			host.markers = [
-				{ label: 'Before', start: 100 },
-				{ label: 'Crossed', start: 149.5 },
-			];
-		}, fadeEnd);
-
-	await waveform.locator('canvas').scrollIntoViewIfNeeded();
-	await mark('1');
-	await expect(parked).toHaveText('Before');
-	await expect
-		.poll(() => parked.evaluate((label) => Number(getComputedStyle(label).opacity)))
-		.toBeLessThan(1);
-
-	await mark('0');
-	await expect(parked).toHaveText('Crossed');
-	await expect(parked).toHaveCSS('opacity', '1');
-});
+			await mark('0');
+			await expect.soft(parked).toHaveText('Crossed');
+			await expect.soft(parked).toHaveCSS('opacity', '1');
+		});
+	},
+);

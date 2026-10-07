@@ -2,7 +2,7 @@ import type { Locator, Page } from '@playwright/test';
 
 import { expect, test } from '@playwright/test';
 
-import { canvasPixels, expectPixel, paintedColour } from './canvas-probe.ts';
+import { canvasPixels, expectPixel, paintedColour, softPixel } from './canvas-probe.ts';
 
 type Pixel = Awaited<ReturnType<typeof canvasPixels>>[number];
 
@@ -89,82 +89,89 @@ async function setOnBox(page: Page, property: string, value: string): Promise<vo
 	);
 }
 
-test('the canvas backs every device pixel, the spike stands one column wide where the log axis puts it, and the bars turn from the lit colour to the hot one at the hot threshold', async ({
-	page,
-}) => {
-	const { alphaAt, canvas, pixelAt, token } = await openSpectrum(page);
-	const { css, device } = await canvas.evaluate((element) => ({
-		css: element.getBoundingClientRect().width,
-		device: element instanceof HTMLCanvasElement ? element.width : 0,
-	}));
+test(
+	'the spectrum paints its spike on the device grid, and repaints when a colour or the hot threshold changes',
+	{ tag: '@mobile' },
+	async ({ page }) => {
+		const { alphaAt, canvas, pixelAt, token } = await openSpectrum(page);
 
-	expect(Math.abs(device - css * 2)).toBeLessThanOrEqual(1);
-	expect(await alphaAt(-6)).toBe(255);
-	expect(await alphaAt(-6, { row: -1 })).toBe(0);
-	expect(await alphaAt(-6, { column: -1 })).toBe(0);
-	expect(await alphaAt(-6, { column: 1 })).toBe(0);
+		await test.step('the canvas backs every device pixel, the spike stands one column wide where the log axis puts it, and the bars turn from the lit colour to the hot one at the hot threshold', async () => {
+			const { css, device } = await canvas.evaluate((element) => ({
+				css: element.getBoundingClientRect().width,
+				device: element instanceof HTMLCanvasElement ? element.width : 0,
+			}));
 
-	expectPixel(await pixelAt(-30), await token('--_sonic-spectrum-lit'));
-	expectPixel(await pixelAt(-12, { row: 1 }), await token('--_sonic-spectrum-lit'));
-	expectPixel(await pixelAt(-12, { row: -1 }), await token('--_sonic-spectrum-hot'));
-	expect(await token('--_sonic-spectrum-hot')).not.toEqual(await token('--_sonic-spectrum-lit'));
-});
+			expect.soft(Math.abs(device - css * 2)).toBeLessThanOrEqual(1);
+			expect.soft(await alphaAt(-6)).toBe(255);
+			expect.soft(await alphaAt(-6, { row: -1 })).toBe(0);
+			expect.soft(await alphaAt(-6, { column: -1 })).toBe(0);
+			expect.soft(await alphaAt(-6, { column: 1 })).toBe(0);
 
-test('a lit colour or a hot threshold set on an ancestor repaints within two frames', async ({
-	page,
-}) => {
-	const { pixelAt, token } = await openSpectrum(page);
+			softPixel(await pixelAt(-30), await token('--_sonic-spectrum-lit'));
+			softPixel(await pixelAt(-12, { row: 1 }), await token('--_sonic-spectrum-lit'));
+			softPixel(await pixelAt(-12, { row: -1 }), await token('--_sonic-spectrum-hot'));
+			expect
+				.soft(await token('--_sonic-spectrum-hot'))
+				.not.toEqual(await token('--_sonic-spectrum-lit'));
+		});
 
-	await setOnBox(page, '--sonic-lit', '#0080ff');
-	expectPixel(await pixelAt(-30), [0, 128, 255, 255]);
+		await test.step('a lit colour or a hot threshold set on an ancestor repaints within two frames', async () => {
+			await setOnBox(page, '--sonic-lit', '#0080ff');
+			softPixel(await pixelAt(-30), [0, 128, 255, 255]);
 
-	await setOnBox(page, '--sonic-spectrum-hot-from', '-40');
-	expectPixel(await pixelAt(-30), await token('--_sonic-spectrum-hot'));
-});
+			await setOnBox(page, '--sonic-spectrum-hot-from', '-40');
+			softPixel(await pixelAt(-30), await token('--_sonic-spectrum-hot'));
+		});
 
-test('the grid is a fifth of the text colour, and repaints within two frames when that changes', async ({
-	page,
-}) => {
-	const { pixelAt } = await openSpectrum(page);
+		await test.step('the grid is a fifth of the text colour, and repaints within two frames when that changes', async () => {
+			await setOnBox(page, 'color', '#00ffff');
+			softPixel(await pixelAt(-24, { column: -20 }), [0, 255, 255, 51]);
+		});
+	},
+);
 
-	await setOnBox(page, 'color', '#00ffff');
-	expectPixel(await pixelAt(-24, { column: -20 }), [0, 255, 255, 51]);
-});
+test(
+	'the grid follows a system text colour when the colour scheme flips',
+	{ tag: '@mobile' },
+	async ({ page }) => {
+		await page.emulateMedia({ colorScheme: 'light' });
 
-test('the grid follows a system text colour when the colour scheme flips', async ({ page }) => {
-	await page.emulateMedia({ colorScheme: 'light' });
+		const { pixelAt } = await openSpectrum(page);
 
-	const { pixelAt } = await openSpectrum(page);
+		await setOnBox(page, 'color-scheme', 'light dark');
+		await setOnBox(page, 'color', 'CanvasText');
+		expectPixel(await pixelAt(-24, { column: -20 }), [0, 0, 0, 51]);
 
-	await setOnBox(page, 'color-scheme', 'light dark');
-	await setOnBox(page, 'color', 'CanvasText');
-	expectPixel(await pixelAt(-24, { column: -20 }), [0, 0, 0, 51]);
+		await page.emulateMedia({ colorScheme: 'dark' });
 
-	await page.emulateMedia({ colorScheme: 'dark' });
+		// Read from the engine, since Firefox's dark CanvasText is not pure white
+		const [red = 0, green = 0, blue = 0] = await page
+			.locator('#spectrum-box')
+			.evaluate((box) => (getComputedStyle(box).color.match(/[\d.]+/g) ?? []).map(Number));
 
-	// Read from the engine, since Firefox's dark CanvasText is not pure white
-	const [red = 0, green = 0, blue = 0] = await page
-		.locator('#spectrum-box')
-		.evaluate((box) => (getComputedStyle(box).color.match(/[\d.]+/g) ?? []).map(Number));
+		expect(red).toBeGreaterThan(200);
+		await expect(async () => {
+			expectPixel(await pixelAt(-24, { column: -20 }), [red, green, blue, 51]);
+		}).toPass();
+	},
+);
 
-	expect(red).toBeGreaterThan(200);
-	await expect(async () => {
-		expectPixel(await pixelAt(-24, { column: -20 }), [red, green, blue, 51]);
-	}).toPass();
-});
+test(
+	'with fill, the spectrum takes its row and its size follows the height',
+	{ tag: '@mobile' },
+	async ({ page }) => {
+		await page.goto('/fixtures/');
 
-test('with fill, the spectrum takes its row and its size follows the height', async ({ page }) => {
-	await page.goto('/fixtures/');
+		const spectrum = page.locator('#spectrum-fill .sonic-spectrum');
 
-	const spectrum = page.locator('#spectrum-fill .sonic-spectrum');
+		await spectrum.scrollIntoViewIfNeeded();
+		await expect(spectrum).toHaveCSS('block-size', '128px');
+		await expect(spectrum).toHaveCSS('--_sonic-spectrum-size', '128px');
 
-	await spectrum.scrollIntoViewIfNeeded();
-	await expect(spectrum).toHaveCSS('block-size', '128px');
-	await expect(spectrum).toHaveCSS('--_sonic-spectrum-size', '128px');
-
-	await page.locator('#spectrum-fill-box').evaluate((box) => {
-		box.style.setProperty('height', '64px');
-	});
-	await expect(spectrum).toHaveCSS('block-size', '64px');
-	await expect(spectrum).toHaveCSS('--_sonic-spectrum-size', '64px');
-});
+		await page.locator('#spectrum-fill-box').evaluate((box) => {
+			box.style.setProperty('height', '64px');
+		});
+		await expect(spectrum).toHaveCSS('block-size', '64px');
+		await expect(spectrum).toHaveCSS('--_sonic-spectrum-size', '64px');
+	},
+);

@@ -1,9 +1,11 @@
 import { expect, test } from '@playwright/test';
 
+import { boxOf } from './pointer.ts';
+
 test.skip(({ hasTouch }) => !hasTouch, 'Needs a touchscreen');
 
 // Not `dblclick`, which iOS may not deliver under `touch-action: none`
-test('a double tap opens typed entry', async ({ page }) => {
+test('a double tap opens typed entry', { tag: '@mobile' }, async ({ page }) => {
 	await page.goto('/fixtures/');
 
 	const target = page.locator('#cutoff .sonic-dial');
@@ -11,8 +13,7 @@ test('a double tap opens typed entry', async ({ page }) => {
 	// A tap outside the viewport lands nowhere
 	await target.scrollIntoViewIfNeeded();
 
-	const box = await target.boundingBox();
-	if (!box) throw new Error('The dial has no box');
+	const box = await boxOf(target);
 
 	const x = box.x + box.width / 2;
 	const y = box.y + box.height / 2;
@@ -23,15 +24,14 @@ test('a double tap opens typed entry', async ({ page }) => {
 	await expect(page.getByRole('textbox', { name: 'Cutoff' })).toBeFocused();
 });
 
-test('a double tap on a number box types in place', async ({ page }) => {
+test('a double tap on a number box types in place', { tag: '@mobile' }, async ({ page }) => {
 	await page.goto('/fixtures/');
 
 	const target = page.locator('#tempo .sonic-number');
 
 	await target.scrollIntoViewIfNeeded();
 
-	const box = await target.boundingBox();
-	if (!box) throw new Error('The number box has no box');
+	const box = await boxOf(target);
 
 	const x = box.x + box.width / 2;
 	const y = box.y + box.height / 2;

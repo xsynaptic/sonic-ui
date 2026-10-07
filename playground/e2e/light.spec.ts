@@ -73,20 +73,24 @@ async function readFalls(page: Page): Promise<Array<number>> {
 		});
 }
 
-test('every directional gradient and cast shadow turns with the one light', async ({ page }) => {
-	await page.goto('/fixtures/');
-	await page.locator('#mute .sonic-button').click();
+test(
+	'every directional gradient and cast shadow turns with the one light',
+	{ tag: '@mobile' },
+	async ({ page }) => {
+		await page.goto('/fixtures/');
+		await page.locator('#mute .sonic-button').click();
 
-	const falls = await readFalls(page);
+		const falls = await readFalls(page);
 
-	expect(await readGradients(page)).toEqual(shaded.map(() => 163));
-	expect(falls.length).toBeGreaterThanOrEqual(cast.length);
-	expect(new Set(falls)).toEqual(new Set([17]));
+		expect(await readGradients(page)).toEqual(shaded.map(() => 163));
+		expect(falls.length).toBeGreaterThanOrEqual(cast.length);
+		expect(new Set(falls)).toEqual(new Set([17]));
 
-	await page.addStyleTag({ content: `:root { --sonic-light-tilt: ${String(tilt)}deg; }` });
+		await page.addStyleTag({ content: `:root { --sonic-light-tilt: ${String(tilt)}deg; }` });
 
-	await expect(async () => {
-		expect(await readGradients(page)).toEqual(shaded.map(() => 180 - tilt));
-		expect(await readFalls(page)).toEqual(falls.map(() => tilt));
-	}).toPass();
-});
+		await expect(async () => {
+			expect(await readGradients(page)).toEqual(shaded.map(() => 180 - tilt));
+			expect(await readFalls(page)).toEqual(falls.map(() => tilt));
+		}).toPass();
+	},
+);

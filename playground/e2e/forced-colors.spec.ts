@@ -3,7 +3,9 @@ import type { Page } from '@playwright/test';
 import { expect, test } from '@playwright/test';
 
 import { canvasPixels, expectPixel, middleOf, paintedColour, pixelAt } from './canvas-probe.ts';
+import { clear, systemColour } from './colour.ts';
 import { mouseOnly } from './pointer.ts';
+import { stillTransitions } from './state.ts';
 
 // A part paints at all only if it opts out; forced colours drop gradients and force backgrounds to Canvas
 const drawnParts = [
@@ -50,21 +52,6 @@ async function paintOf(
 	});
 }
 
-async function systemColour(page: Page, colour: string): Promise<string> {
-	return page.evaluate((expression) => {
-		const probe = document.createElement('div');
-
-		probe.style.cssText = `forced-color-adjust: none; background: ${expression}`;
-		document.body.append(probe);
-
-		const computed = getComputedStyle(probe).backgroundColor;
-
-		probe.remove();
-
-		return computed;
-	}, colour);
-}
-
 const focusable = [
 	'.sonic-dial',
 	'.sonic-slider',
@@ -83,48 +70,6 @@ test.skip(({ browserName }) => browserName === 'webkit', 'WebKit has no forced-c
 test.beforeEach(async ({ page }) => {
 	await page.emulateMedia({ forcedColors: 'active' });
 	await page.goto('/fixtures/');
-});
-
-test('every drawn part opts out of forced colours and paints, and every focusable element stays forced', async ({
-	page,
-}) => {
-	const parts = await page.evaluate((selectors) => {
-		return selectors.map((selector) => {
-			const [element, pseudo] = selector.split('::', 2);
-			const found = document.querySelector(element ?? '');
-			if (!found) return { missing: true, selector };
-
-			const style = getComputedStyle(found, pseudo === undefined ? undefined : `::${pseudo}`);
-
-			return {
-				adjust: style.forcedColorAdjust,
-				isPainted: style.backgroundImage !== 'none' || style.backgroundColor !== 'rgba(0, 0, 0, 0)',
-				selector,
-			};
-		});
-	}, drawnParts);
-	const adjusts = await page.evaluate(
-		(selectors) =>
-			selectors.map((selector) => {
-				const found = document.querySelector(selector);
-
-				return found ? getComputedStyle(found).forcedColorAdjust : 'missing';
-			}),
-		focusable,
-	);
-
-	expect
-		.soft(parts)
-		.toEqual(drawnParts.map((selector) => ({ adjust: 'none', isPainted: true, selector })));
-	expect(adjusts).toEqual(focusable.map(() => 'auto'));
-});
-
-test('a slider’s indicator keeps to the ink whatever colour it is given', async ({ page }) => {
-	const colour = await page
-		.locator('#edge-strip .sonic-slider-cap')
-		.evaluate((cap) => getComputedStyle(cap, '::after').backgroundColor);
-
-	expect(colour).toBe(await systemColour(page, 'ButtonText'));
 });
 
 test('a toggle draws its cap in CanvasText, and its well in Canvas until a lit position is chosen', async ({
@@ -159,7 +104,7 @@ test('a hovered or latched cap keeps to system colours, and a disabled latched c
 	const latched = await paintOf(page, '#mute .sonic-button-cap');
 	const option = await paintOf(page, '#mode [aria-checked="true"] .sonic-segmented-cap');
 
-	const transparentDrop = expect.stringMatching(/^(rgba\(0, 0, 0, 0\)|transparent)/);
+	const transparentDrop = expect.stringMatching(clear);
 
 	expect({ dial, hovered, latched, option }).toEqual({
 		dial: { colour: buttonFace, drop: transparentDrop, image: 'none' },
@@ -195,26 +140,100 @@ test('a bare blank cap is edged by its rim alone', async ({ page }) => {
 		.evaluate((cap) => getComputedStyle(cap).boxShadow.split(/,(?![^(]*\))/));
 
 	expect(rim?.trim()).toContain(buttonText);
-	expect(edge?.trim()).toMatch(/^(rgba\(0, 0, 0, 0\)|transparent)/);
+	expect(edge?.trim()).toMatch(clear);
 });
 
-test('the number box edges its glass and inks its digits, grey when disabled', async ({ page }) => {
-	const [canvasText, grayText] = [
-		await systemColour(page, 'CanvasText'),
-		await systemColour(page, 'GrayText'),
-	];
-	const read = (): Promise<{ border: string; digits: string }> =>
-		page.locator('#tempo .sonic-number').evaluate((control) => ({
-			border: getComputedStyle(control).borderTopColor,
-			digits: getComputedStyle(control.querySelector('.sonic-number-value') ?? control).color,
-		}));
+test('drawn parts opt out of forced colours, and the indicator, the number box and a modulation tick keep to system colours', async ({
+	page,
+}) => {
+	await test.step('every drawn part opts out of forced colours and paints, and every focusable element stays forced', async () => {
+		const parts = await page.evaluate((selectors) => {
+			return selectors.map((selector) => {
+				const [element, pseudo] = selector.split('::', 2);
+				const found = document.querySelector(element ?? '');
+				if (!found) return { missing: true, selector };
 
-	expect(await read()).toEqual({ border: canvasText, digits: canvasText });
+				const style = getComputedStyle(found, pseudo === undefined ? undefined : `::${pseudo}`);
 
-	await page.locator('#tempo').evaluate((host) => {
-		host.setAttribute('disabled', '');
+				return {
+					adjust: style.forcedColorAdjust,
+					isPainted:
+						style.backgroundImage !== 'none' || style.backgroundColor !== 'rgba(0, 0, 0, 0)',
+					selector,
+				};
+			});
+		}, drawnParts);
+		const adjusts = await page.evaluate(
+			(selectors) =>
+				selectors.map((selector) => {
+					const found = document.querySelector(selector);
+
+					return found ? getComputedStyle(found).forcedColorAdjust : 'missing';
+				}),
+			focusable,
+		);
+
+		expect
+			.soft(parts)
+			.toEqual(drawnParts.map((selector) => ({ adjust: 'none', isPainted: true, selector })));
+		expect.soft(adjusts).toEqual(focusable.map(() => 'auto'));
 	});
-	expect(await read()).toEqual({ border: canvasText, digits: grayText });
+
+	await test.step('a slider’s indicator keeps to the ink whatever colour it is given', async () => {
+		const colour = await page
+			.locator('#edge-strip .sonic-slider-cap')
+			.evaluate((cap) => getComputedStyle(cap, '::after').backgroundColor);
+
+		expect.soft(colour).toBe(await systemColour(page, 'ButtonText'));
+	});
+
+	await test.step('the number box edges its glass and inks its digits, grey when disabled', async () => {
+		const [canvasText, grayText] = [
+			await systemColour(page, 'CanvasText'),
+			await systemColour(page, 'GrayText'),
+		];
+		const read = (): Promise<{ border: string; digits: string }> =>
+			page.locator('#tempo .sonic-number').evaluate((control) => ({
+				border: getComputedStyle(control).borderTopColor,
+				digits: getComputedStyle(control.querySelector('.sonic-number-value') ?? control).color,
+			}));
+
+		expect.soft(await read()).toEqual({ border: canvasText, digits: canvasText });
+
+		await page.locator('#tempo').evaluate((host) => {
+			host.setAttribute('disabled', '');
+		});
+		expect.soft(await read()).toEqual({ border: canvasText, digits: grayText });
+	});
+
+	await test.step('a live modulation paints its tick in CanvasText', async () => {
+		const canvasText = await systemColour(page, 'CanvasText');
+
+		for (const id of ['modulated', 'modulated-slider']) {
+			await page.locator(`#${id}`).evaluate((element) => {
+				Object.assign(element, { modulationValue: 95 });
+			});
+		}
+
+		const tick = (selector: string): Promise<{ adjust: string; paint: string }> =>
+			page.locator(selector).evaluate((part) => {
+				const style = getComputedStyle(part, '::after');
+
+				return {
+					adjust: style.forcedColorAdjust,
+					paint: `${style.backgroundImage} ${style.backgroundColor}`,
+				};
+			});
+		const [dial, slider] = [
+			await tick('#modulated .sonic-dial-modulation'),
+			await tick('#modulated-slider .sonic-slider-modulation'),
+		];
+
+		expect.soft(dial.adjust).toBe('none');
+		expect.soft(dial.paint).toContain(canvasText);
+		expect.soft(slider.adjust).toBe('none');
+		expect.soft(slider.paint).toContain(canvasText);
+	});
 });
 
 function readLens(page: Page, selector: string): Promise<{ fill: string; rim: string }> {
@@ -365,7 +384,7 @@ test('a held or disabled point keeps a Canvas core under its ring, as does a hel
 }) => {
 	test.skip(isMobile, mouseOnly);
 
-	await page.addStyleTag({ content: '*, *::before { transition: none !important; }' });
+	await stillTransitions(page);
 
 	const [canvas, grayText, highlight] = [
 		await systemColour(page, 'Canvas'),
@@ -411,35 +430,6 @@ test('a held or disabled point keeps a Canvas core under its ring, as does a hel
 			.soft(await readPoint(page, selector), selector)
 			.toEqual({ fill: canvas, ring: grayText });
 	}
-});
-
-test('a live modulation paints its tick in CanvasText', async ({ page }) => {
-	const canvasText = await systemColour(page, 'CanvasText');
-
-	for (const id of ['modulated', 'modulated-slider']) {
-		await page.locator(`#${id}`).evaluate((element) => {
-			Object.assign(element, { modulationValue: 95 });
-		});
-	}
-
-	const tick = (selector: string): Promise<{ adjust: string; paint: string }> =>
-		page.locator(selector).evaluate((part) => {
-			const style = getComputedStyle(part, '::after');
-
-			return {
-				adjust: style.forcedColorAdjust,
-				paint: `${style.backgroundImage} ${style.backgroundColor}`,
-			};
-		});
-	const [dial, slider] = [
-		await tick('#modulated .sonic-dial-modulation'),
-		await tick('#modulated-slider .sonic-slider-modulation'),
-	];
-
-	expect(dial.adjust).toBe('none');
-	expect(dial.paint).toContain(canvasText);
-	expect(slider.adjust).toBe('none');
-	expect(slider.paint).toContain(canvasText);
 });
 
 test('a wavestrip plays in opaque Highlight, and a waveform and a spectrum paint in opaque CanvasText', async ({
@@ -509,7 +499,7 @@ test('each focusable element focused by a key paints its outline outside its box
 			return { colour: style.outlineColor, offset: style.outlineOffset, style: style.outlineStyle };
 		});
 
-		expect.soft(outline.colour, name).not.toMatch(/^(rgba\(0, 0, 0, 0\)|transparent)$/);
+		expect.soft(outline.colour, name).not.toMatch(clear);
 		expect.soft(outline, name).toMatchObject({ offset: '2px', style: 'solid' });
 	}
 

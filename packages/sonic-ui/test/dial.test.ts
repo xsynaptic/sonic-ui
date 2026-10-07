@@ -5,7 +5,7 @@ import type { SonicDial } from '#elements/dial.ts';
 import '#define/dial.ts';
 import { formatPercent, parsePercent } from '#lib/percent.ts';
 
-import { drawnMarkup, mountDial, pressKey, recordEvents } from './helpers.ts';
+import { drawnMarkup, mountDial, pointerAt, pressKey, recordEvents } from './helpers.ts';
 
 vi.hoisted(() => {
 	Object.defineProperty(navigator, 'platform', { value: 'MacIntel' });
@@ -737,6 +737,16 @@ describe('an endless dial from 10 to 370 in steps of 7.5', () => {
 		expect(dial.value).toBe(370);
 
 		dial.endless = true;
+		expect(dial.value).toBe(40);
+	});
+
+	test('a drag past the end wraps to the start', () => {
+		const { control, dial } = mountDial(`${endless} value="362.5"`);
+
+		pointerAt(control, 'pointerdown', { clientY: 100 });
+		pointerAt(control, 'pointermove', { clientY: 84 });
+		pointerAt(control, 'pointerup', { clientY: 84 });
+
 		expect(dial.value).toBe(40);
 	});
 });

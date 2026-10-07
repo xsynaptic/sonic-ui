@@ -438,6 +438,22 @@ test('a key holds a momentary position until it lifts, and disabling the toggle 
 	expect(control.value).toBe('off');
 });
 
+test('a key-held momentary position holds while focus moves inside the toggle, and lets go when focus leaves it', async () => {
+	const { control, group, positions } = await mountToggle('value="off"', duck);
+	const changes = recordChanges(control);
+
+	positionAt(positions, 1).focus();
+	pressKey(positionAt(positions, 1), 'ArrowLeft');
+	group.dispatchEvent(
+		new FocusEvent('focusout', { bubbles: true, relatedTarget: positionAt(positions, 2) }),
+	);
+	expect(changes).toEqual(['duck']);
+
+	group.dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: document.body }));
+	expect(changes).toEqual(['duck', 'off']);
+	expect(capAt(group)).toBe(1);
+});
+
 test('a drag stops at a disabled end position', async () => {
 	const children = /* HTML */ `
 		<span data-sonic-value="a">A</span>
