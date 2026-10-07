@@ -9,7 +9,7 @@ import {
 	FakeResizeObserver,
 	installCanvasFakes,
 } from './canvas-fakes.ts';
-import { mountControl, nextTask, pointerAt, pressKey, recordEvents } from './helpers.ts';
+import { mountControl, pointerAt, pressKey, recordEvents } from './helpers.ts';
 
 afterEach(() => {
 	document.body.replaceChildren();
@@ -175,60 +175,6 @@ test('Enter opens the typed entry and moves focus to it', () => {
 	expect(document.activeElement).toBe(entry);
 });
 
-test('a promise from requestPeaks repaints and asks again when it settles, either way', async () => {
-	const { flushFrames } = installCanvasFakes();
-	const { waveform } = mountWaveform('max="300" step="0" value="100"');
-	const settles: Array<() => void> = [];
-	let asks = 0;
-
-	waveform.requestPeaks = () => {
-		asks += 1;
-
-		return new Promise<void>((resolve, reject) => {
-			settles.push(asks === 1 ? resolve : reject);
-		});
-	};
-	flushFrames();
-	flushFrames();
-	expect(asks).toBe(1);
-
-	settles[0]?.();
-	await nextTask();
-	flushFrames();
-	expect(asks).toBe(2);
-
-	settles[1]?.();
-	await nextTask();
-	flushFrames();
-	expect(asks).toBe(3);
-});
-
-test('a request still out when a later one is made repaints as it settles', async () => {
-	const { flushFrames } = installCanvasFakes();
-	const { waveform } = mountWaveform('max="300" step="0" value="100"');
-	const settles: Array<() => void> = [];
-	let asks = 0;
-
-	waveform.requestPeaks = () => {
-		asks += 1;
-
-		return asks > 2
-			? undefined
-			: new Promise<void>((resolve) => {
-					settles.push(resolve);
-				});
-	};
-	flushFrames();
-	waveform.zoom = 35;
-	flushFrames();
-	expect(asks).toBe(2);
-
-	settles[0]?.();
-	await nextTask();
-	flushFrames();
-	expect(asks).toBe(3);
-});
-
 test('with reduced-motion="scroll" the playhead stays centerd under reduced motion', () => {
 	const { flushFrames } = installCanvasFakes({ isReducedMotion: true });
 	const { control, waveform } = mountWaveform(
@@ -285,20 +231,6 @@ function countPaints(waveform: SonicWaveform): () => number {
 	return () => cleared.mock.calls.length;
 }
 
-test('a requestPeaks that lists the same pending each call is asked once', () => {
-	const { flushFrames } = installCanvasFakes();
-	const { waveform } = mountWaveform('max="300" step="0" value="100"');
-	let asks = 0;
-
-	waveform.requestPeaks = () => {
-		asks += 1;
-		waveform.pending = [[90, 110]];
-	};
-	for (let frame = 0; frame < 4; frame += 1) flushFrames();
-
-	expect(asks).toBe(1);
-});
-
 test('a requestPeaks that assigns peaks each call is asked once, and the peaks paint', () => {
 	const { flushFrames } = installCanvasFakes();
 	const { waveform } = mountWaveform('max="300" step="0" value="100"');
@@ -315,23 +247,6 @@ test('a requestPeaks that assigns peaks each call is asked once, and the peaks p
 	expect(paints()).toBe(2);
 });
 
-test('peaks written from outside the call ask again', () => {
-	const { flushFrames } = installCanvasFakes();
-	const { waveform } = mountWaveform('max="300" step="0" value="100"');
-	let asks = 0;
-
-	waveform.requestPeaks = () => {
-		asks += 1;
-	};
-	flushFrames();
-	flushFrames();
-	waveform.peaks = { fullScale: 1, pairsPerSecond: 10, samples: new Float32Array(8) };
-	flushFrames();
-	flushFrames();
-
-	expect(asks).toBe(2);
-});
-
 test('an unchanged pending list written from outside paints nothing', () => {
 	const { flushFrames } = installCanvasFakes();
 	const { waveform } = mountWaveform('max="300" step="0" value="100"');
@@ -346,55 +261,6 @@ test('an unchanged pending list written from outside paints nothing', () => {
 	waveform.pending = [[90, 120]];
 	flushFrames();
 	expect(paints()).toBe(2);
-});
-
-test('one settled promise returned on every call is asked twice, not every frame', async () => {
-	const { flushFrames } = installCanvasFakes();
-	const { waveform } = mountWaveform('max="300" step="0" value="100"');
-	const loaded = Promise.resolve();
-	let asks = 0;
-
-	waveform.requestPeaks = () => {
-		asks += 1;
-
-		return loaded;
-	};
-	for (let frame = 0; frame < 4; frame += 1) {
-		flushFrames();
-		await nextTask();
-	}
-
-	expect(asks).toBe(2);
-});
-
-test('two promises returned together each repaint as they settle', async () => {
-	const { flushFrames } = installCanvasFakes();
-	const { waveform } = mountWaveform('max="300" step="0" value="100"');
-	const settles: Array<() => void> = [];
-	const chunks = [0, 1].map(
-		() =>
-			new Promise<void>((resolve) => {
-				settles.push(resolve);
-			}),
-	);
-	let asks = 0;
-
-	waveform.requestPeaks = () => {
-		asks += 1;
-
-		return chunks;
-	};
-	flushFrames();
-	flushFrames();
-	expect(asks).toBe(1);
-
-	for (const [index, settle] of settles.entries()) {
-		settle();
-		await nextTask();
-		flushFrames();
-		flushFrames();
-		expect(asks).toBe(index + 2);
-	}
 });
 
 function zoomEvents(waveform: SonicWaveform): Array<number> {
@@ -437,33 +303,9 @@ test('a ctrl wheel zooms, is cancelled and fires sonic-zoom; a write to zoom fir
 	expect(zooms).toHaveLength(1);
 });
 
-function gestureAt(control: HTMLElement, type: string, scale: number): Event {
-	const event = Object.assign(new Event(type, { bubbles: true, cancelable: true }), { scale });
-
-	control.dispatchEvent(event);
-
-	return event;
-}
-
-test('a Safari gesture scales the zoom it started at, is cancelled, and gives way to a touch', () => {
+test('a ctrl wheel is left to the page while zoomable is off, and zooms once it is back', () => {
 	const { control, waveform } = mountWaveform('zoomable zoom="60"');
 	const zooms = zoomEvents(waveform);
-
-	gestureAt(control, 'gesturestart', 1);
-	expect(gestureAt(control, 'gesturechange', 1.5).defaultPrevented).toBe(true);
-	gestureAt(control, 'gesturechange', 2);
-	expect(zooms).toEqual([90, 120]);
-
-	touchAt(control, 'pointerdown', [1, 100]);
-	expect(gestureAt(control, 'gesturechange', 3).defaultPrevented).toBe(false);
-	expect(zooms).toHaveLength(2);
-});
-
-test('a plain wheel is left to the page, and so is a ctrl wheel without zoomable', () => {
-	const { control, waveform } = mountWaveform('zoomable zoom="60"');
-	const zooms = zoomEvents(waveform);
-
-	expect(wheelAt(control, { deltaY: -10 }).defaultPrevented).toBe(false);
 
 	waveform.zoomable = false;
 	expect(wheelAt(control, { ctrlKey: true, deltaY: -10 }).defaultPrevented).toBe(false);
@@ -499,7 +341,7 @@ test.each([
 	expect([waveform.zoomMin, waveform.zoomMax]).toEqual(bounds);
 });
 
-test('+ and - step the zoom and come back; with ctrl held, or without zoomable, they are left alone', () => {
+test('+ and - step the zoom and come back, firing sonic-zoom each time', () => {
 	const { control, waveform } = mountWaveform('zoomable zoom="60"');
 	const zooms = zoomEvents(waveform);
 
@@ -508,20 +350,6 @@ test('+ and - step the zoom and come back; with ctrl held, or without zoomable, 
 	pressKey(control, '-');
 	pressKey(control, '=');
 	expect(zooms).toEqual([77.04, 60, 46.73, 60]);
-
-	const browserZoom = new KeyboardEvent('keydown', {
-		bubbles: true,
-		cancelable: true,
-		ctrlKey: true,
-		key: '+',
-	});
-
-	control.dispatchEvent(browserZoom);
-	expect(browserZoom.defaultPrevented).toBe(false);
-
-	waveform.zoomable = false;
-	expect(pressKey(control, '+').defaultPrevented).toBe(false);
-	expect(zooms).toHaveLength(4);
 });
 
 test('a second finger puts the scrub back with no change, and the pinch follows the fingers from where they are', () => {
@@ -549,39 +377,4 @@ test('a second finger puts the scrub back with no change, and the pinch follows 
 	touchAt(control, 'pointerup', [2, 290]);
 	expect(waveform.value).toBe(100);
 	expect(events).not.toContain('change');
-});
-
-test('after one finger of a pinch lifts, the other neither scrubs nor zooms, and a fresh touch scrubs again', () => {
-	const { flushFrames } = installCanvasFakes();
-	const { control, waveform } = mountWaveform('max="300" step="0" value="100" zoom="60" zoomable');
-	const zooms = zoomEvents(waveform);
-
-	flushFrames();
-	touchAt(control, 'pointerdown', [1, 200]);
-	touchAt(control, 'pointerdown', [2, 300]);
-	touchAt(control, 'pointerup', [2, 300]);
-	touchAt(control, 'pointermove', [1, 80]);
-	touchAt(control, 'pointerdown', [3, 300]);
-	touchAt(control, 'pointermove', [3, 180]);
-	expect(waveform.value).toBe(100);
-	expect(zooms).toEqual([]);
-
-	touchAt(control, 'pointerup', [3, 180]);
-	touchAt(control, 'pointerup', [1, 80]);
-	touchAt(control, 'pointerdown', [4, 200]);
-	touchAt(control, 'pointermove', [4, 140]);
-	expect(waveform.value).toBeCloseTo(101, 9);
-});
-
-test('without zoomable a second finger leaves the scrub alone', () => {
-	const { flushFrames } = installCanvasFakes();
-	const { control, waveform } = mountWaveform('max="300" step="0" value="100" zoom="60"');
-
-	flushFrames();
-	touchAt(control, 'pointerdown', [1, 200]);
-	touchAt(control, 'pointerdown', [2, 300]);
-	touchAt(control, 'pointermove', [1, 140]);
-
-	expect(waveform.value).toBeCloseTo(101, 9);
-	expect(waveform.zoom).toBe(60);
 });

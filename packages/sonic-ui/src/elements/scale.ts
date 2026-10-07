@@ -30,9 +30,9 @@ export function bindScale(
 	{ control, marks }: { control: HTMLElement; marks: HTMLElement },
 	signal: AbortSignal,
 ): void {
-	const { mapping, watch } = linkValue(element);
+	const { model } = linkValue(element);
 	const render = (): void => {
-		const { proportionOf } = mapping();
+		const { proportionOf } = model.mapping();
 
 		for (const mark of marks.children) {
 			if (!(mark instanceof HTMLElement || mark instanceof SVGElement)) continue;
@@ -59,5 +59,5 @@ export function bindScale(
 		},
 		signal,
 	);
-	signal.addEventListener('abort', watch(render), { once: true });
+	signal.addEventListener('abort', model.watch(render), { once: true });
 }

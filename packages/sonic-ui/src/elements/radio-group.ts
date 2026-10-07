@@ -1,19 +1,13 @@
+import type { Position } from '#lib/positions.ts';
+
 import { SonicFormElement } from '#elements/form-element.ts';
 import { copyNode } from '#lib/copy-node.ts';
 import { bindKeyPress } from '#lib/key-press.ts';
-import { clamp } from '#lib/math.ts';
 import { mirrorChildren } from '#lib/mirror-children.ts';
 import { bindDrag } from '#lib/pointer-drag.ts';
+import { keyTarget, stepFrom } from '#lib/positions.ts';
 import { placeChildren } from '#lib/render.ts';
 import { writeAttribute } from '#lib/write-attribute.ts';
-
-// RTL is not mirrored
-const keySteps = new Map([
-	['ArrowDown', 1],
-	['ArrowLeft', -1],
-	['ArrowRight', 1],
-	['ArrowUp', -1],
-]);
 
 interface Press {
 	boxes: Array<[HTMLButtonElement, DOMRect]>;
@@ -150,6 +144,14 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 		this.#copyOptions(copies);
 	}
 
+	protected positions(options: Array<HTMLButtonElement>): Array<Position> {
+		return options.map((option) => ({
+			isDisabled: this.isOptionDisabled(option),
+			isMomentary:
+				option.querySelector('[data-sonic-value]')?.hasAttribute('data-sonic-momentary') === true,
+		}));
+	}
+
 	protected releaseTarget(option: HTMLButtonElement): HTMLButtonElement | undefined {
 		return option;
 	}
@@ -190,20 +192,9 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 
 	protected stepFrom(from: number, step: number): HTMLButtonElement | undefined {
 		const options = this.options();
-		let index = from;
+		const index = stepFrom(this.positions(options), from, { isWrapping: this.isWrapping(), step });
 
-		for (const _ of options) {
-			const next = index + step;
-
-			index = this.isWrapping()
-				? (next + options.length) % options.length
-				: clamp(next, 0, options.length - 1);
-
-			const option = options[index];
-			if (option && !this.isOptionDisabled(option)) return option;
-		}
-
-		return undefined;
+		return index === undefined ? undefined : options[index];
 	}
 
 	#bindPress(group: HTMLElement, signal: AbortSignal): void {
@@ -266,15 +257,12 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 
 	#keyTarget(option: HTMLButtonElement, key: string): HTMLButtonElement | undefined {
 		const options = this.options();
-		const isEnabled = (other: HTMLButtonElement): boolean => !this.isOptionDisabled(other);
+		const index = keyTarget(this.positions(options), options.indexOf(option), {
+			isWrapping: this.isWrapping(),
+			key,
+		});
 
-		if (key === 'Home') return options.find((other) => isEnabled(other));
-		if (key === 'End') return options.findLast((other) => isEnabled(other));
-
-		const step = keySteps.get(key);
-		if (step === undefined) return undefined;
-
-		return this.stepFrom(options.indexOf(option), step) ?? option;
+		return index === undefined ? undefined : options[index];
 	}
 
 	#markPressed(pressed: HTMLButtonElement | undefined): void {

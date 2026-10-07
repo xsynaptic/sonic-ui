@@ -1,17 +1,17 @@
 import type { ValueAxis } from '#elements/value-gestures.ts';
-import type { AskedValue } from '#lib/asked-value.ts';
 import type { HoverPreview } from '#lib/hover-preview.ts';
-import type { ValueMapping } from '#lib/value-mapping.ts';
+import type { ScrubState } from '#lib/scrub.ts';
+import type { ValueMapping, ValueSpec } from '#lib/value-mapping.ts';
+import type { ValueModel } from '#lib/value-model.ts';
 
 import { SonicFormElement } from '#elements/form-element.ts';
 import { Readout } from '#elements/readout.ts';
 import { ValueGestures } from '#elements/value-gestures.ts';
-import { moveTo, resnap, setAsked } from '#lib/asked-value.ts';
 import { bindHoverPreview } from '#lib/hover-preview.ts';
-import { clamp, toNumber, trimFloat } from '#lib/math.ts';
+import { toNumber, trimFloat } from '#lib/math.ts';
 import { parseNumberList } from '#lib/number-list.ts';
 import { readPxProperty } from '#lib/read-px-property.ts';
-import { valueMapping } from '#lib/value-mapping.ts';
+import { createValueModel } from '#lib/value-model.ts';
 import { writeAttribute } from '#lib/write-attribute.ts';
 
 // eslint-disable-next-line unicorn/consistent-boolean-name -- the name bundlers and other kits use
@@ -47,17 +47,11 @@ const roleAttributes = [
 	'tabindex',
 ];
 
-type ValueLanding = (target: number, direction: -1 | 0 | 1) => number;
-
 export interface ValueLink {
 	input: (next: number, isMover?: boolean) => boolean;
 	isDisabled: () => boolean;
 	isHeld: () => boolean;
-	land: (resolve: undefined | ValueLanding) => void;
-	limit: (bounds: [number, number] | undefined) => void;
-	mapping: () => ValueMapping;
-	value: () => number;
-	watch: (listener: () => void) => () => void;
+	model: ValueModel;
 }
 
 // Filled from inside the class, so it reaches protected members and nothing lands on the element's public type
@@ -90,21 +84,7 @@ export abstract class SonicValueElement extends SonicFormElement {
 			input: (next, isMover = false) => (isMover || !element.#isHeld()) && element.input(next),
 			isDisabled: () => element.isDisabled(),
 			isHeld: () => element.#isHeld(),
-			land: (resolve) => {
-				element.#land = resolve;
-			},
-			limit: (bounds) => {
-				element.#limit = bounds;
-			},
-			mapping: () => element.mapping(),
-			value: () => element.#cell.value,
-			watch: (listener) => {
-				element.#watchers.add(listener);
-
-				return () => {
-					element.#watchers.delete(listener);
-				};
-			},
+			model: element.#model,
 		});
 	}
 
@@ -293,7 +273,7 @@ export abstract class SonicValueElement extends SonicFormElement {
 	}
 
 	get value(): number {
-		return this.#cell.value;
+		return this.#model.value;
 	}
 
 	set value(next: null | number | undefined) {
@@ -306,18 +286,16 @@ export abstract class SonicValueElement extends SonicFormElement {
 		const value = toNumber(next);
 
 		if (this.#isHeld()) {
-			this.heldWrite(value);
+			this.#writeHeld(value);
 			return;
 		}
 
-		if (setAsked(this.#cell, this.mapping(), value)) this.render();
+		if (this.#model.write(value)) this.render();
 	}
 
 	get valueText(): string {
-		return this.#textFor(this.#cell.value);
+		return this.#textFor(this.#model.value);
 	}
-
-	readonly #cell: AskedValue = { asked: undefined, value: 0 };
 
 	#formatEntry: ((value: number) => string) | undefined;
 
@@ -333,35 +311,21 @@ export abstract class SonicValueElement extends SonicFormElement {
 
 	readonly #instance = String((instanceCount += 1));
 
-	#land: undefined | ValueLanding;
-
-	#limit: [number, number] | undefined;
-
-	// Every attribute it reads is observed; a subclass adding an input to `isWrapping()` has to observe it
-	#mapping: undefined | ValueMapping;
+	// A subclass adding an input to `isWrapping()` has to observe it
+	readonly #model = createValueModel(() => this.#spec());
 
 	#parseValue: ((text: string) => number) | undefined;
 
-	#positions: Array<number> | undefined;
-
 	#readout: undefined | { anchor: HTMLElement; bubble: Readout };
 
-	readonly #watchers = new Set<() => void>();
-
 	attributeChangedCallback(name: string): void {
-		this.#mapping = undefined;
-		this.#positions = parseNumberList(this.getAttribute('positions'));
-		if (name === 'value') {
-			if (this.#isHeld()) {
-				this.heldWrite(this.numberAttribute('value', this.min));
-				return;
-			}
-
-			this.#cell.asked = undefined;
+		if (name === 'value' && this.#isHeld()) {
+			this.#writeHeld(this.numberAttribute('value', this.min));
+			return;
 		}
 		if (name === 'disabled' && this.isDisabled()) this.#gestures?.end();
 
-		resnap(this.#cell, this.mapping(), this.numberAttribute('value', this.min));
+		this.#model.respec(this.numberAttribute('value', this.min), { forgetAsk: name === 'value' });
 		if (proportionAttributes.has(name) && this.isBound()) this.proportionsChanged();
 		this.render();
 	}
@@ -419,19 +383,17 @@ export abstract class SonicValueElement extends SonicFormElement {
 					this.forwardNaming(target, isNamed);
 				},
 				hasEntry: () => this.entry !== 'none',
-				holdChanged: () => {
-					this.#renderHold();
-				},
 				input: (next) => this.input(next),
 				isDisabled: () => this.isDisabled(),
 				keyStep: () => this.keyStep,
-				land: (target, direction) => this.#land?.(target, direction) ?? target,
-				limit: () => this.#limit,
-				mapping: () => this.mapping(),
+				model: this.#model,
 				// eslint-disable-next-line unicorn/prefer-number-coercion -- `Number('')` is 0; an emptied field should leave the value alone
 				parse: (text) => (this.#parseValue ?? Number.parseFloat)(text),
 				render: () => {
 					this.render();
+				},
+				scrubChanged: () => {
+					this.#renderHold();
 				},
 				scrubsKeyRepeat: () => this.scrubsKeyRepeat(),
 				springTarget: () => this.springTarget(),
@@ -439,7 +401,6 @@ export abstract class SonicValueElement extends SonicFormElement {
 				toggleState: (state, isOn) => {
 					this.toggleState(state, isOn);
 				},
-				value: () => this.#cell.value,
 			},
 			control,
 		);
@@ -468,7 +429,7 @@ export abstract class SonicValueElement extends SonicFormElement {
 				dismiss: () => {
 					this.render();
 				},
-				isTaken: () => this.#isEditing() || this.isRevealed(),
+				isTaken: () => this.#isEditing() || this.#isRevealed(),
 				show: () => {
 					if (!this.readout) return;
 
@@ -493,33 +454,15 @@ export abstract class SonicValueElement extends SonicFormElement {
 
 	protected abstract override focusTarget(): HTMLElement;
 
-	protected heldFrom(): number | undefined {
-		return this.#gestures?.heldFrom();
-	}
-
-	protected heldWrite(next: number): void {
-		this.#heldAt = next;
-	}
-
-	protected holdChanged(): void {
-		// Only a subclass draws a hold
-	}
-
 	protected input(next: number): boolean {
-		const previous = this.#cell.value;
+		const previous = this.#model.value;
 
-		const target = this.#limit ? clamp(next, ...this.#limit) : next;
-
-		if (moveTo(this.#cell, this.mapping(), target)) this.render();
-		if (this.#cell.value === previous) return false;
+		if (this.#model.input(next)) this.render();
+		if (this.#model.value === previous) return false;
 
 		this.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
 
 		return true;
-	}
-
-	protected isRevealed(): boolean {
-		return this.#gestures?.isRevealed() === true;
 	}
 
 	protected isWrapping(): boolean {
@@ -527,33 +470,11 @@ export abstract class SonicValueElement extends SonicFormElement {
 	}
 
 	protected mapping(): ValueMapping {
-		if (this.#mapping) return this.#mapping;
-
-		const { detent, midpoint } = this;
-
-		this.#mapping = valueMapping({
-			...(detent === undefined ? {} : { detent }),
-			...(this.#positions ? { positions: this.#positions } : {}),
-			max: this.max,
-			...(midpoint === undefined ? {} : { midpoint }),
-			isNotched: this.notched,
-			isWrapping: this.isWrapping(),
-			min: this.min,
-			step: this.step,
-			taper: this.taper,
-		});
-
-		return this.#mapping;
+		return this.#model.mapping();
 	}
 
 	protected originValue(): number {
 		return this.origin ?? this.mapping().bounds[0];
-	}
-
-	protected playback(): number {
-		const from = this.heldFrom();
-
-		return from === undefined ? this.#cell.value : (this.#heldAt ?? from);
 	}
 
 	protected proportionsChanged(): void {
@@ -561,12 +482,12 @@ export abstract class SonicValueElement extends SonicFormElement {
 	}
 
 	protected readoutValue(): number {
-		return this.#shown().value ?? this.#cell.value;
+		return this.#shown().value ?? this.#model.value;
 	}
 
 	protected render(): void {
 		if (this.isBound()) this.#renderControl();
-		for (const listener of this.#watchers) listener();
+		this.#model.notify();
 	}
 
 	protected renderReadout(): void {
@@ -583,8 +504,22 @@ export abstract class SonicValueElement extends SonicFormElement {
 		this.value = Number(state);
 	}
 
+	protected scrubChanged(): void {
+		// Only a subclass draws a scrub
+	}
+
 	protected scrubsKeyRepeat(): boolean {
 		return false;
+	}
+
+	protected scrubState(): ScrubState {
+		const from = this.#gestures?.scrubFrom();
+
+		return {
+			from,
+			isRevealed: this.#isRevealed(),
+			played: from === undefined ? this.#model.value : (this.#heldAt ?? from),
+		};
 	}
 
 	protected springTarget(): number | undefined {
@@ -600,7 +535,7 @@ export abstract class SonicValueElement extends SonicFormElement {
 	}
 
 	#entryText(): string {
-		const value = this.#cell.value;
+		const value = this.#model.value;
 
 		if (this.#formatEntry) return this.#formatEntry(value);
 
@@ -626,8 +561,12 @@ export abstract class SonicValueElement extends SonicFormElement {
 		return this.#gestures?.isHeld() === true;
 	}
 
+	#isRevealed(): boolean {
+		return this.#gestures?.isRevealed() === true;
+	}
+
 	#renderAria(control: HTMLElement, orientation?: 'horizontal' | 'vertical'): void {
-		this.writeFormValue(String(this.#cell.value), String(this.#cell.value));
+		this.writeFormValue(String(this.#model.value), String(this.#model.value));
 		if (this.#isEditing()) {
 			for (const name of roleAttributes) control.removeAttribute(name);
 			this.forwardNaming(control, false);
@@ -654,11 +593,11 @@ export abstract class SonicValueElement extends SonicFormElement {
 
 	#renderControl(): void {
 		// A reveal or typed entry takes the readout from a hover
-		if (this.#isEditing() || this.isRevealed()) this.#hover?.clear();
+		if (this.#isEditing() || this.#isRevealed()) this.#hover?.clear();
 		this.draw();
 		this.toggleState(
 			'at-origin',
-			!this.isWrapping() && this.#cell.value === this.mapping().snap(this.originValue()),
+			!this.isWrapping() && this.#model.value === this.mapping().snap(this.originValue()),
 		);
 		this.#renderAria(this.focusTarget(), this.controlOrientation());
 	}
@@ -674,21 +613,37 @@ export abstract class SonicValueElement extends SonicFormElement {
 	}
 
 	#renderHold(): void {
-		if (this.heldFrom() === undefined) this.#heldAt = undefined;
+		if (this.#gestures?.scrubFrom() === undefined) this.#heldAt = undefined;
 		this.#hover?.restore();
 		this.renderReadout();
-		this.holdChanged();
+		this.scrubChanged();
 	}
 
 	#shown(): { isOpen: boolean; value: number | undefined } {
 		if (this.#isEditing()) return { isOpen: true, value: undefined };
 
-		const isRevealed = this.isRevealed();
+		const isRevealed = this.#isRevealed();
 		const preview = isRevealed ? undefined : this.#hover?.value();
 
 		return {
 			isOpen: (isRevealed || preview !== undefined) && this.readout,
-			value: preview ?? this.#cell.value,
+			value: preview ?? this.#model.value,
+		};
+	}
+
+	#spec(): ValueSpec {
+		const { detent, midpoint, positions } = this;
+
+		return {
+			...(detent === undefined ? {} : { detent }),
+			...(positions ? { positions } : {}),
+			max: this.max,
+			...(midpoint === undefined ? {} : { midpoint }),
+			isNotched: this.notched,
+			isWrapping: this.isWrapping(),
+			min: this.min,
+			step: this.step,
+			taper: this.taper,
 		};
 	}
 
@@ -696,11 +651,16 @@ export abstract class SonicValueElement extends SonicFormElement {
 		const step = this.spokenStep;
 
 		return step !== undefined && step > 0
-			? trimFloat(Math.round(this.#cell.value / step) * step)
-			: this.#cell.value;
+			? trimFloat(Math.round(this.#model.value / step) * step)
+			: this.#model.value;
 	}
 
 	#textFor(value: number): string {
 		return this.#formatValue?.(value) ?? String(value);
+	}
+
+	#writeHeld(next: number): void {
+		this.#heldAt = next;
+		this.scrubChanged();
 	}
 }

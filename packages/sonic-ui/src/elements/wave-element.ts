@@ -2,7 +2,6 @@ import type { Surface, SurfaceFrame } from '#lib/canvas-surface.ts';
 
 import { SonicValueElement } from '#elements/value-element.ts';
 import { bindSurface } from '#lib/canvas-surface.ts';
-import { bindFill } from '#lib/fill-watch.ts';
 
 declare global {
 	interface HTMLElementEventMap {
@@ -75,11 +74,9 @@ export abstract class SonicWaveElement<
 
 	#surface: Surface | undefined;
 
-	#syncFill: ((isFilling: boolean) => void) | undefined;
-
 	override attributeChangedCallback(name: string): void {
 		super.attributeChangedCallback(name);
-		if (name === 'fill') this.#syncFill?.(this.fill);
+		if (name === 'fill') this.#surface?.setFill(this.fill);
 	}
 
 	override connectedCallback(): void {
@@ -99,6 +96,7 @@ export abstract class SonicWaveElement<
 		this.#surface = bindSurface({
 			canvas: this.canvas,
 			colours: this.colours,
+			fill: { control, sizeProperty: this.sizeProperty },
 			lengths: this.lengths,
 			paint: (context, frame) => {
 				this.paint(context, frame);
@@ -110,21 +108,11 @@ export abstract class SonicWaveElement<
 		});
 		this.render();
 		this.checkStyles(control, this.sheet, ['cap', 'glass', 'pane', 'well', 'readout', 'value']);
-		this.#syncFill = bindFill(control, this.sizeProperty, signal);
-		this.#syncFill(this.fill);
+		this.#surface.setFill(this.fill);
 	}
 
 	protected override focusTarget(): HTMLElement {
 		return this.control;
-	}
-
-	protected override heldWrite(next: number): void {
-		super.heldWrite(next);
-		this.render();
-	}
-
-	protected override holdChanged(): void {
-		this.render();
 	}
 
 	protected abstract isEmpty(): boolean;
@@ -158,6 +146,10 @@ export abstract class SonicWaveElement<
 	}
 
 	protected abstract renderMarkers(): void;
+
+	protected override scrubChanged(): void {
+		this.render();
+	}
 
 	protected showCurrentMarker(seconds: number): void {
 		const current = this.#markers.findLast((marker) => marker.start <= seconds);

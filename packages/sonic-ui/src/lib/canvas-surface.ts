@@ -36,12 +36,14 @@ export interface Surface {
 	readonly isVisible: boolean;
 	rebuild: () => void;
 	requestFrame: () => void;
+	setFill: (isFilling: boolean) => void;
 	readonly size: SurfaceSize;
 }
 
 interface SurfaceOptions<Colour extends string, Length extends string, Numeric extends string> {
 	canvas: HTMLCanvasElement;
 	colours: Record<Colour, PrivateProperty>;
+	fill?: { control: HTMLElement; sizeProperty: PrivateProperty };
 	lengths?: Record<Length, PrivateProperty>;
 	numbers?: Record<Numeric, PrivateProperty>;
 	paint: (context: CanvasRenderingContext2D, frame: SurfaceFrame<Colour, Length, Numeric>) => void;
@@ -98,6 +100,8 @@ class CanvasSurface<
 
 	#cssBox: undefined | { height: number; width: number };
 
+	#fillWatch: ResizeObserver | undefined;
+
 	#frame: number | undefined;
 
 	#isDirty = true;
@@ -143,6 +147,7 @@ class CanvasSurface<
 			() => {
 				if (this.#frame !== undefined) cancelAnimationFrame(this.#frame);
 				this.#frame = undefined;
+				this.#stopFill();
 			},
 			{ once: true },
 		);
@@ -161,6 +166,34 @@ class CanvasSurface<
 
 	requestFrame(): void {
 		this.#schedule();
+	}
+
+	setFill(isFilling: boolean): void {
+		const { fill, signal } = this.#options;
+		if (!fill || signal.aborted || isFilling === (this.#fillWatch !== undefined)) return;
+
+		const { style } = fill.control;
+
+		this.#stopFill();
+		if (!isFilling) {
+			style.removeProperty(fill.sizeProperty);
+			return;
+		}
+
+		const started = new ResizeObserver((entries) => {
+			const box = entries.at(-1)?.borderBoxSize[0];
+			if (!box) return;
+
+			// Written a frame on, or the canvas resizes inside this delivery and WebKit reports a loop
+			requestAnimationFrame(() => {
+				if (this.#fillWatch === started) {
+					style.setProperty(fill.sizeProperty, `${String(box.blockSize)}px`);
+				}
+			});
+		});
+
+		this.#fillWatch = started;
+		started.observe(fill.control);
 	}
 
 	#armTransitions(): void {
@@ -314,6 +347,11 @@ class CanvasSurface<
 		this.#frame = requestAnimationFrame((frameMs) => {
 			this.#draw(frameMs);
 		});
+	}
+
+	#stopFill(): void {
+		this.#fillWatch?.disconnect();
+		this.#fillWatch = undefined;
 	}
 
 	#watchResolution(): void {

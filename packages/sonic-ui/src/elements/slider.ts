@@ -6,6 +6,7 @@ import { bindScale } from '#elements/scale.ts';
 import { SonicValueElement } from '#elements/value-element.ts';
 import { clampProportion } from '#lib/math.ts';
 import { requireChild, template } from '#lib/render.ts';
+import { scrubRegions } from '#lib/scrub.ts';
 import { sortedRegions } from '#lib/time-regions.ts';
 
 declare global {
@@ -206,12 +207,7 @@ export class SonicSlider extends SonicValueElement {
 		return this.#slider;
 	}
 
-	protected override heldWrite(next: number): void {
-		super.heldWrite(next);
-		if (this.scrub) this.render();
-	}
-
-	protected override holdChanged(): void {
+	protected override scrubChanged(): void {
 		if (this.scrub) this.render();
 	}
 
@@ -280,21 +276,20 @@ export class SonicSlider extends SonicValueElement {
 
 	#renderScrub(slider: HTMLElement): void {
 		const { style } = slider;
-		const { proportionOf } = this.mapping();
-		const isHeld = this.scrub && this.heldFrom() !== undefined;
-		const played = proportionOf(this.playback());
-		const scrubbed = proportionOf(this.value);
+		const state = this.scrubState();
+		const { played, scrub } = scrubRegions(state, this.value, this.mapping());
 
-		if (isHeld) style.setProperty('--_sonic-slider-played', String(played));
-		else style.removeProperty('--_sonic-slider-played');
+		if (this.scrub && state.from !== undefined) {
+			style.setProperty('--_sonic-slider-played', String(played));
+		} else style.removeProperty('--_sonic-slider-played');
 
-		if (played === scrubbed || !isHeld || !this.isRevealed()) {
+		if (scrub === undefined || !this.scrub) {
 			style.removeProperty('--_sonic-slider-scrub-region');
 			return;
 		}
 
-		const from = grooveStop(Math.min(played, scrubbed));
-		const to = grooveStop(Math.max(played, scrubbed));
+		const from = grooveStop(Math.min(played, scrub));
+		const to = grooveStop(Math.max(played, scrub));
 
 		style.setProperty(
 			'--_sonic-slider-scrub-region',

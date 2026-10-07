@@ -8,6 +8,7 @@ import { createMarkerBand } from '#lib/marker-band.ts';
 import { clampProportion } from '#lib/math.ts';
 import { readPxProperty } from '#lib/read-px-property.ts';
 import { requireChild, template } from '#lib/render.ts';
+import { scrubRegions } from '#lib/scrub.ts';
 import { stripBars, stripGroove, stripRegions } from '#lib/strip-scene.ts';
 import { sortedRegions } from '#lib/time-regions.ts';
 
@@ -164,7 +165,7 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 		const surface = this.surface();
 
 		this.#placeReadout();
-		this.showCurrentMarker(this.playback());
+		this.showCurrentMarker(this.scrubState().played);
 		if (surface && this.#stripRegions(surface.size.width).key !== this.#paintedKey) {
 			surface.requestFrame();
 		}
@@ -277,14 +278,15 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 	}
 
 	#stripRegions(width: number): StripRegions {
-		const { proportionOf } = this.mapping();
-		const isScrubbing = this.heldFrom() !== undefined && this.isRevealed();
+		const mapping = this.mapping();
+		const { proportionOf } = mapping;
+		const { played, scrub } = scrubRegions(this.scrubState(), this.value, mapping);
 
 		return stripRegions(
 			{
 				buffered: this.#buffered.map(([start, end]) => [proportionOf(start), proportionOf(end)]),
-				played: proportionOf(this.playback()),
-				...(isScrubbing ? { scrub: proportionOf(this.value) } : {}),
+				played,
+				...(scrub === undefined ? {} : { scrub }),
 			},
 			width,
 		);

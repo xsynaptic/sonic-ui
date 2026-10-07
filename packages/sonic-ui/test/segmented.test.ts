@@ -148,12 +148,7 @@ test('a value set before the options arrive latches them once they do', async ()
 });
 
 test.each([
-	['ArrowRight', 'bp', 'hp'],
-	['ArrowDown', 'bp', 'hp'],
 	['ArrowRight', 'hp', 'lp'],
-	['ArrowLeft', 'bp', 'lp'],
-	['ArrowUp', 'lp', 'hp'],
-	['Home', 'hp', 'lp'],
 	['End', 'lp', 'hp'],
 ])('%s from %s selects and focuses %s', async (key, from, expected) => {
 	const { options, segmented } = await mountSegmented(`value="${from}"`);

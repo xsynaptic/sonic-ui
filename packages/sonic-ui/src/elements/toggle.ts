@@ -4,6 +4,7 @@ import { SonicPositionGroupElement } from '#elements/position-group.ts';
 import { isUnder, optionValue } from '#elements/radio-group.ts';
 import { dragThresholdPx } from '#lib/drag-step.ts';
 import { bindDrag } from '#lib/pointer-drag.ts';
+import { enabledEnds } from '#lib/positions.ts';
 import { placeChildren, requireChild, template } from '#lib/render.ts';
 import { positionAt, travelFrom } from '#lib/toggle-travel.ts';
 
@@ -163,10 +164,7 @@ export class SonicToggle extends SonicPositionGroupElement {
 	#enabledEnds(): [number, number] {
 		if (this.isBare()) return [0, 1];
 
-		const options = this.options();
-		const isEnabled = (option: HTMLButtonElement): boolean => !this.isOptionDisabled(option);
-
-		return [options.findIndex(isEnabled), options.findLastIndex(isEnabled)];
+		return enabledEnds(this.positions(this.options()));
 	}
 
 	#fixedLegend(): Element | undefined {

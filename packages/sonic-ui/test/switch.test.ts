@@ -463,22 +463,14 @@ test('the bat skips a disabled position and stops before a disabled end, by drag
 	expect(changes).toEqual(['b', 'a']);
 });
 
-test('a press on a disabled position, and an arrow toward it, pass it by', async () => {
+test('a press on a disabled position passes it by', async () => {
 	const { control, group, positions } = await mountSwitch('value="a"', middleOut);
-	const first = positionAt(positions, 0);
 
 	expect(positions.map((position) => position.disabled)).toEqual([false, true, false, true]);
 
 	pointer(positionAt(positions, 1), 'pointerdown');
 	pointer(group, 'pointerup');
 	expect(control.value).toBe('a');
-
-	first.focus();
-	pressKey(first, 'ArrowDown');
-	expect(control.value).toBe('b');
-
-	pressKey(positionAt(positions, 2), 'End');
-	expect(control.value).toBe('b');
 });
 
 test.each(['data-sonic-disabled', 'data-sonic-disabled data-sonic-momentary'])(

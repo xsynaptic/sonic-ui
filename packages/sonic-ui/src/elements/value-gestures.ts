@@ -1,6 +1,7 @@
 import type { DragState } from '#lib/drag-step.ts';
 import type { PointerDrag } from '#lib/pointer-drag.ts';
 import type { ValueMapping } from '#lib/value-mapping.ts';
+import type { ValueModel } from '#lib/value-model.ts';
 
 import { ReadoutClaim, revealDelay } from '#elements/readout-claim.ts';
 import { ValueEntry } from '#elements/value-entry.ts';
@@ -30,20 +31,17 @@ interface GestureHost {
 	entryText: () => string;
 	forwardNaming: (target: Element, isNamed: boolean) => void;
 	hasEntry: () => boolean;
-	holdChanged: () => void;
 	input: (next: number) => boolean;
 	isDisabled: () => boolean;
 	keyStep: () => number | undefined;
-	land: (target: number, direction: -1 | 0 | 1) => number;
-	limit: () => [number, number] | undefined;
-	mapping: () => ValueMapping;
+	model: ValueModel;
 	parse: (text: string) => number;
 	render: () => void;
+	scrubChanged: () => void;
 	scrubsKeyRepeat: () => boolean;
 	springTarget: () => number | undefined;
 	tapTarget: () => number | undefined;
 	toggleState: (state: string, isOn: boolean) => void;
-	value: () => number;
 }
 
 interface KeyScrub {
@@ -64,7 +62,7 @@ const detentZonePx = 8;
 export class ValueGestures {
 	readonly #claim = new ReadoutClaim(() => {
 		this.#showRevealed();
-		this.#host.holdChanged();
+		this.#host.scrubChanged();
 	});
 
 	readonly #control: HTMLElement;
@@ -120,7 +118,7 @@ export class ValueGestures {
 						return;
 					}
 
-					const fromValue = host.value();
+					const fromValue = host.model.value;
 
 					host.toggleState('dragging', true);
 
@@ -187,10 +185,6 @@ export class ValueGestures {
 		this.#endKeyScrub();
 	}
 
-	heldFrom(): number | undefined {
-		return this.#dragging()?.fromValue ?? this.#keyScrub?.fromValue;
-	}
-
 	isEditing(): boolean {
 		return this.#entry?.isOpen === true;
 	}
@@ -205,6 +199,10 @@ export class ValueGestures {
 
 	pointerType(): string | undefined {
 		return this.#pointerType;
+	}
+
+	scrubFrom(): number | undefined {
+		return this.#dragging()?.fromValue ?? this.#keyScrub?.fromValue;
 	}
 
 	#bindEntry(signal: AbortSignal): ValueEntry {
@@ -258,7 +256,7 @@ export class ValueGestures {
 				this.#claim.reveal('keys');
 				this.#showRevealed();
 				this.#keyTo(event, next);
-				host.holdChanged();
+				host.scrubChanged();
 			},
 			{ signal },
 		);
@@ -270,7 +268,7 @@ export class ValueGestures {
 
 				if (isMeta || event.key === this.#keyScrub?.key) this.#endKeyScrub();
 				if (isMeta && this.#dragging()) return;
-				if (isMeta || host.mapping().keyTarget(event.key, host.value()) !== undefined) {
+				if (isMeta || host.model.mapping().keyTarget(event.key, host.model.value) !== undefined) {
 					this.#springBack();
 				}
 			},
@@ -289,7 +287,7 @@ export class ValueGestures {
 
 	#commit(next: number, direction: -1 | 0 | 1 = 0): void {
 		const host = this.#host;
-		const landed = Number.isFinite(next) ? host.land(next, direction) : next;
+		const landed = Number.isFinite(next) ? host.model.land(next, direction) : next;
 
 		if (host.input(landed)) host.dispatch('change');
 	}
@@ -298,7 +296,7 @@ export class ValueGestures {
 		if (!this.#claim.conceal('keys')) return;
 
 		this.#showRevealed();
-		this.#host.holdChanged();
+		this.#host.scrubChanged();
 	}
 
 	#crossCancelZone(drag: ValueDrag, value: number): void {
@@ -320,7 +318,7 @@ export class ValueGestures {
 		const host = this.#host;
 		const isOutside = drag.outside?.(event) === true;
 		const wasEngaged = drag.state.isEngaged;
-		const mapping = host.mapping();
+		const mapping = host.model.mapping();
 		const { state, value } = stepDrag(mapping, drag.state, {
 			isFine: event.shiftKey,
 			isOutside,
@@ -342,8 +340,8 @@ export class ValueGestures {
 		if (!scrub) return;
 
 		this.#keyScrub = undefined;
-		host.holdChanged();
-		if (host.value() !== scrub.fromValue) host.dispatch('change');
+		host.scrubChanged();
+		if (host.model.value !== scrub.fromValue) host.dispatch('change');
 	}
 
 	#keyTarget(key: string): number | undefined {
@@ -351,7 +349,7 @@ export class ValueGestures {
 
 		if (resetKeys.has(key)) return host.default();
 
-		return host.mapping().keyTarget(key, host.value(), host.keyStep());
+		return host.model.mapping().keyTarget(key, host.model.value, host.keyStep());
 	}
 
 	#keyTo(event: KeyboardEvent, next: number): void {
@@ -363,7 +361,7 @@ export class ValueGestures {
 		}
 
 		this.#endKeyScrub();
-		this.#commit(next, next > host.value() ? 1 : -1);
+		this.#commit(next, next > host.model.value ? 1 : -1);
 	}
 
 	#lift(drag: ValueDrag, event: PointerEvent, entry: ValueEntry): void {
@@ -389,9 +387,9 @@ export class ValueGestures {
 		clearTimeout(drag.revealTimer);
 		this.#claim.conceal('drag');
 		host.toggleState('cancelling', false);
-		host.holdChanged();
+		host.scrubChanged();
 		this.#showRevealed();
-		if (host.value() !== drag.fromValue) host.dispatch('change');
+		if (host.model.value !== drag.fromValue) host.dispatch('change');
 		this.#springBack();
 		this.#pointerType = undefined;
 	}
@@ -401,7 +399,7 @@ export class ValueGestures {
 
 		if (isRevealed) this.#claim.reveal('drag');
 		else this.#claim.conceal('drag');
-		this.#host.holdChanged();
+		this.#host.scrubChanged();
 		this.#showRevealed();
 	}
 
@@ -421,7 +419,7 @@ export class ValueGestures {
 
 		if (this.#keyScrub?.key !== key) {
 			this.#endKeyScrub();
-			this.#keyScrub = { fromValue: host.value(), key };
+			this.#keyScrub = { fromValue: host.model.value, key };
 		}
 		host.input(next);
 	}
@@ -441,15 +439,15 @@ export class ValueGestures {
 		if (target === undefined) return;
 
 		// Set before the commit so a `change` listener reading styles sees the glide
-		if (host.mapping().snap(target) !== host.value()) host.toggleState('springing', true);
+		if (host.model.mapping().snap(target) !== host.model.value) host.toggleState('springing', true);
 		this.#commit(target);
 	}
 
 	#startDrag(axis: ValueAxis, event: PointerEvent): DragState {
 		const host = this.#host;
-		const mapping = host.mapping();
+		const mapping = host.model.mapping();
 		const detent = host.detent();
-		const value = host.value();
+		const value = host.model.value;
 		const start = {
 			from: value,
 			position: axis.position(event),
@@ -472,7 +470,7 @@ export class ValueGestures {
 	}
 
 	#withinLimit(mapping: ValueMapping, state: DragState): DragState {
-		const limit = this.#host.limit();
+		const limit = this.#host.model.limit();
 		if (!limit || mapping.isWrapping) return state;
 
 		const [low, high] = limit;

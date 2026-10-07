@@ -2,7 +2,6 @@ import type { Surface, SurfaceFrame } from '#lib/canvas-surface.ts';
 
 import { SonicElement } from '#elements/sonic-element.ts';
 import { bindSurface } from '#lib/canvas-surface.ts';
-import { bindFill } from '#lib/fill-watch.ts';
 
 export abstract class SonicDisplayElement<
 	Colour extends string,
@@ -68,10 +67,8 @@ export abstract class SonicDisplayElement<
 
 	#surface: Surface | undefined;
 
-	#syncFill: ((isFilling: boolean) => void) | undefined;
-
 	attributeChangedCallback(name: string): void {
-		if (name === 'fill') this.#syncFill?.(this.fill);
+		if (name === 'fill') this.#surface?.setFill(this.fill);
 		this.#surface?.invalidate();
 	}
 
@@ -97,6 +94,7 @@ export abstract class SonicDisplayElement<
 		this.#surface = bindSurface({
 			canvas: this.canvas,
 			colours: this.colours,
+			fill: { control, sizeProperty: this.sizeProperty },
 			numbers: this.numbers,
 			paint: (context, frame) => {
 				this.#paint(context, frame);
@@ -104,8 +102,7 @@ export abstract class SonicDisplayElement<
 			signal,
 		});
 		this.checkStyles(control, this.sheet, ['glass', 'pane', 'well']);
-		this.#syncFill = bindFill(control, this.sizeProperty, signal);
-		this.#syncFill(this.fill);
+		this.#surface.setFill(this.fill);
 	}
 
 	protected abstract paint(

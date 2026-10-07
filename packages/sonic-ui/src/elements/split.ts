@@ -52,7 +52,7 @@ function gridLimits(mapping: ValueMapping, [low, high]: [number, number]): [numb
 }
 
 function modelOf(member: Member, value: number, isFree: boolean): SplitMember {
-	const mapping = member.link.mapping();
+	const mapping = member.link.model.mapping();
 	const [first, last] = mapping.bounds;
 
 	return {
@@ -176,7 +176,7 @@ export class SonicSplit extends SonicElement {
 	#compensate(): void {
 		this.#isQueued = false;
 		for (const mover of this.#members) {
-			if (mover.link.value() !== mover.seen) this.#move(mover);
+			if (mover.link.model.value !== mover.seen) this.#move(mover);
 		}
 	}
 
@@ -201,7 +201,7 @@ export class SonicSplit extends SonicElement {
 
 	#join(element: SonicValueElement): Member {
 		const link = linkValue(element);
-		const unwatch = link.watch(() => {
+		const unwatch = link.model.watch(() => {
 			if (this.#isWriting || this.#isQueued) return;
 
 			this.#isQueued = true;
@@ -210,9 +210,9 @@ export class SonicSplit extends SonicElement {
 			});
 		});
 
-		link.land((target, direction) => this.#land(element, target, direction));
+		link.model.setLanding((target, direction) => this.#land(element, target, direction));
 
-		return { element, link, seen: link.value(), unwatch };
+		return { element, link, seen: link.model.value, unwatch };
 	}
 
 	#land(element: SonicValueElement, target: number, direction: -1 | 0 | 1): number {
@@ -241,10 +241,10 @@ export class SonicSplit extends SonicElement {
 			const model = this.#model(values, member);
 			const value = values[index] ?? member.seen;
 
-			member.link.limit(
+			member.link.model.setLimit(
 				isLocked(member)
 					? [value, value]
-					: gridLimits(member.link.mapping(), splitLimits(model, index, this.#total)),
+					: gridLimits(member.link.model.mapping(), splitLimits(model, index, this.#total)),
 			);
 		}
 	}
@@ -270,7 +270,7 @@ export class SonicSplit extends SonicElement {
 			distribute(
 				this.#model(snapshot.values, mover),
 				{ mode: this.mode, total: this.#total },
-				{ index, target: mover.link.value() },
+				{ index, target: mover.link.model.value },
 			),
 			mover,
 		);
@@ -288,7 +288,7 @@ export class SonicSplit extends SonicElement {
 
 		const changed = this.#members.filter(
 			(member, index) =>
-				member !== snapshot.mover && member.link.value() !== snapshot.values[index],
+				member !== snapshot.mover && member.link.model.value !== snapshot.values[index],
 		);
 
 		queueMicrotask(() => {
@@ -317,8 +317,8 @@ export class SonicSplit extends SonicElement {
 	#unbind(): void {
 		for (const { link, unwatch } of this.#members) {
 			unwatch();
-			link.land(undefined);
-			link.limit(undefined);
+			link.model.setLanding(undefined);
+			link.model.setLimit(undefined);
 		}
 		this.#members = [];
 		this.#snapshot = undefined;
@@ -355,14 +355,14 @@ export class SonicSplit extends SonicElement {
 		try {
 			for (const [index, member] of this.#members.entries()) {
 				const value = values[index];
-				if (value === undefined || value === member.link.value()) continue;
+				if (value === undefined || value === member.link.model.value) continue;
 
-				member.link.limit(undefined);
+				member.link.model.setLimit(undefined);
 				member.link.input(value, member === mover);
 			}
 		} finally {
 			this.#isWriting = false;
 		}
-		for (const member of this.#members) member.seen = member.link.value();
+		for (const member of this.#members) member.seen = member.link.model.value;
 	}
 }

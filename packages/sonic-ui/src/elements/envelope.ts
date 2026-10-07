@@ -1,16 +1,14 @@
+import type { FieldGesture, FieldHold } from '#elements/field-gesture.ts';
 import type { ValueLink } from '#elements/value-element.ts';
 import type { AdsrCurves, AdsrProportions, AdsrShape } from '#lib/adsr-shape.ts';
-import type { FieldAxis, FieldDragState, FieldMappings, FieldPoint } from '#lib/field.ts';
-import type { PointerDrag } from '#lib/pointer-drag.ts';
+import type { FieldAxis, FieldPoint } from '#lib/field.ts';
 
-import { ReadoutClaim, revealDelay } from '#elements/readout-claim.ts';
+import { bindFieldGesture } from '#elements/field-gesture.ts';
+import { ReadoutClaim } from '#elements/readout-claim.ts';
 import { Readout } from '#elements/readout.ts';
 import { SonicElement } from '#elements/sonic-element.ts';
 import { linkValue, SonicValueElement } from '#elements/value-element.ts';
 import { adsrPath, adsrShape, adsrStages, timeStages } from '#lib/adsr-shape.ts';
-import { dragThresholdPx } from '#lib/drag-step.ts';
-import { pointerMove, pointerPosition, startFieldDrag, stepFieldDrag } from '#lib/field.ts';
-import { bindDrag } from '#lib/pointer-drag.ts';
 import { requireChild, template } from '#lib/render.ts';
 import { writeAttribute } from '#lib/write-attribute.ts';
 
@@ -34,11 +32,10 @@ interface Drive {
 	binding: Binding;
 }
 
-interface HandleDrag {
-	drives: Array<Drive & { from: number }>;
+interface HandleHold extends FieldHold {
+	drives: Array<Drive>;
 	isFlipped: boolean;
 	part: HTMLElement;
-	state: FieldDragState;
 }
 
 const curveStages = ['attack', 'decay', 'release'] as const;
@@ -46,10 +43,6 @@ const curveStages = ['attack', 'decay', 'release'] as const;
 const bindable = [...adsrStages, 'attack-curve', 'decay-curve', 'release-curve'] as const;
 
 const bindableNames = new Set<string>(bindable);
-
-function flip<Point extends FieldPoint>(point: Point, isFlipped: boolean): Point {
-	return isFlipped ? { ...point, y: -point.y } : point;
-}
 
 function isParent(node: Node): node is Node & ParentNode {
 	return 'querySelector' in node;
@@ -148,8 +141,9 @@ export class SonicEnvelope extends SonicElement {
 		this.reflect('hold', id);
 	}
 
+	// fallow-ignore-next-line code-duplication -- one accessor pair per property
 	get pointerType(): string | undefined {
-		return this.#pointerType;
+		return this.#gesture?.pointerType();
 	}
 
 	get readout(): boolean {
@@ -200,6 +194,8 @@ export class SonicEnvelope extends SonicElement {
 
 	readonly #floor = requireChild(this.#envelope, '.sonic-envelope-floor', SVGElement);
 
+	#gesture: FieldGesture<HandleHold> | undefined;
+
 	readonly #graph = requireChild(this.#envelope, '.sonic-envelope-graph', SVGElement);
 
 	readonly #handles = stageParts(this.#envelope, 'sonic-envelope-handle', timeStages);
@@ -209,10 +205,6 @@ export class SonicEnvelope extends SonicElement {
 	#isDriving = false;
 
 	readonly #line = requireChild(this.#envelope, '.sonic-envelope-line', SVGElement);
-
-	#pointerDrag: PointerDrag<HandleDrag> | undefined;
-
-	#pointerType: string | undefined;
 
 	readonly #readout = new Readout(
 		requireChild(this.#envelope, '.sonic-envelope-readout', HTMLDivElement),
@@ -229,7 +221,7 @@ export class SonicEnvelope extends SonicElement {
 	attributeChangedCallback(name: string): void {
 		if (!this.#signal) return;
 		if (name === 'disabled') {
-			this.#pointerDrag?.end();
+			this.#gesture?.end();
 			this.#draw();
 			return;
 		}
@@ -261,14 +253,14 @@ export class SonicEnvelope extends SonicElement {
 	}
 
 	#bind(): void {
-		this.#pointerDrag?.end();
+		this.#gesture?.end();
 		this.#unbind();
 		for (const name of bindable) {
 			const element = this.#resolve(name);
 			if (!element) continue;
 
 			const link = linkValue(element);
-			const unwatch = link.watch(() => {
+			const unwatch = link.model.watch(() => {
 				if (!this.#isDriving) this.#draw();
 			});
 
@@ -278,24 +270,27 @@ export class SonicEnvelope extends SonicElement {
 	}
 
 	#bindPointer(envelope: HTMLElement, signal: AbortSignal): void {
-		this.#pointerDrag = bindDrag(
+		this.#gesture = bindFieldGesture(
 			envelope,
 			{
-				cancel: (drag) => {
-					for (const { binding, from } of drag.drives) binding.link.input(from);
-				},
+				claim: this.#claim,
 				grab: (event) => this.#grab(event),
-				move: (drag, event) => {
-					this.#moveDrag(drag, event);
+				input: ({ drives }, next) => {
+					this.#isDriving = true;
+					for (const { axis, binding } of drives) {
+						const value = next[axis];
+
+						if (value !== undefined) binding.link.input(value);
+					}
+					this.#isDriving = false;
+					this.#draw();
 				},
-				release: (drag) => {
-					this.#claim.press(false);
-					for (const { binding, from } of drag.drives) {
-						if (binding.link.value() === from) continue;
+				release: ({ drives }, moved) => {
+					for (const { axis, binding } of drives) {
+						if (!moved.includes(axis)) continue;
 
 						binding.element.dispatchEvent(new Event('change', { bubbles: true }));
 					}
-					this.#pointerType = undefined;
 				},
 				toggle: (isDragging) => {
 					this.toggleState('dragging', isDragging);
@@ -377,63 +372,25 @@ export class SonicEnvelope extends SonicElement {
 		];
 	}
 
-	#grab(event: PointerEvent): HandleDrag | undefined {
+	#grab(event: PointerEvent): HandleHold | undefined {
 		const pressed = this.#pressed(event);
 		if (!pressed || pressed.drives.length === 0) return undefined;
 
-		const { drives, isFlipped, part } = pressed;
-
-		this.#pointerType = event.pointerType;
-		this.#claim.press(true, revealDelay(this.#envelope));
-		this.#held = part;
+		this.#held = pressed.part;
 		this.#drawBracket();
+
 		const box = this.#graph.getBoundingClientRect();
 		const travel = { x: Math.max(1, box.width * this.#shape.share), y: Math.max(1, box.height) };
-		const start = (axis: FieldAxis) => {
-			const link = drives.find((drive) => drive.axis === axis)?.binding.link;
-			if (!link) return;
+		const axes: HandleHold['axes'] = {};
 
-			const mapping = link.mapping();
-			const from = link.value();
-
-			return { from, mapping, proportion: mapping.proportionOf(from), travelPx: travel[axis] };
-		};
-
-		return {
-			drives: drives.map((drive) => ({ ...drive, from: drive.binding.link.value() })),
-			isFlipped,
-			part,
-			state: startFieldDrag({
-				position: flip(pointerPosition(event), isFlipped),
-				thresholdPx: dragThresholdPx(event.pointerType),
-				x: start('x'),
-				y: start('y'),
-			}),
-		};
-	}
-
-	#moveDrag(drag: HandleDrag, event: PointerEvent): void {
-		const mappings: FieldMappings = {};
-
-		for (const { axis, binding } of drag.drives) mappings[axis] = binding.link.mapping();
-
-		const step = stepFieldDrag(mappings, drag.state, flip(pointerMove(event), drag.isFlipped));
-
-		drag.state = step.state;
-		if (step.state.isEngaged) this.#claim.reveal('drag');
-		this.#isDriving = true;
-		for (const { axis, binding } of drag.drives) {
-			const next = step[axis];
-
-			if (next !== undefined) binding.link.input(next);
+		for (const { axis, binding } of pressed.drives) {
+			axes[axis] = { model: binding.link.model, travelPx: travel[axis] };
 		}
-		this.#isDriving = false;
-		this.#draw();
+
+		return { ...pressed, axes };
 	}
 
-	#pressed(
-		event: PointerEvent,
-	): (Pick<HandleDrag, 'isFlipped' | 'part'> & { drives: Array<Drive> }) | undefined {
+	#pressed(event: PointerEvent): Omit<HandleHold, 'axes'> | undefined {
 		const part =
 			event.target instanceof Element
 				? event.target.closest<HTMLElement>('.sonic-envelope-handle, .sonic-envelope-curve')
@@ -456,12 +413,12 @@ export class SonicEnvelope extends SonicElement {
 		const curves: AdsrCurves = {};
 
 		for (const stage of adsrStages) {
-			const link = this.#bindings.get(stage)?.link;
+			const model = this.#bindings.get(stage)?.link.model;
 
-			proportions[stage] = link?.mapping().proportionOf(link.value());
+			proportions[stage] = model?.mapping().proportionOf(model.value);
 		}
 		for (const stage of curveStages) {
-			curves[stage] = this.#bindings.get(`${stage}-curve`)?.link.value();
+			curves[stage] = this.#bindings.get(`${stage}-curve`)?.link.model.value;
 		}
 
 		return adsrShape(proportions, curves);
@@ -478,7 +435,7 @@ export class SonicEnvelope extends SonicElement {
 	}
 
 	#renderReadout(): void {
-		const drag = this.#pointerDrag?.current();
+		const drag = this.#gesture?.current();
 
 		if (!drag) {
 			this.#readout.close();

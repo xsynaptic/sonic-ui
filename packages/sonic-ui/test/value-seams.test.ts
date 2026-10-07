@@ -7,7 +7,7 @@ import { pointerAt, pressKey, recordEvents } from './helpers.ts';
 class SeamControl extends SonicValueElement {
 	fromProportion: number | undefined;
 
-	readonly held: Array<number> = [];
+	readonly played: Array<number> = [];
 
 	readonly #control = Object.assign(document.createElement('div'), {
 		innerHTML: '<div popover="manual"><span></span><input hidden /></div>',
@@ -37,8 +37,8 @@ class SeamControl extends SonicValueElement {
 		return this.#control;
 	}
 
-	protected override heldWrite(next: number): void {
-		this.held.push(next);
+	protected override scrubChanged(): void {
+		this.played.push(this.scrubState().played);
 	}
 }
 
@@ -53,7 +53,7 @@ function mountSeam(attributes: string): SeamControl {
 	return seam;
 }
 
-test('a value written mid-drag reaches heldWrite and leaves the drag its value', () => {
+test('a value written mid-drag moves where the scrub played and leaves the drag its value', () => {
 	const seam = mountSeam('value="40"');
 	const events = recordEvents(document.body);
 	const changed: Array<number> = [];
@@ -66,7 +66,7 @@ test('a value written mid-drag reaches heldWrite and leaves the drag its value',
 	seam.value = 10;
 	seam.setAttribute('value', '20');
 
-	expect(seam.held).toEqual([10, 20]);
+	expect(seam.played).toEqual([40, 10, 20]);
 	expect(seam.value).toBe(65);
 
 	pointerAt(seam.control(), 'pointerup', { clientX: 150 });
@@ -88,8 +88,8 @@ test('a link watch hears a scripted write, a change of bounds and a key press, u
 	const seam = mountSeam('min="10" max="50" step="5" value="40"');
 	const seen: Array<number> = [];
 	const link = linkValue(seam);
-	const unwatch = link.watch(() => {
-		seen.push(link.value());
+	const unwatch = link.model.watch(() => {
+		seen.push(link.model.value);
 	});
 
 	seam.value = 20;
@@ -134,7 +134,7 @@ test('a limit stops a drag and the keys inside it, and leaves the bounds and pro
 	const link = linkValue(seam);
 	const values: Array<number> = [];
 
-	link.limit([20, 65]);
+	link.model.setLimit([20, 65]);
 	pointerAt(seam.control(), 'pointerdown', { clientX: 0 });
 	for (const clientX of [1000, -1000]) {
 		pointerAt(seam.control(), 'pointermove', { clientX });
@@ -157,8 +157,8 @@ test('a cleared limit lets a drag reach the maximum again', () => {
 	const seam = mountSeam('min="10" max="110" step="5" value="40"');
 	const link = linkValue(seam);
 
-	link.limit([20, 65]);
-	link.limit(undefined);
+	link.model.setLimit([20, 65]);
+	link.model.setLimit(undefined);
 	pointerAt(seam.control(), 'pointerdown', { clientX: 0 });
 	pointerAt(seam.control(), 'pointermove', { clientX: 1000 });
 

@@ -2,6 +2,7 @@ import type { Hold } from '#lib/hold.ts';
 
 import { optionValue, SonicRadioGroupElement } from '#elements/radio-group.ts';
 import { bindHold } from '#lib/hold.ts';
+import { isMomentaryAt, pressTarget, restOf } from '#lib/positions.ts';
 import { writeAttribute } from '#lib/write-attribute.ts';
 
 type Orientation = 'horizontal' | 'vertical';
@@ -137,13 +138,8 @@ export abstract class SonicPositionGroupElement extends SonicRadioGroupElement {
 
 	protected isMomentary(option: HTMLButtonElement): boolean {
 		const options = this.options();
-		const isEnd = option === options[0] || option === options.at(-1);
 
-		return (
-			isEnd &&
-			options.length > 1 &&
-			option.querySelector('[data-sonic-value]')?.hasAttribute('data-sonic-momentary') === true
-		);
+		return isMomentaryAt(this.positions(options), options.indexOf(option));
 	}
 
 	protected override isWrapping(): boolean {
@@ -152,10 +148,13 @@ export abstract class SonicPositionGroupElement extends SonicRadioGroupElement {
 
 	protected pressTarget(option: HTMLButtonElement): HTMLButtonElement {
 		const options = this.options();
-		const index = this.checkedIndex(options);
-		const other = options.length === 2 && index >= 0 ? options[1 - index] : undefined;
+		const target = pressTarget(
+			this.positions(options),
+			this.checkedIndex(options),
+			options.indexOf(option),
+		);
 
-		return other ?? option;
+		return options[target] ?? option;
 	}
 
 	protected releaseHold(): void {
@@ -193,11 +192,8 @@ export abstract class SonicPositionGroupElement extends SonicRadioGroupElement {
 
 	protected springBack(): void {
 		const options = this.options();
-		const index = this.checkedIndex(options);
-		const held = options[index];
-		if (!held || !this.isMomentary(held)) return;
-
-		const rest = options[index === 0 ? 1 : index - 1];
+		const index = restOf(this.positions(options), this.checkedIndex(options));
+		const rest = index === undefined ? undefined : options[index];
 		if (!rest) return;
 
 		const isFocused = this.group.contains(this.ownerDocument.activeElement);
