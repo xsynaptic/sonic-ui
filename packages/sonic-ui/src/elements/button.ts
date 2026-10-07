@@ -175,12 +175,9 @@ export class SonicButton extends SonicFormElement {
 		this.render();
 		if (__DEV__)
 			this.checkStyles(button, 'button.css', {
-				box: {
-					property: 'padding-inline-start',
-					ratio: '--_sonic-button-padding-ratio',
-					selector: '.sonic-button-cap > :not(svg, .sonic-led)',
-				},
-				material: ['cap', 'well', 'keycap'],
+				property: 'padding-inline-start',
+				ratio: '--_sonic-button-padding-ratio',
+				selector: '.sonic-button-cap > :not(svg, .sonic-led)',
 			});
 
 		button.addEventListener(

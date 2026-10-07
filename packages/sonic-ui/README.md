@@ -44,7 +44,7 @@ import '@xsynaptic/sonic-ui/define';
 
 - A skin sheet does nothing until its class, `sonic-skin-<name>`, is on an ancestor of the controls. The skins are `slate`, `amber`, `ivory`, `lime` and `flat`; a wrapper with another skin's class reskins what is inside it. With no skin a control is bare: no cap and no well, drawn in the text colour around it.
 - `./define` registers every control. `./define/<control>` registers one, and `.` exports the classes and registers nothing.
-- Under a bundler that sets the `development` condition, as Vite's dev server does, the controls warn in the console about a missing sheet, a padding lost to an unlayered rule, a box property set on a host, a child they do not use and a binding that found nothing. Read the console before debugging.
+- Under a bundler that sets the `development` condition, as Vite's dev server does, the controls warn in the console about a control's own sheet or `material/core.css` missing, a padding lost to an unlayered rule, a box property set on a host, a child they do not use and a binding that found nothing. Read the console before debugging.
 
 ## What every control shares
 
@@ -176,6 +176,6 @@ A skin is one rule that sets tokens on a class; copy `dist/skins/flat.css` to st
 | `wavestrip.css` | core, cap, glass, readout, value                |
 | `xy.css`        | core, cap, glass, readout, bracket              |
 
-An LED inside a control also needs `led.css`, and a button inside a ring needs `button.css`.
+An LED inside a control also needs `led.css`, and a button inside a ring needs `button.css`. No warning names a missing material sheet other than `core.css`, so check a control that draws wrong against this table.
 
 Targets current Chrome and Edge, Safari 26 and Firefox 147. No control mirrors for right-to-left. MIT licensed.

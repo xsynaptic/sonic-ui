@@ -221,7 +221,7 @@ export class SonicMeter extends SonicElement {
 			},
 			{ once: true },
 		);
-		if (__DEV__) this.checkStyles(this.#meter, 'meter.css', { material: ['lens', 'groove'] });
+		if (__DEV__) this.checkStyles(this.#meter, 'meter.css');
 	}
 
 	#isSettled(now: number): boolean {

@@ -30,12 +30,9 @@ export class SonicSegmented extends SonicRadioGroupElement {
 		super.connect(signal);
 		if (__DEV__)
 			this.checkStyles(this.group, 'segmented.css', {
-				box: {
-					property: 'padding-inline-start',
-					ratio: '--_sonic-segmented-padding-ratio',
-					selector: '.sonic-segmented-cap',
-				},
-				material: ['well', 'keycap', ['cap', '.sonic-segmented-option']],
+				property: 'padding-inline-start',
+				ratio: '--_sonic-segmented-padding-ratio',
+				selector: '.sonic-segmented-cap',
 			});
 	}
 

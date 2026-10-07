@@ -51,11 +51,8 @@ export class SonicNumber extends SonicValueElement {
 		this.render();
 		if (__DEV__)
 			this.checkStyles(number, 'number.css', {
-				box: {
-					property: 'padding-inline-start',
-					ratio: '--_sonic-number-inset-ratio',
-				},
-				material: ['cap', 'glass', 'pane', 'well', 'value'],
+				property: 'padding-inline-start',
+				ratio: '--_sonic-number-inset-ratio',
 			});
 		this.bindGestures(number, signal, () => ({
 			position: (event) => -event.clientY,

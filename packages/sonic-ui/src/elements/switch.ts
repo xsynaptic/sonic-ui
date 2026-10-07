@@ -73,11 +73,8 @@ export class SonicSwitch extends SonicPositionGroupElement {
 		super.connect(signal);
 		if (__DEV__)
 			this.checkStyles(group, 'switch.css', {
-				box: {
-					property: 'padding-top',
-					selector: '.sonic-switch-label',
-				},
-				material: ['cap'],
+				property: 'padding-top',
+				selector: '.sonic-switch-label',
 			});
 
 		this.bare.addEventListener(

@@ -105,7 +105,7 @@ export abstract class SonicDisplayElement<
 			},
 			signal,
 		});
-		if (__DEV__) this.checkStyles(control, this.sheet, { material: [] });
+		if (__DEV__) this.checkStyles(control, this.sheet);
 		this.#surface.setFill(this.fill);
 	}
 

@@ -123,11 +123,8 @@ export abstract class SonicWaveElement<
 		this.render();
 		if (__DEV__)
 			this.checkStyles(control, this.sheet, {
-				box: {
-					property: 'margin-bottom',
-					selector: '[popover]',
-				},
-				material: ['cap', ['glass', '[popover]'], 'readout', 'value'],
+				property: 'margin-bottom',
+				selector: '[popover]',
 			});
 		this.#surface.setFill(this.fill);
 	}

@@ -75,12 +75,9 @@ export class SonicToggle extends SonicPositionGroupElement {
 		super.connect(signal);
 		if (__DEV__)
 			this.checkStyles(this.group, 'toggle.css', {
-				box: {
-					property: 'margin-top',
-					ratio: '--_sonic-toggle-gap-ratio',
-					selector: '.sonic-toggle-cap',
-				},
-				material: ['cap', 'well', 'keycap'],
+				property: 'margin-top',
+				ratio: '--_sonic-toggle-gap-ratio',
+				selector: '.sonic-toggle-cap',
 			});
 		this.bare.addEventListener(
 			'click',

@@ -9,8 +9,6 @@ const namingAttributes = ['aria-describedby', 'aria-label', 'aria-labelledby'];
 const checkedSheets = new WeakMap<object, Set<string>>();
 
 interface StyleProbe {
-	lost?: string;
-	pseudo?: string;
 	selector?: string;
 	sheet: string;
 	token: string;
@@ -23,49 +21,8 @@ interface BoxProbe {
 	selector?: string;
 }
 
-const materialTokens = {
-	arc: '--_sonic-arc-mask',
-	bracket: 'border-top-style',
-	cap: '--_sonic-cap',
-	core: '--_sonic-unlit',
-	glass: '--_sonic-glass-slab',
-	groove: '--_sonic-groove',
-	keycap: '--_sonic-well-floor',
-	lens: '--_sonic-lens',
-	pane: '--_sonic-glass-pitch',
-	readout: '--_sonic-readout-size',
-	scale: 'position',
-	value: '--_sonic-detent-zone',
-	well: '--_sonic-well-depth',
-} as const;
-
-type MaterialSheet = keyof typeof materialTokens;
-
-// The bracket and the scale set no private token, so each is read by what a standard property holds without it
-const lostValues: Partial<Record<MaterialSheet, string>> = { bracket: 'none', scale: 'static' };
-
-type MaterialProbe = [sheet: MaterialSheet, selector: string, pseudo?: string] | MaterialSheet;
-
-function materialProbe(entry: MaterialProbe): StyleProbe {
-	const [name, selector, pseudo] = typeof entry === 'string' ? [entry] : entry;
-	const lost = lostValues[name];
-
-	return {
-		sheet: `material/${name}.css`,
-		token: materialTokens[name],
-		...(lost === undefined ? {} : { lost }),
-		...(pseudo === undefined ? {} : { pseudo }),
-		...(selector === undefined ? {} : { selector }),
-	};
-}
-
-interface StyleChecks {
-	box?: BoxProbe;
-	material: Array<MaterialProbe>;
-}
-
-function isLost(drawn: Element, { lost = '', pseudo, token }: StyleProbe): boolean {
-	return getComputedStyle(drawn, pseudo).getPropertyValue(token) === lost;
+function isLost(drawn: Element, { token }: StyleProbe): boolean {
+	return getComputedStyle(drawn).getPropertyValue(token) === '';
 }
 
 const hostBoxProperties = [
@@ -178,7 +135,7 @@ export abstract class SonicElement extends HTMLElement {
 		if (!this.isDisabled() && !this.#focused()) target.focus(options);
 	}
 
-	protected checkStyles(control: HTMLElement, sheet: string, { box, material }: StyleChecks): void {
+	protected checkStyles(control: HTMLElement, sheet: string, box?: BoxProbe): void {
 		if (!__DEV__) return;
 
 		const elementClass = this.constructor;
@@ -187,9 +144,7 @@ export abstract class SonicElement extends HTMLElement {
 			selector === undefined ? control : (this.querySelector(selector) ?? undefined);
 		// An LED inherits `--_sonic-unit` from its control, so a token of its own probes it
 		const probes: Array<StyleProbe> = [
-			...(['core', ...material] satisfies Array<MaterialProbe>).map((entry) =>
-				materialProbe(entry),
-			),
+			{ sheet: 'material/core.css', token: '--_sonic-unlit' },
 			{ sheet, token: '--_sonic-unit' },
 			{ selector: '.sonic-led', sheet: 'led.css', token: '--_sonic-led-lens-ratio' },
 		].filter((probe) => !checked.has(probe.sheet) && part(probe) !== undefined);

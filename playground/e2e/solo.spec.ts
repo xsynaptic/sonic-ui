@@ -4,10 +4,11 @@ import { expect, test } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import { solos } from '../src/scripts/solos.ts';
+import { sheetMaterial, solos } from '../src/scripts/solos.ts';
 import { collectConsole } from './console-messages.ts';
 
 const stylesFolder = path.join(import.meta.dirname, '../../packages/sonic-ui/dist/styles');
+const readmePath = path.join(import.meta.dirname, '../../packages/sonic-ui/README.md');
 
 async function readImports(sheet: string): Promise<Array<string>> {
 	const index = await readFile(path.join(stylesFolder, sheet), 'utf8');
@@ -53,6 +54,15 @@ function readPaint(page: Page): Promise<Record<string, string>> {
 		return paint;
 	});
 }
+
+test('the README table lists the material each sheet is drawn with', async () => {
+	const readme = await readFile(readmePath, 'utf8');
+	const rows = [...readme.matchAll(/^\| `(.+?)\.css`\s*\| (.+?)\s*\|$/gm)].map(
+		([, sheet = '', material = '']) => [sheet, material.split(', ')],
+	);
+
+	expect(Object.fromEntries(rows)).toEqual(sheetMaterial);
+});
 
 const warnings = [
 	{ path: '/fixtures/bare/', warning: 'material/core.css' },

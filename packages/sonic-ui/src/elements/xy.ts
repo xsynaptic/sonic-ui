@@ -320,10 +320,7 @@ export class SonicXy extends SonicFormElement {
 		this.keepControl(xy, signal);
 		this.render();
 		if (__DEV__)
-			this.checkStyles(xy, 'xy.css', {
-				box: { property: 'margin-bottom', selector: '[popover]' },
-				material: ['cap', ['glass', '[popover]'], 'readout', ['bracket', '.sonic-xy-bracket']],
-			});
+			this.checkStyles(xy, 'xy.css', { property: 'margin-bottom', selector: '[popover]' });
 		this.#bindPointer(xy, signal);
 		this.#bindKeys(xy, signal);
 	}

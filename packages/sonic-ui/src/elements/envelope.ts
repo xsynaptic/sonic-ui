@@ -241,12 +241,8 @@ export class SonicEnvelope extends SonicElement {
 		this.#bind();
 		if (__DEV__)
 			this.checkStyles(envelope, 'envelope.css', {
-				box: { property: 'margin-bottom', selector: '[popover]' },
-				material: [
-					['glass', '[popover]'],
-					'readout',
-					['bracket', '.sonic-envelope-bracket', '::before'],
-				],
+				property: 'margin-bottom',
+				selector: '[popover]',
 			});
 		this.#bindPointer(envelope, signal);
 		signal.addEventListener(
