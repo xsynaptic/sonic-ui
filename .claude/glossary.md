@@ -148,6 +148,8 @@ The words this library uses for its controls, their parts and their values. Wher
 
 **Modulation value**: Where the value is at this moment, with modulation applied. _Avoid_: Modulated, modulated value
 
+**Clock**: A time written as minutes and seconds, with hours once it passes one. _Avoid_: Timecode, timestamp, duration (that is the spoken form)
+
 **Level**: A meter reading given as a signal amplitude. The meter shows it in decibels and applies ballistics. _Avoid_: dB scale
 
 **Value** (of a meter): A meter reading given in the meter's own units, shown exactly as given. _Avoid_: Linear scale, raw level
@@ -191,6 +193,10 @@ The words this library uses for its controls, their parts and their values. Wher
 **Target**: The region around a press control that takes its presses, or across a slider's breadth that takes its drags. It is the control's own box unless `--sonic-target-size` makes it larger. _Avoid_: Hit area, touch target, tap target, hitbox
 
 **Relief**: How strongly the light models a surface: its bevels, ridges, grooves, sheen and cast shadows. `--sonic-relief` scales it from 0, flat, to 1. _Avoid_: Depth (one part's own token), elevation, shadow
+
+**Shade**: The dark pole of the light: the colour a surface is mixed towards where it turns from the light or lies in shadow. `--sonic-shade` sets it; black by default. _Avoid_: Shadow (one thing drawn with it), dark, black
+
+**Shine**: The light pole of the light: the colour a surface is mixed towards where it catches the light. `--sonic-shine` sets it; white by default. _Avoid_: Highlight (that is a system colour), sheen (one thing drawn with it), white
 
 **Material**: The shared look every control is drawn from. It ships as material sheets, one per shared thing such as the keycap or the glass, beside each control's own sheet. _Avoid_: Base styles, theme; part, partial, recipe or module for a material sheet
 
