@@ -1,5 +1,18 @@
 # @xsynaptic/sonic-ui
 
+## 0.18.0
+
+### Minor Changes
+
+- - Button: an icon keeps its `viewBox` proportions at `--sonic-button-icon-ratio` of the button's height, and the button widens to fit it, never under `--sonic-button-aspect-ratio`; at 0 the button is as wide as its icon. Breaking for an icon wider than it is tall, which was shrunk into a square.
+  - Waveform: a dimmed marker's label dims by opacity, so `renderLabel` children with their own colour dim too, as does the label's scrim. Drop any rule that dimmed them by hand.
+
+### Patch Changes
+
+- Internals restructured into smaller modules; no change to the public surface.
+- Switch and toggle internals restructured around position indices; no change to the public surface.
+- The types say the unit or the contract on the properties whose type alone does not, such as a meter's `level` and a waveform's `zoom`.
+
 ## 0.17.0
 
 ### Minor Changes
