@@ -71,6 +71,14 @@ export function pressTarget(positions: Positions, checked: number, pressed: numb
 	return positions.length === 2 && checked >= 0 ? 1 - checked : pressed;
 }
 
+export function soleStep(positions: Positions, from: number): number | undefined {
+	const ways = [-1, 1]
+		.map((step) => stepFrom(positions, from, { isWrapping: false, step }))
+		.filter((to) => to !== undefined && to !== from);
+
+	return ways.length === 1 ? ways[0] : undefined;
+}
+
 export function restOf(positions: Positions, held: number): number | undefined {
 	if (!isMomentaryAt(positions, held)) return undefined;
 

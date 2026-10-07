@@ -10,8 +10,8 @@ import { placeChildren } from '#lib/render.ts';
 import { writeAttribute } from '#lib/write-attribute.ts';
 
 interface Press {
-	boxes: Array<[HTMLButtonElement, DOMRect]>;
-	option: HTMLButtonElement | undefined;
+	boxes: Array<[number, DOMRect]>;
+	index: number | undefined;
 }
 
 function isInside(box: DOMRect, x: number, y: number): boolean {
@@ -49,16 +49,16 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 		this.render();
 	}
 
-	protected chooseByClick(option: HTMLButtonElement): void {
-		this.select(option);
+	protected chooseByClick(index: number): void {
+		this.select(index);
 	}
 
-	protected chooseByKey(option: HTMLButtonElement, _event: KeyboardEvent): void {
-		this.select(option);
-		option.focus();
+	protected chooseByKey(index: number, _event: KeyboardEvent): void {
+		this.select(index);
+		this.options()[index]?.focus();
 	}
 
-	protected claimPress(_option: HTMLButtonElement, _event: PointerEvent): boolean {
+	protected claimPress(_index: number, _event: PointerEvent): boolean {
 		return false;
 	}
 
@@ -84,8 +84,8 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 			(event) => {
 				if (event instanceof PointerEvent && event.pointerType !== '') return;
 
-				const option = this.optionOf(event.target);
-				if (option) this.chooseByClick(option);
+				const index = this.indexOf(event.target);
+				if (index !== -1) this.chooseByClick(index);
 			},
 			{ signal },
 		);
@@ -96,9 +96,12 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 			(event) => {
 				if (event.defaultPrevented) return;
 
-				const option = this.optionOf(event.target);
-				const next = option && this.#keyTarget(option, event.key);
-				if (!next) return;
+				const index = this.indexOf(event.target);
+				const next =
+					index === -1
+						? undefined
+						: keyTarget(this.positions(), index, { isWrapping: this.isWrapping(), key: event.key });
+				if (next === undefined) return;
 
 				event.preventDefault();
 				this.chooseByKey(next, event);
@@ -111,12 +114,18 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 		return this.options().find((option) => option.tabIndex === 0);
 	}
 
+	protected indexOf(target: EventTarget | null): number {
+		const option = this.optionOf(target);
+
+		return option ? this.options().indexOf(option) : -1;
+	}
+
 	protected isMirrored(child: Node): boolean {
 		return child instanceof Element && child.matches('[data-sonic-value]');
 	}
 
-	protected isOptionDisabled(option: HTMLButtonElement): boolean {
-		return option.querySelector('[data-sonic-value]')?.hasAttribute('data-sonic-disabled') === true;
+	protected isOptionDisabled(index: number): boolean {
+		return this.positions()[index]?.isDisabled !== false;
 	}
 
 	protected isWrapping(): boolean {
@@ -144,26 +153,34 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 		this.#copyOptions(copies);
 	}
 
-	protected positions(options: Array<HTMLButtonElement>): Array<Position> {
-		return options.map((option) => ({
-			isDisabled: this.isOptionDisabled(option),
-			isMomentary:
-				option.querySelector('[data-sonic-value]')?.hasAttribute('data-sonic-momentary') === true,
-		}));
+	protected positions(): Array<Position> {
+		return this.options().map((option) => {
+			const child = option.querySelector('[data-sonic-value]');
+
+			return {
+				isDisabled: child?.hasAttribute('data-sonic-disabled') === true,
+				isMomentary: child?.hasAttribute('data-sonic-momentary') === true,
+			};
+		});
 	}
 
-	protected releaseTarget(option: HTMLButtonElement): HTMLButtonElement | undefined {
-		return option;
+	protected refocusAt(index: number): void {
+		if (this.group.matches(':focus-within')) this.options()[index]?.focus();
+	}
+
+	protected releaseTarget(index: number): number | undefined {
+		return index;
 	}
 
 	protected render(): void {
 		if (!this.isBound()) return;
 
 		const options = this.options();
+		const positions = this.positions();
 		const checked = options.find((option) => optionValue(option) === this.#value);
 		const enabled = this.isDisabled()
 			? []
-			: options.filter((option) => !this.isOptionDisabled(option));
+			: options.filter((_option, index) => positions[index]?.isDisabled === false);
 		const focusable = enabled.find((option) => option === checked) ?? enabled[0];
 
 		for (const option of options) {
@@ -182,19 +199,17 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 		this.value = state;
 	}
 
-	protected select(option: HTMLButtonElement): void {
-		const next = optionValue(option);
+	protected select(index: number): void {
+		const option = this.options()[index];
+		const next = option && optionValue(option);
 		if (next === undefined || next === this.#value) return;
 
 		this.value = next;
 		this.dispatchEvent(new Event('change', { bubbles: true }));
 	}
 
-	protected stepFrom(from: number, step: number): HTMLButtonElement | undefined {
-		const options = this.options();
-		const index = stepFrom(this.positions(options), from, { isWrapping: this.isWrapping(), step });
-
-		return index === undefined ? undefined : options[index];
+	protected stepFrom(from: number, step: number): number | undefined {
+		return stepFrom(this.positions(), from, { isWrapping: this.isWrapping(), step });
 	}
 
 	#bindPress(group: HTMLElement, signal: AbortSignal): void {
@@ -202,30 +217,30 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 			group,
 			{
 				grab: (event) => {
-					const option = this.optionOf(event.target);
-					if (!option || this.isDisabled() || this.isOptionDisabled(option)) return;
-					if (this.claimPress(option, event)) return;
+					const index = this.indexOf(event.target);
+					if (index === -1 || this.isDisabled() || this.isOptionDisabled(index)) return;
+					if (this.claimPress(index, event)) return;
 
 					const boxes = this.#optionBoxes();
 
-					this.#markPressed(option);
+					this.#markPressed(index);
 
-					return { boxes, option };
+					return { boxes, index };
 				},
 				lift: (press) => {
-					if (!press.option || this.isDisabled()) return;
+					if (press.index === undefined || this.isDisabled()) return;
 
-					const option = this.releaseTarget(press.option);
-					if (!option) return;
+					const index = this.releaseTarget(press.index);
+					if (index === undefined) return;
 
-					this.select(option);
-					if (group.matches(':focus-within')) option.focus();
+					this.select(index);
+					this.refocusAt(index);
 				},
 				move: (press, event) => {
-					press.option = press.boxes.find(([, box]) =>
+					press.index = press.boxes.find(([, box]) =>
 						isInside(box, event.clientX, event.clientY),
 					)?.[0];
-					this.#markPressed(press.option);
+					this.#markPressed(press.index);
 				},
 				release: () => {
 					this.#markPressed(undefined);
@@ -255,26 +270,20 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 		if (focused) this.#refocus(focused, focusedValue);
 	}
 
-	#keyTarget(option: HTMLButtonElement, key: string): HTMLButtonElement | undefined {
-		const options = this.options();
-		const index = keyTarget(this.positions(options), options.indexOf(option), {
-			isWrapping: this.isWrapping(),
-			key,
-		});
-
-		return index === undefined ? undefined : options[index];
-	}
-
-	#markPressed(pressed: HTMLButtonElement | undefined): void {
-		for (const option of this.options()) {
-			option.toggleAttribute('data-sonic-pressed', option === pressed);
+	#markPressed(pressed: number | undefined): void {
+		for (const [index, option] of this.options().entries()) {
+			option.toggleAttribute('data-sonic-pressed', index === pressed);
 		}
 	}
 
-	#optionBoxes(): Array<[HTMLButtonElement, DOMRect]> {
-		return this.options()
-			.filter((option) => !this.isOptionDisabled(option))
-			.map((option) => [option, option.getBoundingClientRect()]);
+	#optionBoxes(): Array<[number, DOMRect]> {
+		const positions = this.positions();
+
+		return this.options().flatMap((option, index) =>
+			positions[index]?.isDisabled === false
+				? [[index, option.getBoundingClientRect()] satisfies [number, DOMRect]]
+				: [],
+		);
 	}
 
 	#refocus(focused: HTMLButtonElement, value: string | undefined): void {

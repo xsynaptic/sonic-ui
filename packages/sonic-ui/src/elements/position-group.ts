@@ -1,4 +1,5 @@
 import type { Hold } from '#lib/hold.ts';
+import type { Position } from '#lib/positions.ts';
 
 import { optionValue, SonicRadioGroupElement } from '#elements/radio-group.ts';
 import { bindHold } from '#lib/hold.ts';
@@ -6,6 +7,8 @@ import { isMomentaryAt, pressTarget, restOf } from '#lib/positions.ts';
 import { writeAttribute } from '#lib/write-attribute.ts';
 
 type Orientation = 'horizontal' | 'vertical';
+
+const latching: Position = { isDisabled: false, isMomentary: false };
 
 export abstract class SonicPositionGroupElement extends SonicRadioGroupElement {
 	static override readonly observedAttributes = [
@@ -84,24 +87,26 @@ export abstract class SonicPositionGroupElement extends SonicRadioGroupElement {
 		return this.orientation === 'vertical' ? event.clientY : event.clientX;
 	}
 
-	protected checkedIndex(options: Array<HTMLButtonElement>): number {
-		return options.findIndex((option) => optionValue(option) === this.value);
+	protected checkedIndex(): number {
+		if (this.isBare()) return this.checked ? this.onIndex() : 1 - this.onIndex();
+
+		return this.options().findIndex((option) => optionValue(option) === this.value);
 	}
 
-	protected override chooseByClick(option: HTMLButtonElement): void {
-		super.chooseByClick(option);
-		if (this.isMomentary(option)) this.springBack();
+	protected override chooseByClick(index: number): void {
+		super.chooseByClick(index);
+		if (this.isMomentary(index)) this.springBack();
 	}
 
-	protected override chooseByKey(option: HTMLButtonElement, event: KeyboardEvent): void {
-		if (!this.isMomentary(option)) {
-			super.chooseByKey(option, event);
+	protected override chooseByKey(index: number, event: KeyboardEvent): void {
+		if (!this.isMomentary(index)) {
+			super.chooseByKey(index, event);
 			return;
 		}
 		if (event.repeat) return;
 
-		this.hold(option, event.key);
-		option.focus();
+		this.hold(index, event.key);
+		this.options()[index]?.focus();
 	}
 
 	protected override connect(signal: AbortSignal): void {
@@ -128,33 +133,44 @@ export abstract class SonicPositionGroupElement extends SonicRadioGroupElement {
 		return this.isBare() ? this.bare : super.focusTarget();
 	}
 
-	protected hold(option: HTMLButtonElement, by: number | string): void {
-		if (this.#holding?.hold(by) === true) this.select(option);
+	protected hold(index: number, by: number | string): void {
+		if (this.#holding?.hold(by) === true) this.select(index);
 	}
 
 	protected isBare(): boolean {
 		return this.options().length === 0;
 	}
 
-	protected isMomentary(option: HTMLButtonElement): boolean {
-		const options = this.options();
+	// A row may repeat a value, and every position that holds it is checked
+	protected isChecked(index: number): boolean {
+		const option = this.options()[index];
 
-		return isMomentaryAt(this.positions(options), options.indexOf(option));
+		return option ? optionValue(option) === this.value : index === this.checkedIndex();
+	}
+
+	protected isMomentary(index: number): boolean {
+		return isMomentaryAt(this.positions(), index);
 	}
 
 	protected override isWrapping(): boolean {
 		return false;
 	}
 
-	protected pressTarget(option: HTMLButtonElement): HTMLButtonElement {
-		const options = this.options();
-		const target = pressTarget(
-			this.positions(options),
-			this.checkedIndex(options),
-			options.indexOf(option),
-		);
+	// On is up, as on hardware
+	protected onIndex(): number {
+		return this.orientation === 'vertical' ? 0 : 1;
+	}
 
-		return options[target] ?? option;
+	protected override positions(): Array<Position> {
+		return this.isBare() ? [latching, latching] : super.positions();
+	}
+
+	protected pressedIndex(target: EventTarget | null): number {
+		return target === this.bare ? 0 : this.indexOf(target);
+	}
+
+	protected pressTarget(index: number): number {
+		return pressTarget(this.positions(), this.checkedIndex(), index);
 	}
 
 	protected releaseHold(): void {
@@ -183,6 +199,11 @@ export abstract class SonicPositionGroupElement extends SonicRadioGroupElement {
 		else super.restoreState(state);
 	}
 
+	protected override select(index: number): void {
+		if (this.isBare()) this.setChecked(index === this.onIndex());
+		else super.select(index);
+	}
+
 	protected setChecked(isChecked: boolean): void {
 		if (isChecked === this.checked) return;
 
@@ -191,15 +212,13 @@ export abstract class SonicPositionGroupElement extends SonicRadioGroupElement {
 	}
 
 	protected springBack(): void {
-		const options = this.options();
-		const index = restOf(this.positions(options), this.checkedIndex(options));
-		const rest = index === undefined ? undefined : options[index];
-		if (!rest) return;
+		const rest = restOf(this.positions(), this.checkedIndex());
+		if (rest === undefined) return;
 
 		const isFocused = this.group.contains(this.ownerDocument.activeElement);
 
 		this.select(rest);
-		if (isFocused) rest.focus();
+		if (isFocused) this.options()[rest]?.focus();
 	}
 
 	#renderBare(): void {

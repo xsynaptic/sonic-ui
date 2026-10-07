@@ -8,6 +8,7 @@ import {
 	keyTarget,
 	pressTarget,
 	restOf,
+	soleStep,
 	stepFrom,
 } from '#lib/positions.ts';
 
@@ -94,4 +95,18 @@ test('a held momentary end springs back to its neighbour, and a latching positio
 	expect(restOf(positionsOf('- m -'), 1)).toBeUndefined();
 	expect(restOf(positionsOf('- - m'), 1)).toBeUndefined();
 	expect(restOf(positionsOf('- - m'), -1)).toBeUndefined();
+});
+
+test('at an end, or with only disabled positions to one side, there is one way to go', () => {
+	expect(soleStep(positionsOf('- -'), 0)).toBe(1);
+	expect(soleStep(positionsOf('- - -'), 2)).toBe(1);
+	expect(soleStep(positionsOf('- - x'), 1)).toBe(0);
+	expect(soleStep(positionsOf('x - x -'), 3)).toBe(1);
+});
+
+test('with two ways to go, or none, the side pressed decides', () => {
+	expect(soleStep(positionsOf('- - -'), 1)).toBeUndefined();
+	expect(soleStep(positionsOf('- - -'), -1)).toBeUndefined();
+	expect(soleStep(positionsOf('- x'), 0)).toBeUndefined();
+	expect(soleStep(positionsOf('x x'), 0)).toBeUndefined();
 });

@@ -1,7 +1,7 @@
 import type { ToggleTravel } from '#lib/toggle-travel.ts';
 
 import { SonicPositionGroupElement } from '#elements/position-group.ts';
-import { isUnder, optionValue } from '#elements/radio-group.ts';
+import { isUnder } from '#elements/radio-group.ts';
 import { dragThresholdPx } from '#lib/drag-step.ts';
 import { bindDrag } from '#lib/pointer-drag.ts';
 import { enabledEnds } from '#lib/positions.ts';
@@ -45,7 +45,8 @@ const renderBare = template(
 interface CapDrag {
 	hasMoved: boolean;
 	isHolding: boolean;
-	position: HTMLButtonElement | undefined;
+	marked: HTMLButtonElement;
+	position: number;
 	start: number;
 	thresholdPx: number;
 	travel: ToggleTravel;
@@ -105,7 +106,7 @@ export class SonicToggle extends SonicPositionGroupElement {
 		if (!this.isBound()) return;
 
 		if (__DEV__) this.#checkLegends();
-		this.group.style.setProperty('--_sonic-toggle-count', String(this.#stopCount()));
+		this.group.style.setProperty('--_sonic-toggle-count', String(this.positions().length));
 		this.#placeCap(this.#draggedTo ?? this.#restingAt());
 		super.render();
 		for (const [index, option] of this.options().entries()) {
@@ -139,7 +140,7 @@ export class SonicToggle extends SonicPositionGroupElement {
 					this.#slideTo(positionAt(drag.travel, pointer), event.pointerId);
 				},
 				release: (drag) => {
-					delete (drag.position ?? this.bare).dataset.sonicPressed;
+					delete drag.marked.dataset.sonicPressed;
 					this.#draggedTo = undefined;
 					this.toggleState('dragging', false);
 					this.render();
@@ -161,29 +162,26 @@ export class SonicToggle extends SonicPositionGroupElement {
 		);
 	}
 
-	#enabledEnds(): [number, number] {
-		if (this.isBare()) return [0, 1];
-
-		return enabledEnds(this.positions(this.options()));
-	}
-
 	#fixedLegend(): Element | undefined {
 		return [...this.children].find((child) => child !== this.group && !super.isMirrored(child));
 	}
 
 	#grab(event: PointerEvent): CapDrag | undefined {
-		const position = this.optionOf(event.target);
-		if (this.isDisabled() || (!position && event.target !== this.bare)) return undefined;
+		const position = this.pressedIndex(event.target);
+		if (this.isDisabled() || position < 0) return undefined;
 
 		const isOnCap = isUnder(this.#cap, event.clientX, event.clientY);
 		const travel = this.#travel(event, isOnCap);
-		if (!travel || this.#isBlocked(position, isOnCap)) return undefined;
+		if (!travel || (!isOnCap && this.isOptionDisabled(position))) return undefined;
 
-		(position ?? this.bare).toggleAttribute('data-sonic-pressed', true);
+		const marked = this.options()[position] ?? this.bare;
+
+		marked.toggleAttribute('data-sonic-pressed', true);
 
 		return {
 			hasMoved: false,
 			isHolding: this.#holdFrom(position, event.pointerId),
+			marked,
 			position,
 			start: this.along(event),
 			thresholdPx: dragThresholdPx(event.pointerType),
@@ -191,76 +189,48 @@ export class SonicToggle extends SonicPositionGroupElement {
 		};
 	}
 
-	#holdFrom(position: HTMLButtonElement | undefined, pointerId: number): boolean {
-		const target = position && this.pressTarget(position);
-		if (!target || !this.isMomentary(target) || this.isOptionDisabled(target)) return false;
+	#holdFrom(position: number, pointerId: number): boolean {
+		const target = this.pressTarget(position);
+		if (!this.isMomentary(target) || this.isOptionDisabled(target)) return false;
 
 		this.hold(target, pointerId);
 
 		return true;
 	}
 
-	#isBlocked(position: HTMLButtonElement | undefined, isOnCap: boolean): boolean {
-		return !isOnCap && position !== undefined && this.isOptionDisabled(position);
-	}
-
-	// On is up, as on hardware
-	#onAt(): number {
-		return this.orientation === 'vertical' ? 0 : 1;
-	}
-
 	#placeCap(at: number): void {
 		this.group.style.setProperty('--_sonic-toggle-at', String(at));
 	}
 
-	#press(position: HTMLButtonElement | undefined): void {
-		if (!position) {
-			this.setChecked(!this.checked);
-			return;
-		}
-
+	#press(position: number): void {
 		const target = this.pressTarget(position);
 		if (this.isOptionDisabled(target)) return;
 
 		this.select(target);
-		this.#refocus(target);
-	}
-
-	#refocus(position: HTMLButtonElement): void {
-		if (this.group.matches(':focus-within')) position.focus();
+		this.refocusAt(target);
 	}
 
 	#restingAt(): number {
-		if (this.isBare()) return this.checked ? this.#onAt() : 1 - this.#onAt();
-
-		return Math.max(0, this.checkedIndex(this.options()));
+		return Math.max(0, this.checkedIndex());
 	}
 
 	#slideTo(at: number, pointerId: number): void {
-		const crossed = this.options()[Math.round(at)];
+		const crossed = Math.round(at);
 
 		this.#draggedTo = at;
 		this.#placeCap(at);
-		if (this.isBare()) {
-			this.setChecked(Math.round(at) === this.#onAt());
-			return;
-		}
-		if (!crossed || optionValue(crossed) === this.value) return;
+		if (this.isChecked(crossed)) return;
 
 		this.releaseHold();
-		if (this.isOptionDisabled(crossed) || optionValue(crossed) === this.value) return;
+		if (this.isOptionDisabled(crossed) || this.isChecked(crossed)) return;
 
 		if (this.isMomentary(crossed)) this.hold(crossed, pointerId);
 		else this.select(crossed);
-		this.#refocus(crossed);
-	}
-
-	#stopCount(): number {
-		return this.options().length || 2;
+		this.refocusAt(crossed);
 	}
 
 	#travel(event: PointerEvent, isOnCap: boolean): ToggleTravel | undefined {
-		const [first, last] = this.#enabledEnds();
+		const [first, last] = enabledEnds(this.positions());
 		if (first < 0) return undefined;
 
 		const box = this.#well.getBoundingClientRect();
@@ -271,7 +241,7 @@ export class SonicToggle extends SonicPositionGroupElement {
 
 		return travelFrom({
 			at: this.#restingAt(),
-			count: this.#stopCount(),
+			count: this.positions().length,
 			first,
 			isOnCap,
 			last,
