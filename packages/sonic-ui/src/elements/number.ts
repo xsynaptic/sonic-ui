@@ -49,11 +49,7 @@ export class SonicNumber extends SonicValueElement {
 
 		this.keepControl(number, signal);
 		this.render();
-		if (__DEV__)
-			this.checkStyles(number, 'number.css', {
-				property: 'padding-inline-start',
-				ratio: '--_sonic-number-inset-ratio',
-			});
+		if (__DEV__) this.checkStyles(number, 'number.css');
 		this.bindGestures(number, signal, () => ({
 			position: (event) => -event.clientY,
 			travelPx: this.travelPx(number, '--_sonic-number-travel'),

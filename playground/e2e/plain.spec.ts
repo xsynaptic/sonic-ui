@@ -3,6 +3,7 @@ import type { Page } from '@playwright/test';
 import { expect, test } from '@playwright/test';
 
 const plain = [
+	'#tempo .sonic-number',
 	'#wavestrip .sonic-wavestrip',
 	'#waveform .sonic-waveform',
 	'#spectrum .sonic-spectrum',

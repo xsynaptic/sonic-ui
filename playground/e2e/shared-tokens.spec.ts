@@ -73,11 +73,11 @@ test('the legend font size reaches the text of each press control, and a control
 const corners = [
 	{ host: '#kick', part: '.sonic-button', size: '--sonic-button-size' },
 	{ host: '#mode', part: '.sonic-segmented', size: '--sonic-segmented-size' },
-	{ host: '#tempo', part: '.sonic-number', size: '--sonic-number-size' },
 	{ host: '#send', part: '.sonic-slider-cap', size: '--sonic-slider-size' },
 	{ host: '#screen', part: '', size: '--sonic-screen-size' },
 ];
 const plain = [
+	'#tempo .sonic-number',
 	'#wavestrip .sonic-wavestrip',
 	'#waveform .sonic-waveform',
 	'#spectrum .sonic-spectrum',
@@ -86,7 +86,7 @@ const plain = [
 ];
 
 test(
-	'the shared radius reaches the outer corner of five controls of different sizes and no plain one, and a control’s own ratio overrides it',
+	'the shared radius reaches the outer corner of four controls of different sizes and no plain one, and a control’s own ratio overrides it',
 	{ tag: '@mobile' },
 	async ({ page }) => {
 		await setTokens(root(page), { '--sonic-radius': '5px' });

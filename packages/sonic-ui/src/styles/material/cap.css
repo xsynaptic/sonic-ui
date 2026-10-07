@@ -79,12 +79,13 @@
 			color-mix(in oklab, var(--_sonic-focus) calc(60% * var(--_sonic-focus-strength)), transparent);
 	}
 
-	.sonic-number {
-		--_sonic-ink: var(--_sonic-glass-text);
+	:is(.sonic-number, .sonic-waveform, .sonic-wavestrip, .sonic-xy) {
+		--_sonic-ink: currentcolor;
 	}
 
-	:is(.sonic-waveform, .sonic-wavestrip, .sonic-xy) {
-		--_sonic-ink: currentcolor;
+	/* A plain box has no corner of its own, so its focus outline and glow take this one */
+	:is(.sonic-number, .sonic-waveform, .sonic-wavestrip) {
+		border-radius: var(--sonic-focus-radius, 0);
 	}
 
 	:is(.sonic-dial, .sonic-slider, .sonic-waveform, .sonic-wavestrip) {

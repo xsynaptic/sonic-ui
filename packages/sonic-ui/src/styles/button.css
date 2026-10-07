@@ -85,6 +85,7 @@
 		font: inherit;
 		color: var(--_sonic-ink);
 		cursor: pointer;
+		user-select: none;
 		background: var(--_sonic-well-floor);
 		border: 0;
 		border-radius: var(--_sonic-button-corner);

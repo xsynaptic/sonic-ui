@@ -29,6 +29,8 @@ const stages = ['attack', 'decay', 'sustain', 'release'];
 					<Play aria-hidden="true" />
 				</sonic-button>
 				<span class="sonic-led" id={`${id}-led`}></span>
+				<sonic-meter id={`${id}-meter`}></sonic-meter>
+				<sonic-meter id={`${id}-ladder`} segments="-24 -12 -6 -3 0"></sonic-meter>
 				<div class="sonic-screen" id={`${id}-screen`}>
 					440 Hz
 				</div>

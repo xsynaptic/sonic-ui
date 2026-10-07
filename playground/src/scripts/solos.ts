@@ -10,7 +10,7 @@ export const sheetMaterial: Record<string, Array<string>> = {
 	envelope: ['core', 'glass', 'readout', 'bracket'],
 	led: ['core', 'lens'],
 	meter: ['core', 'lens', 'groove'],
-	number: ['core', 'cap', 'glass', 'pane', 'well', 'value'],
+	number: ['core', 'cap', 'value'],
 	panel: ['core'],
 	ring: ['core', 'arc'],
 	screen: ['core', 'glass', 'pane', 'well'],

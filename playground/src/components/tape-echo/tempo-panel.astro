@@ -31,17 +31,19 @@ const feels = [
 			size="large"
 		/>
 		<div class="grid justify-items-center gap-1">
-			<sonic-number
-				aria-labelledby="echo-bpm"
-				class="font-mono [--sonic-number-size:1.75rem]"
-				data-echo-bpm
-				data-format="bpm"
-				default="96"
-				max="250"
-				min="40"
-				step="0.1"
-				value="96"
-			></sonic-number>
+			<div class="sonic-screen w-fit [font-family:var(--sonic-glass-font,var(--font-mono))] [--sonic-screen-inset-ratio:0] [--sonic-screen-size:1.75rem]">
+				<sonic-number
+					aria-labelledby="echo-bpm"
+					class="[--sonic-number-size:1.75rem]"
+					data-echo-bpm
+					data-format="bpm"
+					default="96"
+					max="250"
+					min="40"
+					step="0.1"
+					value="96"
+				></sonic-number>
+			</div>
 			<Label id="echo-bpm" text="Tempo" />
 		</div>
 		<PanelSwitch id="echo-sync" label="Sync" />

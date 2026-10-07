@@ -7,7 +7,6 @@ import { mouseOnly } from './pointer.ts';
 import { stillTransitions } from './state.ts';
 
 interface DiscSizes {
-	edge: number;
 	gap: number;
 	ring: number;
 }
@@ -38,15 +37,15 @@ async function openLargePad(page: Page): Promise<{ disc: DiscSizes; puck: Locato
 	});
 
 	const puck = page.locator('#xy .sonic-xy-puck');
-	const [edge = 0, gap = 0, ring = 0] = await puck.evaluate((element) => {
+	const [gap = 0, ring = 0] = await puck.evaluate((element) => {
 		const style = getComputedStyle(element, '::before');
 
-		return [style.borderTopWidth, style.outlineOffset, style.outlineWidth].map((length) =>
+		return [style.outlineOffset, style.outlineWidth].map((length) =>
 			Number(length.replace('px', '')),
 		);
 	});
 
-	return { disc: { edge, gap, ring }, puck };
+	return { disc: { gap, ring }, puck };
 }
 
 test('a handle and a curve handle brighten on hover and keep their ring while held', async ({
@@ -127,7 +126,7 @@ test('a held handle keeps its core, and a relief skin gives it a glow, not a bra
 	expect(heldFlat.bracket).toBe('1');
 });
 
-test('the puck lifts on hover and is a glowing ring round a clear fill while held', async ({
+test('the puck lifts on hover, and held it keeps its fill under a glow, or a bracket on a flat skin', async ({
 	isMobile,
 	page,
 }) => {
@@ -140,8 +139,10 @@ test('the puck lifts on hover and is a glowing ring round a clear fill while hel
 	const read = () =>
 		puck.evaluate((element) => {
 			const disc = getComputedStyle(element, '::before');
+			const bracket = element.parentElement?.querySelector('.sonic-xy-bracket');
 
 			return {
+				bracket: bracket ? getComputedStyle(bracket).opacity : '',
 				edge: disc.borderTopColor,
 				fill: disc.backgroundColor,
 				glow: getComputedStyle(element).filter,
@@ -158,11 +159,23 @@ test('the puck lifts on hover and is a glowing ring round a clear fill while hel
 	const held = await read();
 
 	await page.mouse.up();
+	await page.locator('#xy').evaluate((pad) => {
+		pad.style.setProperty('--sonic-relief', '0');
+	});
+	await puck.hover();
+	await page.mouse.down();
+
+	const heldFlat = await read();
+
+	await page.mouse.up();
 	expect(hovered.fill).not.toBe(rest.fill);
 	expect(hovered.glow).toBe(rest.glow);
-	expect(isClear(held.fill)).toBe(true);
+	expect(held.fill).toBe(rest.fill);
 	expect(held.edge).toBe(rest.edge);
 	expect(held.glow).not.toBe(rest.glow);
+	expect(held.bracket).toBe('0');
+	expect(heldFlat.fill).toBe(rest.fill);
+	expect(heldFlat.bracket).toBe('1');
 });
 
 test(
@@ -193,28 +206,3 @@ test(
 		expect(chords[0]).toBeLessThan(size / 2);
 	},
 );
-
-test('each of the pad’s lines stops inside the ring of a held puck, and leaves its centre clear', async ({
-	isMobile,
-	page,
-}) => {
-	test.skip(isMobile, mouseOnly);
-
-	const { disc, puck } = await openLargePad(page);
-
-	await puck.hover();
-	await page.mouse.down();
-
-	for (const axis of ['x', 'y'] as const) {
-		const line = await paintedLine(puck, axis);
-		const size = line.lengthPx;
-		const runs = paintedRuns(line, differsFrom(line.pixels[Math.floor(line.pixels.length / 2)]));
-
-		expectRuns(runs, [
-			[0, size * 0.25 + disc.edge],
-			[size * 0.75 - disc.edge, size],
-		]);
-	}
-
-	await page.mouse.up();
-});

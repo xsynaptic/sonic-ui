@@ -60,6 +60,14 @@ test('a disabled button is drawn in the disabled ink', async ({ page }) => {
 	await expect(page.locator('#next .sonic-button')).toHaveCSS('color', 'rgb(1, 2, 3)');
 });
 
+test(
+	'a button’s legend cannot be selected, so a long press on touch selects nothing',
+	{ tag: '@mobile' },
+	async ({ page }) => {
+		await expect(page.locator('#next .sonic-button')).toHaveCSS('user-select', 'none');
+	},
+);
+
 test('a button is lit while expanded, as a latched one is', async ({ page }) => {
 	const host = page.locator('#next');
 	const button = host.locator('.sonic-button');

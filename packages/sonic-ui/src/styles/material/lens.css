@@ -5,7 +5,24 @@
 			rgb(from var(--_sonic-shine) r g b / calc(0.1 * var(--_sonic-relief))),
 			transparent 60%
 		);
-		--_sonic-lens-glass: var(--sonic-lens, color-mix(in oklab, var(--_sonic-unlit) 60%, #000));
+		--_sonic-lens-modelled: calc(100% * var(--_sonic-relief));
+		--_sonic-lens-tint: color-mix(in oklab, currentcolor 30%, transparent);
+		--_sonic-lens-bezel: var(
+			--sonic-bezel,
+			color-mix(
+				in oklab,
+				color-mix(in oklab, var(--_sonic-unlit) 55%, #000) var(--_sonic-lens-modelled),
+				transparent
+			)
+		);
+		--_sonic-lens-glass: var(
+			--sonic-lens,
+			color-mix(
+				in oklab,
+				color-mix(in oklab, var(--_sonic-unlit) 60%, #000) var(--_sonic-lens-modelled),
+				var(--_sonic-lens-tint)
+			)
+		);
 		--_sonic-lens: var(--_sonic-lens-glint), var(--_sonic-lens-glass);
 	}
 }

@@ -5,7 +5,7 @@ import { expect, test } from '@playwright/test';
 import { mouseOnly } from './pointer.ts';
 
 function readGlass(page: Page): Promise<{ bloom: string; breath: string }> {
-	return page.locator('#tempo .sonic-number').evaluate((glass) => {
+	return page.locator('#screen').evaluate((glass) => {
 		const before = getComputedStyle(glass, '::before');
 
 		return {
@@ -39,7 +39,7 @@ test('glass breathes only while hovered, and holds still under reduced motion', 
 	await page.goto('/fixtures/');
 	expect(await readGlass(page)).toMatchObject({ breath: 'none' });
 
-	await page.locator('#tempo .sonic-number').hover();
+	await page.locator('#screen').hover();
 	expect(await readGlass(page)).toMatchObject({ breath: 'sonic-glass-breathe' });
 
 	await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -53,7 +53,7 @@ test('the texture token at 0 on an ancestor drops the bloom, and forced colours 
 	await page.addStyleTag({ content: ':root { --sonic-glass-texture: 0; }' });
 
 	const bloom = await page
-		.locator('#tempo .sonic-number')
+		.locator('#screen')
 		.evaluate((glass) => getComputedStyle(glass, '::before').opacity);
 
 	expect(bloom).toBe('0');
@@ -141,17 +141,7 @@ test(
 			expect.soft(await readBoxes()).toEqual(first);
 		});
 
-		await test.step('a screen is cut from the glass a number box is, and sizes every edge from its token', async () => {
-			const readPane = (selector: string) =>
-				page.locator(selector).evaluate((pane) => {
-					const style = getComputedStyle(pane);
-
-					return {
-						bloom: getComputedStyle(pane, '::before').backgroundImage,
-						fill: `${style.backgroundColor} ${style.backgroundImage}`,
-						ink: style.color,
-					};
-				});
+		await test.step('a screen sizes every edge from its token', async () => {
 			const readBox = () =>
 				page.locator('#screen').evaluate((screen) => {
 					const style = getComputedStyle(screen);
@@ -160,7 +150,6 @@ test(
 					return [box.height, style.paddingTop, style.borderTopLeftRadius].join(' ');
 				});
 
-			expect.soft(await readPane('#screen')).toEqual(await readPane('#tempo .sonic-number'));
 			expect.soft(await readBox()).toBe('40 4px 6px');
 
 			await page.locator('#screen').evaluate((screen) => {

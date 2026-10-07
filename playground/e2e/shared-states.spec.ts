@@ -106,6 +106,23 @@ test('keyboard focus draws the focus outline, and no glow at strength 0', async 
 	await expect.poll(glow).not.toMatch(/[/,] 0\)/);
 });
 
+test('the focus radius rounds a plain control’s box and leaves a drawn corner alone', async ({
+	page,
+}) => {
+	const button = page.locator('#next .sonic-button');
+	const corner = await button.evaluate((element) => getComputedStyle(element).borderTopLeftRadius);
+
+	await setTokens(page, { '--sonic-focus-radius': '5px' });
+	await expect(button).toHaveCSS('border-top-left-radius', corner);
+
+	for (const selector of ['.sonic-number', '.sonic-waveform', '.sonic-wavestrip']) {
+		await expect(page.locator(selector).first(), selector).toHaveCSS(
+			'border-top-left-radius',
+			'5px',
+		);
+	}
+});
+
 test('a press focuses a slider without the focus outline', async ({ isMobile, page }) => {
 	test.skip(isMobile, mouseOnly);
 

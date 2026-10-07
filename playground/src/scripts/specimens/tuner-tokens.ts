@@ -277,8 +277,6 @@ export const tokenGroups: Array<TokenGroup> = [
 		tokens: [
 			range('size', '--sonic-number-size', [1, 4, 0.125, 'rem']),
 			range('aspect', '--sonic-number-aspect-ratio', [1, 5, 0.1]),
-			range('corner', '--sonic-number-radius-ratio', [0, 0.5, 0.01]),
-			range('inset', '--sonic-number-inset-ratio', [0, 0.5, 0.01]),
 			range('text', '--sonic-number-text-ratio', [0.2, 0.8, 0.01]),
 			range('travel', '--sonic-number-travel', [40, 400, 10, 'px']),
 		],

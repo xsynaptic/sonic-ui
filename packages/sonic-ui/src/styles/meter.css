@@ -49,6 +49,10 @@
 		--_sonic-meter-clip-from: var(--sonic-meter-clip-from, -3);
 		--_sonic-unit: calc(var(--_sonic-meter-size) / 8);
 		--_sonic-meter-toward: to top;
+		--_sonic-meter-unlit: var(
+			--sonic-unlit,
+			color-mix(in oklab, var(--_sonic-unlit) var(--_sonic-lens-modelled), var(--_sonic-lens-tint))
+		);
 		--_sonic-meter-inset: calc(var(--_sonic-meter-size) * 0.125);
 		--_sonic-meter-lens: calc(var(--_sonic-meter-size) - 2 * var(--_sonic-meter-inset));
 		--_sonic-meter-clip-space: calc(var(--_sonic-meter-inset) + var(--_sonic-meter-lens));
@@ -63,7 +67,7 @@
 		inline-size: var(--_sonic-meter-size);
 		block-size: var(--_sonic-meter-length);
 		container-type: size;
-		background: var(--sonic-bezel, color-mix(in oklab, var(--_sonic-unlit) 55%, #000));
+		background: var(--_sonic-lens-bezel);
 		border-radius: calc(var(--_sonic-meter-size) * var(--_sonic-meter-radius-ratio));
 
 		&::after {
@@ -286,10 +290,11 @@
 	.sonic-meter-segments {
 		background: linear-gradient(
 			var(--_sonic-meter-toward),
-			color-mix(in oklab, var(--_sonic-lit) 12%, var(--_sonic-unlit)) 0 var(--_sonic-meter-hot-at),
-			color-mix(in oklab, var(--_sonic-lit-warning) 12%, var(--_sonic-unlit)) 0
+			color-mix(in oklab, var(--_sonic-lit) 12%, var(--_sonic-meter-unlit)) 0
+				var(--_sonic-meter-hot-at),
+			color-mix(in oklab, var(--_sonic-lit-warning) 12%, var(--_sonic-meter-unlit)) 0
 				var(--_sonic-meter-clip-at),
-			color-mix(in oklab, var(--_sonic-lit-danger) 12%, var(--_sonic-unlit)) 0
+			color-mix(in oklab, var(--_sonic-lit-danger) 12%, var(--_sonic-meter-unlit)) 0
 		);
 	}
 

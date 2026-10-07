@@ -67,6 +67,45 @@ function readLed(page: Page, id: string): Promise<Record<string, string>> {
 	});
 }
 
+function readMeter(page: Page, id: string): Promise<Record<string, string>> {
+	return page.locator(`${id} .sonic-meter`).evaluate((meter) => {
+		const probe = document.createElement('i');
+
+		meter.append(probe);
+
+		const mixes = Object.fromEntries(
+			Object.entries({
+				bedModelled: 'color-mix(in oklab, var(--_sonic-unlit) 55%, #000)',
+				bezelToken: 'var(--sonic-bezel)',
+				lensModelled: 'color-mix(in oklab, var(--_sonic-unlit) 60%, #000)',
+				lensToken: 'var(--sonic-lens)',
+				tint: 'color-mix(in oklab, currentcolor 30%, transparent)',
+				unlitModelled: 'color-mix(in oklab, var(--_sonic-lit) 12%, var(--_sonic-unlit))',
+				// The 0% mix mirrors relief 0; without it the last digit differs
+				unlitTinted:
+					'color-mix(in oklab, var(--_sonic-lit) 12%, color-mix(in oklab, var(--_sonic-unlit) 0%, color-mix(in oklab, currentcolor 30%, transparent)))',
+			}).map(([name, colour]) => {
+				probe.style.backgroundColor = colour;
+
+				return [name, getComputedStyle(probe).backgroundColor];
+			}),
+		);
+
+		probe.remove();
+
+		const segments = meter.querySelector('.sonic-meter-segments');
+		const clip = meter.querySelector('.sonic-meter-clip');
+		if (!segments || !clip) throw new Error('The meter has no segments or no clip lens');
+
+		return {
+			...mixes,
+			bed: getComputedStyle(meter).backgroundColor,
+			lens: getComputedStyle(clip).backgroundColor,
+			segments: getComputedStyle(segments).backgroundImage,
+		};
+	});
+}
+
 function lightness(colour: string): number {
 	return Number(/^okl(?:ab|ch)\(([\d.]+)/.exec(colour)?.[1]);
 }
@@ -156,6 +195,33 @@ test(
 		expect(amber.lens).toBe(amber.glass);
 		expect(amber.bezel).not.toMatch(clear);
 		expect(amber.inset).toBe('3.75px');
+	},
+);
+
+test(
+	'a bare meter has a clear bed and tinted unlit segments, bar or ladder, and a skinned one keeps its bezel and lens',
+	{ tag: '@mobile' },
+	async ({ page }) => {
+		for (const id of ['#bare-meter', '#bare-ladder']) {
+			const bare = await readMeter(page, id);
+
+			expect(bare.bed, id).toMatch(clear);
+			expect(bare.lens, id).toBe(bare.tint);
+			expect(bare.segments, id).toContain(bare.unlitTinted);
+			expect(bare.segments, id).not.toContain(bare.unlitModelled);
+		}
+
+		const amber = await readMeter(page, '#amber-meter');
+
+		expect(amber.bed).toBe(amber.bedModelled);
+		expect(amber.lens).toBe(amber.lensModelled);
+		expect(amber.segments).toContain(amber.unlitModelled);
+
+		const flat = await readMeter(page, '#flat-meter');
+
+		expect(flat.bed).toBe(flat.bezelToken);
+		expect(flat.lens).toBe(flat.lensToken);
+		expect(flat.segments).toContain(flat.unlitModelled);
 	},
 );
 

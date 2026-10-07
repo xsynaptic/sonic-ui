@@ -58,8 +58,6 @@
 		--_sonic-xy-x-high: max(var(--_sonic-xy-x-origin, 0), var(--_sonic-xy-x, 0));
 		--_sonic-xy-y-low: min(var(--_sonic-xy-y-origin, 0), var(--_sonic-xy-y, 0));
 		--_sonic-xy-y-high: max(var(--_sonic-xy-y-origin, 0), var(--_sonic-xy-y, 0));
-		--_sonic-xy-cut-x: calc(var(--_sonic-xy-x, 0) * var(--_sonic-xy-travel-x));
-		--_sonic-xy-cut-y: calc(var(--_sonic-xy-y, 0) * var(--_sonic-xy-travel-y));
 
 		position: absolute;
 		inset: 0;
@@ -70,8 +68,6 @@
 			position: absolute;
 			content: '';
 		}
-
-		/* Each line is cut under the puck, which is see-through while held; the cut ends inside its ring */
 
 		&::before {
 			inset: auto 0
@@ -96,12 +92,6 @@
 					transparent 0
 				),
 				var(--_sonic-unlit);
-			mask: linear-gradient(
-				to right,
-				#000 calc(var(--_sonic-xy-cut-x) + 0.29 * var(--_sonic-xy-puck)),
-				transparent 0 calc(var(--_sonic-xy-cut-x) + 0.71 * var(--_sonic-xy-puck)),
-				#000 0
-			);
 		}
 
 		&::after {
@@ -127,12 +117,6 @@
 					transparent 0
 				),
 				var(--_sonic-unlit);
-			mask: linear-gradient(
-				to top,
-				#000 calc(var(--_sonic-xy-cut-y) + 0.29 * var(--_sonic-xy-puck)),
-				transparent 0 calc(var(--_sonic-xy-cut-y) + 0.71 * var(--_sonic-xy-puck)),
-				#000 0
-			);
 		}
 	}
 
@@ -190,8 +174,6 @@
 	}
 
 	:state(dragging) > .sonic-xy > .sonic-xy-puck {
-		--_sonic-xy-puck-fill: transparent;
-		--_sonic-xy-puck-edge: var(--_sonic-xy-lit);
 		--_sonic-xy-puck-glow: color-mix(
 			in oklab,
 			var(--_sonic-xy-lit) calc(30% * var(--_sonic-relief)),
@@ -231,6 +213,7 @@
 
 		:state(dragging) > .sonic-xy > .sonic-xy-puck {
 			--_sonic-xy-puck-fill: Canvas;
+			--_sonic-xy-puck-edge: var(--_sonic-xy-lit);
 		}
 
 		.sonic-xy-axis {

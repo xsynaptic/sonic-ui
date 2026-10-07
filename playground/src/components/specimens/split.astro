@@ -66,7 +66,9 @@ const modes = [
 			<sonic-slider aria-labelledby="split-slider" readout value="50"></sonic-slider>
 		</Cell>
 		<Cell id="split-number" label="Number box">
-			<sonic-number aria-labelledby="split-number" class="font-mono" value="40"></sonic-number>
+			<div class="sonic-screen w-fit [font-family:var(--sonic-glass-font,var(--font-mono))] [--sonic-screen-inset-ratio:0] [--sonic-screen-size:1.75rem]">
+				<sonic-number aria-labelledby="split-number" value="40"></sonic-number>
+			</div>
 		</Cell>
 	</sonic-split>
 </SpecimenGrid>

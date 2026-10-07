@@ -187,23 +187,22 @@ test('drawn parts opt out of forced colours, and the indicator, the number box a
 		expect.soft(colour).toBe(await systemColour(page, 'ButtonText'));
 	});
 
-	await test.step('the number box edges its glass and inks its digits, grey when disabled', async () => {
+	await test.step('the number box inks its digits, grey when disabled', async () => {
 		const [canvasText, grayText] = [
 			await systemColour(page, 'CanvasText'),
 			await systemColour(page, 'GrayText'),
 		];
-		const read = (): Promise<{ border: string; digits: string }> =>
-			page.locator('#tempo .sonic-number').evaluate((control) => ({
-				border: getComputedStyle(control).borderTopColor,
-				digits: getComputedStyle(control.querySelector('.sonic-number-value') ?? control).color,
-			}));
+		const read = (): Promise<string> =>
+			page
+				.locator('#tempo .sonic-number-value')
+				.evaluate((digits) => getComputedStyle(digits).color);
 
-		expect.soft(await read()).toEqual({ border: canvasText, digits: canvasText });
+		expect.soft(await read()).toBe(canvasText);
 
 		await page.locator('#tempo').evaluate((host) => {
 			host.setAttribute('disabled', '');
 		});
-		expect.soft(await read()).toEqual({ border: canvasText, digits: grayText });
+		expect.soft(await read()).toBe(grayText);
 	});
 
 	await test.step('a live modulation paints its tick in CanvasText', async () => {

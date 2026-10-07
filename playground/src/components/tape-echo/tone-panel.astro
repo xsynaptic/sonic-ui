@@ -58,14 +58,16 @@ const ladder = '-24 -12 -6 -3 0';
 		>
 			Style
 		</span>
-		<sonic-number
-			aria-labelledby="echo-style"
-			class="font-mono [--sonic-number-aspect-ratio:4.5] [--sonic-number-size:1.5rem]"
-			data-echo-style
-			data-format="tape-style"
-			positions={tapeStyles.positions}
-			press="step"
-			value="1"
-		></sonic-number>
+		<div class="sonic-screen w-fit [font-family:var(--sonic-glass-font,var(--font-mono))] [--sonic-screen-inset-ratio:0] [--sonic-screen-size:1.5rem]">
+			<sonic-number
+				aria-labelledby="echo-style"
+				class="[--sonic-number-aspect-ratio:4.5] [--sonic-number-size:1.5rem]"
+				data-echo-style
+				data-format="tape-style"
+				positions={tapeStyles.positions}
+				press="step"
+				value="1"
+			></sonic-number>
+		</div>
 	</div>
 </div>

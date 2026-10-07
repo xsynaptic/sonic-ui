@@ -8,7 +8,6 @@ const broken = [
 	'button',
 	'dial',
 	'envelope',
-	'number',
 	'segmented',
 	'slider',
 	'switch',
@@ -99,7 +98,11 @@ test('an unlayered reset zeroes the sheets’ padding, and each control it break
 	const messages = collectConsole(page);
 	const unlayered = await readFacts(page, 'unlayered');
 
-	expect(unlayered['number 0 sonic-number padding-left']).toBe('0px');
+	const capPadding = Object.entries(unlayered).find(([fact]) =>
+		/^segmented \d+ sonic-segmented-cap padding-left$/.test(fact),
+	);
+
+	expect(capPadding?.[1]).toBe('0px');
 	expect(messages.toSorted((first, second) => first.localeCompare(second))).toEqual(
 		broken.map((control) => expect.stringContaining(`<sonic-${control}> has lost its `)),
 	);

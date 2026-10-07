@@ -183,17 +183,18 @@ const titleClass =
 		<p class={titleClass}>Transport</p>
 		<div class="flex flex-1 flex-wrap items-stretch gap-6">
 			<Cell id="panel-tempo" label="Tempo">
-				<sonic-number
-					aria-labelledby="panel-tempo"
-					class="font-mono"
-					data-format="bpm"
-					data-tempo
-					default="125"
-					max="300"
-					min="40"
-					step="0.1"
-					value="125"
-				></sonic-number>
+				<div class="sonic-screen w-fit [font-family:var(--sonic-glass-font,var(--font-mono))] [--sonic-screen-inset-ratio:0] [--sonic-screen-size:1.75rem]">
+					<sonic-number
+						aria-labelledby="panel-tempo"
+						data-format="bpm"
+						data-tempo
+						default="125"
+						max="300"
+						min="40"
+						step="0.1"
+						value="125"
+					></sonic-number>
+				</div>
 			</Cell>
 			<Cell id="panel-run" label="Run">
 				<span class="sonic-ring [--sonic-ring-size:calc(2rem/0.75)]" data-ring-loop>

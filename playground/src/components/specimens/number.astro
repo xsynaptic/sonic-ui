@@ -5,79 +5,87 @@ import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 
 <SpecimenGrid>
 	<Cell id="number-tempo" isWide={true} label="Tempo">
-		<sonic-number
-			aria-labelledby="number-tempo"
-			class="font-mono"
-			data-format="bpm"
-			default="120"
-			max="300"
-			min="20"
-			step="0.1"
-			value="120"
-		></sonic-number>
+		<div class="sonic-screen w-fit [font-family:var(--sonic-glass-font,var(--font-mono))] [--sonic-screen-inset-ratio:0] [--sonic-screen-size:1.75rem]">
+			<sonic-number
+				aria-labelledby="number-tempo"
+				data-format="bpm"
+				default="120"
+				max="300"
+				min="20"
+				step="0.1"
+				value="120"
+			></sonic-number>
+		</div>
 	</Cell>
 	<Cell id="number-frequency" isWide={true} label="Frequency">
-		<sonic-number
-			aria-labelledby="number-frequency"
-			class="font-mono"
-			data-format="hertz"
-			max="20000"
-			min="20"
-			taper="log"
-			value="440"
-		></sonic-number>
+		<div class="sonic-screen w-fit [font-family:var(--sonic-glass-font,var(--font-mono))] [--sonic-screen-inset-ratio:0] [--sonic-screen-size:1.75rem]">
+			<sonic-number
+				aria-labelledby="number-frequency"
+				data-format="hertz"
+				max="20000"
+				min="20"
+				taper="log"
+				value="440"
+			></sonic-number>
+		</div>
 	</Cell>
 	<Cell id="number-transpose" isWide={true} label="Transpose">
-		<sonic-number
-			aria-labelledby="number-transpose"
-			class="font-mono"
-			data-format="semitones"
-			default="0"
-			double-press="reset"
-			max="24"
-			min="-24"
-			value="-5"
-		></sonic-number>
+		<div class="sonic-screen w-fit [font-family:var(--sonic-glass-font,var(--font-mono))] [--sonic-screen-inset-ratio:0] [--sonic-screen-size:1.75rem]">
+			<sonic-number
+				aria-labelledby="number-transpose"
+				data-format="semitones"
+				default="0"
+				double-press="reset"
+				max="24"
+				min="-24"
+				value="-5"
+			></sonic-number>
+		</div>
 	</Cell>
 	<Cell id="number-loop" isWide={true} label="Loop">
-		<sonic-number
-			aria-labelledby="number-loop"
-			class="font-mono"
-			data-format="beats"
-			positions="0.03125 0.0625 0.125 0.25 0.5 1 2 4 8 16 32"
-			value="4"
-		></sonic-number>
+		<div class="sonic-screen w-fit [font-family:var(--sonic-glass-font,var(--font-mono))] [--sonic-screen-inset-ratio:0] [--sonic-screen-size:1.75rem]">
+			<sonic-number
+				aria-labelledby="number-loop"
+				data-format="beats"
+				positions="0.03125 0.0625 0.125 0.25 0.5 1 2 4 8 16 32"
+				value="4"
+			></sonic-number>
+		</div>
 	</Cell>
 	<Cell id="number-note" isWide={true} label="Note">
-		<sonic-number
-			aria-labelledby="number-note"
-			class="font-mono"
-			data-format="note"
-			positions="3 6 8 12 16 18 24 32 36 48 64 72 96 144 192"
-			value="48"
-		></sonic-number>
+		<div class="sonic-screen w-fit [font-family:var(--sonic-glass-font,var(--font-mono))] [--sonic-screen-inset-ratio:0] [--sonic-screen-size:1.75rem]">
+			<sonic-number
+				aria-labelledby="number-note"
+				data-format="note"
+				positions="3 6 8 12 16 18 24 32 36 48 64 72 96 144 192"
+				value="48"
+			></sonic-number>
+		</div>
 	</Cell>
 	<Cell id="number-disabled" isWide={true} label="Disabled">
-		<sonic-number
-			aria-labelledby="number-disabled"
-			class="font-mono"
-			data-format="percent"
-			disabled
-			value="60"
-		></sonic-number>
+		<div class="sonic-screen w-fit [font-family:var(--sonic-glass-font,var(--font-mono))] [--sonic-screen-inset-ratio:0] [--sonic-screen-size:1.75rem]">
+			<sonic-number
+				aria-labelledby="number-disabled"
+				data-format="percent"
+				disabled
+				value="60"
+			></sonic-number>
+		</div>
 	</Cell>
 </SpecimenGrid>
 <SpecimenGrid isLarge={true}>
 	<Cell id="number-large-tempo" isWide={true} label="Tempo, large">
-		<sonic-number
-			aria-labelledby="number-large-tempo"
-			class="font-mono [--sonic-number-size:3.5rem]"
-			data-format="bpm"
-			default="120"
-			max="300"
-			min="20"
-			step="0.1"
-			value="120"
-		></sonic-number>
+		<div class="sonic-screen w-fit [font-family:var(--sonic-glass-font,var(--font-mono))] [--sonic-screen-inset-ratio:0] [--sonic-screen-size:3.5rem]">
+			<sonic-number
+				aria-labelledby="number-large-tempo"
+				class="[--sonic-number-size:3.5rem]"
+				data-format="bpm"
+				default="120"
+				max="300"
+				min="20"
+				step="0.1"
+				value="120"
+			></sonic-number>
+		</div>
 	</Cell>
 </SpecimenGrid>

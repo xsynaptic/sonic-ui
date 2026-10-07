@@ -11,30 +11,13 @@
 		--_sonic-led-size: var(--sonic-led-size, 0.5rem);
 		--_sonic-led-lens-ratio: var(--sonic-led-lens-ratio, calc(0.8 - 0.175 * var(--_sonic-relief)));
 		--_sonic-unit: calc(var(--_sonic-led-size) / 8);
-		--_sonic-led-modelled: calc(100% * var(--_sonic-relief));
-		--_sonic-led-bezel: var(
-			--sonic-bezel,
-			color-mix(
-				in oklab,
-				color-mix(in oklab, var(--_sonic-unlit) 55%, #000) var(--_sonic-led-modelled),
-				transparent
-			)
-		);
-		--_sonic-lens-glass: var(
-			--sonic-lens,
-			color-mix(
-				in oklab,
-				color-mix(in oklab, var(--_sonic-unlit) 60%, #000) var(--_sonic-led-modelled),
-				color-mix(in oklab, currentcolor 30%, transparent)
-			)
-		);
 
 		position: relative;
 		display: inline-block;
 		flex-shrink: 0;
 		inline-size: var(--_sonic-led-size);
 		block-size: var(--_sonic-led-size);
-		background: var(--_sonic-led-bezel);
+		background: var(--_sonic-lens-bezel);
 		border-radius: 50%;
 
 		&::after {
@@ -112,7 +95,7 @@
 					calc(var(--_sonic-led-lens-ratio) * 100%),
 				transparent
 			),
-			var(--_sonic-led-bezel);
+			var(--_sonic-lens-bezel);
 
 		&::after {
 			background: radial-gradient(

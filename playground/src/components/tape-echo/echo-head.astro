@@ -44,12 +44,14 @@ const positions = divisions[division].join(' ');
 			</span>
 		))}
 	</sonic-segmented>
-	<sonic-number
-		aria-label={`Echo ${String(head)} time`}
-		class="font-mono [--sonic-number-size:1.5rem]"
-		data-echo-number
-		data-format="note"
-		positions={positions}
-		value={ticks}
-	></sonic-number>
+	<div class="sonic-screen w-fit [font-family:var(--sonic-glass-font,var(--font-mono))] [--sonic-screen-inset-ratio:0] [--sonic-screen-size:1.5rem]">
+		<sonic-number
+			aria-label={`Echo ${String(head)} time`}
+			class="[--sonic-number-size:1.5rem]"
+			data-echo-number
+			data-format="note"
+			positions={positions}
+			value={ticks}
+		></sonic-number>
+	</div>
 </div>
