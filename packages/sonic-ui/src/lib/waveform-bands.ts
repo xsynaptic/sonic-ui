@@ -1,3 +1,5 @@
+import { clampProportion } from '#lib/math.ts';
+
 export interface WaveformBands {
 	/** Bands per frame, interleaved in `levels`, lowest first */
 	bandCount: number;
@@ -18,7 +20,14 @@ export interface BandTable {
 	weightOf: (level: number) => number;
 }
 
+export interface BandMix {
+	contrast: number;
+	normalize: number;
+	tilt: number;
+}
+
 interface BandView {
+	mix?: BandMix;
 	pixelsPerSecond: number;
 	startSeconds: number;
 	width: number;
@@ -69,36 +78,44 @@ export function bandTable(bands: undefined | WaveformBands): BandTable | undefin
 	return { bandCount, framesPerSecond, levels, weightOf: (level) => weights[level] ?? 0 };
 }
 
-// Hue only: the strongest channel goes to full, since loudness is the envelope's height
-function mixGroup(
+// Loudness is the envelope's height, so the mix is hue: scaled to its strongest channel, or averaged to stay inside the palette
+function groupMixer(
 	{ bandCount, levels, weightOf }: BandTable,
 	colours: ReadonlyArray<BandChannels | undefined>,
-	[fromFrame, toFrame]: [number, number],
-): [number, number, number, number] | undefined {
-	let red = 0;
-	let green = 0;
-	let blue = 0;
-	let total = 0;
+	{ contrast, normalize, tilt }: BandMix,
+): (fromFrame: number, toFrame: number) => [number, number, number, number] | undefined {
+	const gains = Array.from({ length: bandCount }, (_gain, band) => 10 ** ((tilt * band) / 20));
+	const amount = clampProportion(normalize);
 
-	for (let band = 0; band < bandCount; band += 1) {
-		const colour = colours[band];
-		if (!colour) continue;
+	return (fromFrame, toFrame) => {
+		let red = 0;
+		let green = 0;
+		let blue = 0;
+		let total = 0;
 
-		let weight = 0;
+		for (let band = 0; band < bandCount; band += 1) {
+			const colour = colours[band];
+			if (!colour) continue;
 
-		for (let bandFrame = fromFrame; bandFrame < toFrame; bandFrame += 1) {
-			weight += weightOf(levels[bandFrame * bandCount + band] ?? 0);
+			let weight = 0;
+
+			for (let bandFrame = fromFrame; bandFrame < toFrame; bandFrame += 1) {
+				weight += weightOf(levels[bandFrame * bandCount + band] ?? 0);
+			}
+			weight *= gains[band] ?? 1;
+			if (contrast !== 1) weight **= contrast;
+			red += weight * colour[0];
+			green += weight * colour[1];
+			blue += weight * colour[2];
+			total += weight;
 		}
-		red += weight * colour[0];
-		green += weight * colour[1];
-		blue += weight * colour[2];
-		total += weight;
-	}
-	if (total === 0) return undefined;
+		if (total === 0) return;
 
-	const scale = 255 / Math.max(red, green, blue, Number.MIN_VALUE);
+		const full = 255 / Math.max(red, green, blue, Number.MIN_VALUE);
+		const scale = full * amount + (1 - amount) / total;
 
-	return [red * scale, green * scale, blue * scale, 255];
+		return [red * scale, green * scale, blue * scale, 255];
+	};
 }
 
 // Keyed to absolute frames, as buckets are to pairs; keyed to the window, the colours shimmer as it scrolls
@@ -110,6 +127,7 @@ export function bandStrip(
 	if (view.pixelsPerSecond <= 0 || !colours.some(Boolean)) return undefined;
 
 	const { bandCount, framesPerSecond, levels } = table;
+	const mixGroup = groupMixer(table, colours, view.mix ?? { contrast: 1, normalize: 1, tilt: 0 });
 	const pxPerFrame = view.pixelsPerSecond / framesPerSecond;
 	const frames = Math.max(1, Math.round(1 / pxPerFrame));
 	const groupWidth = frames * pxPerFrame;
@@ -128,7 +146,7 @@ export function bandStrip(
 
 	for (let index = 0; index < count; index += 1) {
 		const fromFrame = (first + index) * frames;
-		const mixed = mixGroup(table, colours, [fromFrame, fromFrame + frames]);
+		const mixed = mixGroup(fromFrame, fromFrame + frames);
 
 		if (mixed) pixels.set(mixed, index * 4);
 	}

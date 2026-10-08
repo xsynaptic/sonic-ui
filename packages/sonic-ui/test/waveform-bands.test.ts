@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 
-import type { BandChannels, WaveformBands } from '#lib/waveform-bands.ts';
+import type { BandChannels, BandMix, WaveformBands } from '#lib/waveform-bands.ts';
 
 import { bandStrip, bandTable } from '#lib/waveform-bands.ts';
 
@@ -9,6 +9,7 @@ const green: BandChannels = [0, 255, 0];
 const blue: BandChannels = [0, 0, 255];
 
 interface View {
+	mix?: BandMix;
 	pixelsPerSecond: number;
 	startSeconds: number;
 	width: number;
@@ -41,6 +42,20 @@ function pixelsOf(
 	return Array.from({ length: count }, (_pixel, index) => [
 		...pixels.subarray(index * 4, index * 4 + 4),
 	]);
+}
+
+const slate: BandChannels = [40, 50, 60];
+const paper: BandChannels = [250, 240, 230];
+const plain = { contrast: 1, normalize: 1, tilt: 0 };
+
+function mixedPixel(
+	bands: WaveformBands,
+	colours: ReadonlyArray<BandChannels | undefined>,
+	mix: BandMix,
+): Array<number> {
+	const view = { mix, pixelsPerSecond: bands.framesPerSecond, startSeconds: 0, width: 1 };
+
+	return [...stripOf(bands, colours, view).pixels.subarray(0, 4)];
 }
 
 test('a window moved by a third of a group keeps every colour and shifts only x', () => {
@@ -145,4 +160,38 @@ test('bands that cannot be read, or with no colour set, draw as no bands', () =>
 		table &&
 			bandStrip(table, [undefined, undefined], { pixelsPerSecond: 10, startSeconds: 0, width: 2 }),
 	).toBeUndefined();
+});
+
+test('normalize 0 is the weighted average of the palette, and amounts between sit between', () => {
+	const bands = { bandCount: 2, framesPerSecond: 10, levels: new Uint8Array([255, 51]) };
+	const palette = [slate, paper];
+
+	expect(mixedPixel(bands, palette, plain)).toEqual([217, 236, 255, 255]);
+	expect(mixedPixel(bands, palette, { ...plain, normalize: 0 })).toEqual([75, 82, 88, 255]);
+	expect(mixedPixel(bands, palette, { ...plain, normalize: 0.5 })).toEqual([146, 159, 172, 255]);
+	expect(mixedPixel(bands, palette, { ...plain, normalize: -1 })).toEqual([75, 82, 88, 255]);
+	expect(mixedPixel(bands, palette, { ...plain, normalize: 2 })).toEqual([217, 236, 255, 255]);
+});
+
+test('contrast raises each weight, so the stronger band takes more of the colour', () => {
+	const bands = { bandCount: 2, framesPerSecond: 10, levels: new Uint8Array([255, 51]) };
+
+	expect(mixedPixel(bands, [slate, paper], { contrast: 2, normalize: 0, tilt: 0 })).toEqual([
+		48, 57, 67, 255,
+	]);
+});
+
+test('a tilt gains each band above the lowest by its decibels, moving which band wins', () => {
+	const bands = {
+		bandCount: 3,
+		framesPerSecond: 10,
+		levels: new Float32Array([1, 0.75, 0.5]),
+		minDecibels: -40,
+	};
+
+	expect(mixedPixel(bands, [red, green, blue], plain)).toEqual([255, 81, 26, 255]);
+	// 12 dB a band against 10 dB a band of fall leaves 2 dB of rise: 10 ** -0.2 and 10 ** -0.1 of 255
+	expect(mixedPixel(bands, [red, green, blue], { ...plain, tilt: 12 })).toEqual([
+		161, 203, 255, 255,
+	]);
 });

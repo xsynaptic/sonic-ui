@@ -13,6 +13,15 @@ function ramp(bandCount: number): string {
 	}).join('; ');
 }
 
+const tonal = [
+	'--sonic-waveform-band-1: oklch(0.36 0.03 255)',
+	'--sonic-waveform-band-2: oklch(0.64 0.015 255)',
+	'--sonic-waveform-band-3: oklch(0.96 0 0)',
+	'--sonic-waveform-band-normalize: 0',
+	'--sonic-waveform-band-contrast: 2',
+	'--sonic-waveform-band-tilt: 6',
+].join('; ');
+
 const waveforms = [
 	{ id: 'waveform-playing', isPlaying: true, label: 'Playing', seed: 7 },
 	{ id: 'waveform-paused', label: 'Paused', seed: 8 },
@@ -85,6 +94,15 @@ const waveforms = [
 		label: 'Bands under a deep edge shade',
 		seed: 27,
 	},
+	{
+		bands: 3,
+		hasGlass: true,
+		id: 'waveform-bands-tonal',
+		isPlaying: true,
+		label: 'Bands, tonal palette',
+		seed: 28,
+		style: tonal,
+	},
 ];
 ---
 
@@ -111,7 +129,9 @@ const waveforms = [
 					readout
 					reduced-motion={waveform.motion}
 					step="0"
-					style={waveform.bands === undefined ? undefined : ramp(waveform.bands)}
+					style={
+						waveform.style ?? (waveform.bands === undefined ? undefined : ramp(waveform.bands))
+					}
 					value="150"
 					zoom={waveform.zoom}
 				></sonic-waveform>

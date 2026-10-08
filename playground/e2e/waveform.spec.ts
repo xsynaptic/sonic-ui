@@ -162,6 +162,33 @@ test(
 );
 
 test(
+	'normalize 0 keeps a band at its own colour, and the token repaints with no repaint()',
+	{ tag: '@mobile' },
+	async ({ page }) => {
+		const { canvas, waveform } = await openWaveform(page);
+
+		await tintWaveform(waveform);
+
+		const column = await columnAt(canvas, 150);
+
+		await expect(async () => {
+			const scaled = await pixelAt(canvas, column);
+
+			expect(scaled?.[2]).toBe(255);
+		}).toPass();
+		await waveform.evaluate((host) => {
+			host.style.setProperty('--sonic-waveform-band-normalize', '0');
+		});
+		await expect(async () => {
+			expectPixel(
+				await pixelAt(canvas, column),
+				await layered(canvas, [['oklch(0.6 0.2 260)', 1]]),
+			);
+		}).toPass();
+	},
+);
+
+test(
 	'with no edge shade the wave is one colour from top to centre, and a shade darkens a tinted top by its row',
 	{ tag: '@mobile' },
 	async ({ page }) => {

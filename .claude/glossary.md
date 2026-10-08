@@ -114,6 +114,12 @@ The words this library uses for its controls, their parts and their values. Wher
 
 **Band**: One of the frequency ranges a wave's levels are split into, with a level per band per frame. _Avoid_: Bin (one frequency of a spectrum), zone (a stretch of a level display)
 
+**Normalize**: To scale a band mix so that its strongest channel is at full, as peak normalising does a signal. `--sonic-waveform-band-normalize` sets how far: at 0 the mix is the weighted average of the band colours and stays inside the palette, at 1 it is fully normalized. _Avoid_: Lift (in grading that raises the shadows), brighten, boost; "normalized" for a proportion
+
+**Contrast** (of bands): The exponent on each band's weight in the mix. Above 1 the strongest band takes more of the colour. _Avoid_: Gamma, sharpness, separation
+
+**Tilt** (of bands): A gain that rises steadily from the lowest band to the highest, in decibels a band. The light's tilt (`--sonic-light-tilt`) is an angle and another thing. _Avoid_: Slope (a filter's steepness), gain (one level), emphasis
+
 **Playhead**: The line that marks the current time on a wave. _Avoid_: Cursor, needle
 
 **Ghost**: The faint line that shows where playback really is while the playhead is being held. _Avoid_: Play cursor, echo

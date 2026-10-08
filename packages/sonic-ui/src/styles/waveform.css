@@ -54,6 +54,24 @@
 	initial-value: 1;
 }
 
+@property --_sonic-waveform-band-normalize {
+	syntax: '<number>';
+	inherits: true;
+	initial-value: 1;
+}
+
+@property --_sonic-waveform-band-contrast {
+	syntax: '<number>';
+	inherits: true;
+	initial-value: 1;
+}
+
+@property --_sonic-waveform-band-tilt {
+	syntax: '<number>';
+	inherits: true;
+	initial-value: 0;
+}
+
 @property --_sonic-waveform-grid {
 	syntax: '<color>';
 	inherits: true;
@@ -122,6 +140,9 @@
 		--_sonic-waveform-band-opacity: calc(
 			var(--sonic-waveform-band-opacity, 1) * var(--_sonic-waveform-band-dim, 1)
 		);
+		--_sonic-waveform-band-normalize: var(--sonic-waveform-band-normalize, 1);
+		--_sonic-waveform-band-contrast: var(--sonic-waveform-band-contrast, 1);
+		--_sonic-waveform-band-tilt: var(--sonic-waveform-band-tilt, 0);
 		--_sonic-waveform-grid: var(--sonic-waveform-grid, var(--_sonic-etch));
 		--_sonic-waveform-ends: var(--sonic-waveform-ends, var(--_sonic-etch));
 		--_sonic-waveform-placeholder: var(--sonic-waveform-placeholder, var(--_sonic-etch));

@@ -41,7 +41,10 @@ export const waveformColours = {
 } as const;
 
 export const waveformNumbers = {
+	bandContrast: '--_sonic-waveform-band-contrast',
+	bandNormalize: '--_sonic-waveform-band-normalize',
 	bandOpacity: '--_sonic-waveform-band-opacity',
+	bandTilt: '--_sonic-waveform-band-tilt',
 	edgeShade: '--_sonic-waveform-edge-shade',
 } as const;
 
@@ -119,7 +122,11 @@ export function bandChannels(
 }
 
 function paintTint(context: CanvasRenderingContext2D, scene: Scene, tint: WaveformTint): void {
-	const strip = bandStrip(tint.table, tint.colours, scene);
+	const { bandContrast, bandNormalize, bandTilt } = scene.numbers;
+	const strip = bandStrip(tint.table, tint.colours, {
+		...scene,
+		mix: { contrast: bandContrast, normalize: bandNormalize, tilt: bandTilt },
+	});
 	if (!strip) return;
 
 	const { canvas } = tint.strip;
