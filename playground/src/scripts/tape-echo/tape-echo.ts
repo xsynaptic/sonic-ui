@@ -12,6 +12,7 @@ import type { Echo, EchoParams } from '#scripts/tape-echo/audio.ts';
 import type { Division } from '#scripts/tape-echo/divisions.ts';
 import type { SourceName } from '#scripts/tape-echo/sources.ts';
 
+import { peakOf } from '#scripts/analyser-peak.ts';
 import { dataHook, find, readControls } from '#scripts/find.ts';
 import { applyFormat } from '#scripts/formats.ts';
 import { frameLoop } from '#scripts/frame-loop.ts';
@@ -19,7 +20,7 @@ import { echoModes } from '#scripts/stop-names.ts';
 import { beatMsOf, createTapTempo } from '#scripts/tap-tempo.ts';
 import { createEcho } from '#scripts/tape-echo/audio.ts';
 import { divisions, timeRange } from '#scripts/tape-echo/divisions.ts';
-import { createPlucks } from '#scripts/tape-echo/plucks.ts';
+import { createPattern } from '#scripts/tape-echo/pattern.ts';
 import {
 	createFilePlayer,
 	createInlet,
@@ -27,6 +28,7 @@ import {
 	createSourceSwitch,
 	isSourceName,
 } from '#scripts/tape-echo/sources.ts';
+import { createContext } from '#scripts/tone.ts';
 
 const headSpec = { dial: SonicDial, division: SonicSegmented };
 
@@ -159,34 +161,26 @@ function dimSecondHead({ heads, mode }: Controls): void {
 	if (dial) dial.dimmed = echoModes.valueAt(mode.value) !== 'dual';
 }
 
-function peakOf(analyser: AnalyserNode, samples: Float32Array<ArrayBuffer>): number {
-	let peak = 0;
-
-	analyser.getFloatTimeDomainData(samples);
-	for (const sample of samples) peak = Math.max(peak, Math.abs(sample));
-
-	return peak;
-}
-
 function createSources(context: AudioContext, destination: AudioNode) {
 	const phrase = createInlet(destination);
-	const plucks = createPlucks(context, phrase.node);
+	const pattern = createPattern(phrase.node);
 	const file = createFilePlayer(context, destination);
 	let isPhrasing = false;
 
 	return {
 		file,
 		isPhrasing: () => isPhrasing,
-		plucks,
+		pattern,
 		select: createSourceSwitch({
 			file: file.open,
 			mic: createMic(context, destination),
 			phrase: () => {
-				plucks.restart();
+				pattern.start();
 				phrase.fade(true);
 				isPhrasing = true;
 
 				return Promise.resolve(() => {
+					pattern.stop();
 					phrase.fade(false);
 					isPhrasing = false;
 				});
@@ -222,14 +216,9 @@ function createTransport(controls: Controls, tempo: TapTempo) {
 	const loop = frameLoop((_elapsedSeconds, time) => {
 		if (!engine) return;
 
-		const beatSeconds = beatMsOf(bpm.value) / 1000;
-
-		const isPhrasing = engine.isPhrasing();
-
-		if (isPhrasing) engine.plucks.schedule(beatSeconds);
 		tapLed.toggleAttribute(
 			'data-sonic-lit',
-			isPhrasing ? engine.plucks.isOnBeat(beatSeconds) : tempo.phaseAt(time) < 0.5,
+			(engine.isPhrasing() ? engine.pattern.beatPhase() : tempo.phaseAt(time)) < 0.5,
 		);
 		meters.input.level = peakOf(engine.echo.meters.input, samples);
 		meters.output.level = peakOf(engine.echo.meters.output, samples);
@@ -238,10 +227,11 @@ function createTransport(controls: Controls, tempo: TapTempo) {
 	function start(): Engine {
 		if (engine) return engine;
 
-		const context = new AudioContext();
+		const context = createContext();
 		const echo = createEcho(context);
 
 		engine = { context, echo, ...createSources(context, echo.input) };
+		engine.pattern.setTempo(bpm.value);
 
 		return engine;
 	}
@@ -305,7 +295,8 @@ function createTransport(controls: Controls, tempo: TapTempo) {
 		feed,
 		hasFile: () => engine?.file.hasFile() ?? false,
 		load,
-		restart: () => engine?.plucks.restart(),
+		restart: () => engine?.pattern.restart(),
+		retune: () => engine?.pattern.setTempo(bpm.value),
 		run,
 		update: () => engine?.echo.update(paramsOf(controls)),
 	};
@@ -352,7 +343,10 @@ function bindEcho(panel: HTMLElement): void {
 
 	panel.addEventListener('input', (event) => {
 		if (event.target === mode) dimSecondHead(controls);
-		if (event.target === bpm) tempo.retune(bpm.value);
+		if (event.target === bpm) {
+			tempo.retune(bpm.value);
+			transport.retune();
+		}
 		transport.update();
 	});
 	panel.addEventListener('change', (event) => {
@@ -368,6 +362,7 @@ function bindEcho(panel: HTMLElement): void {
 		const settled = tempo.tap(performance.now());
 
 		if (settled !== undefined) bpm.value = settled;
+		transport.retune();
 		transport.restart();
 		transport.update();
 	});

@@ -37,6 +37,7 @@ const bands = [
 	{bands.map((band) => (
 		<PanelDial
 			detent={0}
+			doublePress="reset"
 			ends={['−15', '+15']}
 			format="db"
 			id={`${strip}-${band.id}`}

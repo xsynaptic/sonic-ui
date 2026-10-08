@@ -23,7 +23,8 @@
 		"astro": "^7.3.5",
 		"react": "^19.3.0",
 		"react-dom": "^19.3.0",
-		"tailwindcss": "^4.3.3"
+		"tailwindcss": "^4.3.3",
+		"tone": "15.1.22"
 	},
 	"devDependencies": {
 		"@astrojs/check": "^0.9.10",

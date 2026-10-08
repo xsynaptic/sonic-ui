@@ -8,11 +8,11 @@ import Layout from '#components/layout.astro';
 import PageHeader from '#components/page-header.astro';
 
 const channels = [
-	{ channel: 1, fader: 0, level: 0 },
-	{ channel: 2, fader: -4, level: -2 },
-	{ channel: 3, fader: -9, level: 3 },
-	{ channel: 4, fader: -60, level: 0 },
-];
+	{ channel: 1, fader: 0, filter: 'off', level: 0 },
+	{ channel: 2, fader: -4, filter: 'off', level: -2 },
+	{ channel: 3, fader: -9, filter: 'off', level: 3 },
+	{ channel: 4, fader: -8, filter: '1', level: 0 },
+] as const;
 ---
 
 <Layout
@@ -21,8 +21,8 @@ const channels = [
 >
 	<PageHeader title="Club mixer">
 		<Fragment slot="lead">
-			Four music channels, two mic channels and two filters. Press Start to run a demo signal
-			through the meters.
+			Four music channels, two mic channels and two filters. Press Start to play a house loop, one
+			stem to a channel, through the EQ, the filters, the faders and the crossfader.
 		</Fragment>
 	</PageHeader>
 	<div class="-mx-4 overflow-x-auto px-4 pb-4 sm:mx-0 sm:px-0">

@@ -25,6 +25,7 @@ const titleClass =
 		<PanelDial
 			data={{ 'data-tempo': '' }}
 			detent={125}
+			doublePress="reset"
 			format="bpm"
 			id="master-tempo"
 			label="Tempo"
@@ -54,6 +55,7 @@ const titleClass =
 			{mixes.map((mix) => (
 				<PanelDial
 					data={mix.data}
+					doublePress="reset"
 					id={`master-${mix.id}`}
 					isNumbered={true}
 					label={mix.label}

@@ -19,6 +19,7 @@ const { input, level, levelData = {}, strip } = Astro.props;
 <PanelDial
 	data={levelData}
 	detent={0}
+	doublePress="reset"
 	ends={['∞', '+10']}
 	format="db-kill"
 	id={`${strip}-level`}

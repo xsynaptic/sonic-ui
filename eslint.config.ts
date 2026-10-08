@@ -56,6 +56,12 @@ export default getConfig([
 			'perfectionist/sort-imports': ['error', { sortSideEffects: true, type: 'natural' }],
 		},
 	},
+	{
+		files: ['packages/**/*'],
+		rules: {
+			'no-restricted-imports': ['error', { paths: ['tone'], patterns: ['tone/*'] }],
+		},
+	},
 	// Everything shipped and everything the playground runs is browser code; only config files see Node
 	getBrowserConfig(['packages/sonic-ui/src/**/*', 'playground/src/**/*']),
 	{

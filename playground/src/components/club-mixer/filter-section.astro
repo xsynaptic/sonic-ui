@@ -27,6 +27,7 @@ const passes = [
 >
 	<PanelDial
 		data={{ 'data-lfo-depth': '' }}
+		doublePress="reset"
 		ends={['Min', 'Max']}
 		format="percent"
 		id={`${section}-lfo-depth`}
@@ -52,6 +53,8 @@ const passes = [
 		size="large"
 	/>
 	<PanelDial
+		data={{ 'data-resonance': '' }}
+		doublePress="reset"
 		ends={['Mild', 'Wild']}
 		format="percent"
 		id={`${section}-resonance`}
@@ -71,6 +74,7 @@ const passes = [
 	<PanelButton id={`${section}-crossfade`} label="To xfade" />
 	{passes.map((pass, index) => (
 		<PanelButton
+			data={{ 'data-pass': pass.id }}
 			id={`${section}-${pass.id}`}
 			isPressed={index === 2}
 			isRound={true}
@@ -80,6 +84,7 @@ const passes = [
 	))}
 	<PanelDial
 		data={{ 'data-frequency': '' }}
+		doublePress="reset"
 		ends={['20', '20k']}
 		format="hertz"
 		id={`${section}-frequency`}
@@ -92,10 +97,18 @@ const passes = [
 		value={2000}
 	/>
 	<div class="mt-auto flex items-end gap-3 pt-2">
-		<PanelButton id={`${section}-on`} isRound={true} label="On" size="large" />
+		<PanelButton
+			data={{ 'data-filter-on': '' }}
+			id={`${section}-on`}
+			isPressed={filter === 1}
+			isRound={true}
+			label="On"
+			size="large"
+		/>
 		{filter === 1 ? (
 			<PanelDial
 				data={{ 'data-crossfade-curve': '' }}
+				doublePress="reset"
 				format="percent"
 				id={`${section}-curve`}
 				label="X curve"

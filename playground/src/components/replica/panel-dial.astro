@@ -4,6 +4,7 @@ import Label from '#components/replica/label.astro';
 interface Props {
 	data?: Record<string, string>;
 	detent?: number;
+	doublePress?: 'reset';
 	ends?: [string, string];
 	format?: string;
 	id: string;
@@ -24,6 +25,7 @@ interface Props {
 const {
 	data = {},
 	detent,
+	doublePress,
 	ends,
 	format,
 	id,
@@ -87,8 +89,9 @@ const sizeClass = {
 	<sonic-dial
 		aria-labelledby={id}
 		data-format={format}
-		default={origin ?? value}
+		default={origin ?? detent ?? value}
 		detent={detent}
+		double-press={doublePress}
 		max={max}
 		midpoint={midpoint}
 		min={min}

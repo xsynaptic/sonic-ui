@@ -8,10 +8,11 @@ import PanelSwitch from '#components/replica/panel-switch.astro';
 interface Props {
 	channel: number;
 	fader: number;
+	filter: '1' | '2' | 'off';
 	level: number;
 }
 
-const { channel, fader, level } = Astro.props;
+const { channel, fader, filter, level } = Astro.props;
 
 const side = channel < 3 ? 'x' : 'y';
 
@@ -43,7 +44,9 @@ const bands = [
 	<StripInput input="Line" level={level} levelData={{ 'data-channel-level': '' }} strip={strip} />
 	{bands.map((band) => (
 		<PanelDial
+			data={{ 'data-channel-band': '' }}
 			detent={0}
+			doublePress="reset"
 			ends={[band.low, '+6']}
 			format="db-kill"
 			id={`${strip}-${band.id}`}
@@ -58,11 +61,12 @@ const bands = [
 		/>
 	))}
 	<PanelSwitch
+		data={{ 'data-filter-assign': '' }}
 		id={`${strip}-filter`}
 		isHorizontal={true}
 		label="Filter"
 		positions={filterAssign}
-		value="off"
+		value={filter}
 	/>
 	<PanelSwitch
 		data={{ 'data-crossfade-assign': '' }}

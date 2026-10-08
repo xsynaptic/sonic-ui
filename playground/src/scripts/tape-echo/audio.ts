@@ -1,4 +1,15 @@
 import type { echoModes } from '#scripts/stop-names.ts';
+import type { ToneAudioNode } from '#scripts/tone.ts';
+
+import {
+	BiquadFilter,
+	Compressor,
+	Delay,
+	Gain,
+	Oscillator,
+	Panner,
+	WaveShaper,
+} from '#scripts/tone.ts';
 
 type EchoMode = NonNullable<ReturnType<typeof echoModes.valueAt>>;
 
@@ -18,41 +29,46 @@ export interface EchoParams {
 }
 
 interface Head {
-	delay: DelayNode;
-	feedback: GainNode;
-	highCut: BiquadFilterNode;
-	lowCut: BiquadFilterNode;
-	pan: StereoPannerNode;
-	shaper: WaveShaperNode;
+	delay: Delay;
+	feedback: Gain;
+	highCut: BiquadFilter;
+	lowCut: BiquadFilter;
+	pan: Panner;
+	shaper: WaveShaper;
 }
 
 interface Bus {
-	drive: WaveShaperNode;
-	dry: GainNode;
-	input: GainNode;
-	master: GainNode;
+	drive: Gain;
+	dry: Gain;
+	input: Gain;
+	master: Gain;
 	meters: { input: AnalyserNode; output: AnalyserNode };
-	output: GainNode;
+	output: Gain;
+	push: Gain;
 	spectrum: AnalyserNode;
-	wet: GainNode;
+	wet: Gain;
 }
 
 interface Rhythm {
-	inlet: GainNode;
-	outlet: GainNode;
-	taps: Array<{ delay: DelayNode; step: number }>;
+	inlet: Gain;
+	outlet: Gain;
+	taps: Array<{ delay: Delay; step: number }>;
 }
 
 interface Graph {
 	bus: Bus;
 	heads: readonly [Head, Head];
 	rhythm: Rhythm;
-	wobble: { depth: GainNode; oscillator: OscillatorNode };
+	wobble: { depth: Gain; oscillator: Oscillator };
 }
 
-type Glide = (param: AudioParam, value: number, time?: number) => void;
+interface Glidable {
+	setTargetAtTime(value: number, startTime: number, timeConstant: number): unknown;
+}
 
-type Link = [AudioNode, AudioNode];
+type Glide = (param: Glidable, value: number, time?: number) => void;
+
+type Link = [ToneAudioNode, ToneAudioNode];
 
 const clean = { ceiling: 20_000, drive: 1, floor: 20, wobbleHz: 0.1, wobbleMs: 0 };
 const styles = [
@@ -77,32 +93,33 @@ const loopGain = 1.05;
 const glide = 0.15;
 const smoothing = 0.03;
 const curveLength = 2049;
+const maxDrive = 10;
 
 function gainOf(decibels: number): number {
 	return 10 ** (decibels / 20);
 }
 
-function curveOf(shape: (x: number) => number): Float32Array<ArrayBuffer> {
-	return Float32Array.from({ length: curveLength }, (_sample, index) =>
-		shape((index / (curveLength - 1)) * 2 - 1),
-	);
-}
+// The compressor adds makeup gain that cannot be switched off, which lifts a limited peak past full scale
+const makeupTrim = gainOf(-2);
 
 function clampTime(seconds: number): number {
 	return Math.min(maxDelaySeconds - 0.1, Math.max(0.005, seconds));
 }
 
-function createHead(context: AudioContext): Head {
+function createHead(): Head {
 	const head: Head = {
-		delay: new DelayNode(context, { maxDelayTime: maxDelaySeconds }),
-		feedback: new GainNode(context),
-		highCut: new BiquadFilterNode(context, { type: 'lowpass' }),
-		lowCut: new BiquadFilterNode(context, { type: 'highpass' }),
-		pan: new StereoPannerNode(context),
-		shaper: new WaveShaperNode(context, { oversample: '2x' }),
+		delay: new Delay({ maxDelay: maxDelaySeconds }),
+		feedback: new Gain(),
+		highCut: new BiquadFilter({ type: 'lowpass' }),
+		lowCut: new BiquadFilter({ type: 'highpass' }),
+		pan: new Panner({ channelCount: 2 }),
+		shaper: new WaveShaper(),
 	};
 
-	head.delay.connect(head.lowCut).connect(head.highCut).connect(head.shaper).connect(head.pan);
+	head.shaper.oversample = '2x';
+	// Tone's panner folds a stereo file to mono without this
+	head.pan.input.channelCountMode = 'clamped-max';
+	head.delay.chain(head.lowCut, head.highCut, head.shaper, head.pan);
 	head.shaper.connect(head.feedback);
 
 	return head;
@@ -110,48 +127,50 @@ function createHead(context: AudioContext): Head {
 
 function createBus(context: AudioContext): Bus {
 	const bus: Bus = {
-		drive: new WaveShaperNode(context, { oversample: '2x' }),
-		dry: new GainNode(context),
-		input: new GainNode(context),
-		master: new GainNode(context, { gain: 0 }),
+		drive: new Gain(),
+		dry: new Gain(),
+		input: new Gain(),
+		master: new Gain(0),
 		meters: {
 			input: new AnalyserNode(context, { fftSize: 1024 }),
 			output: new AnalyserNode(context, { fftSize: 1024 }),
 		},
-		output: new GainNode(context),
+		output: new Gain(),
+		push: new Gain(),
 		// Unsmoothed, so the fall on show is the display's own
 		spectrum: new AnalyserNode(context, { fftSize: 4096, smoothingTimeConstant: 0 }),
-		wet: new GainNode(context),
+		wet: new Gain(),
 	};
-	const limiter = new DynamicsCompressorNode(context, {
+	const shaper = new WaveShaper();
+	const limiter = new Compressor({
 		attack: 0.002,
 		knee: 0,
 		ratio: 20,
-		release: 0.1,
-		threshold: -6,
+		release: 0.25,
+		threshold: -3,
 	});
 
-	bus.input.connect(bus.meters.input);
-	bus.input.connect(bus.dry).connect(bus.output);
-	bus.input.connect(bus.drive);
+	// One fixed curve between two gains; swapping curves as the dial turns crackles
+	shaper.setMap((x) => Math.tanh(maxDrive * x), curveLength);
+	shaper.oversample = '2x';
+	bus.input.fan(bus.meters.input, bus.dry, bus.push);
+	bus.push.chain(shaper, bus.drive);
+	bus.dry.connect(bus.output);
 	bus.wet.connect(bus.output);
-	bus.output.connect(bus.meters.output);
-	bus.output.connect(bus.spectrum);
-	bus.output.connect(limiter).connect(bus.master).connect(context.destination);
+	bus.output.fan(bus.meters.output, bus.spectrum, limiter);
+	limiter.connect(bus.master);
+	bus.master.toDestination();
 
 	return bus;
 }
 
-function createRhythm(context: AudioContext): Rhythm {
-	const inlet = new GainNode(context);
-	const outlet = new GainNode(context);
+function createRhythm(): Rhythm {
+	const inlet = new Gain();
+	const outlet = new Gain();
 	const taps = rhythmTaps.map((tap) => {
-		const delay = new DelayNode(context, { maxDelayTime: maxDelaySeconds });
+		const delay = new Delay({ maxDelay: maxDelaySeconds });
 
-		inlet
-			.connect(delay)
-			.connect(new GainNode(context, { gain: tap.level }))
-			.connect(outlet);
+		inlet.chain(delay, new Gain(tap.level), outlet);
 
 		return { delay, step: tap.step };
 	});
@@ -160,9 +179,9 @@ function createRhythm(context: AudioContext): Rhythm {
 }
 
 function createGraph(context: AudioContext): Graph {
-	const heads = [createHead(context), createHead(context)] as const;
-	const oscillator = new OscillatorNode(context);
-	const depth = new GainNode(context, { gain: 0 });
+	const heads = [createHead(), createHead()] as const;
+	const oscillator = new Oscillator();
+	const depth = new Gain(0);
 
 	oscillator.connect(depth);
 	for (const head of heads) depth.connect(head.delay.delayTime);
@@ -171,7 +190,7 @@ function createGraph(context: AudioContext): Graph {
 	return {
 		bus: createBus(context),
 		heads,
-		rhythm: createRhythm(context),
+		rhythm: createRhythm(),
 		wobble: { depth, oscillator },
 	};
 }
@@ -241,26 +260,24 @@ function updateHeads({ heads, rhythm }: Graph, params: EchoParams, glideTo: Glid
 function updateLevels({ bus, wobble }: Graph, params: EchoParams, glideTo: Glide): void {
 	const style = styles[params.style] ?? clean;
 	const mixAngle = (params.mix / 100) * (Math.PI / 2);
+	const drive = 1 + (params.saturation / 100) * (maxDrive - 1);
 
 	glideTo(wobble.oscillator.frequency, style.wobbleHz);
 	glideTo(wobble.depth.gain, style.wobbleMs / 1000);
 	glideTo(bus.input.gain, gainOf(params.input));
+	glideTo(bus.push.gain, drive / maxDrive);
+	glideTo(bus.drive.gain, 1 / Math.sqrt(drive));
 	glideTo(bus.output.gain, gainOf(params.output));
 	glideTo(bus.dry.gain, Math.cos(mixAngle));
 	glideTo(bus.wet.gain, Math.sin(mixAngle));
 }
 
-function updateCurves({ bus, heads }: Graph, params: EchoParams, previous?: EchoParams): void {
-	if (params.saturation !== previous?.saturation) {
-		const drive = 1 + (params.saturation / 100) * 9;
-
-		bus.drive.curve = curveOf((x) => Math.tanh(drive * x) / Math.sqrt(drive));
-	}
+function updateCurves({ heads }: Graph, params: EchoParams, previous?: EchoParams): void {
 	if (params.style === previous?.style) return;
 
 	const { drive } = styles[params.style] ?? clean;
 
-	for (const head of heads) head.shaper.curve = curveOf((x) => Math.tanh(drive * x) / drive);
+	for (const head of heads) head.shaper.setMap((x) => Math.tanh(drive * x) / drive, curveLength);
 }
 
 export function createEcho(context: AudioContext) {
@@ -285,12 +302,12 @@ export function createEcho(context: AudioContext) {
 	}
 
 	function fade(isOn: boolean): void {
-		glideTo(graph.bus.master.gain, isOn ? 1 : 0);
+		glideTo(graph.bus.master.gain, isOn ? makeupTrim : 0);
 	}
 
 	return {
 		fade,
-		input: graph.bus.input,
+		input: graph.bus.input.input,
 		meters: graph.bus.meters,
 		spectrum: graph.bus.spectrum,
 		update,
