@@ -48,6 +48,7 @@ import '@xsynaptic/sonic-ui/define';
 - Events bubble and carry no detail: read the property when one fires. A control knows nothing about playback, so wire its events to your own state and write the property back.
 - A value control fires `input` as its value moves and `change` once when a gesture ends. A drag owns the value: a write to `value` during one is dropped.
 - `formatValue` and `parseValue` are properties holding functions. Once `parseValue` is set it has to read what `formatValue` writes, or typed entry opens on text it cannot take.
+- To show a control without taking input, set `inert` on the host. It leaves the tab order and the accessibility tree and ignores presses, and it keeps its colours and keeps drawing; `disabled` dims it and is announced as disabled.
 - A display takes its signal as data, and nothing in the library fetches, decodes or opens an `AudioContext`.
 - States a control sets itself are custom states on the host, selected with `:state()`.
 - The LED, the panel, the ring and the screen have no behaviour, so they are classes on your own elements (`sonic-led`, `sonic-panel`, `sonic-ring`, `sonic-screen`). A control draws no glass of its own: wrap one in a screen for the encased look.

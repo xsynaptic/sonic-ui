@@ -46,6 +46,17 @@ const waveforms = [
 		screenClass: '[--sonic-glass-depth:0]',
 		seed: 10,
 	},
+	{
+		hasGlass: true,
+		id: 'waveform-inert',
+		isInert: true,
+		isPlaying: true,
+		label: 'Inert, a small display',
+		markers: '',
+		seed: 21,
+		sizeClass: '[--sonic-waveform-length:6rem] [--sonic-waveform-size:2rem]',
+		zoom: 96,
+	},
 ];
 ---
 
@@ -55,11 +66,12 @@ const waveforms = [
 			<div class:list={[waveform.hasGlass && 'sonic-screen', waveform.screenClass]}>
 				<sonic-waveform
 					aria-labelledby={waveform.id}
-					class:list={['[--sonic-waveform-length:20rem]', waveform.className]}
+					class:list={[waveform.sizeClass ?? '[--sonic-waveform-length:20rem]', waveform.className]}
 					data-format={waveform.format ?? 'clock-tenths'}
 					data-markers={waveform.markers ?? '146=Intro 151.5=Second_track 158=Outro~'}
 					data-pending={waveform.pending}
 					data-samples={waveform.seed}
+					inert={waveform.isInert}
 					key-step="1"
 					max="300"
 					playback-rate={waveform.rate}
@@ -68,6 +80,7 @@ const waveforms = [
 					reduced-motion={waveform.motion}
 					step="0"
 					value="150"
+					zoom={waveform.zoom}
 				></sonic-waveform>
 			</div>
 		</Cell>

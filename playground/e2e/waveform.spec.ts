@@ -75,6 +75,37 @@ test('a drag right walks back and seeks once', async ({ isMobile, page }) => {
 });
 
 // A page from 146.2 seconds is almost four long, so a few hundred ms of play stays on it
+test('an inert waveform takes no focus or drag and still scrolls while playing', async ({
+	isMobile,
+	page,
+}) => {
+	test.skip(isMobile, mouseOnly);
+
+	const { canvas, waveform } = await openWaveform(page);
+	const control = waveform.locator('.sonic-waveform');
+
+	await waveform.evaluate((element) => {
+		const startMs = performance.now();
+
+		Object.assign(element, {
+			inert: true,
+			playing: true,
+			readTime: () => 147 + (performance.now() - startMs) / 1000,
+		});
+	});
+	await control.evaluate((element) => {
+		if (element instanceof HTMLElement) element.focus();
+	});
+	await expect(control).not.toBeFocused();
+
+	await drag(page, canvas, { x: 140, y: 0 });
+	expect(await waveform.evaluate((element) => Number(Reflect.get(element, 'value')))).toBe(150);
+
+	const before = await upperRow(canvas);
+
+	await expect.poll(() => upperRow(canvas)).not.toBe(before);
+});
+
 test(
 	'under reduced motion the picture holds still while the playhead crosses it',
 	{ tag: '@mobile' },
