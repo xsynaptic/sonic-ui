@@ -1,5 +1,15 @@
 # @xsynaptic/sonic-ui
 
+## 0.24.0
+
+### Minor Changes
+
+- Waveform: three number tokens shape the band mix, each watched, so a change repaints with no `repaint()`. Unset, the tint is unchanged.
+
+  - `--sonic-waveform-band-normalize`, 0 to 1 (default 1): at 0 the mix is the weighted average of the band colours and stays inside the palette
+  - `--sonic-waveform-band-contrast` (default 1): the exponent on each band's weight
+  - `--sonic-waveform-band-tilt` (default 0): decibels of gain per band above the lowest
+
 ## 0.23.0
 
 ### Minor Changes
