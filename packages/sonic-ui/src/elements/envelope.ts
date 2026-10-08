@@ -211,14 +211,12 @@ export class SonicEnvelope extends SonicElement {
 
 	#shape: AdsrShape = adsrShape({});
 
-	#signal: AbortSignal | undefined;
-
 	readonly #waiting = new Set<unknown>();
 
 	readonly #warned = new Set<string>();
 
 	attributeChangedCallback(name: string): void {
-		if (!this.#signal) return;
+		if (!this.isBound()) return;
 		if (name === 'disabled') {
 			this.#gesture?.end();
 			this.#draw();
@@ -236,7 +234,6 @@ export class SonicEnvelope extends SonicElement {
 	protected connect(signal: AbortSignal): void {
 		const envelope = this.#envelope;
 
-		this.#signal = signal;
 		this.keepControl(envelope, signal);
 		this.#bind();
 		if (__DEV__)
@@ -248,7 +245,6 @@ export class SonicEnvelope extends SonicElement {
 		signal.addEventListener(
 			'abort',
 			() => {
-				this.#signal = undefined;
 				this.#unbind();
 			},
 			{ once: true },
@@ -292,7 +288,7 @@ export class SonicEnvelope extends SonicElement {
 					for (const { axis, binding } of drives) {
 						if (!moved.includes(axis)) continue;
 
-						binding.element.dispatchEvent(new Event('change', { bubbles: true }));
+						binding.link.change();
 					}
 				},
 				toggle: (isDragging) => {
@@ -433,7 +429,7 @@ export class SonicEnvelope extends SonicElement {
 		this.#waiting.add(key);
 		arrives(() => {
 			this.#waiting.delete(key);
-			if (this.#signal) this.#bind();
+			if (this.isBound()) this.#bind();
 		});
 	}
 

@@ -4,7 +4,7 @@ import { expect, test } from '@playwright/test';
 
 import { canvasPixels, expectPixel, middleOf, paintedColour, pixelAt } from './canvas-probe.ts';
 import { clear, systemColour } from './colour.ts';
-import { mouseOnly } from './pointer.ts';
+import { mouseOnly, noForcedColours } from './pointer.ts';
 import { stillTransitions } from './state.ts';
 
 // A part paints at all only if it opts out; forced colours drop gradients and force backgrounds to Canvas
@@ -65,7 +65,7 @@ const focusable = [
 	'.sonic-xy-axis',
 ];
 
-test.skip(({ browserName }) => browserName === 'webkit', 'WebKit has no forced-colours mode');
+test.skip(({ browserName }) => browserName === 'webkit', noForcedColours);
 
 test.beforeEach(async ({ page }) => {
 	await page.emulateMedia({ forcedColors: 'active' });

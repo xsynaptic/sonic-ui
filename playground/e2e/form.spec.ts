@@ -2,7 +2,7 @@ import type { Locator, Page } from '@playwright/test';
 
 import { expect, test } from '@playwright/test';
 
-import { drag, mouseOnly } from './pointer.ts';
+import { drag, mouseOnly, noForcedColours } from './pointer.ts';
 
 test.beforeEach(async ({ page }) => {
 	await page.goto('/fixtures/form/');
@@ -257,7 +257,7 @@ test('a dial in a disabled fieldset takes the disabled skin, forced colours incl
 	expect(await lit('#drive')).toBe(await lit('#held'));
 	expect(await lit('#drive')).not.toBe(await lit('#cutoff'));
 
-	test.skip(browserName === 'webkit', 'WebKit has no forced-colours mode');
+	test.skip(browserName === 'webkit', noForcedColours);
 
 	await page.emulateMedia({ forcedColors: 'active' });
 

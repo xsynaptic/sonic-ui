@@ -53,6 +53,7 @@ const roleAttributes = [
 ];
 
 export interface ValueLink {
+	change: () => void;
 	input: (next: number, isMover?: boolean) => boolean;
 	isDisabled: () => boolean;
 	isHeld: () => boolean;
@@ -86,6 +87,9 @@ export abstract class SonicValueElement extends SonicFormElement {
 
 	static {
 		link = (element) => ({
+			change: () => {
+				element.dispatchEvent(new Event('change', { bubbles: true }));
+			},
 			input: (next, isMover = false) => (isMover || !element.#isHeld()) && element.input(next),
 			isDisabled: () => element.isDisabled(),
 			isHeld: () => element.#isHeld(),

@@ -14,6 +14,8 @@ export interface Point {
 
 export const mouseOnly = 'The mouse drives this gesture';
 
+export const noForcedColours = "Playwright's WebKit does not emulate forced colours";
+
 export async function boxOf(target: Locator): Promise<Box> {
 	const box = await target.boundingBox();
 	if (!box) throw new Error('The target has no box');

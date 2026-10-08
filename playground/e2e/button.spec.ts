@@ -3,7 +3,7 @@ import type { Locator, Page } from '@playwright/test';
 import { expect, test } from '@playwright/test';
 
 import { systemColour } from './colour.ts';
-import { boxOf, centerOf, mouseOnly } from './pointer.ts';
+import { boxOf, centerOf, mouseOnly, noForcedColours } from './pointer.ts';
 import { readState, stillTransitions } from './state.ts';
 
 test.beforeEach(async ({ page }) => {
@@ -86,7 +86,7 @@ test('a button is lit while expanded, as a latched one is', async ({ page }) => 
 
 test.describe('forced colours', () => {
 	test.use({ forcedColors: 'active' });
-	test.skip(({ browserName }) => browserName === 'webkit', 'WebKit has no forced-colours mode');
+	test.skip(({ browserName }) => browserName === 'webkit', noForcedColours);
 
 	test('a disabled button takes the system colour over the disabled ink', async ({ page }) => {
 		await page.locator('#next').evaluate((element) => {

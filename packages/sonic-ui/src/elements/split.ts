@@ -101,8 +101,6 @@ export class SonicSplit extends SonicElement {
 
 	#members: Array<Member> = [];
 
-	#signal: AbortSignal | undefined;
-
 	#snapshot: Snapshot | undefined;
 
 	#total = 0;
@@ -110,8 +108,8 @@ export class SonicSplit extends SonicElement {
 	readonly #waiting = new Set<string>();
 
 	attributeChangedCallback(name: string): void {
-		if ((name === 'mode' || name === 'total') && this.#signal) this.#bind();
-		if (name === 'disabled' && this.#signal) this.#limit();
+		if ((name === 'mode' || name === 'total') && this.isBound()) this.#bind();
+		if (name === 'disabled' && this.isBound()) this.#limit();
 	}
 
 	override connectedCallback(): void {
@@ -128,7 +126,6 @@ export class SonicSplit extends SonicElement {
 			if (isLockChange || !this.#isSameMembers(this.#find())) this.#bind();
 		});
 
-		this.#signal = signal;
 		if (this.internals) this.internals.role = 'group';
 		observer.observe(this, {
 			attributeFilter: lockAttributes,
@@ -147,7 +144,6 @@ export class SonicSplit extends SonicElement {
 			'abort',
 			() => {
 				observer.disconnect();
-				this.#signal = undefined;
 				this.#isTotalKept = false;
 				this.#unbind();
 			},
@@ -296,9 +292,7 @@ export class SonicSplit extends SonicElement {
 		queueMicrotask(() => {
 			this.#isWriting = true;
 			try {
-				for (const { element } of changed) {
-					element.dispatchEvent(new Event('change', { bubbles: true }));
-				}
+				for (const { link } of changed) link.change();
 			} finally {
 				this.#isWriting = false;
 			}
@@ -333,7 +327,7 @@ export class SonicSplit extends SonicElement {
 		this.#waiting.add(tag);
 		void customElements.whenDefined(tag).then(() => {
 			this.#waiting.delete(tag);
-			if (this.#signal) this.#bind();
+			if (this.isBound()) this.#bind();
 		});
 	}
 
