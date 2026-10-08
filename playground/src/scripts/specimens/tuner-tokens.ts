@@ -80,6 +80,10 @@ export const tokenGroups: Array<TokenGroup> = [
 				resolved: '--_sonic-glass',
 			}),
 			{
+				...range('readout depth', '--sonic-readout-depth', [0, 1, 0.05]),
+				from: '.sonic-dial-readout',
+			},
+			{
 				kind: 'choice',
 				label: 'glass font',
 				options: [

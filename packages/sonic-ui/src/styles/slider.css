@@ -18,6 +18,18 @@
 	initial-value: 0.15;
 }
 
+@property --_sonic-slider-groove-hovered {
+	syntax: '<number>';
+	inherits: true;
+	initial-value: 0;
+}
+
+@property --_sonic-slider-groove-held {
+	syntax: '<number>';
+	inherits: true;
+	initial-value: 0;
+}
+
 @property --_sonic-slider-value {
 	syntax: '<number>';
 	inherits: true;
@@ -49,7 +61,16 @@
 	}
 
 	.sonic-slider {
-		--_sonic-slider-groove-ratio: var(--sonic-slider-groove-ratio, 0.15);
+		--_sonic-slider-groove-rest: var(--sonic-slider-groove-ratio, 0.15);
+		--_sonic-slider-groove-hover-delay: 0s;
+		--_sonic-slider-groove-ratio: calc(
+			var(--_sonic-slider-groove-rest) +
+				(
+					var(--sonic-slider-groove-hover-ratio, var(--_sonic-slider-groove-rest)) -
+						var(--_sonic-slider-groove-rest)
+				) *
+				max(var(--_sonic-slider-groove-hovered), var(--_sonic-slider-groove-held))
+		);
 		--_sonic-slider-cap-ratio: var(--sonic-slider-cap-ratio, 0.5);
 		--_sonic-slider-radius-ratio: var(--sonic-slider-radius-ratio, 0.15);
 		--_sonic-slider-bevel-ratio: var(--sonic-slider-bevel-ratio, 0.075);
@@ -92,7 +113,10 @@
 		touch-action: var(--sonic-touch-action, pan-y);
 		cursor: var(--_sonic-slider-cursor);
 		user-select: none;
-		transition: --_sonic-slider-groove-ratio var(--_sonic-fade-duration) ease-out;
+		transition:
+			--_sonic-slider-groove-hovered var(--_sonic-fade-duration) ease-out
+				var(--_sonic-slider-groove-hover-delay),
+			--_sonic-slider-groove-held var(--_sonic-fade-duration) ease-out;
 
 		@media (prefers-reduced-motion: reduce) {
 			transition: none;
@@ -101,19 +125,13 @@
 
 	:where(:not(:disabled)) > .sonic-slider:focus-visible,
 	:state(dragging) > .sonic-slider {
-		--_sonic-slider-groove-ratio: var(
-			--sonic-slider-groove-hover-ratio,
-			var(--sonic-slider-groove-ratio, 0.15)
-		);
+		--_sonic-slider-groove-held: 1;
 	}
 
 	@media (hover: hover) {
-		/* fallow-ignore-next-line code-duplication -- `:hover` and `:focus-visible` split by `(hover: hover)` */
 		:where(:not(:disabled)) > .sonic-slider:hover {
-			--_sonic-slider-groove-ratio: var(
-				--sonic-slider-groove-hover-ratio,
-				var(--sonic-slider-groove-ratio, 0.15)
-			);
+			--_sonic-slider-groove-hovered: 1;
+			--_sonic-slider-groove-hover-delay: var(--sonic-slider-groove-hover-delay, 0s);
 		}
 	}
 

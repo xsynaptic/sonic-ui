@@ -78,6 +78,69 @@ test('a scrub slider thickens its groove under the pointer without changing its 
 	expect(layers - (await countLayers())).toBe(1);
 });
 
+test('a groove with a hover delay stays thin under the pointer until a press or a focus, and thins at once when the pointer leaves', async ({
+	isMobile,
+	page,
+}) => {
+	test.skip(isMobile, mouseOnly);
+
+	const host = page.locator('#seek');
+	const slider = host.locator('.sonic-slider');
+	const groove = slider.locator('.sonic-slider-groove');
+	const setDelay = (delay: string): Promise<void> =>
+		host.evaluate((element, value) => {
+			element.style.setProperty('--sonic-slider-groove-hover-delay', value);
+		}, delay);
+	const pendingDelays = (): Promise<Array<number>> =>
+		slider.evaluate((element) =>
+			element
+				.getAnimations()
+				.filter((animation) => animation.playState === 'running')
+				.map((animation) => Number(animation.effect?.getTiming().delay)),
+		);
+
+	await slider.scrollIntoViewIfNeeded();
+
+	const { height, width, x, y } = await boxOf(slider);
+	const middle = y + height / 2;
+
+	await test.step('hovered inside the delay, the groove is at its resting thickness', async () => {
+		await setDelay('100s');
+		await page.mouse.move(x + width / 4, middle);
+		await expect(slider.locator('.sonic-slider-readout')).toBeVisible();
+		expect(await pendingDelays()).toEqual([100_000]);
+		await expect(groove).toHaveCSS('block-size', '8px');
+	});
+
+	await test.step('Tab onto it inside the delay thickens it', async () => {
+		await slider.focus();
+		await page.keyboard.press('Shift+Tab');
+		await expect(groove).toHaveCSS('block-size', '8px');
+		await page.keyboard.press('Tab');
+		await expect(slider).toBeFocused();
+		await expect(groove).toHaveCSS('block-size', '16px');
+	});
+
+	await test.step('a press inside the delay thickens it', async () => {
+		await slider.blur();
+		await expect(groove).toHaveCSS('block-size', '8px');
+		await page.mouse.down();
+		await expect(groove).toHaveCSS('block-size', '16px');
+		await page.mouse.up();
+	});
+
+	await test.step('a pointer that leaves a thickened groove thins it with no delay', async () => {
+		await slider.blur();
+		await page.mouse.move(x + width / 4, y + height + 40);
+		await setDelay('');
+		await page.mouse.move(x + width / 4, middle);
+		await expect(groove).toHaveCSS('block-size', '16px');
+		await setDelay('100s');
+		await page.mouse.move(x + width / 4, y + height + 40);
+		await expect(groove).toHaveCSS('block-size', '8px');
+	});
+});
+
 interface Gaps {
 	end: number;
 	left: number;

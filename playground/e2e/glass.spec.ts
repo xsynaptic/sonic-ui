@@ -19,6 +19,46 @@ function readFont(target: Locator): Promise<string> {
 	return target.evaluate((element) => getComputedStyle(element).fontFamily);
 }
 
+function readSelectionColour(target: Locator): Promise<string> {
+	return target.evaluate((element) => getComputedStyle(element, '::selection').color);
+}
+
+interface Depth {
+	centre: string;
+	glass: string;
+	shadowAlphas: Array<number>;
+}
+
+function readDepth(readout: Locator): Promise<Depth> {
+	return readout.evaluate((element) => {
+		const context = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
+		if (!context) throw new Error('No 2d context');
+
+		const styles = getComputedStyle(element);
+		const [centre, glass] = styles.backgroundImage.match(/[a-z]+\([^()]*\)/g) ?? [];
+		if (centre === undefined || glass === undefined) throw new Error('The fill has no two stops');
+
+		const paint = (colour: string): string => {
+			context.clearRect(0, 0, 1, 1);
+			context.fillStyle = colour;
+			context.fillRect(0, 0, 1, 1);
+
+			return context.getImageData(0, 0, 1, 1).data.join(' ');
+		};
+		const shadows = styles.boxShadow.match(/[a-z]+\([^)]*\)/g) ?? [];
+
+		return {
+			centre: paint(centre),
+			glass: paint(glass),
+			shadowAlphas: shadows.map((colour) => {
+				const parts = colour.slice(colour.indexOf('(') + 1, -1).split(/[,/]/);
+
+				return colour.includes('/') || parts.length === 4 ? Number(parts.at(-1)) : 1;
+			}),
+		};
+	});
+}
+
 function sizeOf(
 	page: Page,
 	selector: string,
@@ -85,6 +125,21 @@ test(
 			});
 			expect.soft(await readFont(readout)).toBe('monospace');
 			expect.soft(await readFont(host.locator('.sonic-dial-entry'))).toBe('monospace');
+		});
+
+		await test.step('--sonic-entry-selection colours the selected text of an entry; unset, it is the lit colour', async () => {
+			const host = page.locator('#level');
+			const entry = host.locator('.sonic-dial-entry');
+
+			await host.evaluate((element) => {
+				element.style.setProperty('--sonic-lit', 'rgb(4, 5, 6)');
+			});
+			expect.soft(await readSelectionColour(entry)).toBe('rgb(4, 5, 6)');
+
+			await host.evaluate((element) => {
+				element.style.setProperty('--sonic-entry-selection', 'rgb(1, 2, 3)');
+			});
+			expect.soft(await readSelectionColour(entry)).toBe('rgb(1, 2, 3)');
 		});
 
 		await test.step('a screen is sized like a div: it fills a block, hugs in a flex row and grows with what it holds', async () => {
@@ -159,6 +214,37 @@ test(
 		});
 	},
 );
+
+test("a readout's depth is its own token, and a screen's glass depth stays out of it", async ({
+	page,
+}) => {
+	await page.goto('/fixtures/');
+
+	await test.step('--sonic-readout-depth at 0 drops the shadow, the shine and the lighter centre of a readout; unset, it has all three', async () => {
+		const host = page.locator('#level');
+		const readout = host.locator('.sonic-dial-readout');
+		const modelled = await readDepth(readout);
+
+		expect.soft(modelled.shadowAlphas).toHaveLength(2);
+		for (const alpha of modelled.shadowAlphas) expect.soft(alpha).toBeGreaterThan(0);
+		expect.soft(modelled.centre).not.toBe(modelled.glass);
+
+		await host.evaluate((element) => {
+			element.style.setProperty('--sonic-readout-depth', '0');
+		});
+
+		const flat = await readDepth(readout);
+
+		expect.soft(flat.shadowAlphas).toEqual([0, 0]);
+		expect.soft(flat.centre).toBe(flat.glass);
+	});
+
+	await test.step('a screen with no glass depth leaves the readout of a dial inside it alone', async () => {
+		const inside = await readDepth(page.locator('#glass-dial .sonic-dial-readout'));
+
+		expect.soft(inside.centre).not.toBe(inside.glass);
+	});
+});
 
 test('a screen with no glass depth leaves the well of a button inside it alone', async ({
 	page,

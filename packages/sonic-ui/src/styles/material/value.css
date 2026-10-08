@@ -25,7 +25,7 @@
 		border: 0;
 
 		&::selection {
-			color: var(--_sonic-lit);
+			color: var(--sonic-entry-selection, var(--_sonic-lit));
 			background: transparent;
 		}
 
