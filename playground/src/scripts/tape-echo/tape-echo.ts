@@ -10,6 +10,7 @@ import {
 import type { ControlsOf } from '#scripts/find.ts';
 import type { Echo, EchoParams } from '#scripts/tape-echo/audio.ts';
 import type { Division } from '#scripts/tape-echo/divisions.ts';
+import type { SourceName } from '#scripts/tape-echo/sources.ts';
 
 import { dataHook, find, readControls } from '#scripts/find.ts';
 import { applyFormat, formatterFor } from '#scripts/formats.ts';
@@ -19,6 +20,13 @@ import { beatMsOf, createTapTempo } from '#scripts/tap-tempo.ts';
 import { createEcho } from '#scripts/tape-echo/audio.ts';
 import { divisions, timeRange } from '#scripts/tape-echo/divisions.ts';
 import { createPlucks } from '#scripts/tape-echo/plucks.ts';
+import {
+	createFilePlayer,
+	createInlet,
+	createMic,
+	createSourceSwitch,
+	isSourceName,
+} from '#scripts/tape-echo/sources.ts';
 
 const headSpec = { dial: SonicDial, division: SonicSegmented, number: SonicNumber };
 
@@ -39,6 +47,7 @@ const panelSpec = {
 	mode: SonicDial,
 	peakRead: SonicButton,
 	play: SonicButton,
+	source: SonicSegmented,
 	spectrum: SonicSpectrum,
 	style: SonicNumber,
 	tap: SonicButton,
@@ -48,19 +57,29 @@ type EchoHead = ControlsOf<typeof headSpec>;
 
 interface Controls extends ControlsOf<typeof panelSpec> {
 	dials: ControlsOf<typeof dialSpec>;
+	filePicker: HTMLInputElement;
 	heads: Array<EchoHead>;
 	meters: { input: SonicMeter; output: SonicMeter };
+	micHint: HTMLElement;
 	peakStatus: HTMLElement;
+	sourceStatus: HTMLElement;
 	tapLed: HTMLElement;
 }
 
-interface Engine {
+type FilePlayer = ReturnType<typeof createFilePlayer>;
+
+interface Engine extends ReturnType<typeof createSources> {
 	context: AudioContext;
 	echo: Echo;
-	plucks: ReturnType<typeof createPlucks>;
 }
 
+type TapTempo = ReturnType<typeof createTapTempo>;
+
 const ticksPerBeat = 48;
+const micRefusals: Record<string, string> = {
+	NotAllowedError: 'Microphone permission was refused',
+	NotFoundError: 'No microphone was found',
+};
 
 function isDivision(value: string): value is Division {
 	return value === 'time' || Object.hasOwn(divisions, value);
@@ -76,6 +95,7 @@ function readPanel(panel: Element): Controls {
 	return {
 		...controls,
 		dials: readControls(panel, dialSpec, echoHook),
+		filePicker: find(panel, echoHook('file'), HTMLInputElement),
 		heads: [...panel.querySelectorAll(':scope [data-echo-head]')].map((head) =>
 			readControls(head, headSpec, echoHook),
 		),
@@ -84,7 +104,9 @@ function readPanel(panel: Element): Controls {
 			{ input: SonicMeter, output: SonicMeter },
 			(name) => `:scope [data-echo-meter="${name}"]`,
 		),
+		micHint: find(panel, echoHook('mic-hint'), HTMLElement),
 		peakStatus: find(panel, echoHook('peak-status'), HTMLElement),
+		sourceStatus: find(panel, echoHook('source-status'), HTMLElement),
 		tapLed: find(controls.tap, ':scope > .sonic-led', HTMLElement),
 	};
 }
@@ -152,19 +174,69 @@ function peakOf(analyser: AnalyserNode, samples: Float32Array<ArrayBuffer>): num
 	return peak;
 }
 
-function createTransport(controls: Controls) {
-	const { bpm, meters, spectrum, tapLed } = controls;
+function createSources(context: AudioContext, destination: AudioNode) {
+	const phrase = createInlet(destination);
+	const plucks = createPlucks(context, phrase.node);
+	const file = createFilePlayer(context, destination);
+	let isPhrasing = false;
+
+	return {
+		file,
+		isPhrasing: () => isPhrasing,
+		plucks,
+		select: createSourceSwitch({
+			file: file.open,
+			mic: createMic(context, destination),
+			phrase: () => {
+				plucks.restart();
+				phrase.fade(true);
+				isPhrasing = true;
+
+				return Promise.resolve(() => {
+					phrase.fade(false);
+					isPhrasing = false;
+				});
+			},
+		}),
+	};
+}
+
+function heardSource(name: string, file: FilePlayer): SourceName | undefined {
+	if (!isSourceName(name)) return undefined;
+	if (name === 'file' && !file.hasFile()) return undefined;
+
+	return name;
+}
+
+function refusalOf(error: unknown): string {
+	const refusal = error instanceof DOMException ? micRefusals[error.name] : undefined;
+
+	return refusal ?? 'The microphone is unavailable';
+}
+
+function showSource({ micHint, source, sourceStatus }: Controls, message: string): void {
+	micHint.hidden = source.value !== 'mic';
+	sourceStatus.textContent = message;
+}
+
+function createTransport(controls: Controls, tempo: TapTempo) {
+	const { bpm, meters, play, source, spectrum, tapLed } = controls;
 	const samples = new Float32Array(1024);
 	let engine: Engine | undefined;
 	let runs = 0;
 
-	const loop = frameLoop(() => {
+	const loop = frameLoop((_elapsedSeconds, time) => {
 		if (!engine) return;
 
 		const beatSeconds = beatMsOf(bpm.value) / 1000;
 
-		engine.plucks.schedule(beatSeconds);
-		tapLed.toggleAttribute('data-sonic-lit', engine.plucks.isOnBeat(beatSeconds));
+		const isPhrasing = engine.isPhrasing();
+
+		if (isPhrasing) engine.plucks.schedule(beatSeconds);
+		tapLed.toggleAttribute(
+			'data-sonic-lit',
+			isPhrasing ? engine.plucks.isOnBeat(beatSeconds) : tempo.phaseAt(time) < 0.5,
+		);
 		meters.input.level = peakOf(engine.echo.meters.input, samples);
 		meters.output.level = peakOf(engine.echo.meters.output, samples);
 	});
@@ -175,9 +247,35 @@ function createTransport(controls: Controls) {
 		const context = new AudioContext();
 		const echo = createEcho(context);
 
-		engine = { context, echo, plucks: createPlucks(context, echo.input) };
+		engine = { context, echo, ...createSources(context, echo.input) };
 
 		return engine;
+	}
+
+	function fallBack(message: string): void {
+		source.value = 'phrase';
+		showSource(controls, message);
+		void feed();
+	}
+
+	async function feed(): Promise<void> {
+		if (!engine) return;
+
+		try {
+			await engine.select(play.pressed ? heardSource(source.value, engine.file) : undefined);
+		} catch (error) {
+			fallBack(refusalOf(error));
+		}
+	}
+
+	async function load(file: Blob): Promise<void> {
+		try {
+			await start().file.load(file);
+		} catch {
+			fallBack('That file could not be read as audio');
+			return;
+		}
+		if (source.value === 'file') await feed();
 	}
 
 	async function run(isRunning: boolean): Promise<void> {
@@ -191,11 +289,12 @@ function createTransport(controls: Controls) {
 			delete tapLed.dataset.sonicLit;
 			meters.input.level = 0;
 			meters.output.level = 0;
+			await feed();
 			return;
 		}
 
 		const current = runs;
-		const { context, echo, plucks } = start();
+		const { context, echo } = start();
 
 		await context.resume();
 		if (current !== runs) return;
@@ -203,15 +302,52 @@ function createTransport(controls: Controls) {
 		echo.update(paramsOf(controls));
 		echo.fade(true);
 		spectrum.analyser = echo.spectrum;
-		plucks.restart();
 		loop.start();
+		await feed();
 	}
 
 	return {
+		fallBack,
+		feed,
+		hasFile: () => engine?.file.hasFile() ?? false,
+		load,
 		restart: () => engine?.plucks.restart(),
 		run,
 		update: () => engine?.echo.update(paramsOf(controls)),
 	};
+}
+
+type Transport = ReturnType<typeof createTransport>;
+
+function bindSource(panel: HTMLElement, controls: Controls, transport: Transport): void {
+	const { filePicker, source } = controls;
+
+	source.addEventListener('change', () => {
+		showSource(controls, '');
+		if (source.value === 'file') filePicker.click();
+		void transport.feed();
+	});
+	filePicker.addEventListener('change', () => {
+		const file = filePicker.files?.[0];
+
+		if (file) void transport.load(file);
+	});
+	filePicker.addEventListener('cancel', () => {
+		if (!transport.hasFile()) transport.fallBack('');
+	});
+	panel.addEventListener('dragover', (event) => {
+		event.preventDefault();
+	});
+	panel.addEventListener('drop', (event) => {
+		const file = event.dataTransfer?.files[0];
+
+		event.preventDefault();
+		if (!file) return;
+
+		source.value = 'file';
+		showSource(controls, '');
+		void transport.load(file);
+	});
 }
 
 // The drawing is hidden from assistive technology, so the reading is spoken on request
@@ -229,11 +365,11 @@ function bindPeakRead({ peakRead, peakStatus, spectrum }: Controls): void {
 	});
 }
 
-function bindEcho(panel: Element): void {
+function bindEcho(panel: HTMLElement): void {
 	const controls = readPanel(panel);
 	const { bpm, heads, mode, play, tap: tapButton } = controls;
-	const transport = createTransport(controls);
 	const tempo = createTapTempo(bpm.value);
+	const transport = createTransport(controls, tempo);
 
 	panel.addEventListener('input', (event) => {
 		for (const head of heads) {
@@ -241,6 +377,7 @@ function bindEcho(panel: Element): void {
 			if (event.target === head.number) head.dial.value = head.number.value;
 		}
 		if (event.target === mode) dimSecondHead(controls);
+		if (event.target === bpm) tempo.retune(bpm.value);
 		transport.update();
 	});
 	panel.addEventListener('change', (event) => {
@@ -262,10 +399,11 @@ function bindEcho(panel: Element): void {
 	play.addEventListener('change', () => {
 		void transport.run(play.pressed);
 	});
+	bindSource(panel, controls, transport);
 	bindPeakRead(controls);
 	dimSecondHead(controls);
 }
 
-const panel = document.querySelector('[data-tape-echo]');
+const panel = document.querySelector<HTMLElement>('[data-tape-echo]');
 
 if (panel) bindEcho(panel);

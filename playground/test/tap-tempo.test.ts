@@ -53,3 +53,13 @@ test('the mean runs over the last five taps, so a sixth drops the first', () => 
 	expect(tempo.tap(1600)).toBe(150);
 	expect(tempo.tap(1900)).toBe(200);
 });
+
+test('a retuned tempo keeps its anchor and takes the new beat', () => {
+	const tempo = createTapTempo(96);
+
+	tempo.tap(1000);
+	tempo.retune(120);
+
+	expect(tempo.phaseAt(1000 + 125)).toBeCloseTo(0.25);
+	expect(tempo.phaseAt(1000 + 500 + 375)).toBeCloseTo(0.75);
+});

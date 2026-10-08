@@ -1,0 +1,52 @@
+---
+// The ring is open at the bottom, so its ink stops at 0.9344 of its box; sized so that ink spans the i's dot to the s's foot
+// The gap is an o's right bearing, the o-s kerning and the tracking, so the dial sits where an o would
+---
+
+<span class="wordmark">
+	<span class="wordmark-dial">
+		<sonic-dial aria-hidden="true" inert value="64"></sonic-dial>
+	</span>
+	<span>
+		sonic<span class="wordmark-hyphen">-</span>ui
+	</span>
+</span>
+
+<style>
+	.wordmark {
+		/* The mark is the default dial under every skin, so each token a skin sets falls back here */
+		--sonic-cap: initial;
+		--sonic-cap-edge: initial;
+		--sonic-cap-hover: initial;
+		--sonic-dial-gap-ratio: initial;
+		--sonic-dial-ring-ratio: initial;
+		--sonic-dial-size: 0.8123em;
+		--sonic-ink: initial;
+		--sonic-lit: initial;
+		--sonic-relief: initial;
+		--sonic-unlit: initial;
+		--sonic-well: initial;
+
+		display: inline-flex;
+		align-items: baseline;
+		font-family: var(--font-plex-sans), sans-serif;
+		font-style: italic;
+		font-weight: 700;
+		line-height: 1;
+		letter-spacing: -0.02em;
+		white-space: nowrap;
+	}
+
+	.wordmark-dial {
+		display: grid;
+		flex: none;
+		inline-size: 0.8123em;
+		block-size: 0.8123em;
+		margin-inline-end: 0.011em;
+		translate: 0 0.0653em;
+	}
+
+	.wordmark-hyphen {
+		color: oklch(76.9% 0.165 70deg);
+	}
+</style>

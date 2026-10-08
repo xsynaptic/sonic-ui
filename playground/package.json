@@ -11,6 +11,7 @@
 		"build": "astro build",
 		"preview": "astro preview",
 		"check-types": "astro check",
+		"capture": "astro build && node scripts/capture.ts",
 		"test-e2e": "astro build && playwright test --project chromium",
 		"test-e2e-full": "astro build && playwright test"
 	},

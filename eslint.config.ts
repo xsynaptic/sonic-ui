@@ -59,8 +59,8 @@ export default getConfig([
 	// Everything shipped and everything the playground runs is browser code; only config files see Node
 	getBrowserConfig(['packages/sonic-ui/src/**/*', 'playground/src/**/*']),
 	{
-		// Specs run in Node and hand functions to `page.evaluate`, which run in the page
-		files: ['playground/e2e/**/*', 'playground/playwright.config.ts'],
+		// Specs and the capture script run in Node and hand functions to `page.evaluate`, which run in the page
+		files: ['playground/e2e/**/*', 'playground/scripts/**/*', 'playground/playwright.config.ts'],
 		languageOptions: {
 			globals: { ...globals.node, ...globals.browser },
 		},

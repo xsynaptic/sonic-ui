@@ -14,6 +14,9 @@ export function createTapTempo(bpm: number) {
 		phaseAt(time: number): number {
 			return ((((time - anchor) % beatMs) + beatMs) % beatMs) / beatMs;
 		},
+		retune(next: number): void {
+			beatMs = beatMsOf(next);
+		},
 		tap(now: number): number | undefined {
 			taps = [...taps.filter((time) => now - time < tapWindowMs), now].slice(-tapsKept);
 			anchor = now;

@@ -4,6 +4,7 @@ import Moon from '@lucide/astro/icons/moon';
 import Sun from '@lucide/astro/icons/sun';
 
 import Document from '#components/document.astro';
+import Wordmark from '#components/wordmark.astro';
 import '#styles/playground.css';
 
 interface Props {
@@ -44,8 +45,8 @@ const linkClass =
 	</script>
 	<nav class="top-0 sm:sticky z-10 border-b border-line bg-ground/90 backdrop-blur">
 		<div class="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-2 sm:px-8">
-			<a class="font-mono text-sm font-bold text-text-strong" href={`${base}/`}>
-				sonic-ui
+			<a class="text-lg text-text-strong" href={`${base}/`}>
+				<Wordmark />
 			</a>
 			<ul aria-label="Pages" class="flex flex-wrap gap-x-4 gap-y-1 text-sm">
 				{pages.map((page) => (

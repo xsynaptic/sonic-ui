@@ -5,6 +5,7 @@ import PanelDial from '#components/replica/panel-dial.astro';
 import PanelSwitch from '#components/replica/panel-switch.astro';
 import { echoModes } from '#scripts/stop-names.ts';
 
+// The mode dial's scale band is as wide as its longest name, so its size is what leaves room for a cap
 const feels = [
 	{ data: { 'data-echo-groove': '' }, ends: ['Short', 'Long'], id: 'echo-groove', label: 'Groove' },
 	{ data: { 'data-echo-feel': '' }, ends: ['Early', 'Late'], id: 'echo-feel', label: 'Feel' },
@@ -66,22 +67,24 @@ const feels = [
 		))}
 	</div>
 	<div class="grid justify-items-center gap-1">
-		<sonic-dial
-			aria-labelledby="echo-mode"
-			class="[--sonic-dial-notch-ratio:0.05] [--sonic-dial-scale-font-ratio:0.085] [--sonic-dial-scale-ratio:0.34] [--sonic-dial-size:6rem] [--sonic-dial-sweep:180deg]"
-			data-echo-mode
-			data-format="echo-mode"
-			max="3"
-			notched
-			readout
-			value="0"
-		>
-			{echoModes.labels.map((mode, index) => (
-				<span class="font-mono uppercase" data-sonic-value={index}>
-					{mode}
-				</span>
-			))}
-		</sonic-dial>
+		<div class="-mb-10">
+			<sonic-dial
+				aria-labelledby="echo-mode"
+				class="[--sonic-dial-notch-ratio:0.05] [--sonic-dial-scale-font-ratio:0.062] [--sonic-dial-scale-ratio:0.25] [--sonic-dial-size:8.25rem] [--sonic-dial-sweep:180deg]"
+				data-echo-mode
+				data-format="echo-mode"
+				max="3"
+				notched
+				readout
+				value="0"
+			>
+				{echoModes.labels.map((mode, index) => (
+					<span class="font-mono uppercase" data-sonic-value={index}>
+						{mode}
+					</span>
+				))}
+			</sonic-dial>
+		</div>
 		<Label id="echo-mode" text="Mode" />
 	</div>
 </div>

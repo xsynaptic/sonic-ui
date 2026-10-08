@@ -34,8 +34,8 @@ export default defineConfig({
 			cssVariable: '--font-plex-sans',
 			name: 'IBM Plex Sans',
 			provider: fontProviders.google(),
-			styles: ['normal'],
-			weights: [400, 500, 600],
+			styles: ['normal', 'italic'],
+			weights: [400, 500, 600, 700],
 		},
 		{
 			cssVariable: '--font-plex-mono',

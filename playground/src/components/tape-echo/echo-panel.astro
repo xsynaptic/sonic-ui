@@ -1,9 +1,15 @@
 ---
+import Label from '#components/replica/label.astro';
 import PanelButton from '#components/replica/panel-button.astro';
 import PanelDial from '#components/replica/panel-dial.astro';
 import PanelSwitch from '#components/replica/panel-switch.astro';
 import EchoHead from '#components/tape-echo/echo-head.astro';
 
+const sources = [
+	{ text: 'Phrase', value: 'phrase' },
+	{ text: 'Mic', value: 'mic' },
+	{ text: 'File', value: 'file' },
+];
 const cutTicks = {
 	high: [1000, 2000, 5000, 10_000, 20_000],
 	low: [20, 50, 100, 200, 500, 1000, 2000],
@@ -47,6 +53,22 @@ const cutTicks = {
 			label="Play"
 			size="large"
 		/>
+		<div class="grid justify-items-center gap-1">
+			<sonic-segmented
+				aria-labelledby="echo-source"
+				class="font-mono [--sonic-segmented-size:1.25rem]"
+				data-echo-source
+				value="phrase"
+			>
+				{sources.map((source) => (
+					<span class="text-[0.5rem] uppercase" data-sonic-value={source.value}>
+						{source.text}
+					</span>
+				))}
+			</sonic-segmented>
+			<Label id="echo-source" text="Source" />
+			<input accept="audio/*" data-echo-file hidden type="file" />
+		</div>
 	</div>
 	<EchoHead division="note" head={2} ticks={48} />
 	<PanelDial

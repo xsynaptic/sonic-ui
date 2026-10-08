@@ -25,6 +25,7 @@
 		"stryker": "pnpm build && stryker run",
 		"stryker-file": "pnpm build && stryker run --reporters clear-text --mutate",
 		"stryker-kills": "node scripts/stryker-kills.ts",
+		"capture": "pnpm build && pnpm -F @playground/sonic-ui capture",
 		"changeset": "changeset",
 		"check": "lefthook run check",
 		"check:pkg": "pnpm --filter './packages/*' --no-bail exec publint",

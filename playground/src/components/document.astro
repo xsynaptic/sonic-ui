@@ -11,8 +11,9 @@ interface Props {
 
 const { bodyClass, description, scheme, skin, title } = Astro.props;
 
+// The wordmark's dial, with heavier strokes so it reads at 16px
 const favicon = `data:image/svg+xml,${encodeURIComponent(
-	'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><style>circle{fill:#18181b}path{stroke:#fafafa}@media (prefers-color-scheme:dark){circle{fill:#f4f4f5}path{stroke:#18181b}}</style><circle cx="16" cy="16" r="14"/><path d="M16 16 9 7" fill="none" stroke-linecap="round" stroke-width="3.5"/></svg>',
+	'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" stroke-linecap="round" stroke-width="3.5"><style>.ink{stroke:#18181b}@media (prefers-color-scheme:dark){.ink{stroke:#f4f4f5}}</style><path class="ink" d="M24.7 6.34A13 13 0 0 1 22.5 27.26" opacity=".3"/><path d="M9.5 27.26A13 13 0 1 1 24.7 6.34" stroke="#f59e0a"/><path class="ink" d="M18.34 13.4 21.35 10.05" stroke-width="3"/></svg>',
 )}`;
 ---
 
