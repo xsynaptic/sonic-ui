@@ -13,7 +13,7 @@ import type { Division } from '#scripts/tape-echo/divisions.ts';
 import type { SourceName } from '#scripts/tape-echo/sources.ts';
 
 import { dataHook, find, readControls } from '#scripts/find.ts';
-import { applyFormat, formatterFor } from '#scripts/formats.ts';
+import { applyFormat } from '#scripts/formats.ts';
 import { frameLoop } from '#scripts/frame-loop.ts';
 import { echoModes } from '#scripts/stop-names.ts';
 import { beatMsOf, createTapTempo } from '#scripts/tap-tempo.ts';
@@ -28,7 +28,7 @@ import {
 	isSourceName,
 } from '#scripts/tape-echo/sources.ts';
 
-const headSpec = { dial: SonicDial, division: SonicSegmented, number: SonicNumber };
+const headSpec = { dial: SonicDial, division: SonicSegmented };
 
 const dialSpec = {
 	feedback: SonicDial,
@@ -45,7 +45,6 @@ const dialSpec = {
 const panelSpec = {
 	bpm: SonicNumber,
 	mode: SonicDial,
-	peakRead: SonicButton,
 	play: SonicButton,
 	source: SonicSegmented,
 	spectrum: SonicSpectrum,
@@ -61,7 +60,6 @@ interface Controls extends ControlsOf<typeof panelSpec> {
 	heads: Array<EchoHead>;
 	meters: { input: SonicMeter; output: SonicMeter };
 	micHint: HTMLElement;
-	peakStatus: HTMLElement;
 	sourceStatus: HTMLElement;
 	tapLed: HTMLElement;
 }
@@ -105,16 +103,15 @@ function readPanel(panel: Element): Controls {
 			(name) => `:scope [data-echo-meter="${name}"]`,
 		),
 		micHint: find(panel, echoHook('mic-hint'), HTMLElement),
-		peakStatus: find(panel, echoHook('peak-status'), HTMLElement),
 		sourceStatus: find(panel, echoHook('source-status'), HTMLElement),
 		tapLed: find(controls.tap, ':scope > .sonic-led', HTMLElement),
 	};
 }
 
 function secondsOf(head: EchoHead, bpm: number): number {
-	if (head.number.dataset.format !== 'note') return head.number.value / 1000;
+	if (head.dial.dataset.format !== 'note') return head.dial.value / 1000;
 
-	return (head.number.value / ticksPerBeat) * (beatMsOf(bpm) / 1000);
+	return (head.dial.value / ticksPerBeat) * (beatMsOf(bpm) / 1000);
 }
 
 function paramsOf({ bpm, dials, heads, mode, style }: Controls): EchoParams {
@@ -137,32 +134,29 @@ function paramsOf({ bpm, dials, heads, mode, style }: Controls): EchoParams {
 }
 
 function setDivision(head: EchoHead, division: Division, bpm: number): void {
+	const { dial } = head;
 	const seconds = secondsOf(head, bpm);
 
-	head.dial.notched = division !== 'time';
-	for (const control of [head.dial, head.number]) {
-		if (division === 'time') {
-			control.positions = undefined;
-			control.min = timeRange.min;
-			control.max = timeRange.max;
-			control.taper = 'log';
-			applyFormat(control, 'milliseconds');
-			control.value = Math.round(seconds * 1000);
-			continue;
-		}
-
-		control.positions = [...divisions[division]];
-		applyFormat(control, 'note');
-		control.value = (seconds * 1000 * ticksPerBeat) / beatMsOf(bpm);
+	dial.notched = division !== 'time';
+	if (division === 'time') {
+		dial.positions = undefined;
+		dial.min = timeRange.min;
+		dial.max = timeRange.max;
+		dial.taper = 'log';
+		applyFormat(dial, 'milliseconds');
+		dial.value = Math.round(seconds * 1000);
+		return;
 	}
+
+	dial.positions = [...divisions[division]];
+	applyFormat(dial, 'note');
+	dial.value = (seconds * 1000 * ticksPerBeat) / beatMsOf(bpm);
 }
 
 function dimSecondHead({ heads, mode }: Controls): void {
-	const isDimmed = echoModes.valueAt(mode.value) !== 'dual';
+	const dial = heads[1]?.dial;
 
-	for (const control of [heads[1]?.dial, heads[1]?.number]) {
-		if (control) control.dimmed = isDimmed;
-	}
+	if (dial) dial.dimmed = echoModes.valueAt(mode.value) !== 'dual';
 }
 
 function peakOf(analyser: AnalyserNode, samples: Float32Array<ArrayBuffer>): number {
@@ -350,21 +344,6 @@ function bindSource(panel: HTMLElement, controls: Controls, transport: Transport
 	});
 }
 
-// The drawing is hidden from assistive technology, so the reading is spoken on request
-function bindPeakRead({ peakRead, peakStatus, spectrum }: Controls): void {
-	const formatHertz = formatterFor('hertz') ?? String;
-	const formatDecibels = formatterFor('db') ?? String;
-
-	peakRead.addEventListener('click', () => {
-		const peak = spectrum.peak;
-
-		peakStatus.textContent = peak
-			? `Peak ${formatHertz(peak.frequency)}, ${formatDecibels(peak.decibels)}`
-			: 'No signal yet';
-		spectrum.resetPeak();
-	});
-}
-
 function bindEcho(panel: HTMLElement): void {
 	const controls = readPanel(panel);
 	const { bpm, heads, mode, play, tap: tapButton } = controls;
@@ -372,10 +351,6 @@ function bindEcho(panel: HTMLElement): void {
 	const transport = createTransport(controls, tempo);
 
 	panel.addEventListener('input', (event) => {
-		for (const head of heads) {
-			if (event.target === head.dial) head.number.value = head.dial.value;
-			if (event.target === head.number) head.dial.value = head.number.value;
-		}
 		if (event.target === mode) dimSecondHead(controls);
 		if (event.target === bpm) tempo.retune(bpm.value);
 		transport.update();
@@ -400,7 +375,6 @@ function bindEcho(panel: HTMLElement): void {
 		void transport.run(play.pressed);
 	});
 	bindSource(panel, controls, transport);
-	bindPeakRead(controls);
 	dimSecondHead(controls);
 }
 

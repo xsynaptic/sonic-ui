@@ -1,0 +1,32 @@
+---
+import Headphones from '@lucide/astro/icons/headphones';
+
+import InputPanel from '#components/tape-echo/input-panel.astro';
+import OutputPanel from '#components/tape-echo/output-panel.astro';
+import TimePanel from '#components/tape-echo/time-panel.astro';
+import TonePanel from '#components/tape-echo/tone-panel.astro';
+---
+
+<div class="-mx-4 overflow-x-auto px-4 pb-4 sm:mx-0 sm:px-0" data-tape-echo>
+	<div class="inline-grid min-w-max gap-4 surface p-4">
+		<div class="grid grid-cols-[repeat(4,auto)] gap-x-4">
+			<InputPanel />
+			<TimePanel />
+			<TonePanel />
+			<OutputPanel />
+		</div>
+		<div class="sonic-screen [--sonic-screen-inset-ratio:0.08] [--sonic-screen-size:6rem]">
+			<sonic-spectrum
+				class="[--sonic-spectrum-clip-from:-25] [--sonic-spectrum-hot-from:-34] [--sonic-spectrum-length:100%] [--sonic-spectrum-size:5rem]"
+				data-echo-spectrum
+			></sonic-spectrum>
+		</div>
+	</div>
+	<div class="mt-3 grid min-h-6 max-w-2xl gap-1 text-sm">
+		<p class="flex items-center gap-2 text-text-muted" data-echo-mic-hint hidden>
+			<Headphones aria-hidden="true" class="size-4 shrink-0" />
+			Use headphones with the microphone: through speakers, the echo feeds itself.
+		</p>
+		<p class="text-danger" data-echo-source-status role="status"></p>
+	</div>
+</div>

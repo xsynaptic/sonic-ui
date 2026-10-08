@@ -1,12 +1,7 @@
 ---
-import Headphones from '@lucide/astro/icons/headphones';
-
 import Layout from '#components/layout.astro';
 import PageHeader from '#components/page-header.astro';
-import Label from '#components/replica/label.astro';
-import EchoPanel from '#components/tape-echo/echo-panel.astro';
-import TempoPanel from '#components/tape-echo/tempo-panel.astro';
-import TonePanel from '#components/tape-echo/tone-panel.astro';
+import TapeEcho from '#components/tape-echo/tape-echo.astro';
 ---
 
 <Layout
@@ -20,54 +15,7 @@ import TonePanel from '#components/tape-echo/tone-panel.astro';
 			never leaves the browser.
 		</Fragment>
 	</PageHeader>
-	<div class="-mx-4 overflow-x-auto px-4 pb-4 sm:mx-0 sm:px-0" data-tape-echo>
-		<div class="inline-grid min-w-max gap-4 surface p-4">
-			<div class="flex items-stretch gap-4">
-				<EchoPanel />
-				<TempoPanel />
-				<TonePanel />
-			</div>
-			<div class="grid grid-cols-[minmax(0,1fr)_11rem] items-center gap-4">
-				<div class="sonic-screen [--sonic-screen-inset-ratio:0.08] [--sonic-screen-size:6rem]">
-					<sonic-spectrum
-						class="[--sonic-spectrum-clip-from:-25] [--sonic-spectrum-hot-from:-34] [--sonic-spectrum-length:100%] [--sonic-spectrum-size:5rem]"
-						data-echo-spectrum
-					></sonic-spectrum>
-				</div>
-				<div class="grid justify-items-center gap-2">
-					<Label id="echo-peak" text="Loudest frequency" />
-					<div class="sonic-screen w-full [font-family:var(--sonic-glass-font,var(--font-mono))] [--sonic-screen-inset-ratio:0] [--sonic-screen-size:1.5rem]">
-						<p
-							aria-labelledby="echo-peak"
-							class="text-[0.6875rem] whitespace-nowrap"
-							data-echo-peak-status
-							role="status"
-						>
-							Press Read
-						</p>
-					</div>
-					<sonic-button
-						aria-describedby="echo-peak-help"
-						aria-label="Read peak"
-						class="font-mono text-[0.5rem]"
-						data-echo-peak-read
-					>
-						<span aria-hidden="true">READ</span>
-					</sonic-button>
-					<p class="text-center text-[0.6875rem] leading-snug text-text-muted" id="echo-peak-help">
-						Shows the loudest frequency since the last read, and its level.
-					</p>
-				</div>
-			</div>
-		</div>
-		<div class="mt-3 grid min-h-6 max-w-2xl gap-1 text-sm">
-			<p class="flex items-center gap-2 text-text-muted" data-echo-mic-hint hidden>
-				<Headphones aria-hidden="true" class="size-4 shrink-0" />
-				Use headphones with the microphone: through speakers, the echo feeds itself.
-			</p>
-			<p class="text-danger" data-echo-source-status role="status"></p>
-		</div>
-	</div>
+	<TapeEcho />
 	<Fragment slot="scripts">
 		<script>
 			import '#scripts/tape-echo/tape-echo.ts';

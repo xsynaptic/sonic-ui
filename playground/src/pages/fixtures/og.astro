@@ -1,0 +1,37 @@
+---
+import Document from '#components/document.astro';
+import TapeEcho from '#components/tape-echo/tape-echo.astro';
+import Wordmark from '#components/wordmark.astro';
+import '#styles/playground.css';
+
+// Shot by `pnpm capture` at 1280×640 while playing
+// Top margin centres the instrument, not the status line under it
+---
+
+<Document
+	bodyClass="bg-ground text-text antialiased"
+	scheme="dark"
+	skin="amber"
+	title="sonic-ui fixtures, social image"
+>
+	<main class="grid h-[640px] w-[1280px] grid-cols-[340px_auto] gap-10 overflow-hidden pl-12">
+		<div class="grid content-center gap-6">
+			<h1 class="text-[76px] leading-none text-text-strong">
+				<Wordmark />
+			</h1>
+			<p class="text-2xl leading-snug text-text-muted">
+				Native custom elements for audio interfaces, skinned with tokens.
+			</p>
+			<p class="font-mono text-sm text-text">pnpm add @xsynaptic/sonic-ui</p>
+		</div>
+		<div class="mt-[57px]">
+			<TapeEcho />
+		</div>
+	</main>
+	<script>
+		import '@xsynaptic/sonic-ui/define';
+
+		import '#scripts/formats.ts';
+		import '#scripts/tape-echo/tape-echo.ts';
+	</script>
+</Document>

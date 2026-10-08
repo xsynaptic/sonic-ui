@@ -1,0 +1,39 @@
+---
+import Label from '#components/replica/label.astro';
+import LevelStage from '#components/tape-echo/level-stage.astro';
+import Panel from '#components/tape-echo/panel.astro';
+
+const sources = [
+	{ text: 'Phrase', value: 'phrase' },
+	{ text: 'Mic', value: 'mic' },
+	{ text: 'File', value: 'file' },
+];
+---
+
+<Panel id="echo-input-title" title="Input">
+	<div class="grid content-end justify-items-center gap-1 [--sonic-button-face-radius-ratio:0.5] [--sonic-button-radius-ratio:0.5] [--sonic-button-size:3.5rem]">
+		<sonic-button aria-labelledby="echo-play" data-echo-play latching>
+			<span class="sonic-led"></span>
+		</sonic-button>
+		<Label id="echo-play" text="Play" />
+	</div>
+	<div class="grid content-end justify-items-center gap-1">
+		<sonic-segmented
+			aria-labelledby="echo-source"
+			class="font-mono [--sonic-segmented-size:1.25rem]"
+			data-echo-source
+			value="phrase"
+		>
+			{sources.map((source) => (
+				<span class="text-[0.5rem] uppercase" data-sonic-value={source.value}>
+					{source.text}
+				</span>
+			))}
+		</sonic-segmented>
+		<Label id="echo-source" text="Source" />
+		<input accept="audio/*" data-echo-file hidden type="file" />
+	</div>
+	<div class="flex items-end justify-center gap-6">
+		<LevelStage label="Gain" stage="input" />
+	</div>
+</Panel>

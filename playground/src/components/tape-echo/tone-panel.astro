@@ -1,73 +1,78 @@
 ---
+import Label from '#components/replica/label.astro';
 import PanelDial from '#components/replica/panel-dial.astro';
+import Panel from '#components/tape-echo/panel.astro';
 import { tapeStyles } from '#scripts/stop-names.ts';
 
-const stages = [
-	{ data: { 'data-echo-input': '' }, id: 'echo-input', label: 'Input', meter: 'input' },
-	{ data: { 'data-echo-output': '' }, id: 'echo-output', label: 'Output', meter: 'output' },
-];
-const ladder = '-24 -12 -6 -3 0';
+const cutTicks = {
+	high: [1000, 2000, 5000, 10_000, 20_000],
+	low: [20, 50, 100, 200, 500, 1000, 2000],
+};
 ---
 
-<div
-	aria-label="Tone"
-	class="sonic-panel [--sonic-panel-radius:1.5rem] grid justify-items-center gap-5 p-4"
-	role="group"
->
-	<PanelDial
-		data={{ 'data-echo-saturation': '' }}
-		ends={['Min', 'Max']}
-		format="percent"
-		id="echo-saturation"
-		label="Saturation"
-		max={100}
-		min={0}
-		size="large"
-		value={30}
-	/>
-	<div class="flex gap-6">
-		{stages.map((stage) => (
-			<div class="grid justify-items-center gap-2">
-				<PanelDial
-					data={stage.data}
-					detent={0}
-					ends={['−24', '+24']}
-					format="db"
-					id={stage.id}
-					label={stage.label}
-					max={24}
-					min={-24}
-					origin={0}
-					size="large"
-					step={0.5}
-					value={0}
-				/>
-				<sonic-meter
-					class="[--sonic-meter-length:3rem] [--sonic-meter-size:0.375rem]"
-					data-echo-meter={stage.meter}
-					orientation="horizontal"
-					segments={ladder}
-				></sonic-meter>
-			</div>
-		))}
+<Panel id="echo-tone-title" title="Tone">
+	<div class="flex items-end justify-center gap-6">
+		<PanelDial
+			data={{ 'data-echo-feedback': '' }}
+			format="percent"
+			id="echo-feedback"
+			label="Feedback"
+			max={100}
+			min={0}
+			size="large"
+			value={45}
+		/>
+		<PanelDial
+			data={{ 'data-echo-saturation': '' }}
+			format="percent"
+			id="echo-saturation"
+			label="Saturation"
+			max={100}
+			min={0}
+			size="large"
+			value={30}
+		/>
 	</div>
-	<div class="grid justify-items-center gap-1 self-stretch">
-		<span
-			class="sonic-panel-title self-stretch font-mono text-[0.625rem] font-bold tracking-widest text-text uppercase"
-			id="echo-style"
-		>
-			Style
-		</span>
-		<div class="sonic-screen w-fit [font-family:var(--sonic-glass-font,var(--font-mono))] [--sonic-screen-inset-ratio:0] [--sonic-screen-size:1.5rem]">
-			<sonic-number
-				aria-labelledby="echo-style"
-				class="[--sonic-number-aspect-ratio:4.5] [--sonic-number-size:1.5rem]"
-				data-echo-style
-				data-format="tape-style"
-				positions={tapeStyles.positions}
-				press="step"
-				value="1"
-			></sonic-number>
+	<div class="flex items-end justify-center gap-6">
+		<PanelDial
+			data={{ 'data-echo-low-cut': '' }}
+			format="hertz"
+			id="echo-low-cut"
+			label="Low cut"
+			max={2000}
+			min={20}
+			size="large"
+			taper="log"
+			ticks={cutTicks.low}
+			value={120}
+		/>
+		<PanelDial
+			data={{ 'data-echo-high-cut': '' }}
+			format="hertz"
+			id="echo-high-cut"
+			label="High cut"
+			max={20_000}
+			min={1000}
+			size="large"
+			taper="log"
+			ticks={cutTicks.high}
+			value={6000}
+		/>
+	</div>
+	<div class="flex items-end justify-center gap-6">
+		<div class="grid justify-items-center gap-1">
+			<div class="sonic-screen w-fit [font-family:var(--sonic-glass-font,var(--font-mono))] [--sonic-screen-inset-ratio:0] [--sonic-screen-size:1.5rem]">
+				<sonic-number
+					aria-labelledby="echo-style"
+					class="[--sonic-number-aspect-ratio:4.5] [--sonic-number-size:1.5rem]"
+					data-echo-style
+					data-format="tape-style"
+					positions={tapeStyles.positions}
+					press="step"
+					value="1"
+				></sonic-number>
+			</div>
+			<Label id="echo-style" text="Style" />
 		</div>
 	</div>
-</div>
+</Panel>

@@ -1,0 +1,33 @@
+---
+import PanelDial from '#components/replica/panel-dial.astro';
+
+interface Props {
+	label: string;
+	stage: 'input' | 'output';
+}
+
+const { label, stage } = Astro.props;
+---
+
+<div class="grid justify-items-center gap-2">
+	<PanelDial
+		data={{ [`data-echo-${stage}`]: '' }}
+		detent={0}
+		ends={['−24', '+24']}
+		format="db"
+		id={`echo-${stage}`}
+		label={label}
+		max={24}
+		min={-24}
+		origin={0}
+		size="large"
+		step={0.5}
+		value={0}
+	/>
+	<sonic-meter
+		class="[--sonic-meter-length:3rem] [--sonic-meter-size:0.375rem]"
+		data-echo-meter={stage}
+		orientation="horizontal"
+		segments="-24 -12 -6 -3 0"
+	></sonic-meter>
+</div>

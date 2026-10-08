@@ -13,22 +13,20 @@ interface Props {
 const { division, head, ticks } = Astro.props;
 
 const id = `echo-head-${String(head)}`;
-const positions = divisions[division].join(' ');
 ---
 
 <div
 	aria-labelledby={id}
-	class="grid justify-items-center gap-2 [--sonic-dial-size:2.5rem]"
+	class="grid justify-items-center gap-2 [--sonic-dial-size:3.5rem]"
 	data-echo-head={head}
 	role="group"
 >
-	<Label id={id} text={`Echo ${String(head)}`} />
 	<sonic-dial
 		aria-labelledby={id}
 		data-echo-dial
 		data-format="note"
 		notched
-		positions={positions}
+		positions={divisions[division].join(' ')}
 		readout
 		value={ticks}
 	></sonic-dial>
@@ -44,14 +42,5 @@ const positions = divisions[division].join(' ');
 			</span>
 		))}
 	</sonic-segmented>
-	<div class="sonic-screen w-fit [font-family:var(--sonic-glass-font,var(--font-mono))] [--sonic-screen-inset-ratio:0] [--sonic-screen-size:1.5rem]">
-		<sonic-number
-			aria-label={`Echo ${String(head)} time`}
-			class="[--sonic-number-size:1.5rem]"
-			data-echo-number
-			data-format="note"
-			positions={positions}
-			value={ticks}
-		></sonic-number>
-	</div>
+	<Label id={id} text={`Echo ${String(head)}`} />
 </div>

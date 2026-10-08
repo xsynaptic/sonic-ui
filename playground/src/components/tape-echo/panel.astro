@@ -1,0 +1,27 @@
+---
+// Rows sit on the instrument's grid so they line up across panels
+interface Props {
+	class?: string;
+	id: string;
+	title: string;
+}
+
+const { class: className, id, title } = Astro.props;
+---
+
+<div
+	aria-labelledby={id}
+	class:list={[
+		'sonic-panel row-span-4 grid grid-rows-subgrid gap-y-5 p-4 [--sonic-panel-radius:1.5rem]',
+		className,
+	]}
+	role="group"
+>
+	<span
+		class="sonic-panel-title font-mono text-[0.625rem] font-bold tracking-widest text-text uppercase"
+		id={id}
+	>
+		{title}
+	</span>
+	<slot />
+</div>

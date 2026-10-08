@@ -1,0 +1,25 @@
+---
+import PanelDial from '#components/replica/panel-dial.astro';
+import LevelStage from '#components/tape-echo/level-stage.astro';
+import Panel from '#components/tape-echo/panel.astro';
+---
+
+<Panel id="echo-output-title" title="Output">
+	<div class="flex items-end justify-center gap-6">
+		<PanelDial
+			data={{ 'data-echo-mix': '' }}
+			ends={['Dry', 'Wet']}
+			format="percent"
+			id="echo-mix"
+			label="Mix"
+			max={100}
+			min={0}
+			size="large"
+			value={35}
+		/>
+	</div>
+	<div></div>
+	<div class="flex items-end justify-center gap-6">
+		<LevelStage label="Level" stage="output" />
+	</div>
+</Panel>
