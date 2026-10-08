@@ -1,5 +1,14 @@
 # @xsynaptic/sonic-ui
 
+## 0.22.0
+
+### Minor Changes
+
+- - `--sonic-entry-selection` colours the selected text of a typed entry, which opens with its value selected. Unset, it stays the control's lit colour.
+  - `--sonic-slider-groove-hover-delay` is how long a slider's groove waits under a pointer before it thickens to `--sonic-slider-groove-hover-ratio`. A press or a keyboard focus thickens it at once and leaving thins it at once. Unset, there is no wait.
+  - `--sonic-readout-depth` scales a readout's cast shadow, inner shine and lighter centre from 0 to 1. Unset, it follows the relief.
+  - Behaviour change: a readout no longer takes `--sonic-glass-depth` from a screen around it. Inside a screen flattened with `--sonic-glass-depth: 0` its centre follows the relief again, as its shadow always did; set `--sonic-readout-depth: 0` to flatten it.
+
 ## 0.21.0
 
 ### Minor Changes
