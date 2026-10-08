@@ -110,7 +110,9 @@ The words this library uses for its controls, their parts and their values. Wher
 
 ### Waves
 
-**Peaks**: The amplitude summary, worked out ahead of time, that a wave control draws. _Avoid_: Data, samples, waveform data
+**Peaks**: The amplitude summary, worked out ahead of time, that a wave control draws. Bands sit beside them and colour what they draw. _Avoid_: Data, samples, waveform data
+
+**Band**: One of the frequency ranges a wave's levels are split into, with a level per band per frame. _Avoid_: Bin (one frequency of a spectrum), zone (a stretch of a level display)
 
 **Playhead**: The line that marks the current time on a wave. _Avoid_: Cursor, needle
 

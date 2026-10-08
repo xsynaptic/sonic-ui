@@ -6,6 +6,7 @@
 		--sonic-cap: oklch(37.2% 0.039 257deg);
 		--sonic-cap-hover: oklch(44.6% 0.037 257deg);
 		--sonic-ink: color-mix(in oklab, var(--sonic-cap) 30%, #fff);
+		--sonic-waveform-edge-shade: 0.55;
 		--sonic-dial-ring-ratio: 0.12;
 		--sonic-dial-gap-ratio: 0.07;
 	}

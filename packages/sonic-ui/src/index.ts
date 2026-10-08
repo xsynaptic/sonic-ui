@@ -19,4 +19,5 @@ export { crossfadeGains } from '#lib/crossfade.ts';
 export { envelopeCurve } from '#lib/envelope-curve.ts';
 export { formatPercent, parsePercent } from '#lib/percent.ts';
 export type { TimeRegions } from '#lib/time-regions.ts';
+export type { WaveformBands } from '#lib/waveform-bands.ts';
 export type { WaveformPeaks } from '#lib/waveform-buckets.ts';

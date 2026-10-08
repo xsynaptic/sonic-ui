@@ -247,6 +247,24 @@ test('a requestPeaks that assigns peaks each call is asked once, and the peaks p
 	expect(paints()).toBe(2);
 });
 
+test('bands written inside requestPeaks ask once, and a write from outside asks for the window again', () => {
+	const { flushFrames } = installCanvasFakes();
+	const { waveform } = mountWaveform('max="300" step="0" value="100"');
+	const bands = { bandCount: 3, framesPerSecond: 10, levels: new Uint8Array(9) };
+	let asks = 0;
+
+	waveform.requestPeaks = () => {
+		asks += 1;
+		waveform.bands = bands;
+	};
+	for (let frame = 0; frame < 4; frame += 1) flushFrames();
+	expect(asks).toBe(1);
+
+	waveform.bands = { ...bands };
+	for (let frame = 0; frame < 4; frame += 1) flushFrames();
+	expect(asks).toBe(2);
+});
+
 test('an unchanged pending list written from outside paints nothing', () => {
 	const { flushFrames } = installCanvasFakes();
 	const { waveform } = mountWaveform('max="300" step="0" value="100"');

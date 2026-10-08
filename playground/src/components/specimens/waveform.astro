@@ -5,6 +5,14 @@ import ZoomOut from '@lucide/astro/icons/zoom-out';
 import Cell from '#components/specimens/cell.astro';
 import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 
+function ramp(bandCount: number): string {
+	return Array.from({ length: bandCount }, (_band, band) => {
+		const hue = 25 + (band * 250) / (bandCount - 1);
+
+		return `--sonic-waveform-band-${String(band + 1)}: oklch(0.75 0.19 ${String(hue)})`;
+	}).join('; ');
+}
+
 const waveforms = [
 	{ id: 'waveform-playing', isPlaying: true, label: 'Playing', seed: 7 },
 	{ id: 'waveform-paused', label: 'Paused', seed: 8 },
@@ -57,6 +65,26 @@ const waveforms = [
 		sizeClass: '[--sonic-waveform-length:6rem] [--sonic-waveform-size:2rem]',
 		zoom: 96,
 	},
+	{ bands: 3, id: 'waveform-bands', isPlaying: true, label: 'Three bands', seed: 22 },
+	{ bands: 5, id: 'waveform-bands-five', isPlaying: true, label: 'Five bands', seed: 23 },
+	{ bands: 3, id: 'waveform-bands-dimmed', isDimmed: true, label: 'Bands, dimmed', seed: 24 },
+	{ bands: 3, id: 'waveform-bands-disabled', isDisabled: true, label: 'Bands, disabled', seed: 25 },
+	{
+		bands: 3,
+		bandsMissing: '149.5 162',
+		id: 'waveform-bands-part',
+		label: 'Bands part loaded, beside a pending region',
+		pending: '151 162',
+		seed: 26,
+	},
+	{
+		bands: 3,
+		className: '[--sonic-waveform-edge-shade:0.8]',
+		id: 'waveform-bands-edge',
+		isPlaying: true,
+		label: 'Bands under a deep edge shade',
+		seed: 27,
+	},
 ];
 ---
 
@@ -67,10 +95,14 @@ const waveforms = [
 				<sonic-waveform
 					aria-labelledby={waveform.id}
 					class:list={[waveform.sizeClass ?? '[--sonic-waveform-length:20rem]', waveform.className]}
+					data-bands={waveform.bands}
+					data-bands-missing={waveform.bandsMissing}
 					data-format={waveform.format ?? 'clock-tenths'}
 					data-markers={waveform.markers ?? '146=Intro 151.5=Second_track 158=Outro~'}
 					data-pending={waveform.pending}
 					data-samples={waveform.seed}
+					dimmed={waveform.isDimmed}
+					disabled={waveform.isDisabled}
 					inert={waveform.isInert}
 					key-step="1"
 					max="300"
@@ -79,6 +111,7 @@ const waveforms = [
 					readout
 					reduced-motion={waveform.motion}
 					step="0"
+					style={waveform.bands === undefined ? undefined : ramp(waveform.bands)}
 					value="150"
 					zoom={waveform.zoom}
 				></sonic-waveform>

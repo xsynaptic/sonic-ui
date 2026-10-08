@@ -5,7 +5,9 @@ import type { Drawn } from '#lib/frame-timeline.ts';
 import type { PeaksRequest } from '#lib/peaks-request.ts';
 import type { TimeRegions } from '#lib/time-regions.ts';
 import type { Milliseconds, PixelsPerSecond, Seconds } from '#lib/units.ts';
+import type { BandChannels, WaveformBands } from '#lib/waveform-bands.ts';
 import type { WaveformPeaks } from '#lib/waveform-buckets.ts';
+import type { WaveformTint } from '#lib/waveform-scene.ts';
 import type { ZoomGesture } from '#lib/zoom-gesture.ts';
 
 import { SonicWaveElement } from '#elements/wave-element.ts';
@@ -17,7 +19,13 @@ import { createPeaksRequest } from '#lib/peaks-request.ts';
 import { requireChild, template } from '#lib/render.ts';
 import { dueRegions, readRegions } from '#lib/time-regions.ts';
 import { createTrackingClock } from '#lib/tracking-clock.ts';
-import { paintWaveform, waveformColours } from '#lib/waveform-scene.ts';
+import { bandTable } from '#lib/waveform-bands.ts';
+import {
+	bandChannels,
+	paintWaveform,
+	waveformColours,
+	waveformNumbers,
+} from '#lib/waveform-scene.ts';
 import { bindZoom, bindZoomKeys } from '#lib/zoom-gesture.ts';
 
 export type { PeaksRequest } from '#lib/peaks-request.ts';
@@ -33,6 +41,8 @@ declare global {
 }
 
 type Colour = keyof typeof waveformColours;
+
+type Numeric = keyof typeof waveformNumbers;
 
 export type LabelRender = (marker: WaveMarker, element: HTMLElement) => void;
 
@@ -78,7 +88,7 @@ function placeLine(line: HTMLElement, at: number | undefined): void {
 	}
 }
 
-export class SonicWaveform extends SonicWaveElement<Colour> {
+export class SonicWaveform extends SonicWaveElement<Colour, never, Numeric> {
 	static override readonly observedAttributes = [
 		...SonicWaveElement.observedAttributes,
 		'pending-delay',
@@ -90,6 +100,16 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 		'zoom-min',
 		'zoomable',
 	];
+
+	get bands(): undefined | WaveformBands {
+		return this.#bands;
+	}
+
+	set bands(bands: undefined | WaveformBands) {
+		this.#bands = bands;
+		this.#bandTable = bandTable(bands);
+		this.#peaksRequest.changed();
+	}
 
 	get peaks(): undefined | WaveformPeaks {
 		return this.#peaks;
@@ -237,9 +257,17 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 
 	protected readonly lengths = {};
 
+	protected readonly numbers = waveformNumbers;
+
 	protected readonly sheet = 'waveform.css';
 
 	protected readonly sizeProperty = '--_sonic-waveform-size';
+
+	#bandColours: Array<BandChannels | undefined> = [];
+
+	#bands: undefined | WaveformBands;
+
+	#bandTable: ReturnType<typeof bandTable>;
 
 	readonly #clock = createTrackingClock();
 
@@ -279,6 +307,8 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 		parkProperty: '--_sonic-waveform-label-park',
 	});
 
+	#strip: CanvasRenderingContext2D | undefined;
+
 	#zoomGesture: undefined | ZoomGesture;
 
 	override attributeChangedCallback(name: string): void {
@@ -288,6 +318,7 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 
 	override connectedCallback(): void {
 		this.upgradeProperties(
+			'bands',
 			'peaks',
 			'pending',
 			'pendingDelay',
@@ -349,7 +380,7 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 
 	protected paint(
 		context: CanvasRenderingContext2D,
-		{ frameMs, isDirty, isRebuilt, look, size }: SurfaceFrame<Colour>,
+		{ frameMs, isDirty, isRebuilt, look, size }: SurfaceFrame<Colour, never, Numeric>,
 	): void {
 		const held = this.#held();
 		const isPaged = look.isReducedMotion && this.reducedMotion === 'page';
@@ -390,8 +421,9 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 			if (isRebuilt) this.#kindColours = this.#readKindColours();
 			paintWaveform(
 				context,
-				{ ...view, colours: look.colours },
+				{ ...view, colours: look.colours, numbers: look.numbers },
 				{
+					bands: this.#tint(isRebuilt),
 					kindColours: this.#kindColours,
 					markers: this.markerList(),
 					peaks: this.#peaks,
@@ -484,6 +516,24 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 		return this.#drawn ?? { seconds: this.value, startSeconds: this.value };
 	}
 
+	#readBandColours(
+		strip: CanvasRenderingContext2D,
+		bandCount: number,
+	): Array<BandChannels | undefined> {
+		const probes = Array.from({ length: bandCount }, (_probe, band) => {
+			const probe = document.createElement('div');
+
+			probe.style.setProperty(
+				'color',
+				`var(--sonic-waveform-band-${String(band + 1)}, transparent)`,
+			);
+
+			return probe;
+		});
+
+		return this.#readProbes(probes).map((colour) => bandChannels(strip, colour));
+	}
+
 	#readKindColours(): Map<string, string> {
 		const kinds = [...new Set(this.markers.map(({ kind }) => kind).filter((kind) => isKind(kind)))];
 		const probes = kinds.map((kind) => {
@@ -495,17 +545,43 @@ export class SonicWaveform extends SonicWaveElement<Colour> {
 			return probe;
 		});
 
+		const read = this.#readProbes(probes);
+
+		return new Map(kinds.map((kind, index) => [kind, read[index] ?? '']));
+	}
+
+	#readProbes(probes: Array<HTMLElement>): Array<string> {
 		this.control.append(...probes);
 
 		const read = probes.map((probe) => getComputedStyle(probe).color);
 
 		for (const probe of probes) probe.remove();
 
-		return new Map(kinds.map((kind, index) => [kind, read[index] ?? '']));
+		return read;
 	}
 
 	#sourceSeconds(): number {
 		return this.#readTime?.() ?? this.scrubState().played;
+	}
+
+	#tint(isRebuilt: boolean): undefined | WaveformTint {
+		const table = this.#bandTable;
+		if (!table) return undefined;
+
+		const strip =
+			this.#strip ??
+			document.createElement('canvas').getContext('2d', { willReadFrequently: true }) ??
+			undefined;
+		if (!strip) return undefined;
+
+		this.#strip = strip;
+
+		if (isRebuilt || this.#bandColours.length !== table.bandCount) {
+			strip.canvas.height = 1;
+			this.#bandColours = this.#readBandColours(strip, table.bandCount);
+		}
+
+		return { colours: this.#bandColours, strip, table };
 	}
 
 	#zoomTo(target: number): void {

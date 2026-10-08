@@ -118,6 +118,8 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 
 	protected readonly lengths = lengths;
 
+	protected readonly numbers = {};
+
 	protected readonly sheet = 'wavestrip.css';
 
 	protected readonly sizeProperty = '--_sonic-wavestrip-size';

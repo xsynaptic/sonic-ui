@@ -30,10 +30,28 @@
 	initial-value: rgb(245 158 10);
 }
 
-@property --_sonic-waveform-wave-edge {
+@property --_sonic-waveform-shade {
 	syntax: '<color>';
 	inherits: true;
-	initial-value: rgb(110 70 5);
+	initial-value: rgb(0 0 0);
+}
+
+@property --_sonic-waveform-shade-clear {
+	syntax: '<color>';
+	inherits: true;
+	initial-value: rgb(0 0 0 / 0%);
+}
+
+@property --_sonic-waveform-edge-shade {
+	syntax: '<number>';
+	inherits: true;
+	initial-value: 0;
+}
+
+@property --_sonic-waveform-band-opacity {
+	syntax: '<number>';
+	inherits: true;
+	initial-value: 1;
 }
 
 @property --_sonic-waveform-grid {
@@ -98,13 +116,11 @@
 		);
 		--_sonic-waveform-lit: var(--_sonic-lit);
 		--_sonic-waveform-wave: var(--_sonic-waveform-lit);
-		--_sonic-waveform-wave-edge: var(
-			--sonic-waveform-edge,
-			color-mix(
-				in oklab,
-				var(--_sonic-waveform-lit) calc(100% - 55% * var(--_sonic-relief)),
-				var(--_sonic-shade)
-			)
+		--_sonic-waveform-shade: var(--_sonic-shade);
+		--_sonic-waveform-shade-clear: rgb(from var(--_sonic-shade) r g b / 0%);
+		--_sonic-waveform-edge-shade: var(--sonic-waveform-edge-shade, 0);
+		--_sonic-waveform-band-opacity: calc(
+			var(--sonic-waveform-band-opacity, 1) * var(--_sonic-waveform-band-dim, 1)
 		);
 		--_sonic-waveform-grid: var(--sonic-waveform-grid, var(--_sonic-etch));
 		--_sonic-waveform-ends: var(--sonic-waveform-ends, var(--_sonic-etch));
@@ -153,10 +169,12 @@
 
 	[dimmed] > .sonic-waveform {
 		--_sonic-waveform-lit: var(--_sonic-lit-off);
+		--_sonic-waveform-band-dim: 0.75;
 	}
 
 	:disabled > .sonic-waveform {
 		--_sonic-waveform-lit: var(--_sonic-lit-disabled);
+		--_sonic-waveform-band-dim: 0.25;
 
 		cursor: default;
 	}
@@ -219,7 +237,8 @@
 	@media (forced-colors: active) {
 		.sonic-waveform {
 			--_sonic-waveform-wave: rgb(from CanvasText r g b / 100%);
-			--_sonic-waveform-wave-edge: rgb(from CanvasText r g b / 100%);
+			--_sonic-waveform-edge-shade: 0;
+			--_sonic-waveform-band-opacity: 0;
 			--_sonic-waveform-grid: rgb(from GrayText r g b / 100%);
 			--_sonic-waveform-ends: rgb(from GrayText r g b / 100%);
 			--_sonic-waveform-placeholder: rgb(from GrayText r g b / 100%);
@@ -228,7 +247,6 @@
 
 		:disabled > .sonic-waveform {
 			--_sonic-waveform-wave: rgb(from GrayText r g b / 100%);
-			--_sonic-waveform-wave-edge: rgb(from GrayText r g b / 100%);
 		}
 
 		:is(.sonic-waveform-playhead, .sonic-waveform-ghost) {

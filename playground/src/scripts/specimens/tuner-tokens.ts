@@ -191,6 +191,8 @@ export const tokenGroups: Array<TokenGroup> = [
 		tokens: [
 			range('size', '--sonic-waveform-size', [3, 10, 0.25, 'rem']),
 			range('length', '--sonic-waveform-length', [8, 24, 0.5, 'rem']),
+			range('edge shade', '--sonic-waveform-edge-shade', [0, 1, 0.01]),
+			range('band opacity', '--sonic-waveform-band-opacity', [0, 1, 0.01]),
 		],
 	},
 	{

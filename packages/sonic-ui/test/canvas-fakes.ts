@@ -89,6 +89,7 @@ export function installCanvasFakes({ isReducedMotion = false } = {}): {
 		fill: ignore,
 		fillRect: ignore,
 		fillStyle: '',
+		getImageData: () => ({ data: [] }),
 		globalAlpha: 1,
 		lineTo: ignore,
 		lineWidth: 1,

@@ -454,6 +454,11 @@ test('a wavestrip plays in opaque Highlight, and a waveform and a spectrum paint
 	}).toPass();
 
 	await waveform.scrollIntoViewIfNeeded();
+	await page.locator('#waveform').evaluate((host: HTMLElementTagNameMap['sonic-waveform']) => {
+		host.style.setProperty('--sonic-waveform-band-1', 'rgb(255 0 0)');
+		host.style.setProperty('--sonic-waveform-edge-shade', '0.8');
+		host.bands = { bandCount: 1, framesPerSecond: 10, levels: new Uint8Array(3000).fill(255) };
+	});
 
 	const wave = await paintedColour(waveform, canvasText);
 	const middle = await middleOf(waveform);

@@ -34,6 +34,7 @@ function markerKey(marker: undefined | WaveMarker): string {
 export abstract class SonicWaveElement<
 	Colour extends string,
 	Length extends string = never,
+	Numeric extends string = never,
 > extends SonicValueElement {
 	static override readonly observedAttributes = [...SonicValueElement.observedAttributes, 'fill'];
 
@@ -78,6 +79,8 @@ export abstract class SonicWaveElement<
 		speak: (seconds) => spokenDuration(seconds, this.closest<HTMLElement>('[lang]')?.lang),
 	};
 
+	protected abstract readonly numbers: Record<Numeric, `--_sonic-${string}`>;
+
 	protected abstract readonly sheet: string;
 
 	protected abstract readonly sizeProperty: `--_sonic-${string}`;
@@ -112,6 +115,7 @@ export abstract class SonicWaveElement<
 			colours: this.colours,
 			fill: { control, sizeProperty: this.sizeProperty },
 			lengths: this.lengths,
+			numbers: this.numbers,
 			paint: (context, frame) => {
 				this.paint(context, frame);
 			},
@@ -152,7 +156,7 @@ export abstract class SonicWaveElement<
 
 	protected abstract paint(
 		context: CanvasRenderingContext2D,
-		frame: SurfaceFrame<Colour, Length>,
+		frame: SurfaceFrame<Colour, Length, Numeric>,
 	): void;
 
 	protected override proportionsChanged(): void {

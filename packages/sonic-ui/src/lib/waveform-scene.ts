@@ -1,17 +1,29 @@
 import type { View } from '#lib/frame-timeline.ts';
+import type { BandChannels, BandTable } from '#lib/waveform-bands.ts';
 import type { WaveformPeaks } from '#lib/waveform-buckets.ts';
 
 import { isKind } from '#lib/marker-band.ts';
 import { clamp } from '#lib/math.ts';
+import { bandStrip } from '#lib/waveform-bands.ts';
 import { waveformBuckets } from '#lib/waveform-buckets.ts';
 
 type Colour = keyof typeof waveformColours;
 
+type Numeric = keyof typeof waveformNumbers;
+
 interface Scene extends View {
 	colours: Record<Colour, string>;
+	numbers: Record<Numeric, number>;
+}
+
+export interface WaveformTint {
+	colours: ReadonlyArray<BandChannels | undefined>;
+	strip: CanvasRenderingContext2D;
+	table: BandTable;
 }
 
 interface Drawn {
+	bands: undefined | WaveformTint;
 	kindColours: ReadonlyMap<string, string>;
 	markers: ReadonlyArray<{ dimmed?: boolean; kind?: string; start: number }>;
 	peaks: undefined | WaveformPeaks;
@@ -23,8 +35,14 @@ export const waveformColours = {
 	grid: '--_sonic-waveform-grid',
 	marker: '--_sonic-waveform-marker',
 	placeholder: '--_sonic-waveform-placeholder',
+	shade: '--_sonic-waveform-shade',
+	shadeClear: '--_sonic-waveform-shade-clear',
 	wave: '--_sonic-waveform-wave',
-	waveEdge: '--_sonic-waveform-wave-edge',
+} as const;
+
+export const waveformNumbers = {
+	bandOpacity: '--_sonic-waveform-band-opacity',
+	edgeShade: '--_sonic-waveform-edge-shade',
 } as const;
 
 const amplitudeMargin = 0.94;
@@ -86,26 +104,55 @@ function paintPlaceholders(context: CanvasRenderingContext2D, scene: Scene): voi
 	context.stroke();
 }
 
-function waveFill(context: CanvasRenderingContext2D, scene: Scene): CanvasGradient {
-	const { wave, waveEdge } = scene.colours;
-	const gradient = context.createLinearGradient(0, 0, 0, scene.height);
+// A painted pixel is the one reading that resolves any colour syntax to channels
+export function bandChannels(
+	strip: CanvasRenderingContext2D,
+	colour: string,
+): BandChannels | undefined {
+	strip.clearRect(0, 0, 1, 1);
+	strip.fillStyle = colour;
+	strip.fillRect(0, 0, 1, 1);
 
-	gradient.addColorStop(0, waveEdge);
-	gradient.addColorStop(0.5, wave);
-	gradient.addColorStop(1, waveEdge);
+	const [red = 0, green = 0, blue = 0, alpha = 0] = strip.getImageData(0, 0, 1, 1).data;
 
-	return gradient;
+	return alpha === 0 ? undefined : [red, green, blue];
 }
 
-function paintWave(context: CanvasRenderingContext2D, scene: Scene, peaks: WaveformPeaks): void {
-	const buckets = waveformBuckets(peaks, scene);
+function paintTint(context: CanvasRenderingContext2D, scene: Scene, tint: WaveformTint): void {
+	const strip = bandStrip(tint.table, tint.colours, scene);
+	if (!strip) return;
+
+	const { canvas } = tint.strip;
+	const { count } = strip;
+
+	if (canvas.width < count) canvas.width = count;
+	tint.strip.putImageData(new ImageData(strip.pixels, count, 1), 0, 0);
+	context.globalAlpha = scene.numbers.bandOpacity;
+	context.drawImage(canvas, 0, 0, count, 1, strip.x, 0, count * strip.groupWidth, scene.height);
+}
+
+function paintEdgeShade(context: CanvasRenderingContext2D, scene: Scene): void {
+	const { shade, shadeClear } = scene.colours;
+	const gradient = context.createLinearGradient(0, 0, 0, scene.height);
+
+	gradient.addColorStop(0, shade);
+	gradient.addColorStop(0.5, shadeClear);
+	gradient.addColorStop(1, shade);
+	context.globalAlpha = scene.numbers.edgeShade;
+	context.fillStyle = gradient;
+	context.fillRect(0, 0, scene.width, scene.height);
+}
+
+function paintWave(context: CanvasRenderingContext2D, scene: Scene, drawn: Drawn): void {
+	const buckets = drawn.peaks ? waveformBuckets(drawn.peaks, scene) : [];
 	const [first] = buckets;
 	if (!first) return;
 
 	const center = scene.height / 2;
 	const amplitudePx = center * amplitudeMargin;
+	const { bandOpacity, edgeShade } = scene.numbers;
 
-	context.fillStyle = waveFill(context, scene);
+	context.fillStyle = scene.colours.wave;
 	context.beginPath();
 	context.moveTo(first.x, center);
 	for (const bucket of buckets) context.lineTo(bucket.x, center - bucket.high * amplitudePx);
@@ -113,6 +160,11 @@ function paintWave(context: CanvasRenderingContext2D, scene: Scene, peaks: Wavef
 		context.lineTo(bucket.x, center - bucket.low * amplitudePx);
 	context.closePath();
 	context.fill();
+	// The flat envelope is the mask: from here only the pixels it covers take colour
+	context.globalCompositeOperation = 'source-atop';
+	if (drawn.bands && bandOpacity > 0) paintTint(context, scene, drawn.bands);
+	if (edgeShade > 0) paintEdgeShade(context, scene);
+	context.globalAlpha = 1;
 }
 
 function paintMarkers(context: CanvasRenderingContext2D, scene: Scene, drawn: Drawn): void {
@@ -138,12 +190,15 @@ export function paintWaveform(context: CanvasRenderingContext2D, scene: Scene, d
 	const [from, to] = [clamp(opening, 0, width), clamp(closing, 0, width)];
 
 	context.clearRect(0, 0, width, height);
-	paintHatch(context, scene, [0, from]);
-	paintHatch(context, scene, [to, width]);
+	paintWave(context, scene, drawn);
+	// Laid under the wave, so the nearest is painted first
+	context.globalCompositeOperation = 'destination-over';
+	paintPlaceholders(context, scene);
 	context.fillStyle = grid;
 	if (to > from) context.fillRect(from, Math.round((height - line) / 2), to - from, line);
-	paintPlaceholders(context, scene);
-	if (drawn.peaks) paintWave(context, scene, drawn.peaks);
+	paintHatch(context, scene, [0, from]);
+	paintHatch(context, scene, [to, width]);
+	context.globalCompositeOperation = 'source-over';
 	// Scrolling lines sit at fractional x; rounding them judders
 	context.fillStyle = ends;
 	for (const edge of [opening, closing]) context.fillRect(edge - line / 2, 0, line, height);

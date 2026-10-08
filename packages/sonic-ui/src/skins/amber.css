@@ -4,5 +4,6 @@
 		--sonic-cap: oklch(37% 0.012 286deg);
 		--sonic-cap-hover: oklch(44.2% 0.015 286deg);
 		--sonic-ink: color-mix(in oklab, var(--sonic-cap) 30%, #fff);
+		--sonic-waveform-edge-shade: 0.55;
 	}
 }

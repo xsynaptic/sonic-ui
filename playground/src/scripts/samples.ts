@@ -2,6 +2,7 @@ import type { SonicWaveform } from '@xsynaptic/sonic-ui';
 
 import { frameLoop } from '#scripts/frame-loop.ts';
 import { readRegions } from '#scripts/read-regions.ts';
+import { emptyLevels, fillLevels, framesPerSecond, minDecibels } from '#scripts/seeded-bands.ts';
 import { seededPeaks } from '#scripts/seeded-peaks.ts';
 import { emptySamples, fillSamples, pairsPerSecond } from '#scripts/seeded-samples.ts';
 
@@ -23,6 +24,20 @@ function play(waveform: SonicWaveform): void {
 	}).start();
 }
 
+function tint(waveform: SonicWaveform, bandCount: number): void {
+	const levels = emptyLevels(waveform.max, bandCount);
+	let from = 0;
+
+	for (const [start, end] of [
+		...readRegions(waveform.dataset.bandsMissing),
+		[waveform.max, waveform.max] as const,
+	]) {
+		fillLevels(levels, bandCount, [from, Math.floor(start * framesPerSecond)]);
+		from = Math.ceil(end * framesPerSecond);
+	}
+	waveform.bands = { bandCount, framesPerSecond, levels, minDecibels };
+}
+
 for (const waveform of document.querySelectorAll<SonicWaveform>('sonic-waveform[data-samples]')) {
 	const samples = emptySamples(waveform.max);
 	const peaks = seededPeaks(Number(waveform.dataset.samples));
@@ -35,5 +50,6 @@ for (const waveform of document.querySelectorAll<SonicWaveform>('sonic-waveform[
 	}
 	waveform.peaks = { pairsPerSecond, samples };
 	waveform.pending = pending;
+	if (waveform.dataset.bands !== undefined) tint(waveform, Number(waveform.dataset.bands));
 	if (waveform.playing) play(waveform);
 }
