@@ -1,3 +1,5 @@
+import { formatClock } from '#lib/clock.ts';
+
 const formatters = new Map<string, Intl.DurationFormat>();
 
 function formatterFor(language: string, isZero: boolean): Intl.DurationFormat {
@@ -20,6 +22,8 @@ function formatterFor(language: string, isZero: boolean): Intl.DurationFormat {
 }
 
 export function spokenDuration(seconds: number, language = ''): string {
+	if (!('DurationFormat' in Intl)) return formatClock(seconds);
+
 	// Truncated as the clock is, so every unit carries one sign; mixed signs throw
 	const total = Math.trunc(seconds);
 

@@ -8,6 +8,11 @@ const namingAttributes = ['aria-describedby', 'aria-label', 'aria-labelledby'];
 
 const checkedSheets = new WeakMap<object, Set<string>>();
 
+// Before `:state()`, `states` is missing or refuses an ident without the legacy dashes
+const canMatchStates = CSS.supports('selector(:state(a))');
+
+const canReferElements = 'ariaLabelledByElements' in Element.prototype;
+
 interface StyleProbe {
 	selector?: string;
 	sheet: string;
@@ -72,6 +77,8 @@ function writeLabelledBy(target: Element, labels: Array<Element>): void {
 export abstract class SonicElement extends HTMLElement {
 	static readonly observedAttributes = [...namingAttributes, 'disabled'];
 
+	static #labelCount = 0;
+
 	get disabled(): boolean {
 		return this.hasAttribute('disabled');
 	}
@@ -86,7 +93,18 @@ export abstract class SonicElement extends HTMLElement {
 
 	#connection: AbortController | undefined;
 
+	readonly #customStates = canMatchStates ? this.internals?.states : undefined;
+
 	readonly #states = new Set<string>();
+
+	static #labelId(label: Element): string {
+		if (label.id === '') {
+			SonicElement.#labelCount += 1;
+			label.id = `sonic-label-${String(SonicElement.#labelCount)}`;
+		}
+
+		return label.id;
+	}
 
 	override blur(): void {
 		this.#focused()?.blur();
@@ -192,7 +210,7 @@ export abstract class SonicElement extends HTMLElement {
 
 			writeAttribute(target, name, isNamed && value !== null ? value : undefined);
 		}
-		if (labels.length > 0) writeLabelledBy(target, labels);
+		if (labels.length > 0) this.#writeLabels(target, labels);
 	}
 
 	protected hasState(state: string): boolean {
@@ -260,12 +278,12 @@ export abstract class SonicElement extends HTMLElement {
 	protected toggleState(state: string, isOn: boolean): void {
 		if (isOn) {
 			this.#states.add(state);
-			this.internals?.states.add(state);
+			this.#customStates?.add(state);
 			return;
 		}
 
 		this.#states.delete(state);
-		this.internals?.states.delete(state);
+		this.#customStates?.delete(state);
 	}
 
 	// A property set before upgrade shadows its accessor
@@ -313,5 +331,16 @@ export abstract class SonicElement extends HTMLElement {
 			root instanceof ShadowRoot ? root.activeElement : this.ownerDocument.activeElement;
 
 		return active instanceof HTMLElement && this.contains(active) ? active : undefined;
+	}
+
+	#writeLabels(target: Element, labels: Array<Element>): void {
+		if (canReferElements) {
+			writeLabelledBy(target, labels);
+			return;
+		}
+
+		const ids = labels.map((label) => SonicElement.#labelId(label));
+
+		writeAttribute(target, 'aria-labelledby', ids.join(' '));
 	}
 }

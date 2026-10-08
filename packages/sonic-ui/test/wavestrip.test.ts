@@ -864,6 +864,24 @@ test('the spoken clock follows the nearest lang, and an unreadable one falls bac
 	);
 });
 
+test('without Intl.DurationFormat the strip still binds and speaks the clock', () => {
+	installCanvasFakes();
+
+	const durationFormat = Intl.DurationFormat;
+
+	Reflect.deleteProperty(Intl, 'DurationFormat');
+	try {
+		const { control } = mountWavestrip('max="4000" step="5" value="3725"');
+
+		expect(control.getAttribute('aria-valuetext')).toBe('1:02:05');
+
+		control.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'ArrowRight' }));
+		expect(control.getAttribute('aria-valuetext')).toBe('1:02:10');
+	} finally {
+		Object.assign(Intl, { DurationFormat: durationFormat });
+	}
+});
+
 test('formatValue replaces the text and the spoken text, and the entry still opens on a clock', () => {
 	installCanvasFakes();
 

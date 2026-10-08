@@ -9,6 +9,9 @@ interface ReadoutView {
 // happy-dom has no popover API
 const canPopover = 'togglePopover' in HTMLElement.prototype;
 
+// Without anchor positioning the bubble opens away from its control
+export const isUnanchored = canPopover && !CSS.supports('anchor-name', '--a');
+
 let readoutCount = 0;
 
 export class Readout {
@@ -45,6 +48,6 @@ export class Readout {
 	}
 
 	#toggle(isOpen: boolean): void {
-		if (canPopover && this.#bubble.isConnected) this.#bubble.togglePopover(isOpen);
+		if (canPopover && !isUnanchored && this.#bubble.isConnected) this.#bubble.togglePopover(isOpen);
 	}
 }

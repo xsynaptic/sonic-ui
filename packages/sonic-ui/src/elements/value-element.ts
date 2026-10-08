@@ -5,7 +5,7 @@ import type { ValueMapping, ValueSpec } from '#lib/value-mapping.ts';
 import type { ValueModel } from '#lib/value-model.ts';
 
 import { SonicFormElement } from '#elements/form-element.ts';
-import { Readout } from '#elements/readout.ts';
+import { isUnanchored, Readout } from '#elements/readout.ts';
 import { ValueGestures } from '#elements/value-gestures.ts';
 import { bindHoverPreview } from '#lib/hover-preview.ts';
 import { toNumber, trimFloat } from '#lib/math.ts';
@@ -396,7 +396,7 @@ export abstract class SonicValueElement extends SonicFormElement {
 				forwardNaming: (target, isNamed) => {
 					this.forwardNaming(target, isNamed);
 				},
-				hasEntry: () => this.entry !== 'none',
+				hasEntry: () => !isUnanchored && this.entry !== 'none',
 				input: (next) => this.input(next),
 				isDisabled: () => this.isDisabled(),
 				keyStep: () => this.keyStep,

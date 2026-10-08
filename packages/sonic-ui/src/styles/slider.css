@@ -314,12 +314,13 @@
 				transparent
 					calc(
 						var(--_sonic-slider-lit-low) * var(--_sonic-slider-travel) +
-							var(--_sonic-slider-groove-end) * sign(var(--_sonic-slider-lit-low))
+							var(--_sonic-slider-groove-end) * clamp(0, var(--_sonic-slider-lit-low) * 100000, 1)
 					),
 				var(--_sonic-slider-lit) 0
 					calc(
 						var(--_sonic-slider-lit-high) * var(--_sonic-slider-travel) +
-							var(--_sonic-slider-groove-end) * (2 - sign(1 - var(--_sonic-slider-lit-high)))
+							var(--_sonic-slider-groove-end) *
+							(2 - clamp(0, (1 - var(--_sonic-slider-lit-high)) * 100000, 1))
 					),
 				transparent 0
 			),

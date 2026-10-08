@@ -1,5 +1,11 @@
 # @xsynaptic/sonic-ui
 
+## 0.24.1
+
+### Patch Changes
+
+- Older browsers: controls connect without custom states or `Intl.DurationFormat`, a `<label>` without an id is given one where `ariaLabelledByElements` is missing, the readout and typed entry stay shut without anchor positioning, and the shipped sheets no longer use CSS nesting or `sign()`.
+
 ## 0.24.0
 
 ### Minor Changes
