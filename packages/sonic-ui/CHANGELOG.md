@@ -1,5 +1,12 @@
 # @xsynaptic/sonic-ui
 
+## 0.23.0
+
+### Minor Changes
+
+- - Waveform: `bands` (`WaveformBands`) tints the wave from levels per frequency band, coloured by `--sonic-waveform-band-1` upward and scaled by `--sonic-waveform-band-opacity`. Call `repaint()` after changing a band token.
+  - Breaking: `--sonic-waveform-edge` is replaced by `--sonic-waveform-edge-shade`, 0 to 1, how far the wave's edges mix towards `--sonic-shade`. Unset, the wave is flat; the skins with relief set 0.55.
+
 ## 0.22.0
 
 ### Minor Changes
