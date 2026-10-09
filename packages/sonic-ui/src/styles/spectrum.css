@@ -94,9 +94,16 @@
 	}
 
 	.sonic-spectrum-canvas {
+		--_sonic-spectrum-corner: max(
+			0px,
+			var(--_sonic-screen-radius, 0px) - var(--_sonic-screen-inset, 0px)
+		);
+
 		display: block;
 		inline-size: 100%;
 		block-size: 100%;
+		border-end-start-radius: var(--_sonic-spectrum-corner);
+		border-end-end-radius: var(--_sonic-spectrum-corner);
 	}
 
 	/* Opaque, since a system highlight carries alpha that would blend the bars into what is behind them */

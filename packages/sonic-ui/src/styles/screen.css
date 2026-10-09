@@ -11,14 +11,16 @@
 		--_sonic-screen-size: var(--sonic-screen-size, 2.5rem);
 		--_sonic-screen-radius-ratio: var(--sonic-screen-radius-ratio, 0.15);
 		--_sonic-screen-radius-own: calc(var(--_sonic-screen-size) * var(--sonic-screen-radius-ratio));
-		--_sonic-screen-inset-ratio: var(--sonic-screen-inset-ratio, 0.1);
-		--_sonic-unit: calc(var(--_sonic-screen-size) / 32);
-
-		min-block-size: var(--_sonic-screen-size);
-		padding: calc(var(--_sonic-screen-size) * var(--_sonic-screen-inset-ratio));
-		border-radius: var(
+		--_sonic-screen-radius: var(
 			--_sonic-screen-radius-own,
 			var(--sonic-radius, calc(var(--_sonic-screen-size) * var(--_sonic-screen-radius-ratio)))
 		);
+		--_sonic-screen-inset-ratio: var(--sonic-screen-inset-ratio, 0.1);
+		--_sonic-screen-inset: calc(var(--_sonic-screen-size) * var(--_sonic-screen-inset-ratio));
+		--_sonic-unit: calc(var(--_sonic-screen-size) / 32);
+
+		min-block-size: var(--_sonic-screen-size);
+		padding: var(--_sonic-screen-inset);
+		border-radius: var(--_sonic-screen-radius);
 	}
 }
