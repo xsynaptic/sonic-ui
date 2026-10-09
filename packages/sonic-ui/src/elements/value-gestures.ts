@@ -69,6 +69,9 @@ export class ValueGestures {
 
 	#entry: undefined | ValueEntry;
 
+	// The part that holds focus, the role and the keys; the control itself on all but the strip
+	readonly #focus: HTMLElement;
+
 	readonly #host: GestureHost;
 
 	#isRevealed = false;
@@ -79,9 +82,10 @@ export class ValueGestures {
 
 	#pointerType: string | undefined;
 
-	constructor(host: GestureHost, control: HTMLElement) {
+	constructor(host: GestureHost, control: HTMLElement, focus: HTMLElement) {
 		this.#host = host;
 		this.#control = control;
+		this.#focus = focus;
 	}
 
 	abandon(): void {
@@ -110,7 +114,7 @@ export class ValueGestures {
 					host.toggleState('springing', false);
 					// A click listener above makes WebKit send a tap's compatibility mousedown, which blurs the entry a double tap just opened
 					if (event.pointerType === 'touch') event.preventDefault();
-					focusByPointer(control);
+					focusByPointer(this.#focus);
 					this.#pointerType = event.pointerType;
 					if (isResetPress(event)) {
 						this.#reset();
@@ -226,7 +230,7 @@ export class ValueGestures {
 		});
 
 		this.#entry = entry;
-		entry.bind(control, signal);
+		entry.bind(this.#focus, signal);
 
 		return entry;
 	}
@@ -238,7 +242,7 @@ export class ValueGestures {
 		control.addEventListener(
 			'keydown',
 			(event) => {
-				if (host.isDisabled() || event.defaultPrevented || event.target !== control) return;
+				if (host.isDisabled() || event.defaultPrevented || event.target !== this.#focus) return;
 
 				host.toggleState('springing', false);
 				if (event.key === 'Enter') {
@@ -274,7 +278,7 @@ export class ValueGestures {
 			},
 			{ signal },
 		);
-		control.addEventListener(
+		this.#focus.addEventListener(
 			'blur',
 			() => {
 				this.#endKeyScrub();

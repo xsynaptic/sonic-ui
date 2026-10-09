@@ -1,6 +1,4 @@
 ---
-import Play from '@lucide/astro/icons/play';
-
 import Cell from '#components/specimens/cell.astro';
 import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 
@@ -20,7 +18,7 @@ const ballistics = [
 			<sonic-meter></sonic-meter>
 		</div>
 	</Cell>
-	<Cell id="meter-horizontal" isWide={true} label="Horizontal">
+	<Cell id="meter-horizontal" label="Horizontal" span="wide">
 		<div aria-labelledby="meter-horizontal" class="grid gap-1" role="group">
 			<sonic-meter orientation="horizontal"></sonic-meter>
 			<sonic-meter orientation="horizontal"></sonic-meter>
@@ -41,13 +39,13 @@ const ballistics = [
 			<sonic-meter data-demo="reduction" max="0" min="-24" origin="0" value="0"></sonic-meter>
 		</div>
 	</Cell>
-	<Cell id="meter-short-ladder" isWide={true} label="Short ladder">
+	<Cell id="meter-short-ladder" label="Short ladder" span="wide">
 		<div aria-labelledby="meter-short-ladder" class="grid gap-1" role="group">
 			<sonic-meter orientation="horizontal" segments={shortLadder}></sonic-meter>
 			<sonic-meter orientation="horizontal" segments={shortLadder}></sonic-meter>
 		</div>
 	</Cell>
-	<Cell id="meter-correlation" isWide={true} label="Correlation">
+	<Cell id="meter-correlation" label="Correlation" span="wide">
 		<div aria-labelledby="meter-correlation" role="group">
 			<sonic-meter
 				data-demo="correlation"
@@ -66,7 +64,7 @@ const ballistics = [
 			</div>
 		</Cell>
 	))}
-	<Cell id="meter-peak" isWide={true} label="Peak report">
+	<Cell id="meter-peak" label="Peak report" span="wide">
 		<div
 			aria-labelledby="meter-peak"
 			class="grid justify-items-center gap-2"
@@ -88,13 +86,8 @@ const ballistics = [
 			</p>
 		</div>
 	</Cell>
-	<Cell id="meter-run" label="Run">
-		<sonic-button aria-labelledby="meter-run" data-run latching pressed>
-			<Play aria-hidden="true" />
-		</sonic-button>
-	</Cell>
 </SpecimenGrid>
-<SpecimenGrid isLarge={true}>
+<SpecimenGrid size="large">
 	<Cell id="meter-large-stereo" label="Stereo, large">
 		<div
 			aria-labelledby="meter-large-stereo"

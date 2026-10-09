@@ -11,15 +11,15 @@ const screens = [
 
 <SpecimenGrid>
 	{screens.map((screen) => (
-		<Cell id={screen.id} isWide={true} label={screen.label}>
+		<Cell id={screen.id} label={screen.label} span="wide">
 			<div aria-labelledby={screen.id} class="sonic-screen min-w-30 font-mono text-sm" role="group">
 				{screen.text}
 			</div>
 		</Cell>
 	))}
 </SpecimenGrid>
-<SpecimenGrid isLarge={true}>
-	<Cell id="screen-large-frequency" isWide={true} label="Frequency, large">
+<SpecimenGrid size="large">
+	<Cell id="screen-large-frequency" label="Frequency, large" span="wide">
 		<div
 			aria-labelledby="screen-large-frequency"
 			class="sonic-screen min-w-72 font-mono text-4xl [--sonic-screen-size:6rem]"

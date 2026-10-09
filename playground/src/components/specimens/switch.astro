@@ -22,7 +22,7 @@ const legend = 'font-mono text-text uppercase';
 			<span data-sonic-value="post">Post</span>
 		</sonic-switch>
 	</Cell>
-	<Cell id="switch-assign" isWide={true} label="Assign">
+	<Cell id="switch-assign" label="Assign">
 		<sonic-switch
 			aria-labelledby="switch-assign"
 			class={legend}
@@ -43,7 +43,7 @@ const legend = 'font-mono text-text uppercase';
 			<span data-sonic-value="on">On</span>
 		</sonic-switch>
 	</Cell>
-	<Cell id="switch-position-disabled" label="One position disabled">
+	<Cell id="switch-position-disabled" label="Position disabled">
 		<sonic-switch aria-labelledby="switch-position-disabled" class={legend} value="off">
 			<span data-sonic-value="1">1</span>
 			<span data-sonic-value="off">Off</span>
@@ -59,8 +59,8 @@ const legend = 'font-mono text-text uppercase';
 		</sonic-switch>
 	</Cell>
 </SpecimenGrid>
-<SpecimenGrid isLarge={true}>
-	<Cell id="switch-large-assign" isWide={true} label="Assign, large">
+<SpecimenGrid size="large">
+	<Cell id="switch-large-assign" label="Assign, large">
 		<sonic-switch
 			aria-labelledby="switch-large-assign"
 			class:list={[legend, '[--sonic-switch-size:4rem]']}
@@ -72,7 +72,7 @@ const legend = 'font-mono text-text uppercase';
 			<span data-sonic-value="y">Y</span>
 		</sonic-switch>
 	</Cell>
-	<Cell id="switch-large-duck" isWide={true} label="Momentary, large">
+	<Cell id="switch-large-duck" label="Momentary, large">
 		<sonic-switch
 			aria-labelledby="switch-large-duck"
 			class:list={[legend, '[--sonic-switch-size:4rem]']}

@@ -1,20 +1,26 @@
 ---
 interface Props {
 	id: string;
-	isWide?: boolean;
 	label: string;
+	span?: 'full' | 'wide';
 }
 
-const { id, isWide = false, label } = Astro.props;
+const { id, label, span } = Astro.props;
 ---
 
 <div
-	class:list={['grid grid-rows-[1fr_auto] justify-items-center gap-3', { 'col-span-2': isWide }]}
+	class:list={[
+		'row-span-2 grid grid-rows-subgrid justify-items-center gap-y-3',
+		{ 'col-span-2': span === 'wide', 'col-span-full': span === 'full' },
+	]}
 >
 	<div class="flex items-center justify-center gap-2">
 		<slot />
 	</div>
-	<span class="font-mono text-[0.625rem] tracking-[0.14em] text-text-muted uppercase" id={id}>
+	<span
+		class="text-center font-mono text-[0.625rem] tracking-[0.14em] text-balance text-text-muted uppercase"
+		id={id}
+	>
 		{label}
 	</span>
 </div>

@@ -1,4 +1,6 @@
 ---
+import Play from '@lucide/astro/icons/play';
+
 import Layout from '#components/layout.astro';
 import ButtonSpecimens from '#components/specimens/button.astro';
 import DialSpecimens from '#components/specimens/dial.astro';
@@ -34,7 +36,7 @@ const demos = [
 ];
 
 const sections = [
-	{ id: 'tuner', label: 'Tuner' },
+	{ id: 'overview', label: import.meta.env.DEV ? 'Tuner' : 'Overview' },
 	{ id: 'dial', label: 'Dial' },
 	{ id: 'slider', label: 'Slider' },
 	{ id: 'button', label: 'Button' },
@@ -60,6 +62,9 @@ const sections = [
 	description="Native custom elements for audio interfaces: dials, sliders, meters, waveforms and more, skinned with tokens."
 	title="sonic-ui"
 >
+	<sonic-button aria-label="Run" data-run latching pressed slot="controls">
+		<Play aria-hidden="true" />
+	</sonic-button>
 	<header class="mb-10 grid justify-items-start gap-5">
 		<h1 class="text-[clamp(2.75rem,13vw,6rem)] leading-none text-text-strong">
 			<Wordmark />
@@ -97,7 +102,7 @@ const sections = [
 			))}
 		</ul>
 	</nav>
-	<Section id="tuner" title="Tuner">
+	<Section id="overview" title={import.meta.env.DEV ? 'Tuner' : 'Overview'}>
 		<Tuner />
 	</Section>
 	<Section id="dial" title="Dial">
@@ -162,6 +167,8 @@ const sections = [
 			import '#scripts/specimens/split.ts';
 			import '#scripts/specimens/legend.ts';
 			import '#scripts/specimens/zoom.ts';
+			import '#scripts/specimens/bracket.ts';
+			import '#scripts/specimens/preview.ts';
 			import '#scripts/buffered.ts';
 			import '#scripts/samples.ts';
 			import '#scripts/markers.ts';

@@ -1,5 +1,5 @@
 ---
-import Play from '@lucide/astro/icons/play';
+import Repeat from '@lucide/astro/icons/repeat';
 import Square from '@lucide/astro/icons/square';
 
 import Cell from '#components/specimens/cell.astro';
@@ -196,11 +196,11 @@ const titleClass =
 					></sonic-number>
 				</div>
 			</Cell>
-			<Cell id="panel-run" label="Run">
+			<Cell id="panel-loop" label="Loop">
 				<span class="sonic-ring [--sonic-ring-size:calc(2rem/0.75)]" data-ring-loop>
-					<sonic-button aria-labelledby="panel-run" data-run latching pressed>
+					<sonic-button aria-labelledby="panel-loop" latching pressed>
 						<span class="sonic-led"></span>
-						<Play aria-hidden="true" />
+						<Repeat aria-hidden="true" />
 					</sonic-button>
 				</span>
 			</Cell>

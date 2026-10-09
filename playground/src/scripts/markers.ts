@@ -40,15 +40,18 @@ function drawRuns(marker: Marker, element: HTMLElement): void {
 	);
 }
 
-const shapes: Record<string, string> = {
-	cue: 'M5 0 10 10H0Z',
-	hot: 'M5 0 10 5 5 10 0 5Z',
-};
+function drawHotCue(marker: Marker, element: HTMLElement): void {
+	const badge = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 
-function drawShape(marker: Marker, element: HTMLElement): void {
-	const path = shapes[marker.kind ?? ''] ?? 'M0 0H10V10H0Z';
+	badge.setAttribute('viewBox', '0 0 10 10');
+	badge.style.display = 'block';
+	badge.innerHTML =
+		'<rect width="10" height="10" rx="2" fill="currentcolor" /><text x="5" y="7.7" fill="#18181b" font-family="ui-monospace, monospace" font-size="7.5" font-weight="700" text-anchor="middle"></text>';
 
-	element.innerHTML = `<svg viewBox="0 0 10 10" style="display: block; fill: currentcolor"><path d="${path}" /></svg>`;
+	const letter = badge.querySelector('text');
+
+	if (letter) letter.textContent = marker.label ?? '';
+	element.replaceChildren(badge);
 }
 
 for (const control of document.querySelectorAll<SonicWaveform | SonicWavestrip>(
@@ -66,5 +69,5 @@ for (const waveform of document.querySelectorAll<SonicWaveform>(
 for (const wavestrip of document.querySelectorAll<SonicWavestrip>(
 	'sonic-wavestrip[data-marker-shapes]',
 )) {
-	wavestrip.renderMarker = drawShape;
+	wavestrip.renderMarker = drawHotCue;
 }

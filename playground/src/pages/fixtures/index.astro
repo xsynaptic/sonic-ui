@@ -235,6 +235,19 @@ import '#styles/playground.css';
 				value="150"
 			></sonic-wavestrip>
 		</div>
+		<div class="w-72" id="wavestrip-region-box">
+			<sonic-wavestrip
+				aria-label="Overview"
+				class="[--sonic-wavestrip-length:100%]"
+				data-peaks="flat"
+				id="wavestrip-region"
+				max="300"
+				step="0"
+				value="30"
+			>
+				<sonic-region aria-label="Shown above" end="180" id="region" start="120"></sonic-region>
+			</sonic-wavestrip>
+		</div>
 		<div class="flex h-24 w-72" id="wavestrip-pinned-box">
 			<sonic-wavestrip
 				aria-label="Pinned"

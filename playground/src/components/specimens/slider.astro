@@ -16,7 +16,7 @@ const faderMarks = [
 ---
 
 <SpecimenGrid>
-	<Cell id="slider-send" isWide={true} label="Send">
+	<Cell id="slider-send" label="Send" span="wide">
 		<sonic-slider
 			aria-labelledby="slider-send"
 			data-format="percent"
@@ -24,7 +24,7 @@ const faderMarks = [
 			value="40"
 		></sonic-slider>
 	</Cell>
-	<Cell id="slider-crossfader" isWide={true} label="Crossfader">
+	<Cell id="slider-crossfader" label="Crossfader" span="wide">
 		<sonic-slider
 			aria-labelledby="slider-crossfader"
 			default="0"
@@ -36,7 +36,7 @@ const faderMarks = [
 			value="-30"
 		></sonic-slider>
 	</Cell>
-	<Cell id="slider-blend" isWide={true} label="Blend">
+	<Cell id="slider-blend" label="Blend" span="wide">
 		<sonic-slider
 			aria-labelledby="slider-blend"
 			class="[--sonic-slider-size:3.25rem]"
@@ -55,7 +55,7 @@ const faderMarks = [
 			<span data-sonic-value="50">B</span>
 		</sonic-slider>
 	</Cell>
-	<Cell id="slider-modulated" isWide={true} label="Modulated">
+	<Cell id="slider-modulated" label="Modulated" span="wide">
 		<sonic-slider
 			aria-labelledby="slider-modulated"
 			data-format="percent"
@@ -64,7 +64,7 @@ const faderMarks = [
 			value="50"
 		></sonic-slider>
 	</Cell>
-	<Cell id="slider-depth" isWide={true} label="Depth">
+	<Cell id="slider-depth" label="Depth" span="wide">
 		<sonic-slider
 			aria-labelledby="slider-depth"
 			data-format="percent"
@@ -74,7 +74,7 @@ const faderMarks = [
 			value="40"
 		></sonic-slider>
 	</Cell>
-	<Cell id="slider-seek" isWide={true} label="Seek">
+	<Cell id="slider-seek" label="Seek" span="wide">
 		<sonic-slider
 			aria-labelledby="slider-seek"
 			class="[--sonic-slider-cap-ratio:0] [--sonic-slider-groove-hover-ratio:0.5] [--sonic-slider-groove-ratio:0.25] [--sonic-slider-size:1rem]"
@@ -88,7 +88,7 @@ const faderMarks = [
 			value="120"
 		></sonic-slider>
 	</Cell>
-	<Cell id="slider-strip" isWide={true} label="Strip">
+	<Cell id="slider-strip" label="Strip" span="wide">
 		<sonic-slider
 			aria-labelledby="slider-strip"
 			class="[--sonic-slider-cap-ratio:0] [--sonic-slider-groove-anchor:1] [--sonic-slider-groove-hover-ratio:0.5] [--sonic-slider-groove-radius-ratio:0] [--sonic-slider-groove-ratio:0.25] [--sonic-slider-size:1rem]"
@@ -116,7 +116,7 @@ const faderMarks = [
 			value="0"
 		></sonic-slider>
 	</Cell>
-	<Cell id="slider-scale" label="Scale">
+	<Cell id="slider-scale" label="Scale" span="wide">
 		<sonic-slider
 			aria-labelledby="slider-scale"
 			class="[--sonic-slider-length:10rem] [--sonic-slider-size:3.25rem]"
@@ -145,7 +145,7 @@ const faderMarks = [
 			value="7"
 		></sonic-slider>
 	</Cell>
-	<Cell id="slider-progress" isWide={true} label="Progress">
+	<Cell id="slider-progress" label="Progress" span="wide">
 		<sonic-slider
 			aria-labelledby="slider-progress"
 			data-buffered="0 38 52 71"
@@ -193,8 +193,8 @@ const faderMarks = [
 		></sonic-slider>
 	</Cell>
 </SpecimenGrid>
-<SpecimenGrid isLarge={true}>
-	<Cell id="slider-large-send" isWide={true} label="Send, large">
+<SpecimenGrid size="large">
+	<Cell id="slider-large-send" label="Send, large" span="wide">
 		<sonic-slider
 			aria-labelledby="slider-large-send"
 			class="[--sonic-slider-length:20rem] [--sonic-slider-size:4rem]"

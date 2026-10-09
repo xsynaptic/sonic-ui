@@ -26,14 +26,14 @@ const legend = 'font-mono uppercase';
 			<span data-sonic-value="wet">Wet</span>
 		</sonic-toggle>
 	</Cell>
-	<Cell id="toggle-assign" isWide={true} label="Assign">
+	<Cell id="toggle-assign" label="Assign">
 		<sonic-toggle aria-labelledby="toggle-assign" class={legend} value="off">
 			<span data-sonic-value="1">1</span>
 			<span data-sonic-value="off">Off</span>
 			<span data-sonic-value="2">2</span>
 		</sonic-toggle>
 	</Cell>
-	<Cell id="toggle-bypass" isWide={true} label="Lit, two colours">
+	<Cell id="toggle-bypass" label="Lit, two colours">
 		<sonic-toggle aria-labelledby="toggle-bypass" class={legend} value="a">
 			<span data-sonic-lit data-sonic-value="a">
 				A
@@ -62,7 +62,7 @@ const legend = 'font-mono uppercase';
 			<Volume2 aria-label="On" data-sonic-lit data-sonic-value="on" role="img" />
 		</sonic-toggle>
 	</Cell>
-	<Cell id="toggle-transport" isWide={true} label="Icons, three">
+	<Cell id="toggle-transport" label="Icons, three" span="wide">
 		<sonic-toggle aria-labelledby="toggle-transport" value="pause">
 			<TransportModes />
 		</sonic-toggle>
@@ -82,7 +82,7 @@ const legend = 'font-mono uppercase';
 			<span data-sonic-value="b">B</span>
 		</sonic-toggle>
 	</Cell>
-	<Cell id="toggle-cue" isWide={true} label="Momentary">
+	<Cell id="toggle-cue" label="Momentary">
 		<sonic-toggle aria-labelledby="toggle-cue" class={legend} value="off">
 			<span data-sonic-lit data-sonic-momentary data-sonic-value="cue">
 				Cue
@@ -99,7 +99,7 @@ const legend = 'font-mono uppercase';
 			</span>
 		</sonic-toggle>
 	</Cell>
-	<Cell id="toggle-position-disabled" isWide={true} label="One position disabled">
+	<Cell id="toggle-position-disabled" label="One position disabled" span="wide">
 		<sonic-toggle aria-labelledby="toggle-position-disabled" class={legend} value="off">
 			<span data-sonic-value="1">1</span>
 			<span data-sonic-value="off">Off</span>
@@ -135,7 +135,7 @@ const legend = 'font-mono uppercase';
 			orientation="vertical"
 		></sonic-toggle>
 	</Cell>
-	<Cell id="toggle-outside-loop" isWide={true} label="Legends outside">
+	<Cell id="toggle-outside-loop" label="Legends outside">
 		<sonic-toggle
 			aria-labelledby="toggle-outside-loop"
 			class={legend}
@@ -146,7 +146,7 @@ const legend = 'font-mono uppercase';
 			<span data-sonic-value="post">Post</span>
 		</sonic-toggle>
 	</Cell>
-	<Cell id="toggle-outside-assign" isWide={true} label="Outside, three">
+	<Cell id="toggle-outside-assign" label="Outside, three">
 		<sonic-toggle
 			aria-labelledby="toggle-outside-assign"
 			class={legend}
@@ -162,7 +162,7 @@ const legend = 'font-mono uppercase';
 			</span>
 		</sonic-toggle>
 	</Cell>
-	<Cell id="toggle-outside-disabled" isWide={true} label="Outside, one disabled">
+	<Cell id="toggle-outside-disabled" label="Outside, one disabled" span="wide">
 		<sonic-toggle
 			aria-labelledby="toggle-outside-disabled"
 			class={legend}
@@ -189,7 +189,7 @@ const legend = 'font-mono uppercase';
 			<span data-sonic-value="down">Down</span>
 		</sonic-toggle>
 	</Cell>
-	<Cell id="toggle-outside-vertical-loop" label="Outside, vertical, two">
+	<Cell id="toggle-outside-vertical-loop" label="Outside, two">
 		<sonic-toggle
 			aria-labelledby="toggle-outside-vertical-loop"
 			class={legend}
@@ -202,8 +202,8 @@ const legend = 'font-mono uppercase';
 		</sonic-toggle>
 	</Cell>
 </SpecimenGrid>
-<SpecimenGrid isLarge={true}>
-	<Cell id="toggle-large-assign" isWide={true} label="Assign, large">
+<SpecimenGrid size="large">
+	<Cell id="toggle-large-assign" label="Assign, large">
 		<sonic-toggle
 			aria-labelledby="toggle-large-assign"
 			class:list={[legend, '[--sonic-toggle-size:4rem]']}

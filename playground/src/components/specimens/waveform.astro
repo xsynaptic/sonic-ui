@@ -106,9 +106,9 @@ const waveforms = [
 ];
 ---
 
-<SpecimenGrid isLarge={true}>
+<SpecimenGrid size="wide">
 	{waveforms.map((waveform) => (
-		<Cell id={waveform.id} isWide={true} label={waveform.label}>
+		<Cell id={waveform.id} label={waveform.label}>
 			<div class:list={[waveform.hasGlass && 'sonic-screen', waveform.screenClass]}>
 				<sonic-waveform
 					aria-labelledby={waveform.id}
@@ -138,7 +138,7 @@ const waveforms = [
 			</div>
 		</Cell>
 	))}
-	<Cell id="waveform-zoom" isWide={true} label="Zoom">
+	<Cell id="waveform-zoom" label="Zoom">
 		<div class="flex flex-col items-center gap-2 sm:flex-row" data-zoom-specimen>
 			<sonic-waveform
 				aria-labelledby="waveform-zoom"

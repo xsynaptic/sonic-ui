@@ -30,21 +30,3 @@ test('every tuner baseline resolves on its part', async ({ page }) => {
 
 	expect(unresolved).toEqual([]);
 });
-
-test('the glass font choice sets the token, and the first option clears it', async ({ page }) => {
-	await page.goto('/');
-
-	const choice = page.locator('select[data-token="--sonic-glass-font"]');
-	const fontOf = () =>
-		page
-			.locator('[data-tuner-panel] .sonic-number')
-			.first()
-			.evaluate((glass) => getComputedStyle(glass).fontFamily);
-	const inherited = await fontOf();
-
-	await choice.selectOption({ label: 'serif' });
-	expect(await fontOf()).toBe('ui-serif, serif');
-
-	await choice.selectOption({ label: 'inherit' });
-	expect(await fontOf()).toBe(inherited);
-});

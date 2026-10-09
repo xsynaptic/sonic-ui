@@ -233,7 +233,7 @@ export abstract class SonicElement extends HTMLElement {
 			if (__DEV__)
 				checkChildren(
 					this,
-					[...this.childNodes].filter((child) => child !== control),
+					[...this.childNodes].filter((child) => child !== control && !this.usesChild(child)),
 				);
 		};
 		const observer = new MutationObserver(keep);
@@ -296,6 +296,10 @@ export abstract class SonicElement extends HTMLElement {
 			Reflect.deleteProperty(this, name);
 			this[name] = value;
 		}
+	}
+
+	protected usesChild(_child: Node): boolean {
+		return false;
 	}
 
 	// Once a class; a sheet that is missing has already said why the control looks wrong

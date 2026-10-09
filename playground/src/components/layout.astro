@@ -69,7 +69,8 @@ const linkClass =
 					</a>
 				</li>
 			</ul>
-			<div class="ms-auto flex flex-wrap items-center gap-x-3 gap-y-2 font-mono [--sonic-segmented-size:1.75rem]">
+			<div class="ms-auto flex flex-wrap items-center gap-x-3 gap-y-2 font-mono [--sonic-button-size:1.75rem] [--sonic-segmented-size:1.75rem]">
+				<slot name="controls" />
 				<sonic-segmented aria-label="Skin" data-skin-choice value="default">
 					{skins.map((skin) => (
 						<span data-sonic-value={skin}>{skin}</span>

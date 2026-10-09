@@ -4,7 +4,7 @@ import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 ---
 
 <SpecimenGrid>
-	<Cell id="number-tempo" isWide={true} label="Tempo">
+	<Cell id="number-tempo" label="Tempo">
 		<div class="sonic-screen w-fit [font-family:var(--sonic-glass-font,var(--font-mono))] [--sonic-screen-inset-ratio:0] [--sonic-screen-size:1.75rem]">
 			<sonic-number
 				aria-labelledby="number-tempo"
@@ -17,7 +17,7 @@ import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 			></sonic-number>
 		</div>
 	</Cell>
-	<Cell id="number-frequency" isWide={true} label="Frequency">
+	<Cell id="number-frequency" label="Frequency">
 		<div class="sonic-screen w-fit [font-family:var(--sonic-glass-font,var(--font-mono))] [--sonic-screen-inset-ratio:0] [--sonic-screen-size:1.75rem]">
 			<sonic-number
 				aria-labelledby="number-frequency"
@@ -29,7 +29,7 @@ import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 			></sonic-number>
 		</div>
 	</Cell>
-	<Cell id="number-transpose" isWide={true} label="Transpose">
+	<Cell id="number-transpose" label="Transpose">
 		<div class="sonic-screen w-fit [font-family:var(--sonic-glass-font,var(--font-mono))] [--sonic-screen-inset-ratio:0] [--sonic-screen-size:1.75rem]">
 			<sonic-number
 				aria-labelledby="number-transpose"
@@ -42,7 +42,7 @@ import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 			></sonic-number>
 		</div>
 	</Cell>
-	<Cell id="number-loop" isWide={true} label="Loop">
+	<Cell id="number-loop" label="Loop">
 		<div class="sonic-screen w-fit [font-family:var(--sonic-glass-font,var(--font-mono))] [--sonic-screen-inset-ratio:0] [--sonic-screen-size:1.75rem]">
 			<sonic-number
 				aria-labelledby="number-loop"
@@ -52,7 +52,7 @@ import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 			></sonic-number>
 		</div>
 	</Cell>
-	<Cell id="number-note" isWide={true} label="Note">
+	<Cell id="number-note" label="Note">
 		<div class="sonic-screen w-fit [font-family:var(--sonic-glass-font,var(--font-mono))] [--sonic-screen-inset-ratio:0] [--sonic-screen-size:1.75rem]">
 			<sonic-number
 				aria-labelledby="number-note"
@@ -62,7 +62,7 @@ import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 			></sonic-number>
 		</div>
 	</Cell>
-	<Cell id="number-disabled" isWide={true} label="Disabled">
+	<Cell id="number-disabled" label="Disabled">
 		<div class="sonic-screen w-fit [font-family:var(--sonic-glass-font,var(--font-mono))] [--sonic-screen-inset-ratio:0] [--sonic-screen-size:1.75rem]">
 			<sonic-number
 				aria-labelledby="number-disabled"
@@ -73,8 +73,8 @@ import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 		</div>
 	</Cell>
 </SpecimenGrid>
-<SpecimenGrid isLarge={true}>
-	<Cell id="number-large-tempo" isWide={true} label="Tempo, large">
+<SpecimenGrid size="large">
+	<Cell id="number-large-tempo" label="Tempo, large">
 		<div class="sonic-screen w-fit [font-family:var(--sonic-glass-font,var(--font-mono))] [--sonic-screen-inset-ratio:0] [--sonic-screen-size:3.5rem]">
 			<sonic-number
 				aria-labelledby="number-large-tempo"

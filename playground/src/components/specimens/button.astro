@@ -38,7 +38,7 @@ const hotCues = ['oklch(76.9% 0.165 70deg)', '#22c55e', '#38bdf8', '#e879f9'];
 			<span class="sonic-led"></span>
 		</sonic-button>
 	</Cell>
-	<Cell id="button-hot-cues" isWide={true} label="Hot cues">
+	<Cell id="button-hot-cues" label="Hot cues" span="wide">
 		{hotCues.map((colour, index) => (
 			<sonic-button
 				aria-label={`Hot cue ${String(index + 1)}`}
@@ -52,7 +52,7 @@ const hotCues = ['oklch(76.9% 0.165 70deg)', '#22c55e', '#38bdf8', '#e879f9'];
 			</sonic-button>
 		))}
 	</Cell>
-	<Cell id="button-labels" isWide={true} label="Labels">
+	<Cell id="button-labels" label="Labels" span="wide">
 		<sonic-button latching pressed>
 			<span>Shuffle</span>
 		</sonic-button>
@@ -101,7 +101,7 @@ const hotCues = ['oklch(76.9% 0.165 70deg)', '#22c55e', '#38bdf8', '#e879f9'];
 			<ListMusic aria-hidden="true" />
 		</sonic-button>
 	</Cell>
-	<Cell id="button-busy-delay" label="Loading, after 400ms">
+	<Cell id="button-busy-delay" label="Loads after 400ms">
 		<sonic-button
 			aria-labelledby="button-busy-delay"
 			busy
@@ -119,7 +119,7 @@ const hotCues = ['oklch(76.9% 0.165 70deg)', '#22c55e', '#38bdf8', '#e879f9'];
 		</sonic-button>
 	</Cell>
 </SpecimenGrid>
-<SpecimenGrid isLarge={true}>
+<SpecimenGrid size="large">
 	<Cell id="button-large-play" label="Play, large">
 		<sonic-button aria-labelledby="button-large-play" class="[--sonic-button-size:6rem]">
 			<Play aria-hidden="true" />

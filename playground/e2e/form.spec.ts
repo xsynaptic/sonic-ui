@@ -164,6 +164,8 @@ test(
 			['touch.x', '40'],
 			['touch.y', '60'],
 			['position', '150'],
+			['loop.start', '60'],
+			['loop.end', '90'],
 			['detail', '90'],
 		];
 
@@ -180,7 +182,8 @@ test(
 		await page.getByRole('radio', { name: 'Out' }).click();
 		await page.locator('#touch [data-sonic-axis="x"]').press('ArrowUp');
 		await page.locator('#touch [data-sonic-axis="y"]').press('ArrowRight');
-		await page.locator('#position .sonic-wavestrip').press('ArrowRight');
+		await page.locator('#position .sonic-wavestrip-canvas').press('ArrowRight');
+		await page.locator('#position .sonic-region').press('ArrowRight');
 		await page.locator('#detail .sonic-waveform').press('ArrowLeft');
 
 		expect(await readFormData(page)).toEqual([
@@ -197,6 +200,8 @@ test(
 			['touch.x', '45'],
 			['touch.y', '61'],
 			['position', '155'],
+			['loop.start', '65'],
+			['loop.end', '95'],
 			['detail', '88'],
 		]);
 
@@ -216,7 +221,7 @@ test(
 			[page.getByRole('radio', { exact: true, name: 'In' }), 'aria-checked', 'true'],
 			[page.locator('#touch [data-sonic-axis="x"]'), 'aria-valuenow', '40'],
 			[page.locator('#touch [data-sonic-axis="y"]'), 'aria-valuenow', '60'],
-			[page.locator('#position .sonic-wavestrip'), 'aria-valuenow', '150'],
+			[page.locator('#position .sonic-wavestrip-canvas'), 'aria-valuenow', '150'],
 			[page.locator('#detail .sonic-waveform'), 'aria-valuenow', '90'],
 		] as const) {
 			await expect(control).toHaveAttribute(name, value);
@@ -316,14 +321,15 @@ test('back navigation restores what each control held, never what another held',
 	if (browserName !== 'firefox') expect(held).toEqual(changed);
 });
 
-test('back navigation restores an XY pad, a bare switch and toggle, a number box and both wave controls', async ({
+test('back navigation restores an XY pad, a bare switch and toggle, a number box, both wave controls and a region', async ({
 	browserName,
 	page,
 }) => {
 	const reads = {
 		detail: ['#detail .sonic-waveform', 'aria-valuenow'],
 		link: ['#link [role="switch"]', 'aria-checked'],
-		position: ['#position .sonic-wavestrip', 'aria-valuenow'],
+		loop: ['#position .sonic-region', 'aria-valuenow'],
+		position: ['#position .sonic-wavestrip-canvas', 'aria-valuenow'],
 		sync: ['#sync [role="switch"]', 'aria-checked'],
 		tempo: ['#tempo .sonic-number', 'aria-valuenow'],
 		touchX: ['#touch [data-sonic-axis="x"]', 'aria-valuenow'],
@@ -332,6 +338,7 @@ test('back navigation restores an XY pad, a bare switch and toggle, a number box
 	const original = {
 		detail: '90',
 		link: 'false',
+		loop: '60',
 		position: '150',
 		sync: 'false',
 		tempo: '120',
@@ -341,6 +348,7 @@ test('back navigation restores an XY pad, a bare switch and toggle, a number box
 	const changed = {
 		detail: '92',
 		link: 'true',
+		loop: '65',
 		position: '155',
 		sync: 'true',
 		tempo: '120.5',
@@ -351,7 +359,8 @@ test('back navigation restores an XY pad, a bare switch and toggle, a number box
 	await page.locator('#tempo .sonic-number').press('ArrowUp');
 	await page.locator('#touch [data-sonic-axis="x"]').press('ArrowRight');
 	await page.locator('#touch [data-sonic-axis="x"]').press('ArrowUp');
-	await page.locator('#position .sonic-wavestrip').press('ArrowRight');
+	await page.locator('#position .sonic-wavestrip-canvas').press('ArrowRight');
+	await page.locator('#position .sonic-region').press('ArrowRight');
 	await page.locator('#detail .sonic-waveform').press('ArrowRight');
 	await page.locator('#sync [role="switch"]').click();
 	await page.locator('#link [role="switch"]').click();
@@ -359,7 +368,16 @@ test('back navigation restores an XY pad, a bare switch and toggle, a number box
 	await page.goBack();
 	await expect(page.locator('#tempo .sonic-number')).toHaveAttribute('aria-valuenow');
 
-	const controls = ['detail', 'link', 'position', 'sync', 'tempo', 'touchX', 'touchY'] as const;
+	const controls = [
+		'detail',
+		'link',
+		'loop',
+		'position',
+		'sync',
+		'tempo',
+		'touchX',
+		'touchY',
+	] as const;
 	const held = Object.fromEntries(
 		await Promise.all(
 			controls.map(async (control) => {

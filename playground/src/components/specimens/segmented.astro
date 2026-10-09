@@ -6,17 +6,17 @@ import TransportModes from '#components/specimens/transport-modes.astro';
 ---
 
 <SpecimenGrid>
-	<Cell id="segmented-filter" isWide={true} label="Filter mode">
+	<Cell id="segmented-filter" label="Filter mode" span="wide">
 		<sonic-segmented aria-labelledby="segmented-filter" class="font-mono" value="lp">
 			<FilterModes hasNotch={true} />
 		</sonic-segmented>
 	</Cell>
-	<Cell id="segmented-transport" isWide={true} label="Transport">
+	<Cell id="segmented-transport" label="Transport" span="wide">
 		<sonic-segmented aria-labelledby="segmented-transport" value="play">
 			<TransportModes />
 		</sonic-segmented>
 	</Cell>
-	<Cell id="segmented-option-disabled" isWide={true} label="One option disabled">
+	<Cell id="segmented-option-disabled" label="One option disabled" span="wide">
 		<sonic-segmented aria-labelledby="segmented-option-disabled" class="font-mono" value="lp">
 			<span data-sonic-value="lp">LP</span>
 			<span data-sonic-disabled data-sonic-value="bp">
@@ -25,14 +25,14 @@ import TransportModes from '#components/specimens/transport-modes.astro';
 			<span data-sonic-value="hp">HP</span>
 		</sonic-segmented>
 	</Cell>
-	<Cell id="segmented-disabled" isWide={true} label="Disabled">
+	<Cell id="segmented-disabled" label="Disabled">
 		<sonic-segmented aria-labelledby="segmented-disabled" class="font-mono" disabled value="bp">
 			<FilterModes hasNotch={false} />
 		</sonic-segmented>
 	</Cell>
 </SpecimenGrid>
-<SpecimenGrid isLarge={true}>
-	<Cell id="segmented-large-filter" isWide={true} label="Filter mode, large">
+<SpecimenGrid size="large">
+	<Cell id="segmented-large-filter" label="Filter mode, large" span="wide">
 		<sonic-segmented
 			aria-labelledby="segmented-large-filter"
 			class="font-mono [--sonic-segmented-size:4rem]"
@@ -41,7 +41,7 @@ import TransportModes from '#components/specimens/transport-modes.astro';
 			<FilterModes hasNotch={true} />
 		</sonic-segmented>
 	</Cell>
-	<Cell id="segmented-large-transport" isWide={true} label="Transport, large">
+	<Cell id="segmented-large-transport" label="Transport, large" span="wide">
 		<sonic-segmented
 			aria-labelledby="segmented-large-transport"
 			class="[--sonic-segmented-size:4rem]"

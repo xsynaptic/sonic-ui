@@ -9,9 +9,9 @@ const spectrums = [
 ];
 ---
 
-<SpecimenGrid isLarge={true}>
+<SpecimenGrid size="wide">
 	{spectrums.map((spectrum) => (
-		<Cell id={spectrum.id} isWide={true} label={spectrum.label}>
+		<Cell id={spectrum.id} label={spectrum.label}>
 			<div
 				aria-labelledby={spectrum.id}
 				class:list={[spectrum.hasGlass && 'sonic-screen']}

@@ -1,10 +1,12 @@
-import type { SonicWaveform } from '@xsynaptic/sonic-ui';
+import type { SonicButton, SonicWaveform } from '@xsynaptic/sonic-ui';
 
 import { frameLoop } from '#scripts/frame-loop.ts';
 import { readRegions } from '#scripts/read-regions.ts';
 import { emptyLevels, fillLevels, framesPerSecond, minDecibels } from '#scripts/seeded-bands.ts';
 import { seededPeaks } from '#scripts/seeded-peaks.ts';
 import { emptySamples, fillSamples, pairsPerSecond } from '#scripts/seeded-samples.ts';
+
+const run = document.querySelector<SonicButton>('[data-run]');
 
 function play(waveform: SonicWaveform): void {
 	let position = waveform.value;
@@ -15,6 +17,8 @@ function play(waveform: SonicWaveform): void {
 		position = waveform.value;
 	});
 	frameLoop((elapsedSeconds, time) => {
+		if (run?.pressed === false) return;
+
 		position += elapsedSeconds * waveform.playbackRate;
 		if (position >= waveform.max) position = waveform.min;
 		if (time - reported < 250) return;

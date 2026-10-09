@@ -53,7 +53,7 @@ const modes = [
 		</sonic-split>
 	</div>
 </SpecimenGrid>
-<SpecimenGrid isLarge={true}>
+<SpecimenGrid size="large">
 	<sonic-split
 		aria-label="Mixed members"
 		class="col-span-full flex flex-wrap items-end justify-center gap-8"
@@ -62,7 +62,7 @@ const modes = [
 		<Cell id="split-dial" label="Dial">
 			<sonic-dial aria-labelledby="split-dial" readout value="60"></sonic-dial>
 		</Cell>
-		<Cell id="split-slider" isWide={true} label="Slider">
+		<Cell id="split-slider" label="Slider" span="wide">
 			<sonic-slider aria-labelledby="split-slider" readout value="50"></sonic-slider>
 		</Cell>
 		<Cell id="split-number" label="Number box">

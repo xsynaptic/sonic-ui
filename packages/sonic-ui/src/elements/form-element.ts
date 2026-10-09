@@ -80,6 +80,23 @@ export abstract class SonicFormElement extends SonicElement {
 
 	protected abstract restoreState(state: string): void;
 
+	protected writeFormFields(fields: ReadonlyArray<[string, number]>, state: string): void {
+		const { name } = this;
+
+		if (name === '') {
+			// eslint-disable-next-line unicorn/no-null -- `null` submits nothing
+			this.writeFormValue(null, state);
+			return;
+		}
+
+		const data = new FormData();
+
+		for (const [field, value] of fields) {
+			data.set(`${name}.${field}`, String(value));
+		}
+		this.writeFormValue(data, state);
+	}
+
 	protected writeFormValue(value: FormData | null | string, state: string): void {
 		this.internals?.setFormValue(value, `${this.localName}:${state}`);
 	}

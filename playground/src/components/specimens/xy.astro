@@ -3,7 +3,7 @@ import Cell from '#components/specimens/cell.astro';
 import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 ---
 
-<SpecimenGrid isLarge={true}>
+<SpecimenGrid size="large">
 	<Cell id="xy-plain" label="Plain">
 		<sonic-xy aria-labelledby="xy-plain" x="30" y="60"></sonic-xy>
 	</Cell>
@@ -75,8 +75,8 @@ import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 		></sonic-xy>
 	</Cell>
 </SpecimenGrid>
-<SpecimenGrid isLarge={true}>
-	<Cell id="xy-large" isWide={true} label="Large">
+<SpecimenGrid size="large">
+	<Cell id="xy-large" label="Large" span="wide">
 		<sonic-xy aria-labelledby="xy-large" class="[--sonic-xy-size:14rem]" x="40" y="70"></sonic-xy>
 	</Cell>
 </SpecimenGrid>

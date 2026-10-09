@@ -25,6 +25,7 @@ declare global {
 
 interface HoverBinding {
 	canShow?: () => boolean;
+	changed?: () => void;
 	place: () => void;
 	valueAt: (event: PointerEvent) => number | undefined;
 }
@@ -416,6 +417,7 @@ export abstract class SonicValueElement extends SonicFormElement {
 				},
 			},
 			control,
+			this.focusTarget(),
 		);
 		this.#gestures.bind(signal, grab);
 		control.addEventListener(
@@ -430,13 +432,14 @@ export abstract class SonicValueElement extends SonicFormElement {
 	protected bindHover(
 		control: HTMLElement,
 		signal: AbortSignal,
-		{ canShow = () => true, place, valueAt }: HoverBinding,
+		{ canShow = () => true, changed, place, valueAt }: HoverBinding,
 	): void {
 		this.#hover = bindHoverPreview(
 			control,
 			{
 				canShow,
 				changed: () => {
+					changed?.();
 					this.dispatchEvent(new Event('sonic-hover', { bubbles: true }));
 				},
 				dismiss: () => {
@@ -535,6 +538,10 @@ export abstract class SonicValueElement extends SonicFormElement {
 		};
 	}
 
+	protected spokenText(value: number): string | undefined {
+		return (this.#formatSpokenValue ?? this.#formatValue ?? this.notation.speak)?.(value);
+	}
+
 	protected springTarget(): number | undefined {
 		return undefined;
 	}
@@ -594,11 +601,7 @@ export abstract class SonicValueElement extends SonicFormElement {
 		writeAttribute(control, 'aria-valuemax', String(high));
 		writeAttribute(control, 'aria-valuenow', String(this.#spokenNow()));
 		if (orientation) writeAttribute(control, 'aria-orientation', orientation);
-		writeAttribute(
-			control,
-			'aria-valuetext',
-			(this.#formatSpokenValue ?? this.#formatValue ?? this.notation.speak)?.(this.#spokenNow()),
-		);
+		writeAttribute(control, 'aria-valuetext', this.spokenText(this.#spokenNow()));
 		this.forwardNaming(control, true);
 		this.#renderDisabled(control);
 		this.renderReadout();

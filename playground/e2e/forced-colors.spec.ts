@@ -55,7 +55,8 @@ async function paintOf(
 const focusable = [
 	'.sonic-dial',
 	'.sonic-slider',
-	'.sonic-wavestrip',
+	'.sonic-wavestrip-canvas',
+	'.sonic-region',
 	'.sonic-waveform',
 	'.sonic-number',
 	'.sonic-button',
@@ -491,7 +492,8 @@ test('each focusable element focused by a key paints its outline outside its box
 		['a bare switch', '#sync .sonic-switch-position'],
 		['a toggle position', '#route .sonic-toggle-position[tabindex="0"]'],
 		['a toggle with no positions', '#link .sonic-toggle-position'],
-		['a wavestrip', '#wavestrip .sonic-wavestrip'],
+		['a wavestrip', '#wavestrip .sonic-wavestrip-canvas'],
+		['a region', '#wavestrip-region .sonic-region'],
 		['a waveform', '#waveform .sonic-waveform'],
 		['an XY part', '#xy [data-sonic-axis="x"]'],
 	] as const) {
