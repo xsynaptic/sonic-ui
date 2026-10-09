@@ -1,5 +1,11 @@
 @layer sonic.material, sonic.control;
 
+@property --_sonic-region-bracket-width {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 1px;
+}
+
 @layer sonic.control {
 	sonic-region {
 		display: none;

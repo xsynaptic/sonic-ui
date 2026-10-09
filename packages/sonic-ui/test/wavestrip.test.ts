@@ -1142,3 +1142,20 @@ test('the spoken clock is given the value spoken-step rounded', () => {
 
 	expect(canvas.getAttribute('aria-valuetext')).toBe('1 minute, 25 seconds');
 });
+
+test('the spoken formatter runs once per spoken value, and never for a region layer with no regions', () => {
+	installCanvasFakes();
+
+	const { canvas, wavestrip } = mountWavestrip('max="300" step="0" spoken-step="1" value="0"');
+	const format = vi.fn((seconds: number) => `${String(seconds)} seconds`);
+
+	wavestrip.formatSpokenValue = format;
+	format.mockClear();
+	for (let write = 1; write <= 100; write += 1) wavestrip.value = write * 0.25;
+
+	expect(format).toHaveBeenCalledTimes(25);
+	expect(canvas.getAttribute('aria-valuetext')).toBe('25 seconds');
+
+	wavestrip.formatSpokenValue = (seconds) => `${String(seconds)} s`;
+	expect(canvas.getAttribute('aria-valuetext')).toBe('25 s');
+});

@@ -4,6 +4,12 @@
 	initial-value: 24px;
 }
 
+@property --_sonic-readout-shine-width {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 1px;
+}
+
 @layer sonic.material {
 	:is(.sonic-dial, .sonic-envelope, .sonic-slider, .sonic-waveform, .sonic-wavestrip, .sonic-xy) {
 		--_sonic-readout-size: var(--sonic-readout-size, 1.5rem);
@@ -26,8 +32,10 @@
 		--_sonic-glass-own: var(--sonic-readout-glass);
 		--_sonic-glass-edge-colour-own: var(--sonic-readout-edge);
 		--_sonic-glass-edge-width-own: var(--sonic-readout-edge-width);
+		--_sonic-readout-shine-width: max(1px, round(var(--_sonic-unit), var(--_sonic-snap)));
 
 		box-sizing: border-box;
+		display: none;
 		place-items: center;
 		min-inline-size: calc(1.75 * var(--_sonic-readout-size));
 		block-size: var(--_sonic-readout-size);
@@ -55,7 +63,7 @@
 		box-shadow:
 			calc(2 * var(--_sonic-cast-x)) calc(2 * var(--_sonic-cast-y)) calc(6 * var(--_sonic-unit))
 				color-mix(in srgb, var(--_sonic-shade) calc(55% * var(--_sonic-readout-depth)), transparent),
-			inset 0 0 0 max(1px, round(var(--_sonic-unit), var(--_sonic-snap)))
+			inset 0 0 0 var(--_sonic-readout-shine-width)
 				color-mix(in srgb, var(--_sonic-shine) calc(8% * var(--_sonic-readout-depth)), transparent);
 		opacity: 0;
 		translate: 0 calc(0.15 * var(--_sonic-readout-size));

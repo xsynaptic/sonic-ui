@@ -108,6 +108,12 @@
 	initial-value: rgb(200 200 208);
 }
 
+@property --_sonic-waveform-line {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 1px;
+}
+
 @layer sonic.control {
 	:is(sonic-waveform, .sonic-waveform) {
 		--_sonic-waveform-size: var(--sonic-waveform-size, 6rem);

@@ -18,10 +18,7 @@ const atFloor = {
 const aboveFloor = {
 	// A readout appears without its fade
 	ignoreAtRules: ['starting-style'],
-	ignoreFunctions: [
-		// Edges and insets are not snapped to the pixel grid, nor a meter's segments to its pitch
-		'round',
-	],
+	ignoreFunctions: ['round'],
 	ignoreProperties: {
 		// Prefixed at build
 		'/^mask(-composite|-image|-repeat)?$/': anyValue,

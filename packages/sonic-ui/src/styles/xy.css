@@ -6,6 +6,18 @@
 	initial-value: 128px;
 }
 
+@property --_sonic-xy-line {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 1px;
+}
+
+@property --_sonic-xy-puck-ring-width {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 2px;
+}
+
 @layer sonic.control {
 	:is(sonic-xy, .sonic-xy) {
 		--_sonic-xy-size: var(--sonic-xy-size, 8rem);
@@ -165,7 +177,7 @@
 	}
 
 	@media (hover: hover) {
-		:not(:disabled, :state(dragging)) > .sonic-xy > .sonic-xy-puck:hover {
+		:not(:disabled, :is(:state(dragging))) > .sonic-xy > .sonic-xy-puck:hover {
 			--_sonic-xy-puck-fill: var(--_sonic-xy-puck-lift);
 		}
 	}

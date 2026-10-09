@@ -443,7 +443,7 @@
 
 	@media (prefers-reduced-motion: reduce) {
 		.sonic-toggle,
-		:state(dragging) > .sonic-toggle,
+		:is(:state(dragging)) > .sonic-toggle,
 		.sonic-toggle-well,
 		.sonic-toggle-cap,
 		.sonic-toggle-legend {

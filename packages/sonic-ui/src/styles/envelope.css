@@ -6,6 +6,12 @@
 	initial-value: 80px;
 }
 
+@property --_sonic-point-edge {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 1px;
+}
+
 @layer sonic.control {
 	:is(sonic-envelope, .sonic-envelope) {
 		--_sonic-envelope-size: var(--sonic-envelope-size, 5rem);

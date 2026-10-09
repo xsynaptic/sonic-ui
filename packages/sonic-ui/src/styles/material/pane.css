@@ -1,3 +1,9 @@
+@property --_sonic-glass-pitch {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 2px;
+}
+
 @keyframes sonic-glass-breathe {
 	to {
 		opacity: calc(0.4 * min(1, var(--_sonic-glass-texture)));

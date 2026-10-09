@@ -225,7 +225,7 @@
 		--_sonic-slider-scale-band: calc(var(--_sonic-slider-size) * var(--_sonic-slider-scale-ratio));
 	}
 
-	[groove-press='none']:not(:state(dragging)) > .sonic-slider {
+	[groove-press='none']:not(:is(:state(dragging))) > .sonic-slider {
 		cursor: default;
 	}
 

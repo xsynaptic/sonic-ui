@@ -121,6 +121,7 @@ export class RegionLayer {
 	}
 
 	follow(): void {
+		if (this.#drawn.length === 0) return;
 		if (this.#stripKey() !== this.#key) this.render();
 	}
 

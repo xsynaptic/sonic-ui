@@ -72,6 +72,12 @@
 	initial-value: 0;
 }
 
+@property --_sonic-marker-edge {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 1px;
+}
+
 @property --_sonic-marker-step {
 	syntax: '<length>';
 	inherits: true;

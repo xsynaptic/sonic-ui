@@ -333,6 +333,11 @@ export abstract class SonicValueElement extends SonicFormElement {
 
 	#readout: undefined | { anchor: HTMLElement; bubble: Readout };
 
+	// A host's formatter may be costly, so it runs only when the spoken value or the formatter changes
+	#said:
+		| undefined
+		| { format: ((value: number) => string) | undefined; text: string | undefined; value: number };
+
 	attributeChangedCallback(name: string): void {
 		if (name === 'value' && this.#isHeld()) {
 			this.#writeHeld(this.numberAttribute('value', this.min));
@@ -601,7 +606,7 @@ export abstract class SonicValueElement extends SonicFormElement {
 		writeAttribute(control, 'aria-valuemax', String(high));
 		writeAttribute(control, 'aria-valuenow', String(this.#spokenNow()));
 		if (orientation) writeAttribute(control, 'aria-orientation', orientation);
-		writeAttribute(control, 'aria-valuetext', this.spokenText(this.#spokenNow()));
+		writeAttribute(control, 'aria-valuetext', this.#spokenValueText());
 		this.forwardNaming(control, true);
 		this.#renderDisabled(control);
 		this.renderReadout();
@@ -669,6 +674,19 @@ export abstract class SonicValueElement extends SonicFormElement {
 		return step !== undefined && step > 0
 			? trimFloat(Math.round(this.#model.value / step) * step)
 			: this.#model.value;
+	}
+
+	#spokenValueText(): string | undefined {
+		const format = this.#formatSpokenValue ?? this.#formatValue ?? this.notation.speak;
+		const value = this.#spokenNow();
+		const said = this.#said;
+		if (said && said.format === format && said.value === value) return said.text;
+
+		const text = format?.(value);
+
+		this.#said = { format, text, value };
+
+		return text;
 	}
 
 	#textFor(value: number): string {
