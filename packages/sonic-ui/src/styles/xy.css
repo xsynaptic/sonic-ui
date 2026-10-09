@@ -122,7 +122,7 @@
 		}
 	}
 
-	:is(.sonic-xy-bracket, .sonic-xy-puck) {
+	:is(.sonic-xy-reticle, .sonic-xy-puck) {
 		position: absolute;
 		inset: auto auto calc(var(--_sonic-xy-y, 0) * var(--_sonic-xy-travel-y))
 			calc(var(--_sonic-xy-x, 0) * var(--_sonic-xy-travel-x));
@@ -131,8 +131,8 @@
 		border-radius: 50%;
 	}
 
-	.sonic-xy-bracket {
-		--_sonic-bracket-size: var(--_sonic-xy-puck);
+	.sonic-xy-reticle {
+		--_sonic-reticle-size: var(--_sonic-xy-puck);
 	}
 
 	.sonic-xy-puck {

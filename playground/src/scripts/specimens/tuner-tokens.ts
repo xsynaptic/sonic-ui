@@ -180,7 +180,7 @@ export const tokenGroups: Array<TokenGroup> = [
 			range('gap', '--sonic-wavestrip-bar-gap-ratio', [0, 0.8, 0.01]),
 			range('bar corner', '--sonic-wavestrip-bar-radius-ratio', [0, 0.5, 0.01]),
 			range('marker', '--sonic-wavestrip-marker-ratio', [0.04, 0.3, 0.005]),
-			colour('wave', '--sonic-wave', { resolved: '--_sonic-wavestrip-wave' }),
+			colour('unplayed', '--sonic-unplayed', { resolved: '--_sonic-wavestrip-wave' }),
 			colour('scrub', '--sonic-scrub', { resolved: '--_sonic-wavestrip-scrub' }),
 			range('cancel zone', '--sonic-cancel-zone', [0, 120, 4, 'px']),
 		],

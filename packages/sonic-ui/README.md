@@ -75,11 +75,12 @@ A skin is one rule that sets tokens on a class; copy `dist/skins/flat.css` to st
 | --------------- | ----------------------------------------------- |
 | `button.css`    | core, cap, well, keycap                         |
 | `dial.css`      | core, cap, glass, readout, value, arc, scale    |
-| `envelope.css`  | core, glass, readout, bracket                   |
+| `envelope.css`  | core, glass, readout, reticle                   |
 | `led.css`       | core, lens                                      |
 | `meter.css`     | core, lens, groove                              |
 | `number.css`    | core, cap, value                                |
 | `panel.css`     | core                                            |
+| `region.css`    | core, cap                                       |
 | `ring.css`      | core, arc                                       |
 | `screen.css`    | core, glass, pane, well                         |
 | `segmented.css` | core, cap, well, keycap                         |
@@ -89,7 +90,7 @@ A skin is one rule that sets tokens on a class; copy `dist/skins/flat.css` to st
 | `toggle.css`    | core, cap, well, keycap                         |
 | `waveform.css`  | core, cap, glass, readout, value                |
 | `wavestrip.css` | core, cap, glass, readout, value                |
-| `xy.css`        | core, cap, glass, readout, bracket              |
+| `xy.css`        | core, cap, glass, readout, reticle              |
 
 An LED inside a control also needs `led.css`, and a button inside a ring needs `button.css`. Only a missing `core.css` or control sheet is warned about, so check a control that draws wrong against this table.
 

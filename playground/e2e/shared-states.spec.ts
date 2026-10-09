@@ -126,7 +126,7 @@ test('the focus radius rounds the focus of a box with no corner, a toggle positi
 		'.sonic-slider',
 		'.sonic-switch-position',
 		'.sonic-waveform',
-		'.sonic-wavestrip',
+		'.sonic-wavestrip-canvas',
 	]) {
 		await expect(page.locator(selector).first(), selector).toHaveCSS(
 			'border-top-left-radius',

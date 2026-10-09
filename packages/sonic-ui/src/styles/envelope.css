@@ -55,11 +55,11 @@
 		clip-path: inset(calc(-1 * var(--_sonic-envelope-inset)));
 	}
 
-	.sonic-envelope-bracket {
+	.sonic-envelope-reticle {
 		--_sonic-point-size: calc(
 			2 * var(--_sonic-envelope-size) * var(--_sonic-envelope-handle-ratio)
 		);
-		--_sonic-bracket-size: var(--_sonic-point-size);
+		--_sonic-reticle-size: var(--_sonic-point-size);
 
 		position: absolute;
 		inset: 0;
@@ -93,7 +93,7 @@
 	}
 
 	:is(.sonic-envelope-handle, .sonic-envelope-curve),
-	.sonic-envelope-bracket::before {
+	.sonic-envelope-reticle::before {
 		position: absolute;
 		inset: auto auto
 			calc(

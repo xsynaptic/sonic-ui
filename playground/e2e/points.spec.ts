@@ -84,7 +84,7 @@ test('a handle and a curve handle brighten on hover and keep their ring while he
 	}
 });
 
-test('a held handle keeps its core, and a relief skin gives it a glow, not a bracket', async ({
+test('a held handle keeps its core, and a relief skin gives it a glow, not a reticle', async ({
 	isMobile,
 	page,
 }) => {
@@ -97,11 +97,11 @@ test('a held handle keeps its core, and a relief skin gives it a glow, not a bra
 	const read = () =>
 		handle.evaluate((element) => {
 			const style = getComputedStyle(element);
-			const bracket = element.parentElement?.querySelector('.sonic-envelope-bracket');
+			const reticle = element.parentElement?.querySelector('.sonic-envelope-reticle');
 
 			return {
-				bracket: bracket ? getComputedStyle(bracket, '::before').opacity : '',
 				halo: style.boxShadow,
+				reticle: reticle ? getComputedStyle(reticle, '::before').opacity : '',
 			};
 		});
 
@@ -121,12 +121,12 @@ test('a held handle keeps its core, and a relief skin gives it a glow, not a bra
 
 	await page.mouse.up();
 	expect(isClear(held.halo)).toBe(false);
-	expect(held.bracket).toBe('0');
+	expect(held.reticle).toBe('0');
 	expect(isClear(heldFlat.halo)).toBe(true);
-	expect(heldFlat.bracket).toBe('1');
+	expect(heldFlat.reticle).toBe('1');
 });
 
-test('the puck lifts on hover, and held it keeps its fill under a glow, or a bracket on a flat skin', async ({
+test('the puck lifts on hover, and held it keeps its fill under a glow, or a reticle on a flat skin', async ({
 	isMobile,
 	page,
 }) => {
@@ -139,13 +139,13 @@ test('the puck lifts on hover, and held it keeps its fill under a glow, or a bra
 	const read = () =>
 		puck.evaluate((element) => {
 			const disc = getComputedStyle(element, '::before');
-			const bracket = element.parentElement?.querySelector('.sonic-xy-bracket');
+			const reticle = element.parentElement?.querySelector('.sonic-xy-reticle');
 
 			return {
-				bracket: bracket ? getComputedStyle(bracket).opacity : '',
 				edge: disc.borderTopColor,
 				fill: disc.backgroundColor,
 				glow: getComputedStyle(element).filter,
+				reticle: reticle ? getComputedStyle(reticle).opacity : '',
 			};
 		});
 	const rest = await read();
@@ -173,9 +173,9 @@ test('the puck lifts on hover, and held it keeps its fill under a glow, or a bra
 	expect(held.fill).toBe(rest.fill);
 	expect(held.edge).toBe(rest.edge);
 	expect(held.glow).not.toBe(rest.glow);
-	expect(held.bracket).toBe('0');
+	expect(held.reticle).toBe('0');
 	expect(heldFlat.fill).toBe(rest.fill);
-	expect(heldFlat.bracket).toBe('1');
+	expect(heldFlat.reticle).toBe('1');
 });
 
 test(

@@ -1,12 +1,12 @@
 @layer sonic.material {
-	.sonic-xy-bracket,
-	.sonic-envelope-bracket::before {
+	.sonic-xy-reticle,
+	.sonic-envelope-reticle::before {
 		box-sizing: border-box;
-		inline-size: var(--_sonic-bracket-size);
-		block-size: var(--_sonic-bracket-size);
+		inline-size: var(--_sonic-reticle-size);
+		block-size: var(--_sonic-reticle-size);
 		pointer-events: none;
 		content: '';
-		border: max(1px, 0.06 * var(--_sonic-bracket-size)) solid
+		border: max(1px, 0.06 * var(--_sonic-reticle-size)) solid
 			color-mix(in oklab, currentcolor 45%, transparent);
 		border-radius: 50%;
 		opacity: 0;
@@ -23,8 +23,8 @@
 			scale var(--_sonic-fade-duration) ease-out;
 	}
 
-	:state(dragging) > * > .sonic-xy-bracket,
-	:state(dragging) > * > .sonic-envelope-bracket::before {
+	:state(dragging) > * > .sonic-xy-reticle,
+	:state(dragging) > * > .sonic-envelope-reticle::before {
 		opacity: calc(1 - var(--_sonic-relief));
 		scale: 1;
 	}

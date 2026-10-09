@@ -43,7 +43,7 @@ const orientations = { x: 'horizontal', y: 'vertical' } as const;
 const renderXy = template(
 	/* HTML */ `
 		<div class="sonic-xy">
-			<div class="sonic-xy-bracket" aria-hidden="true"></div>
+			<div class="sonic-xy-reticle" aria-hidden="true"></div>
 			<div class="sonic-xy-field" aria-hidden="true"></div>
 			<div class="sonic-xy-puck">
 				<div class="sonic-xy-axis" data-sonic-axis="x" role="slider" tabindex="0"></div>
@@ -561,20 +561,15 @@ export class SonicXy extends SonicFormElement {
 	}
 
 	#renderForm(): void {
-		const { name, x, y } = this;
-		const state = `${String(x)},${String(y)}`;
+		const { x, y } = this;
 
-		if (name === '') {
-			// eslint-disable-next-line unicorn/no-null -- `null` submits nothing
-			this.writeFormValue(null, state);
-			return;
-		}
-
-		const fields = new FormData();
-
-		fields.set(`${name}.x`, String(x));
-		fields.set(`${name}.y`, String(y));
-		this.writeFormValue(fields, state);
+		this.writeFormFields(
+			[
+				['x', x],
+				['y', y],
+			],
+			`${String(x)},${String(y)}`,
+		);
 	}
 
 	#renderReadout(): void {

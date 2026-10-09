@@ -7,11 +7,12 @@ interface Solo {
 export const sheetMaterial: Record<string, Array<string>> = {
 	button: ['core', 'cap', 'well', 'keycap'],
 	dial: ['core', 'cap', 'glass', 'readout', 'value', 'arc', 'scale'],
-	envelope: ['core', 'glass', 'readout', 'bracket'],
+	envelope: ['core', 'glass', 'readout', 'reticle'],
 	led: ['core', 'lens'],
 	meter: ['core', 'lens', 'groove'],
 	number: ['core', 'cap', 'value'],
 	panel: ['core'],
+	region: ['core', 'cap'],
 	ring: ['core', 'arc'],
 	screen: ['core', 'glass', 'pane', 'well'],
 	segmented: ['core', 'cap', 'well', 'keycap'],
@@ -21,7 +22,7 @@ export const sheetMaterial: Record<string, Array<string>> = {
 	toggle: ['core', 'cap', 'well', 'keycap'],
 	waveform: ['core', 'cap', 'glass', 'readout', 'value'],
 	wavestrip: ['core', 'cap', 'glass', 'readout', 'value'],
-	xy: ['core', 'cap', 'glass', 'readout', 'bracket'],
+	xy: ['core', 'cap', 'glass', 'readout', 'reticle'],
 };
 
 const icon = '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 4l14 8-14 8z" /></svg>';
@@ -70,6 +71,11 @@ export const solos: Record<string, Solo> = {
 		markup:
 			'<section aria-label="Panel" class="sonic-panel"><h2 class="sonic-panel-title">Panel</h2></section>',
 		sheets: ['panel'],
+	},
+	region: {
+		markup:
+			'<sonic-wavestrip aria-label="Position" max="300" value="150"><sonic-region aria-label="Shown above" end="180" start="120"></sonic-region></sonic-wavestrip>',
+		sheets: ['wavestrip', 'region'],
 	},
 	ring: {
 		markup:

@@ -94,7 +94,7 @@ The words this library uses for its controls, their parts and their values. Wher
 
 **Ladder**: A meter drawn as separate segments, each with its own threshold. _Avoid_: LED strip, stepped meter
 
-**Bracket**: The pair of arcs round a held puck or handle on a skin with no relief. _Avoid_: Ring (that is a lit arc), halo
+**Reticle**: The pair of arcs round a held puck or handle on a skin with no relief. _Avoid_: Bracket (that is a region's frame), ring (that is a lit arc), halo
 
 **Readout**: The bubble that shows a control's value while it is being moved. _Avoid_: Tooltip, value label
 
@@ -126,9 +126,13 @@ The words this library uses for its controls, their parts and their values. Wher
 
 **Marker**: A labelled point or region on a wave; with no end it is a point marker, with one a region. _Avoid_: Cue (a cue is one kind of marker, and the consumer's word), mark
 
-**Region**: A stretch of a wave with a start and an end. _Avoid_: Span, range, interval
+**Region**: A stretch of a wave with a start and an end. An editable one is an element; a marker's is a picture. _Avoid_: Span, range, interval
+
+**Bracket**: The frame drawn round an editable region. _Avoid_: Reticle (that is a held point's arcs), handle, window (the stretch a waveform shows)
 
 **Lane**: One of the rows that point markers stack in when they sit too close to share one. _Avoid_: Row, track, tier
+
+**Preview**: A time shown as a scrub's edge without being scrubbed to. _Avoid_: Hover (that is the pointer's), ghost (that is where playback is)
 
 **Scrub**: To drag along a wave, or along a slider that seeks, looking for a place to seek to. _Avoid_: Seek (the jump itself), drag
 

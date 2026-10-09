@@ -88,7 +88,13 @@
 	}
 
 	/* A plain box has no corner of its own, so its focus outline and glow take this one */
-	:is(.sonic-number, .sonic-slider, .sonic-switch-position, .sonic-waveform, .sonic-wavestrip) {
+	:is(
+		.sonic-number,
+		.sonic-slider,
+		.sonic-switch-position,
+		.sonic-waveform,
+		.sonic-wavestrip-canvas
+	) {
 		border-radius: var(--sonic-focus-radius, 0);
 	}
 
@@ -145,7 +151,7 @@
 		.sonic-segmented-option,
 		.sonic-slider,
 		.sonic-waveform,
-		.sonic-wavestrip,
+		.sonic-wavestrip-canvas,
 		.sonic-xy-axis
 	):focus-visible {
 		outline: 2px solid transparent;
@@ -161,7 +167,7 @@
 			.sonic-number,
 			.sonic-slider,
 			.sonic-waveform,
-			.sonic-wavestrip,
+			.sonic-wavestrip-canvas,
 			.sonic-xy-axis
 		):focus-visible:not([data-sonic-pointer-focus]) {
 		outline: var(--sonic-focus-outline, 2px solid transparent);
@@ -230,7 +236,7 @@
 			.sonic-segmented-option,
 			.sonic-slider,
 			.sonic-waveform,
-			.sonic-wavestrip
+			.sonic-wavestrip-canvas
 		):focus-visible {
 			outline-offset: 2px;
 

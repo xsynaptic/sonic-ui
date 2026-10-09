@@ -72,7 +72,7 @@ test(
 	async ({ page }, testInfo) => {
 		await page.goto('/fixtures/');
 
-		await expect(page.locator('#wavestrip-fill .sonic-wavestrip')).toHaveAttribute(
+		await expect(page.locator('#wavestrip-fill .sonic-wavestrip-canvas')).toHaveAttribute(
 			'aria-valuetext',
 			testInfo.project.name === strippedProject ? '2:30' : '2 minutes, 30 seconds',
 		);
