@@ -14,6 +14,7 @@ export default getConfig([
 			'**/.cache/**',
 			'**/temp/**',
 			'.claude/**',
+			'playground/src/pages/lab/**',
 			'**/blob-report/**',
 			'**/playwright-report/**',
 			'**/test-results/**',

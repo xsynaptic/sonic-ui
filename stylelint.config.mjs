@@ -43,6 +43,7 @@ const aboveFloor = {
 /** @type {import('stylelint').Config} */
 export default {
 	extends: ['@xsynaptic/stylelint-config'],
+	ignoreFiles: ['playground/src/pages/lab/**'],
 	overrides: [
 		{
 			files: ['packages/sonic-ui/src/**/*.css'],

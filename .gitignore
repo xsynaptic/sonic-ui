@@ -11,6 +11,7 @@ temp/
 .claude/tasks*
 .claude/settings*.json
 .claude/worktrees/
+playground/src/pages/lab/
 
 # Playwright
 .playwright-mcp/
