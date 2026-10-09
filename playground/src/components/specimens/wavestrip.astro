@@ -19,7 +19,6 @@ const strips = [
 		markers: '30 32 34 36 60..95:intro 140 142 215 216 217 260~',
 		seed: 6,
 	},
-	{ format: 'seconds', id: 'wavestrip-seconds', label: 'Readout in seconds', seed: 7 },
 	{
 		hasShapes: true,
 		id: 'wavestrip-shapes',
@@ -31,13 +30,6 @@ const strips = [
 	{ hasGlass: true, id: 'wavestrip-glass', label: 'On glass', seed: 10 },
 	{
 		hasGlass: true,
-		id: 'wavestrip-glass-dimmed',
-		isDimmed: true,
-		label: 'On glass, dimmed',
-		seed: 11,
-	},
-	{
-		hasGlass: true,
 		id: 'wavestrip-glass-flat',
 		label: 'On flat glass',
 		screenClass: '[--sonic-glass-depth:0]',
@@ -47,7 +39,6 @@ const strips = [
 
 interface RegionCell {
 	id: string;
-	isDimmed?: boolean;
 	label: string;
 	regions: Array<{
 		end: number;
@@ -76,13 +67,6 @@ const regionCells: Array<RegionCell> = [
 		seed: 23,
 	},
 	{
-		id: 'region-dimmed',
-		isDimmed: true,
-		label: 'Region on a dimmed strip',
-		regions: [loop],
-		seed: 24,
-	},
-	{
 		id: 'region-overlap',
 		label: 'Two regions: the later takes the press',
 		regions: [
@@ -104,7 +88,7 @@ const regionCells: Array<RegionCell> = [
 					cancellable
 					class:list={['[--sonic-wavestrip-length:20rem]', strip.tokens]}
 					data-buffered="0 150 190 230"
-					data-format={strip.format ?? 'clock'}
+					data-format="clock"
 					data-marker-shapes={strip.hasShapes}
 					data-markers={strip.markers ?? markers}
 					data-peaks={strip.seed}
@@ -138,21 +122,6 @@ const regionCells: Array<RegionCell> = [
 			></sonic-wavestrip>
 		</div>
 	</Cell>
-	<Cell id="wavestrip-glass-fill" label="On glass, fills its row">
-		<div class="sonic-screen h-24 w-80 [--sonic-wavestrip-length:100%]">
-			<sonic-wavestrip
-				aria-labelledby="wavestrip-glass-fill"
-				data-format="clock"
-				data-markers={markers}
-				data-peaks="13"
-				fill
-				key-step="5"
-				max="300"
-				readout
-				value="120"
-			></sonic-wavestrip>
-		</div>
-	</Cell>
 	<Cell id="wavestrip-large" label="Large" span="full">
 		<sonic-wavestrip
 			aria-labelledby="wavestrip-large"
@@ -167,23 +136,6 @@ const regionCells: Array<RegionCell> = [
 			readout
 			value="120"
 		></sonic-wavestrip>
-	</Cell>
-	<Cell id="wavestrip-large-glass" label="Large, on glass" span="full">
-		<div class="sonic-screen [--sonic-screen-size:5rem]">
-			<sonic-wavestrip
-				aria-labelledby="wavestrip-large-glass"
-				cancellable
-				class="[--sonic-wavestrip-length:min(48rem,80vw)] [--sonic-wavestrip-marker-ratio:0.14] [--sonic-wavestrip-size:5rem]"
-				data-buffered="0 150 190 230"
-				data-format="clock"
-				data-markers={markers}
-				data-peaks="12"
-				key-step="5"
-				max="300"
-				readout
-				value="120"
-			></sonic-wavestrip>
-		</div>
 	</Cell>
 	<Cell
 		id="wavestrip-bracket"
@@ -236,7 +188,6 @@ const regionCells: Array<RegionCell> = [
 				class:list={['[--sonic-wavestrip-length:20rem]', cell.tokens]}
 				data-format="clock"
 				data-peaks={cell.seed}
-				dimmed={cell.isDimmed}
 				key-step="5"
 				max="300"
 				readout

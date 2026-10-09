@@ -90,7 +90,7 @@ const panels = rigs.map((rig) => build(rig));
 
 <div class="grid gap-3 lg:grid-cols-2">
 	{panels.map((panel) => (
-		<div class="grid justify-items-center gap-5 surface p-5">
+		<div class="grid justify-items-center gap-5 surface p-5 last:odd:lg:col-span-2">
 			<p class="justify-self-start font-mono text-[0.625rem] tracking-[0.16em] text-text-muted uppercase">
 				{panel.title}
 			</p>

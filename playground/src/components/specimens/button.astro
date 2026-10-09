@@ -10,7 +10,6 @@ import Cell from '#components/specimens/cell.astro';
 import MuteButton from '#components/specimens/mute-button.astro';
 import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 
-const drums = ['Kick', 'Snare', 'Hat', 'Clap'];
 const hotCues = ['oklch(76.9% 0.165 70deg)', '#22c55e', '#38bdf8', '#e879f9'];
 ---
 
@@ -23,11 +22,9 @@ const hotCues = ['oklch(76.9% 0.165 70deg)', '#22c55e', '#38bdf8', '#e879f9'];
 	<Cell id="button-mute" label="Mute">
 		<MuteButton isPressed={true} labelledby="button-mute" />
 	</Cell>
-	{drums.map((drum) => (
-		<Cell id={`button-${drum.toLowerCase()}`} label={drum}>
-			<sonic-button aria-labelledby={`button-${drum.toLowerCase()}`} momentary />
-		</Cell>
-	))}
+	<Cell id="button-momentary" label="Momentary">
+		<sonic-button aria-labelledby="button-momentary" momentary />
+	</Cell>
 	<Cell id="button-armed" label="Armed">
 		<sonic-button aria-labelledby="button-armed" armed latching>
 			<Play aria-hidden="true" />

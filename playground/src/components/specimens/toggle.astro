@@ -1,5 +1,4 @@
 ---
-import Power from '@lucide/astro/icons/power';
 import Volume2 from '@lucide/astro/icons/volume-2';
 import VolumeX from '@lucide/astro/icons/volume-x';
 
@@ -13,9 +12,6 @@ const legend = 'font-mono uppercase';
 <SpecimenGrid>
 	<Cell id="toggle-sync" label="Sync">
 		<sonic-toggle aria-labelledby="toggle-sync"></sonic-toggle>
-	</Cell>
-	<Cell id="toggle-sync-on" label="Sync, on">
-		<sonic-toggle aria-labelledby="toggle-sync-on" checked></sonic-toggle>
 	</Cell>
 	<Cell id="toggle-sync-lit" label="Sync, lit">
 		<sonic-toggle aria-labelledby="toggle-sync-lit" checked data-sonic-lit></sonic-toggle>
@@ -67,11 +63,6 @@ const legend = 'font-mono uppercase';
 			<TransportModes />
 		</sonic-toggle>
 	</Cell>
-	<Cell id="toggle-standby" label="Icon, on/off">
-		<sonic-toggle aria-labelledby="toggle-standby" checked>
-			<Power aria-hidden="true" />
-		</sonic-toggle>
-	</Cell>
 	<Cell id="toggle-small" label="Small">
 		<sonic-toggle
 			aria-labelledby="toggle-small"
@@ -89,14 +80,6 @@ const legend = 'font-mono uppercase';
 			</span>
 			<span data-sonic-value="off">Off</span>
 			<span data-sonic-value="on">On</span>
-		</sonic-toggle>
-	</Cell>
-	<Cell id="toggle-tap" label="Momentary, two">
-		<sonic-toggle aria-labelledby="toggle-tap" class={legend} value="off">
-			<span data-sonic-value="off">Off</span>
-			<span data-sonic-lit="ok" data-sonic-momentary data-sonic-value="tap">
-				Tap
-			</span>
 		</sonic-toggle>
 	</Cell>
 	<Cell id="toggle-position-disabled" label="One position disabled" span="wide">
@@ -128,13 +111,6 @@ const legend = 'font-mono uppercase';
 			<span data-sonic-value="2">2</span>
 		</sonic-toggle>
 	</Cell>
-	<Cell id="toggle-vertical-sync" label="Vertical, bare">
-		<sonic-toggle
-			aria-labelledby="toggle-vertical-sync"
-			checked
-			orientation="vertical"
-		></sonic-toggle>
-	</Cell>
 	<Cell id="toggle-outside-loop" label="Legends outside">
 		<sonic-toggle
 			aria-labelledby="toggle-outside-loop"
@@ -162,20 +138,6 @@ const legend = 'font-mono uppercase';
 			</span>
 		</sonic-toggle>
 	</Cell>
-	<Cell id="toggle-outside-disabled" label="Outside, one disabled" span="wide">
-		<sonic-toggle
-			aria-labelledby="toggle-outside-disabled"
-			class={legend}
-			legends="outside"
-			value="a"
-		>
-			<span data-sonic-value="a">A</span>
-			<span data-sonic-disabled data-sonic-value="off">
-				Off
-			</span>
-			<span data-sonic-value="b">B</span>
-		</sonic-toggle>
-	</Cell>
 	<Cell id="toggle-outside-vertical" label="Outside, vertical">
 		<sonic-toggle
 			aria-labelledby="toggle-outside-vertical"
@@ -187,18 +149,6 @@ const legend = 'font-mono uppercase';
 			<span data-sonic-value="up">Up</span>
 			<span data-sonic-value="off">Off</span>
 			<span data-sonic-value="down">Down</span>
-		</sonic-toggle>
-	</Cell>
-	<Cell id="toggle-outside-vertical-loop" label="Outside, two">
-		<sonic-toggle
-			aria-labelledby="toggle-outside-vertical-loop"
-			class={legend}
-			legends="outside"
-			orientation="vertical"
-			value="post"
-		>
-			<span data-sonic-value="pre">Pre</span>
-			<span data-sonic-value="post">Post</span>
 		</sonic-toggle>
 	</Cell>
 </SpecimenGrid>

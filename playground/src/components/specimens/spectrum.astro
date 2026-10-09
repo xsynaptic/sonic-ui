@@ -5,6 +5,7 @@ import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 const spectrums = [
 	{ id: 'spectrum-still', label: 'Still frame', shape: 2 },
 	{ id: 'spectrum-hold', isHeld: true, label: 'Peak hold', shape: 3 },
+	{ grid: 'none', id: 'spectrum-bare', label: 'No grid', shape: 3 },
 	{ hasGlass: true, id: 'spectrum-glass', label: 'On glass', shape: 2 },
 ];
 ---
@@ -20,6 +21,7 @@ const spectrums = [
 				<sonic-spectrum
 					class="[--sonic-spectrum-length:20rem]"
 					data-spectrum-shape={spectrum.shape}
+					grid={spectrum.grid}
 					peak-hold={spectrum.isHeld}
 				></sonic-spectrum>
 			</div>

@@ -27,7 +27,6 @@ const waveforms = [
 	{ id: 'waveform-paused', label: 'Paused', seed: 8 },
 	{ id: 'waveform-pending', label: 'Pending', pending: '151 162', seed: 9 },
 	{ id: 'waveform-rate', isPlaying: true, label: 'Double speed', rate: 2, seed: 14 },
-	{ format: 'seconds-tenths', id: 'waveform-seconds', label: 'Readout in seconds', seed: 15 },
 	{
 		className: [
 			'[--sonic-waveform-playhead-width:1px] [--sonic-waveform-label-fade-end:0]',
@@ -55,7 +54,6 @@ const waveforms = [
 		seed: 18,
 	},
 	{ hasGlass: true, id: 'waveform-glass', isPlaying: true, label: 'On glass', seed: 19 },
-	{ hasGlass: true, id: 'waveform-glass-paused', label: 'On glass, paused', seed: 20 },
 	{
 		hasGlass: true,
 		id: 'waveform-glass-flat',
@@ -115,7 +113,7 @@ const waveforms = [
 					class:list={[waveform.sizeClass ?? '[--sonic-waveform-length:20rem]', waveform.className]}
 					data-bands={waveform.bands}
 					data-bands-missing={waveform.bandsMissing}
-					data-format={waveform.format ?? 'clock-tenths'}
+					data-format="clock-tenths"
 					data-markers={waveform.markers ?? '146=Intro 151.5=Second_track 158=Outro~'}
 					data-pending={waveform.pending}
 					data-samples={waveform.seed}

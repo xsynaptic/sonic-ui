@@ -10,8 +10,9 @@ const { id, label, span } = Astro.props;
 
 <div
 	class:list={[
-		'row-span-2 grid grid-rows-subgrid justify-items-center gap-y-3',
-		{ 'col-span-2': span === 'wide', 'col-span-full': span === 'full' },
+		'grid max-w-full grid-rows-[1fr_auto] justify-items-center gap-y-3',
+		span === undefined && 'w-(--specimen-cell)',
+		{ 'w-[calc(var(--specimen-cell)*2+1rem)]': span === 'wide', 'w-full': span === 'full' },
 	]}
 >
 	<div class="flex items-center justify-center gap-2">

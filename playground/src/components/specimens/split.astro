@@ -17,7 +17,7 @@ const modes = [
 ---
 
 <SpecimenGrid>
-	<div class="col-span-full grid justify-items-center gap-6" data-split-demo>
+	<div class="grid w-full justify-items-center gap-6" data-split-demo>
 		<sonic-segmented aria-label="Mode" class="font-mono" data-split-mode value="proportional">
 			{modes.map(([value, label]) => (
 				<span data-sonic-value={value}>{label}</span>
@@ -56,7 +56,7 @@ const modes = [
 <SpecimenGrid size="large">
 	<sonic-split
 		aria-label="Mixed members"
-		class="col-span-full flex flex-wrap items-end justify-center gap-8"
+		class="flex w-full flex-wrap items-end justify-center gap-8"
 		total="150"
 	>
 		<Cell id="split-dial" label="Dial">
