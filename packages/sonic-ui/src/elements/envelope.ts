@@ -251,6 +251,10 @@ export class SonicEnvelope extends SonicElement {
 		);
 	}
 
+	protected override stateTarget(): HTMLElement {
+		return this.#envelope;
+	}
+
 	#bind(): void {
 		this.#gesture?.end();
 		this.#unbind();

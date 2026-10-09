@@ -5,7 +5,7 @@ import { expect, test } from '@playwright/test';
 import { canvasPixels } from './canvas-probe.ts';
 import { systemColour } from './colour.ts';
 import { boxOf, centerOf, noForcedColours } from './pointer.ts';
-import { readState, valueNow } from './state.ts';
+import { valueNow } from './state.ts';
 
 // At DPR 2 the default 3px pitch makes 6 device px a bar
 const pitch = 6;
@@ -62,7 +62,7 @@ test(
 
 		await page.mouse.move(center.x, center.y);
 		await page.mouse.down();
-		expect(await readState(region, 'dragging')).toBe(true);
+		await expect(part).toHaveAttribute('data-sonic-dragging', '');
 
 		await page.mouse.move(center.x + 48, center.y, { steps: 4 });
 		await page.mouse.up();
@@ -75,7 +75,7 @@ test(
 		expect(moved.x - drawn.x).toBeCloseTo(48, 0);
 		expect(moved.width).toBeCloseTo(drawn.width, 1);
 		expect(await valueNow(canvas)).toBe(30);
-		expect(await readState(region, 'dragging')).toBe(false);
+		await expect(part).not.toHaveAttribute('data-sonic-dragging');
 	},
 );
 

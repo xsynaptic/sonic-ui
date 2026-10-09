@@ -84,11 +84,11 @@
 		block-size: var(--_sonic-meter-size);
 	}
 
-	:is([value], :state(ladder)) > .sonic-meter {
+	:is([value] > .sonic-meter, .sonic-meter[data-sonic-ladder]) {
 		--_sonic-meter-clip-space: 0px;
 	}
 
-	:state(ladder) > .sonic-meter {
+	.sonic-meter[data-sonic-ladder] {
 		--_sonic-meter-gap: 0px;
 	}
 
@@ -171,7 +171,7 @@
 		mask-composite: add;
 	}
 
-	:state(ladder) > .sonic-meter > :is(.sonic-meter-segments, .sonic-meter-bar) {
+	.sonic-meter[data-sonic-ladder] > :is(.sonic-meter-segments, .sonic-meter-bar) {
 		--_sonic-meter-pitch: calc(
 			(var(--_sonic-meter-length) - 2 * var(--_sonic-meter-inset)) / var(--_sonic-meter-count, 1)
 		);
@@ -249,8 +249,8 @@
 		block-size: auto;
 	}
 
-	[orientation='horizontal']:state(ladder)
-		> .sonic-meter
+	[orientation='horizontal']
+		> .sonic-meter[data-sonic-ladder]
 		> :is(.sonic-meter-segments, .sonic-meter-bar) {
 		--_sonic-meter-segment-mask: radial-gradient(
 				circle var(--_sonic-meter-ladder-radius),
@@ -260,14 +260,14 @@
 			0 0 / var(--_sonic-meter-pitch) 100% repeat no-repeat;
 	}
 
-	:state(ladder) > .sonic-meter > :is(.sonic-meter-segments, .sonic-meter-bar)::after {
+	.sonic-meter[data-sonic-ladder] > :is(.sonic-meter-segments, .sonic-meter-bar)::after {
 		position: absolute;
 		inset: 0;
 		content: '';
 		background: var(--_sonic-lens-glint) 0 100% / 100% var(--_sonic-meter-pitch) repeat-y;
 	}
 
-	:state(ladder) > .sonic-meter > .sonic-meter-bar::after {
+	.sonic-meter[data-sonic-ladder] > .sonic-meter-bar::after {
 		background: radial-gradient(
 				circle var(--_sonic-meter-ladder-radius),
 				color-mix(in srgb, var(--_sonic-shine) calc(45% * var(--_sonic-relief)), transparent),
@@ -276,8 +276,8 @@
 			0 100% / 100% var(--_sonic-meter-pitch) repeat-y;
 	}
 
-	[orientation='horizontal']:state(ladder)
-		> .sonic-meter
+	[orientation='horizontal']
+		> .sonic-meter[data-sonic-ladder]
 		> :is(.sonic-meter-segments, .sonic-meter-bar)::after {
 		background-repeat: repeat-x;
 		background-position: 0 0;
@@ -355,7 +355,7 @@
 		}
 	}
 
-	:is([value], :state(ladder)) > .sonic-meter > .sonic-meter-clip {
+	:is([value] > .sonic-meter, .sonic-meter[data-sonic-ladder]) > .sonic-meter-clip {
 		display: none;
 	}
 
@@ -389,7 +389,7 @@
 			background: Mark;
 		}
 
-		:state(ladder) > .sonic-meter > :is(.sonic-meter-segments, .sonic-meter-bar)::after {
+		.sonic-meter[data-sonic-ladder] > :is(.sonic-meter-segments, .sonic-meter-bar)::after {
 			display: none;
 		}
 	}

@@ -23,8 +23,22 @@ export function mountDial(attributes: string): { control: HTMLElement; dial: Son
 	return { control, dial: host };
 }
 
+function sortAttributes(element: Element): void {
+	const attributes = [...element.attributes].toSorted((first, second) =>
+		first.name.localeCompare(second.name),
+	);
+
+	for (const { name } of attributes) element.removeAttribute(name);
+	for (const { name, value } of attributes) element.setAttribute(name, value);
+}
+
 export function drawnMarkup(control: Element | null): string | undefined {
-	return control?.outerHTML.replaceAll(/sonic-(entry|readout)-\d+/g, 'sonic-$1');
+	const copy = control?.cloneNode(true);
+	if (!(copy instanceof Element)) return undefined;
+
+	for (const element of [copy, ...copy.querySelectorAll('*')]) sortAttributes(element);
+
+	return copy.outerHTML.replaceAll(/sonic-(entry|readout)-\d+/g, 'sonic-$1');
 }
 
 export function nextTask(): Promise<unknown> {

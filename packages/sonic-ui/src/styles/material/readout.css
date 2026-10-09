@@ -95,7 +95,7 @@
 			}
 		}
 
-		:state(editing) > :is(.sonic-dial, .sonic-slider, .sonic-waveform, .sonic-wavestrip) > & {
+		:is(.sonic-dial, .sonic-slider, .sonic-waveform, .sonic-wavestrip)[data-sonic-editing] > & {
 			pointer-events: auto;
 			cursor: text;
 		}

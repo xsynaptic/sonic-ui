@@ -122,7 +122,7 @@
 		touch-action: pan-x;
 	}
 
-	:state(dragging) > .sonic-toggle {
+	.sonic-toggle[data-sonic-dragging] {
 		transition: --_sonic-toggle-sink var(--_sonic-press-duration) cubic-bezier(0.4, 0, 0.2, 1);
 	}
 
@@ -178,7 +178,7 @@
 	}
 
 	/* Held, never resting: the chosen position's cap stands as proud as any other */
-	.sonic-toggle:has(> .sonic-toggle-position[data-sonic-pressed]):has(
+	.sonic-toggle:has(> .sonic-toggle-position[data-sonic-active]):has(
 			> .sonic-toggle-position:not(:disabled)
 		) {
 		--_sonic-toggle-sink: calc(var(--_sonic-keycap-depth) / 2);
@@ -443,7 +443,7 @@
 
 	@media (prefers-reduced-motion: reduce) {
 		.sonic-toggle,
-		:is(:state(dragging)) > .sonic-toggle,
+		.sonic-toggle[data-sonic-dragging],
 		.sonic-toggle-well,
 		.sonic-toggle-cap,
 		.sonic-toggle-legend {

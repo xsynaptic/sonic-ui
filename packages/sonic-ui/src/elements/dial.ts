@@ -115,4 +115,8 @@ export class SonicDial extends SonicValueElement {
 	protected override isWrapping(): boolean {
 		return this.endless;
 	}
+
+	protected override stateTarget(): HTMLElement {
+		return this.#dial;
+	}
 }

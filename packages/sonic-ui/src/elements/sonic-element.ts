@@ -8,9 +8,6 @@ const namingAttributes = ['aria-describedby', 'aria-label', 'aria-labelledby'];
 
 const checkedSheets = new WeakMap<object, Set<string>>();
 
-// Before `:state()`, `states` is missing or refuses an ident without the legacy dashes
-const canMatchStates = CSS.supports('selector(:state(a))');
-
 const canReferElements = 'ariaLabelledByElements' in Element.prototype;
 
 interface StyleProbe {
@@ -92,8 +89,6 @@ export abstract class SonicElement extends HTMLElement {
 		'attachInternals' in HTMLElement.prototype ? this.attachInternals() : undefined;
 
 	#connection: AbortController | undefined;
-
-	readonly #customStates = canMatchStates ? this.internals?.states : undefined;
 
 	readonly #states = new Set<string>();
 
@@ -275,15 +270,14 @@ export abstract class SonicElement extends HTMLElement {
 		this.setAttribute(name, value === true ? '' : value.toString());
 	}
 
-	protected toggleState(state: string, isOn: boolean): void {
-		if (isOn) {
-			this.#states.add(state);
-			this.#customStates?.add(state);
-			return;
-		}
+	protected stateTarget(): Element | undefined {
+		return undefined;
+	}
 
-		this.#states.delete(state);
-		this.#customStates?.delete(state);
+	protected toggleState(state: string, isOn: boolean): void {
+		if (isOn) this.#states.add(state);
+		else this.#states.delete(state);
+		this.stateTarget()?.toggleAttribute(`data-sonic-${state}`, isOn);
 	}
 
 	// A property set before upgrade shadows its accessor

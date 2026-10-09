@@ -127,7 +127,7 @@
 	.sonic-button:is(
 		[aria-pressed='true'],
 		[aria-expanded='true'],
-		:where([momentary]:state(pressed)) > *
+		:where([momentary]) > [data-sonic-pressed]
 	) {
 		--_sonic-keycap-shift: calc(var(--_sonic-keycap-depth) / 2);
 		--_sonic-keycap-scale: var(--_sonic-button-latched-scale);
@@ -169,7 +169,7 @@
 		}
 	}
 
-	.sonic-button:is(:active, [data-sonic-pressed], :where([momentary]:state(pressed)) > *):where(
+	.sonic-button:is(:active, [data-sonic-active], :where([momentary]) > [data-sonic-pressed]):where(
 			:not(:disabled, [aria-disabled='true'])
 		) {
 		--_sonic-keycap-shift: calc(var(--_sonic-keycap-depth) / 2);
@@ -189,9 +189,10 @@
 			[aria-expanded='true'],
 			:disabled,
 			[aria-disabled='true'],
-			:where([momentary]:state(pressed), [armed]) > *,
+			:where([momentary]) > [data-sonic-pressed],
+			:where([armed]) > *,
 			:where([busy]) > :not(:has(.sonic-led))
-		):is(:focus-visible, :active, [data-sonic-pressed]) {
+		):is(:focus-visible, :active, [data-sonic-active]) {
 		color: var(--_sonic-ink-lift);
 	}
 
@@ -202,7 +203,8 @@
 				[aria-expanded='true'],
 				:disabled,
 				[aria-disabled='true'],
-				:where([momentary]:state(pressed), [armed]) > *,
+				:where([momentary]) > [data-sonic-pressed],
+				:where([armed]) > *,
 				:where([busy]) > :not(:has(.sonic-led))
 			):hover {
 			color: var(--_sonic-ink-lift);
@@ -311,7 +313,7 @@
 	.sonic-button:not(
 			[aria-pressed='true'],
 			[aria-expanded='true'],
-			:where([momentary]:state(pressed)) > *
+			:where([momentary]) > [data-sonic-pressed]
 		)
 		.sonic-button-cap
 		> [data-sonic-when='pressed'] {

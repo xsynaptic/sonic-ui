@@ -284,6 +284,7 @@ export class RegionLayer {
 		const span = link.span();
 		const [low, high] = regionTravel(span, mapping.bounds);
 		const canMove = this.#isEnabled(entry);
+		const stop = region.getAttribute('tabindex') === '-1' ? '-1' : '0';
 
 		writeProperty(part, '--_sonic-region-from', String(mapping.proportionOf(span.start)));
 		writeProperty(part, '--_sonic-region-to', String(mapping.proportionOf(span.end)));
@@ -297,7 +298,7 @@ export class RegionLayer {
 		writeAttribute(part, 'aria-valuenow', String(span.start));
 		writeAttribute(part, 'aria-valuetext', host.speak(span));
 		writeAttribute(part, 'aria-disabled', canMove ? undefined : 'true');
-		writeAttribute(part, 'tabindex', canMove ? '0' : undefined);
+		writeAttribute(part, 'tabindex', canMove ? stop : undefined);
 		link.draw(part);
 
 		return entry;

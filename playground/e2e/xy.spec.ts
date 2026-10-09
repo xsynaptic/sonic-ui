@@ -84,7 +84,9 @@ test("a press on the field reports dragging by its first input and brings the pu
 		element.addEventListener(
 			'input',
 			() => {
-				element.dataset.pressed = String(element.matches(':state(dragging)'));
+				element.dataset.pressed = String(
+					element.querySelector(':scope > [data-sonic-dragging]') !== null,
+				);
 			},
 			{ once: true },
 		);

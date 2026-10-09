@@ -120,6 +120,21 @@ test('a disabled region takes no press, so the strip seeks on the press as it do
 	]);
 });
 
+test('a region with tabindex -1 leaves the tab order and still takes a drag, and the attribute removed puts it back', () => {
+	const { control, region } = mountStrip('', 'tabindex="-1"');
+	const [part] = parts(control);
+
+	expect(part?.getAttribute('tabindex')).toBe('-1');
+
+	pointerAt(control, 'pointerdown', { clientX: 80, clientY: 24 });
+	pointerAt(control, 'pointermove', { clientX: 90, clientY: 24 });
+	pointerAt(control, 'pointerup', { clientX: 90, clientY: 24 });
+	expect(region.start).toBe(110);
+
+	region.removeAttribute('tabindex');
+	expect(part?.getAttribute('tabindex')).toBe('0');
+});
+
 test('a held region ignores a write, and a write after the release lands', () => {
 	const { control, region } = mountStrip();
 

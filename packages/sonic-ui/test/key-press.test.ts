@@ -29,7 +29,7 @@ function key(target: HTMLElement, type: 'keydown' | 'keyup', init: KeyboardEvent
 }
 
 function isHeld(part: HTMLElement): boolean {
-	return 'sonicPressed' in part.dataset;
+	return 'sonicActive' in part.dataset;
 }
 
 test('Space marks the part until it lifts, and a repeat after that marks nothing', () => {

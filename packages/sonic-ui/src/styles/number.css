@@ -67,7 +67,7 @@
 		white-space: nowrap;
 	}
 
-	:state(editing) > .sonic-number > .sonic-number-value {
+	.sonic-number[data-sonic-editing] > .sonic-number-value {
 		visibility: hidden;
 	}
 

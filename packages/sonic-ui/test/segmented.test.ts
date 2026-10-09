@@ -304,7 +304,7 @@ function mouseAt(target: Element, type: string, clientX: number): void {
 }
 
 function held(options: Array<HTMLButtonElement>): Array<boolean> {
-	return options.map((option) => option.dataset.sonicPressed !== undefined);
+	return options.map((option) => option.dataset.sonicActive !== undefined);
 }
 
 test('a press follows the pointer across options and latches where it is released', async () => {

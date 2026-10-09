@@ -1,11 +1,12 @@
 import type { Locator, Page } from '@playwright/test';
 
-import { expect, test } from '@playwright/test';
+import { expect } from '@playwright/test';
 
 import { alphaAt, canvasPixels, paintedColour, pixelAt, softPixel } from './canvas-probe.ts';
 import { clear, systemColour } from './colour.ts';
 import { boxOf, noForcedColours } from './pointer.ts';
 import { readState } from './state.ts';
+import { test } from './stripped.ts';
 
 // At DPR 2 the default 3px pitch and 0.33 gap make 6 device px a bar: 4 drawn, then 2 of gap
 const pitch = 6;
@@ -96,6 +97,32 @@ test(
 				await paintedColour(canvas, `color-mix(in oklab, #0080ff 30%, ${unlit})`),
 			);
 		});
+	},
+);
+
+test(
+	'where a canvas parses no `color-mix()`, the unplayed bars still paint the wave colour',
+	{ tag: '@stripped' },
+	async ({ page }) => {
+		const { canvas } = await openWavestrip(page);
+		const { device } = await readWidth(canvas);
+		const wave = await canvas.evaluate((element) => {
+			const probe = document.createElement('span');
+
+			probe.style.color = 'var(--_sonic-wavestrip-wave)';
+			element.after(probe);
+
+			const { color } = getComputedStyle(probe);
+
+			probe.remove();
+
+			return color;
+		});
+
+		softPixel(
+			await pixelAt(canvas, (Math.floor(device / 2 / pitch) + 4) * pitch + 1),
+			await paintedColour(canvas, wave),
+		);
 	},
 );
 
@@ -310,7 +337,9 @@ test('a press reports dragging by its first input, and the hovered value returns
 		element.addEventListener(
 			'input',
 			() => {
-				element.dataset.pressed = String(element.matches(':state(dragging)'));
+				element.dataset.pressed = String(
+					element.querySelector(':scope > [data-sonic-dragging]') !== null,
+				);
 			},
 			{ once: true },
 		);

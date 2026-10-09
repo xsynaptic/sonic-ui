@@ -224,6 +224,10 @@ export class SonicMeter extends SonicElement {
 		if (__DEV__) this.checkStyles(this.#meter, 'meter.css');
 	}
 
+	protected override stateTarget(): HTMLElement {
+		return this.#meter;
+	}
+
 	#isSettled(now: number): boolean {
 		if (this.#isValueShown) return true;
 		if (now - this.#clipAt < holdMs) return false;

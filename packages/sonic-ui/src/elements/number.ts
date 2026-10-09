@@ -68,6 +68,10 @@ export class SonicNumber extends SonicValueElement {
 		return this.#number;
 	}
 
+	protected override stateTarget(): HTMLElement {
+		return this.#number;
+	}
+
 	protected override tapTarget(): number | undefined {
 		if (this.press !== 'step') return undefined;
 

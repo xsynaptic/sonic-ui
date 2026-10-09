@@ -98,14 +98,14 @@
 		transition: color var(--_sonic-fade-duration) ease-out;
 	}
 
-	.sonic-segmented-option:where([data-sonic-pressed]):not(:disabled),
+	.sonic-segmented-option:where([data-sonic-active]):not(:disabled),
 	.sonic-segmented-option[aria-checked='true'] {
 		--_sonic-keycap-shift: calc(var(--_sonic-keycap-depth) / 2);
 		--_sonic-keycap-scale: var(--_sonic-segmented-latched-scale);
 		--_sonic-keycap-drop: var(--_sonic-press-drop);
 	}
 
-	.sonic-segmented-option:where([data-sonic-pressed]):not(:disabled) {
+	.sonic-segmented-option:where([data-sonic-active]):not(:disabled) {
 		--_sonic-keycap-scale: var(--_sonic-segmented-press-scale);
 	}
 
@@ -127,7 +127,7 @@
 	.sonic-segmented-option:not([aria-checked='true'], :disabled):is(
 			:focus-visible,
 			:active,
-			[data-sonic-pressed]
+			[data-sonic-active]
 		) {
 		color: var(--_sonic-ink-lift);
 	}

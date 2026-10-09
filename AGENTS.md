@@ -14,7 +14,7 @@ Everything tracked is public and stands alone. Name no person and none of our ot
 
 ## Public surface
 
-Tokens, hook classes, attributes, events and `:state()` names are the API. Renaming one, or nesting a hook class differently, breaks someone's skin; call it out in the changeset.
+Tokens, hook classes, attributes, events and state names are the API. Renaming one, or nesting a hook class differently, breaks someone's skin; call it out in the changeset.
 
 - Every public name carries the `sonic` prefix, data attributes and the layer included.
 - Skins set public tokens only. When a skin needs a hook-class rule, add the missing token instead.

@@ -124,7 +124,7 @@
 	}
 
 	:where(:not(:disabled)) > .sonic-slider:focus-visible,
-	:state(dragging) > .sonic-slider {
+	.sonic-slider[data-sonic-dragging] {
 		--_sonic-slider-groove-held: 1;
 	}
 
@@ -156,11 +156,11 @@
 		touch-action: var(--sonic-touch-action, pan-x);
 	}
 
-	:state(dragging) > .sonic-slider {
+	.sonic-slider[data-sonic-dragging] {
 		--_sonic-cap: var(--_sonic-cap-hover);
 	}
 
-	:state(springing) > .sonic-slider {
+	.sonic-slider[data-sonic-springing] {
 		/* A damped spring with 10% bounce, sampled into `linear()` */
 		transition: --_sonic-slider-value 200ms
 			linear(
@@ -225,7 +225,7 @@
 		--_sonic-slider-scale-band: calc(var(--_sonic-slider-size) * var(--_sonic-slider-scale-ratio));
 	}
 
-	[groove-press='none']:not(:is(:state(dragging))) > .sonic-slider {
+	[groove-press='none'] > .sonic-slider:not([data-sonic-dragging]) {
 		cursor: default;
 	}
 
@@ -371,7 +371,7 @@
 		display: none;
 	}
 
-	:state(modulated) > .sonic-slider > .sonic-slider-modulation {
+	.sonic-slider[data-sonic-modulated] > .sonic-slider-modulation {
 		--_sonic-slider-live-low: min(
 			var(--_sonic-slider-value, 0),
 			var(--_sonic-slider-modulation-value, 0)
@@ -424,7 +424,9 @@
 		}
 	}
 
-	:where([orientation='vertical']):state(modulated) > .sonic-slider > .sonic-slider-modulation {
+	:where([orientation='vertical'])
+		> .sonic-slider[data-sonic-modulated]
+		> .sonic-slider-modulation {
 		&::before {
 			inset: auto 0 var(--_sonic-slider-live-start);
 			inline-size: auto;
@@ -531,7 +533,7 @@
 			--_sonic-slider-modulation: CanvasText;
 		}
 
-		:state(modulated) > .sonic-slider > .sonic-slider-modulation {
+		.sonic-slider[data-sonic-modulated] > .sonic-slider-modulation {
 			--_sonic-slider-modulation-tick: CanvasText;
 
 			background: GrayText;

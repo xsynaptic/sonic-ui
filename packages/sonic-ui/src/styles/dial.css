@@ -87,7 +87,7 @@
 		border-radius: 50%;
 	}
 
-	:state(dragging) > .sonic-dial {
+	.sonic-dial[data-sonic-dragging] {
 		--_sonic-cap: var(--_sonic-cap-hover);
 	}
 
@@ -236,7 +236,7 @@
 		display: none;
 	}
 
-	:state(modulated) > .sonic-dial > .sonic-dial-modulation {
+	.sonic-dial[data-sonic-modulated] > .sonic-dial-modulation {
 		--_sonic-dial-modulation-value-angle: calc(
 			var(--_sonic-dial-modulation-value, 0) * var(--_sonic-dial-sweep)
 		);
@@ -399,7 +399,7 @@
 			--_sonic-dial-modulation: CanvasText;
 		}
 
-		:state(modulated) > .sonic-dial > .sonic-dial-modulation {
+		.sonic-dial[data-sonic-modulated] > .sonic-dial-modulation {
 			--_sonic-dial-modulation-range: GrayText;
 			--_sonic-dial-modulation-tick: CanvasText;
 		}

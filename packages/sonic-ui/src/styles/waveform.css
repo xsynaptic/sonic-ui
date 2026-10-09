@@ -190,7 +190,7 @@
 		block-size: 100%;
 	}
 
-	:state(dragging) > .sonic-waveform {
+	.sonic-waveform[data-sonic-dragging] {
 		cursor: grabbing;
 	}
 

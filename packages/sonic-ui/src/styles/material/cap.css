@@ -189,8 +189,13 @@
 		}
 	}
 
-	:state(editing)
-		> :is(.sonic-dial, .sonic-number, .sonic-slider, .sonic-waveform, .sonic-wavestrip) {
+	:is(
+		.sonic-dial,
+		.sonic-number,
+		.sonic-slider,
+		.sonic-waveform,
+		.sonic-wavestrip
+	)[data-sonic-editing] {
 		--_sonic-cap: var(--_sonic-cap-hover);
 		--_sonic-focus-shadow: var(--_sonic-focus-glow);
 	}

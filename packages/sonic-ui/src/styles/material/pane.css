@@ -87,7 +87,7 @@
 
 			@media (prefers-reduced-motion: no-preference) {
 				&:is(:focus-visible, :focus-within)::before,
-				&:has(:state(dragging))::before {
+				&:has([data-sonic-dragging])::before {
 					animation: sonic-glass-breathe 3s ease-in-out infinite alternate;
 				}
 

@@ -219,6 +219,10 @@ export class SonicSlider extends SonicValueElement {
 		return this.spring ? this.originValue() : undefined;
 	}
 
+	protected override stateTarget(): HTMLElement {
+		return this.#slider;
+	}
+
 	#axis(slider: HTMLElement, cap: HTMLElement): SliderAxis {
 		const box = slider.getBoundingClientRect();
 		const capBox = cap.getBoundingClientRect();

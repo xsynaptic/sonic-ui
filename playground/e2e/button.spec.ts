@@ -173,7 +173,7 @@ test.describe('momentary', () => {
 
 				const { dataset } = document.body;
 
-				dataset.kick = `${dataset.kick ?? ''}${event.target.matches(':state(pressed)') ? 'down' : 'up'} `;
+				dataset.kick = `${dataset.kick ?? ''}${event.target.querySelector(':scope > [data-sonic-pressed]') ? 'down' : 'up'} `;
 			});
 		});
 	});

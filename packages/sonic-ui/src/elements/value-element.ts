@@ -333,7 +333,6 @@ export abstract class SonicValueElement extends SonicFormElement {
 
 	#readout: undefined | { anchor: HTMLElement; bubble: Readout };
 
-	// A host's formatter may be costly, so it runs only when the spoken value or the formatter changes
 	#said:
 		| undefined
 		| { format: ((value: number) => string) | undefined; text: string | undefined; value: number };

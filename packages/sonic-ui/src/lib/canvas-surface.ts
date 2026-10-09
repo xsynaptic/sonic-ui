@@ -68,6 +68,21 @@ function deviceBox(
 	return Math.abs(device.blockSize - css.blockSize * dpr) > 1 ? undefined : device;
 }
 
+function canTakeColour(context: CanvasRenderingContext2D, colour: string): boolean {
+	const kept = context.fillStyle;
+	const isKept = (sentinel: string): boolean => {
+		context.fillStyle = sentinel;
+		context.fillStyle = colour;
+
+		return context.fillStyle === sentinel;
+	};
+	const isRefused = isKept('#000000') && isKept('#ffffff');
+
+	context.fillStyle = kept;
+
+	return !isRefused;
+}
+
 // `Object.fromEntries` widens the keys to `string`
 function readEach<Name extends string, Value>(
 	properties: Partial<Record<Name, PrivateProperty>>,
@@ -306,10 +321,12 @@ class CanvasSurface<
 
 		return {
 			colours: readEach(colours, (property) =>
-				styles
-					.getPropertyValue(property)
-					.trim()
-					.replaceAll('currentcolor', () => styles.color),
+				this.#resolve(
+					styles
+						.getPropertyValue(property)
+						.trim()
+						.replaceAll('currentcolor', () => styles.color),
+				),
 			),
 			isReducedMotion: this.#reducedMotion.matches,
 			lengths: readEach<Length, number>(lengths, (property) => readPxProperty(styles, property, 0)),
@@ -340,6 +357,22 @@ class CanvasSurface<
 		this.#options.resize?.(this.#size);
 		if (previous.width === 0 || previous.height === 0) this.rebuild();
 		else this.invalidate();
+	}
+
+	#resolve(colour: string): string {
+		const context = this.#context;
+		if (!context || canTakeColour(context, colour)) return colour;
+
+		const probe = document.createElement('span');
+
+		probe.style.color = colour;
+		this.#options.canvas.append(probe);
+
+		const resolved = getComputedStyle(probe).color;
+
+		probe.remove();
+
+		return resolved;
 	}
 
 	#schedule(): void {

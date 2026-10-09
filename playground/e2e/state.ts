@@ -1,7 +1,11 @@
 import type { Locator, Page } from '@playwright/test';
 
 export function readState(host: Locator, name: string): Promise<boolean> {
-	return host.evaluate((element, state) => element.matches(`:state(${state})`), name);
+	return host.evaluate(
+		(element, state) =>
+			element.querySelector(`:scope > [data-sonic-${CSS.escape(state)}]`) !== null,
+		name,
+	);
 }
 
 export async function valueNow(control: Locator): Promise<number> {

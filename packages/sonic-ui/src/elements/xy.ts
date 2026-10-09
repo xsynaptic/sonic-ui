@@ -378,6 +378,10 @@ export class SonicXy extends SonicFormElement {
 		this.y = y;
 	}
 
+	protected override stateTarget(): HTMLElement {
+		return this.#xy;
+	}
+
 	#axisText(axis: FieldAxis): string {
 		const { value } = this.#models[axis];
 		const label = this.getAttribute(`${axis}-label`) ?? axis.toUpperCase();

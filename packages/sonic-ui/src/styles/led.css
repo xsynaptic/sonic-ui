@@ -78,7 +78,7 @@
 		[data-sonic-lit]:where(:not([data-sonic-lit='idle'])),
 		:where(
 				.sonic-button:is([aria-pressed='true'], [aria-expanded='true']),
-				[momentary]:state(pressed) > .sonic-button,
+				[momentary] > .sonic-button[data-sonic-pressed],
 				.sonic-segmented-option[aria-checked='true'],
 				.sonic-toggle:has(
 					> [role='switch'][aria-checked='true'],
@@ -86,7 +86,7 @@
 				)
 			)
 			*,
-		:where(:state(at-origin):not(:disabled) > .sonic-led)
+		:where(:not(:disabled):has(> [data-sonic-at-origin]) > .sonic-led)
 	) {
 		background:
 			radial-gradient(

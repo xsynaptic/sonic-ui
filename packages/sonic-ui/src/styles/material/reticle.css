@@ -23,8 +23,8 @@
 			scale var(--_sonic-fade-duration) ease-out;
 	}
 
-	:state(dragging) > * > .sonic-xy-reticle,
-	:state(dragging) > * > .sonic-envelope-reticle::before {
+	[data-sonic-dragging] > .sonic-xy-reticle,
+	[data-sonic-dragging] > .sonic-envelope-reticle::before {
 		opacity: calc(1 - var(--_sonic-relief));
 		scale: 1;
 	}

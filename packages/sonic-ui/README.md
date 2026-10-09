@@ -51,7 +51,7 @@ import '@xsynaptic/sonic-ui/define';
 - `formatValue` and `parseValue` are properties holding functions. Once `parseValue` is set it has to read what `formatValue` writes, or typed entry opens on text it cannot take.
 - To show a control without taking input, set `inert` on the host. It leaves the tab order and the accessibility tree and ignores presses, and it keeps its colours and keeps drawing; `disabled` dims it and is announced as disabled.
 - A display takes its signal as data, and nothing in the library fetches, decodes or opens an `AudioContext`.
-- States a control sets itself are custom states on the host, selected with `:state()`.
+- A state a control sets itself is an attribute on its drawn part, `data-sonic-<state>`, selected as `.sonic-slider[data-sonic-dragging]`.
 - The LED, the panel, the ring and the screen have no behaviour, so they are classes on your own elements (`sonic-led`, `sonic-panel`, `sonic-ring`, `sonic-screen`). A control draws no glass of its own: wrap one in a screen for the encased look.
 
 ## Skinning

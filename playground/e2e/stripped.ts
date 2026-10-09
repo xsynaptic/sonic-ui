@@ -7,15 +7,23 @@ function strip(): void {
 	Reflect.deleteProperty(Element.prototype, 'ariaLabelledByElements');
 	Reflect.deleteProperty(Intl, 'DurationFormat');
 
-	// Chrome 90 to 124 take a custom state only with the legacy dashes
-	CustomStateSet.prototype.add = () => {
-		throw new DOMException('A custom state needs the legacy dashes', 'SyntaxError');
-	};
+	for (const name of ['fillStyle', 'strokeStyle'] as const) {
+		const style = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, name);
+
+		Object.defineProperty(CanvasRenderingContext2D.prototype, name, {
+			...style,
+			set(this: CanvasRenderingContext2D, next: CanvasGradient | CanvasPattern | string) {
+				if (typeof next === 'string' && next.includes('color-mix(')) return;
+
+				style?.set?.call(this, next);
+			},
+		});
+	}
 
 	const supports = CSS.supports.bind(CSS);
 
 	CSS.supports = (query: string, value?: string) =>
-		!/anchor-name|:state\(/.test(query) &&
+		!query.includes('anchor-name') &&
 		(value === undefined ? supports(query) : supports(query, value));
 }
 

@@ -228,6 +228,10 @@ export class SonicButton extends SonicFormElement {
 		if (this.latching) this.pressed = state === 'true';
 	}
 
+	protected override stateTarget(): HTMLElement {
+		return this.#button;
+	}
+
 	#bindMomentary(button: HTMLButtonElement, signal: AbortSignal): void {
 		const holding = bindHold(
 			button,

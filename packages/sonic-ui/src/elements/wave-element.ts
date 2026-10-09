@@ -201,6 +201,10 @@ export abstract class SonicWaveElement<
 		this.dispatchEvent(new Event('sonic-marker', { bubbles: true }));
 	}
 
+	protected override stateTarget(): HTMLElement {
+		return this.control;
+	}
+
 	protected surface(): Surface | undefined {
 		return this.#surface;
 	}

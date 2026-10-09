@@ -194,7 +194,7 @@ The words this library uses for its controls, their parts and their values. Wher
 
 **Hook class**: A public class on one of a control's drawn parts. _Avoid_: Part, slot, BEM element
 
-**State**: A public custom state that a skin may select on, such as dragging or pressed. _Avoid_: Mode, status
+**State**: A public attribute a control writes on its drawn part, `data-sonic-<state>`, that a skin may select on, such as dragging or pressed. _Avoid_: Mode, status
 
 **Lit colour**: The colour a lamp shows, named for what it reports: lit (the skin's one light), ok, warning or danger. Idle is lit at a lower level. _Avoid_: Alt, secondary, accent, a colour's own name (green, red); hot and clip on a lamp (those are a meter's zones)
 

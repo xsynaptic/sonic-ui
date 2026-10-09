@@ -208,6 +208,10 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 		this.dispatchEvent(new Event('change', { bubbles: true }));
 	}
 
+	protected override stateTarget(): HTMLElement {
+		return this.group;
+	}
+
 	protected stepFrom(from: number, step: number): number | undefined {
 		return stepFrom(this.positions(), from, { isWrapping: this.isWrapping(), step });
 	}
@@ -272,7 +276,7 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 
 	#markPressed(pressed: number | undefined): void {
 		for (const [index, option] of this.options().entries()) {
-			option.toggleAttribute('data-sonic-pressed', index === pressed);
+			option.toggleAttribute('data-sonic-active', index === pressed);
 		}
 	}
 

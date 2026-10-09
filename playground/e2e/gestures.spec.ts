@@ -198,7 +198,10 @@ function readSpring(host: Locator): Promise<{ drawn: number; isSpringing: boolea
 			? getComputedStyle(control).getPropertyValue('--_sonic-slider-value')
 			: '';
 
-		return { drawn: Number(drawn), isSpringing: element.matches(':state(springing)') };
+		return {
+			drawn: Number(drawn),
+			isSpringing: control?.hasAttribute('data-sonic-springing') === true,
+		};
 	});
 }
 
@@ -210,7 +213,7 @@ test('a springing slider let go reports where it was, then its return to the ori
 	const start = await centerOf(host.locator('.sonic-slider-cap'));
 
 	await page.addStyleTag({
-		content: '#bend:state(springing) > .sonic-slider { transition-duration: 2s; }',
+		content: '#bend > .sonic-slider[data-sonic-springing] { transition-duration: 2s; }',
 	});
 	await host.evaluate((element) => {
 		element.addEventListener('change', () => {

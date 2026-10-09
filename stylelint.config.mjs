@@ -32,8 +32,6 @@ const aboveFloor = {
 		'nesting',
 		// A readout stays shut
 		'popover-open',
-		// Looks that follow a custom state: held, dragging, editing, and a meter's ladder
-		'state',
 	],
 };
 

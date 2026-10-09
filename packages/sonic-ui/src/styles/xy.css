@@ -177,7 +177,7 @@
 	}
 
 	@media (hover: hover) {
-		:not(:disabled, :is(:state(dragging))) > .sonic-xy > .sonic-xy-puck:hover {
+		:not(:disabled) > .sonic-xy:where(:not([data-sonic-dragging])) > .sonic-xy-puck:hover {
 			--_sonic-xy-puck-fill: var(--_sonic-xy-puck-lift);
 		}
 	}
@@ -187,7 +187,7 @@
 		--_sonic-xy-puck-ring: var(--_sonic-focus);
 	}
 
-	:state(dragging) > .sonic-xy > .sonic-xy-puck {
+	.sonic-xy[data-sonic-dragging] > .sonic-xy-puck {
 		--_sonic-xy-puck-glow: color-mix(
 			in oklab,
 			var(--_sonic-xy-lit) calc(30% * var(--_sonic-relief)),
@@ -225,7 +225,7 @@
 			}
 		}
 
-		:state(dragging) > .sonic-xy > .sonic-xy-puck {
+		.sonic-xy[data-sonic-dragging] > .sonic-xy-puck {
 			--_sonic-xy-puck-fill: Canvas;
 			--_sonic-xy-puck-edge: var(--_sonic-xy-lit);
 		}

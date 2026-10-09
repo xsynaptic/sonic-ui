@@ -150,7 +150,7 @@ export class SonicToggle extends SonicPositionGroupElement {
 						drag.isPress = false;
 				},
 				release: (drag) => {
-					delete drag.marked.dataset.sonicPressed;
+					delete drag.marked.dataset.sonicActive;
 					this.#draggedTo = undefined;
 					this.toggleState('dragging', false);
 					this.render();
@@ -186,7 +186,7 @@ export class SonicToggle extends SonicPositionGroupElement {
 
 		const marked = this.options()[position] ?? this.bare;
 
-		marked.toggleAttribute('data-sonic-pressed', true);
+		marked.toggleAttribute('data-sonic-active', true);
 
 		return {
 			hasMoved: false,

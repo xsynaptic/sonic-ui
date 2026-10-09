@@ -4,7 +4,7 @@ export function bindKeyPress(root: HTMLElement, signal: AbortSignal): void {
 	const release = (): void => {
 		if (!pressed) return;
 
-		delete pressed.dataset.sonicPressed;
+		delete pressed.dataset.sonicActive;
 		pressed = undefined;
 	};
 
@@ -18,7 +18,7 @@ export function bindKeyPress(root: HTMLElement, signal: AbortSignal): void {
 
 			release();
 			pressed = part;
-			part.dataset.sonicPressed = '';
+			part.dataset.sonicActive = '';
 		},
 		{ signal },
 	);

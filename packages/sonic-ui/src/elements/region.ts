@@ -62,6 +62,7 @@ export class SonicRegion extends SonicFormElement {
 		'kind',
 		'name',
 		'start',
+		'tabindex',
 	];
 
 	static {
@@ -171,6 +172,10 @@ export class SonicRegion extends SonicFormElement {
 
 		this.#span = { end, start };
 		this.render();
+	}
+
+	protected override stateTarget(): HTMLElement | undefined {
+		return this.#part;
 	}
 
 	#draw(part: HTMLElement): void {
