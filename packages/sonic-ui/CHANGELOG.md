@@ -1,5 +1,31 @@
 # @xsynaptic/sonic-ui
 
+## 0.25.1
+
+### Patch Changes
+
+- `formatClock` writes a time that is not finite (a duration not yet known, a live stream's) as an empty string, where it wrote `NaN:NaN`.
+
+## 0.25.0
+
+### Minor Changes
+
+- - `<sonic-region>`: an editable region, a child of a wave strip, drawn as a bracket and registered by `./define/region` with `region.css`. A drag of its body or a key moves it and keeps its length. It has `start`, `end`, `kind`, `name` (submitting `name.start` and `name.end`) and `disabled`, speaks its start, carries `:state(dragging)`, and fires `input` and `change`, which bubble through the strip.
+  - Region surface: tokens `--sonic-region-bracket`, `--sonic-region-fill`, `--sonic-region-bracket-width` and `--sonic-region-bracket-radius`; hook classes `.sonic-wavestrip-regions`, `.sonic-region` and `.sonic-region-bracket`; `data-sonic-clipped` on a region written past a bound.
+  - Wave strip: `formatSpokenRegion(start, end)` words what a region speaks, and `preview` draws a time as a scrub's edge without scrubbing to it.
+  - Wave strip and waveform: `valueFromPoint(clientX, clientY)` is the inverse of `clientXOf`.
+  - Wave strip, breaking: the slider role, the tab stop and the focus glow are on `.sonic-wavestrip-canvas`, so `.sonic-wavestrip:focus-visible` no longer matches (`:focus-within` does).
+- - XY pad and envelope: the arcs round a held puck or handle are the reticle. Breaking: `.sonic-xy-bracket` is `.sonic-xy-reticle`, `.sonic-envelope-bracket` is `.sonic-envelope-reticle`, and `material/bracket.css` is `material/reticle.css`.
+- - Waveform: `clientXOf(seconds)` is the viewport x where a time was last drawn, as on the wave strip, so a layer over the wave follows a paged window and a drag. The x is not clamped to the window.
+  - Wave strip and waveform: `markersFromPoint(clientX, clientY)` lists the markers at a point, nearest first.
+  - Wave strip: `renderMarker(marker, element)` draws a point marker; the element lasts until the next `markers` or `renderMarker` write.
+  - Waveform: a marker outside the bounds paints its line at the bound.
+  - Wave strip: `--sonic-wave` is renamed `--sonic-unplayed`, beside `--sonic-buffered` and `--sonic-scrub`. Breaking for a skin or host that sets it.
+
+### Patch Changes
+
+- Older browsers, down to Chrome 111, Safari 16.4 and Firefox 128: the built sheets carry vendor prefixes (`-webkit-mask`, `-webkit-user-select`), shading no longer needs relative colour, a dial's scale and the XY pad's lines no longer need the `cap` unit or `sign()`, and typed entry stays shut without the popover API. With no skin, glass follows `Canvas`: an off-white in light, the engine's dark canvas in dark.
+
 ## 0.24.1
 
 ### Patch Changes
