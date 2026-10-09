@@ -271,7 +271,7 @@ export class SonicWaveform extends SonicWaveElement<Colour, never, Numeric> {
 
 	readonly #clock = createTrackingClock();
 
-	#drawn: Drawn | undefined;
+	#drawn: (Drawn & { zoom: PixelsPerSecond }) | undefined;
 
 	readonly #ghost = requireChild(this.control, '.sonic-waveform-ghost', HTMLDivElement);
 
@@ -314,6 +314,15 @@ export class SonicWaveform extends SonicWaveElement<Colour, never, Numeric> {
 	override attributeChangedCallback(name: string): void {
 		super.attributeChangedCallback(name);
 		if (name === 'zoomable') this.#zoomGesture?.sync();
+	}
+
+	/** Viewport x of a time as last drawn; not clamped to the window */
+	clientXOf(value: Seconds): number {
+		const { left, width } = this.canvas.getBoundingClientRect();
+		const zoom = this.#drawn?.zoom ?? this.zoom;
+		const startSeconds = this.#drawn?.startSeconds ?? this.value - width / zoom / 2;
+
+		return left + (clamp(value, ...this.mapping().bounds) - startSeconds) * zoom;
 	}
 
 	override connectedCallback(): void {
@@ -404,7 +413,7 @@ export class SonicWaveform extends SonicWaveElement<Colour, never, Numeric> {
 		});
 		const { seconds, view } = timeline;
 
-		this.#drawn = { seconds, startSeconds: view.startSeconds };
+		this.#drawn = { seconds, startSeconds: view.startSeconds, zoom: this.zoom };
 		placeLine(this.#playhead, timeline.playheadAt);
 		placeLine(this.#ghost, timeline.ghostAt);
 		this.showCurrentMarker(seconds);

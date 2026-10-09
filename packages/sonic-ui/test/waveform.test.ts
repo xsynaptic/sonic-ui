@@ -23,6 +23,13 @@ function mountWaveform(attributes: string): { control: HTMLElement; waveform: So
 	return { control, waveform };
 }
 
+function boxCanvas(control: HTMLElement): void {
+	const canvas = control.querySelector('canvas');
+	if (!canvas) throw new Error('The waveform has no canvas');
+
+	vi.spyOn(canvas, 'getBoundingClientRect').mockReturnValue(new DOMRect(40, 0, 490, 96));
+}
+
 function playheadAt(control: HTMLElement): number {
 	const line = control.querySelector<HTMLElement>('.sonic-waveform-playhead');
 
@@ -459,4 +466,47 @@ test('a key scrub draws the playhead at the scrubbed value and the ghost where p
 	arrowRight(control, 'keyup', false);
 	flushFrames();
 	expect(ghost?.hidden).toBe(true);
+});
+
+test('clientXOf places a time on the drawn window, past its edges, and clamps the time to the bounds', () => {
+	const { flushFrames } = installCanvasFakes();
+	const { control, waveform } = mountWaveform('min="30" max="300" step="0" value="100"');
+
+	boxCanvas(control);
+	flushFrames();
+
+	expect(waveform.clientXOf(102)).toBeCloseTo(425, 9);
+	expect(waveform.clientXOf(110)).toBeCloseTo(985, 9);
+	expect(waveform.clientXOf(0)).toBeCloseTo(-4615, 9);
+});
+
+test('clientXOf holds to the picture until a frame draws a written zoom', () => {
+	const { flushFrames } = installCanvasFakes();
+	const { control, waveform } = mountWaveform('max="300" step="0" value="100"');
+
+	boxCanvas(control);
+	flushFrames();
+	waveform.zoom = 140;
+	expect(waveform.clientXOf(102)).toBeCloseTo(425, 9);
+
+	flushFrames();
+	expect(waveform.clientXOf(102)).toBeCloseTo(565, 9);
+});
+
+test('clientXOf follows a paged window, and a drag that carries the page with it', () => {
+	const { flushFrames } = installCanvasFakes({ isReducedMotion: true });
+	const { control, waveform } = mountWaveform('max="300" step="0" value="13.9"');
+
+	boxCanvas(control);
+	flushFrames();
+	expect(waveform.clientXOf(13.9)).toBeCloseTo(523, 9);
+	expect(waveform.clientXOf(7)).toBeCloseTo(40, 9);
+
+	pointerAt(control, 'pointerdown', { clientX: 200 });
+	pointerAt(control, 'pointermove', { clientX: 340 });
+	flushFrames();
+
+	expect(waveform.value).toBeCloseTo(11.9, 9);
+	expect(waveform.clientXOf(11.9)).toBeCloseTo(523, 9);
+	expect(waveform.clientXOf(7)).toBeCloseTo(180, 9);
 });

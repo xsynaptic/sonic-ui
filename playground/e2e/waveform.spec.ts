@@ -321,6 +321,31 @@ test(
 	},
 );
 
+test(
+	'clientXOf lands on the playhead, in a paged window too',
+	{ tag: '@mobile' },
+	async ({ page }) => {
+		const { waveform } = await openWaveform(page);
+		const gap = (): Promise<number> =>
+			waveform.evaluate((element) => {
+				const playhead = element.querySelector('.sonic-waveform-playhead');
+				if (!playhead || !('clientXOf' in element) || !('value' in element)) return NaN;
+
+				const box = playhead.getBoundingClientRect();
+				const { clientXOf } = element as { clientXOf: (value: unknown) => number };
+
+				return Math.abs(clientXOf.call(element, element.value) - (box.left + box.width / 2));
+			});
+
+		await waveform.evaluate((element) => Object.assign(element, { value: 147 }));
+		await expect.poll(gap).toBeLessThan(0.5);
+
+		await page.emulateMedia({ reducedMotion: 'reduce' });
+		await waveform.evaluate((element) => Object.assign(element, { value: 149 }));
+		await expect.poll(gap).toBeLessThan(0.5);
+	},
+);
+
 test('the pending state follows a region in the window, clears when it lands or leaves, and waits out pending-delay', async ({
 	page,
 }) => {
