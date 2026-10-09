@@ -1,6 +1,9 @@
 const sign = /^[-−]/;
 
+// A time not yet known writes as nothing, the text `parseClock` reads back as NaN
 export function formatClock(seconds: number): string {
+	if (!Number.isFinite(seconds)) return '';
+
 	const total = Math.floor(Math.abs(seconds));
 	const hours = Math.floor(total / 3600);
 	const minutes = Math.floor(total / 60) % 60;

@@ -13,6 +13,10 @@ test.each([
 	expect(formatClock(seconds)).toBe(text);
 });
 
+test.each([NaN, Infinity, -Infinity])('%j seconds writes as nothing', (seconds) => {
+	expect(formatClock(seconds)).toBe('');
+});
+
 test.each([
 	['83', 83],
 	['1:23', 83],
