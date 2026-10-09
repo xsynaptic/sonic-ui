@@ -16,6 +16,15 @@ const strips = [
 		seed: 6,
 	},
 	{ format: 'seconds', id: 'wavestrip-seconds', label: 'Readout in seconds', seed: 7 },
+	{
+		hasShapes: true,
+		id: 'wavestrip-shapes',
+		label: 'Markers drawn by the host',
+		markers: '30:cue 60..95:intro 140:hot 150:cue 152:hot 215:hot 260:cue~',
+		seed: 14,
+		tokens:
+			'[--sonic-marker-cue:oklch(78%_0.15_85deg)] [--sonic-marker-hot:oklch(70%_0.17_25deg)] [--sonic-wavestrip-marker-ratio:0.2]',
+	},
 	{ hasGlass: true, id: 'wavestrip-glass', label: 'On glass', seed: 10 },
 	{
 		hasGlass: true,
@@ -41,9 +50,10 @@ const strips = [
 				<sonic-wavestrip
 					aria-labelledby={strip.id}
 					cancellable
-					class="[--sonic-wavestrip-length:20rem]"
+					class:list={['[--sonic-wavestrip-length:20rem]', strip.tokens]}
 					data-buffered="0 150 190 230"
 					data-format={strip.format ?? 'clock'}
+					data-marker-shapes={strip.hasShapes}
 					data-markers={strip.markers ?? markers}
 					data-peaks={strip.seed}
 					dimmed={strip.isDimmed}

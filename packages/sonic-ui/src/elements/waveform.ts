@@ -2,6 +2,7 @@ import type { ValueAxis } from '#elements/value-gestures.ts';
 import type { WaveMarker } from '#elements/wave-element.ts';
 import type { SurfaceFrame } from '#lib/canvas-surface.ts';
 import type { Drawn } from '#lib/frame-timeline.ts';
+import type { Point } from '#lib/marker-band.ts';
 import type { PeaksRequest } from '#lib/peaks-request.ts';
 import type { TimeRegions } from '#lib/time-regions.ts';
 import type { Milliseconds, PixelsPerSecond, Seconds } from '#lib/units.ts';
@@ -49,6 +50,7 @@ export type LabelRender = (marker: WaveMarker, element: HTMLElement) => void;
 const defaultZoom = 70;
 const defaultZoomMin = 20;
 const defaultZoomMax = 280;
+const lineReachPx = 4;
 
 const renderWaveform = template(
 	/* HTML */ `
@@ -319,10 +321,8 @@ export class SonicWaveform extends SonicWaveElement<Colour, never, Numeric> {
 	/** Viewport x of a time as last drawn; not clamped to the window */
 	clientXOf(value: Seconds): number {
 		const { left, width } = this.canvas.getBoundingClientRect();
-		const zoom = this.#drawn?.zoom ?? this.zoom;
-		const startSeconds = this.#drawn?.startSeconds ?? this.value - width / zoom / 2;
 
-		return left + (clamp(value, ...this.mapping().bounds) - startSeconds) * zoom;
+		return left + this.#drawnX(value, width);
 	}
 
 	override connectedCallback(): void {
@@ -387,6 +387,18 @@ export class SonicWaveform extends SonicWaveElement<Colour, never, Numeric> {
 		return !this.#peaks || this.#peaks.samples.length === 0;
 	}
 
+	// The canvas paints a region as its start line alone
+	protected markersInReach({ x }: Point, widthPx: number): Array<number> {
+		return this.markerList()
+			.map(({ start }, index) => ({
+				distance: Math.abs(this.#drawnX(start, widthPx) - x),
+				index,
+			}))
+			.filter(({ distance }) => distance <= lineReachPx)
+			.toSorted((first, second) => first.distance - second.distance)
+			.map(({ index }) => index);
+	}
+
 	protected paint(
 		context: CanvasRenderingContext2D,
 		{ frameMs, isDirty, isRebuilt, look, size }: SurfaceFrame<Colour, never, Numeric>,
@@ -434,7 +446,10 @@ export class SonicWaveform extends SonicWaveElement<Colour, never, Numeric> {
 				{
 					bands: this.#tint(isRebuilt),
 					kindColours: this.#kindColours,
-					markers: this.markerList(),
+					markers: this.markerList().map((marker) => ({
+						...marker,
+						start: clamp(marker.start, ...range),
+					})),
 					peaks: this.#peaks,
 					range,
 				},
@@ -482,6 +497,13 @@ export class SonicWaveform extends SonicWaveElement<Colour, never, Numeric> {
 
 	protected override scrubsKeyRepeat(): boolean {
 		return true;
+	}
+
+	#drawnX(value: Seconds, widthPx: number): number {
+		const zoom = this.#drawn?.zoom ?? this.zoom;
+		const startSeconds = this.#drawn?.startSeconds ?? this.value - widthPx / zoom / 2;
+
+		return (clamp(value, ...this.mapping().bounds) - startSeconds) * zoom;
 	}
 
 	#duePending(): Array<[number, number]> {

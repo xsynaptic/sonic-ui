@@ -193,9 +193,11 @@
 			calc(var(--_sonic-marker-from, 0) * 100% - var(--_sonic-marker-size) / 2);
 		inline-size: var(--_sonic-marker-size);
 		block-size: var(--_sonic-marker-size);
-		background: var(--_sonic-marker-colour);
+		color: var(--_sonic-marker-colour);
+		background: var(--_sonic-marker-paint, var(--_sonic-marker-colour));
 		border-radius: 50%;
-		box-shadow: 0 0 0 var(--_sonic-marker-edge) var(--sonic-wavestrip-marker-edge, transparent);
+		box-shadow: 0 0 0 var(--_sonic-marker-edge)
+			var(--_sonic-marker-paint, var(--sonic-wavestrip-marker-edge, transparent));
 	}
 
 	.sonic-wavestrip-region {
@@ -240,8 +242,8 @@
 		}
 
 		.sonic-wavestrip-marker {
-			background: var(--_sonic-marker-colour);
-			box-shadow: 0 0 0 var(--_sonic-marker-edge) Canvas;
+			background: var(--_sonic-marker-paint, var(--_sonic-marker-colour));
+			box-shadow: 0 0 0 var(--_sonic-marker-edge) var(--_sonic-marker-paint, Canvas);
 		}
 
 		.sonic-wavestrip-region {

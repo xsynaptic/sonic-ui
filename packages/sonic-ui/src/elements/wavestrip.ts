@@ -1,5 +1,7 @@
 import type { ValueAxis } from '#elements/value-gestures.ts';
+import type { WaveMarker } from '#elements/wave-element.ts';
 import type { SurfaceFrame } from '#lib/canvas-surface.ts';
+import type { Point } from '#lib/marker-band.ts';
 import type { StripRegions } from '#lib/strip-scene.ts';
 import type { TimeRegions } from '#lib/time-regions.ts';
 import type { Seconds } from '#lib/units.ts';
@@ -22,6 +24,8 @@ declare global {
 type Colour = keyof typeof colours;
 
 type Length = keyof typeof lengths;
+
+export type MarkerRender = (marker: WaveMarker, element: HTMLElement) => void;
 
 const colours = {
 	buffered: '--_sonic-wavestrip-buffered',
@@ -106,6 +110,21 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 		this.surface()?.invalidate();
 	}
 
+	/** Runs once per point marker on each `markers` or `renderMarker` write; the element lasts until the next */
+	get renderMarker(): MarkerRender | undefined {
+		return this.#renderMarker;
+	}
+
+	set renderMarker(render: MarkerRender | undefined) {
+		this.#renderMarker = render;
+		this.#drawMarker =
+			render &&
+			((marker, element) => {
+				render({ ...marker }, element);
+			});
+		if (this.isBound()) this.renderMarkers();
+	}
+
 	protected readonly control = renderWavestrip();
 
 	protected readonly canvas = requireChild(
@@ -128,13 +147,17 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 
 	#buffered: Array<[number, number]> = [];
 
-	readonly #markerBand = createMarkerBand(
+	#drawMarker: MarkerRender | undefined;
+
+	readonly #markerBand = createMarkerBand<WaveMarker>(
 		requireChild(this.control, '.sonic-wavestrip-markers', HTMLDivElement),
 	);
 
 	#paintedKey = '';
 
 	#peaks: ArrayLike<number> | undefined;
+
+	#renderMarker: MarkerRender | undefined;
 
 	/** Viewport x of a time, clamped to the strip */
 	clientXOf(value: Seconds): number {
@@ -144,7 +167,7 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 	}
 
 	override connectedCallback(): void {
-		this.upgradeProperties('buffered', 'cancellable', 'peaks');
+		this.upgradeProperties('buffered', 'cancellable', 'peaks', 'renderMarker');
 		super.connectedCallback();
 	}
 
@@ -161,7 +184,7 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 				const at = clampProportion((event.clientX - axis.startPx) / axis.travelPx);
 				const mapping = this.mapping();
 
-				return this.#markerAt(event, axis) ?? mapping.snap(mapping.valueAt(at));
+				return this.#markerStartAt(event, axis) ?? mapping.snap(mapping.valueAt(at));
 			},
 		});
 		this.bindGestures(control, signal, (event) => this.#grab(event));
@@ -181,6 +204,17 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 		return !this.#peaks || this.#peaks.length === 0;
 	}
 
+	/** The first point marker is the one a press there snaps to */
+	protected markersInReach(point: Point, widthPx: number): Array<number> {
+		const regions = this.markerProportions().flatMap(([from, to], index) => {
+			const isRegion = this.markerList()[index]?.end !== undefined;
+
+			return isRegion && point.x >= from * widthPx && point.x <= to * widthPx ? [index] : [];
+		});
+
+		return [...this.#markerBand.inReach(point, widthPx), ...regions];
+	}
+
 	protected paint(context: CanvasRenderingContext2D, frame: SurfaceFrame<Colour, Length>): void {
 		const { look, size } = frame;
 		const strip = this.#stripRegions(size.width);
@@ -198,7 +232,7 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 	}
 
 	protected override renderMarkers(): void {
-		this.#markerBand.render(this.markerList(), this.markerProportions());
+		this.#markerBand.render(this.markerList(), this.markerProportions(), this.#drawMarker);
 	}
 
 	protected override scrubsKeyRepeat(): boolean {
@@ -247,17 +281,17 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 			travelPx: axis.travelPx,
 		};
 
-		this.input(this.#markerAt(event, axis) ?? this.mapping().valueAt(at));
+		this.input(this.#markerStartAt(event, axis) ?? this.mapping().valueAt(at));
 
 		return outside ? { ...grabbed, outside } : grabbed;
 	}
 
-	#markerAt(
-		event: PointerEvent,
+	#markerStartAt(
+		{ clientX, clientY }: PointerEvent,
 		{ startPx, topPx, travelPx }: { startPx: number; topPx: number; travelPx: number },
 	): number | undefined {
-		const index = this.#markerBand.at(
-			{ x: event.clientX - startPx, y: event.clientY - topPx },
+		const [index] = this.#markerBand.inReach(
+			{ x: clientX - startPx, y: clientY - topPx },
 			travelPx,
 		);
 

@@ -40,6 +40,17 @@ function drawRuns(marker: Marker, element: HTMLElement): void {
 	);
 }
 
+const shapes: Record<string, string> = {
+	cue: 'M5 0 10 10H0Z',
+	hot: 'M5 0 10 5 5 10 0 5Z',
+};
+
+function drawShape(marker: Marker, element: HTMLElement): void {
+	const path = shapes[marker.kind ?? ''] ?? 'M0 0H10V10H0Z';
+
+	element.innerHTML = `<svg viewBox="0 0 10 10" style="display: block; fill: currentcolor"><path d="${path}" /></svg>`;
+}
+
 for (const control of document.querySelectorAll<SonicWaveform | SonicWavestrip>(
 	':is(sonic-waveform, sonic-wavestrip)[data-markers]',
 )) {
@@ -50,4 +61,10 @@ for (const waveform of document.querySelectorAll<SonicWaveform>(
 	'sonic-waveform[data-markers*="|"]',
 )) {
 	waveform.renderLabel = drawRuns;
+}
+
+for (const wavestrip of document.querySelectorAll<SonicWavestrip>(
+	'sonic-wavestrip[data-marker-shapes]',
+)) {
+	wavestrip.renderMarker = drawShape;
 }

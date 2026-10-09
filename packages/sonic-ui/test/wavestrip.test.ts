@@ -223,7 +223,7 @@ test('a max written during a drag keeps the dragged value', () => {
 	expect(changed).toEqual([130]);
 });
 
-function markerDots(control: HTMLElement): Array<HTMLElement> {
+function markerParts(control: HTMLElement): Array<HTMLElement> {
 	return [
 		...control.querySelectorAll<HTMLElement>(
 			':is(.sonic-wavestrip-marker, .sonic-wavestrip-region)',
@@ -270,10 +270,10 @@ test('a marker sits at its proportion between the bounds', () => {
 
 	wavestrip.markers = [{ end: 255, start: 105 }];
 
-	const [dot] = markerDots(control);
+	const [region] = markerParts(control);
 
-	expect(dot?.style.getPropertyValue('--_sonic-marker-from')).toBe('0.25');
-	expect(dot?.style.getPropertyValue('--_sonic-marker-to')).toBe('0.75');
+	expect(region?.style.getPropertyValue('--_sonic-marker-from')).toBe('0.25');
+	expect(region?.style.getPropertyValue('--_sonic-marker-to')).toBe('0.75');
 });
 
 test('the band holds one part per marker in the order `markers` reads back', () => {
@@ -284,7 +284,7 @@ test('the band holds one part per marker in the order `markers` reads back', () 
 	wavestrip.markers = [{ start: 200 }, { end: 150, start: 100 }, { start: 50 }];
 
 	expect(
-		markerDots(control).map((part) => [
+		markerParts(control).map((part) => [
 			part.className,
 			Number(part.style.getPropertyValue('--_sonic-marker-from')) * 300 + 30,
 		]),
@@ -295,21 +295,192 @@ test('the band holds one part per marker in the order `markers` reads back', () 
 	]);
 });
 
-test('a value write leaves the marker dots as they were built', () => {
+test('a value write leaves the marker parts as they were built', () => {
 	installCanvasFakes();
 
 	const { control, wavestrip } = mountWavestrip('max="300" value="10"');
 
 	wavestrip.markers = [{ start: 60 }, { end: 120, kind: 'loop', start: 90 }];
 
-	const built = markerDots(control);
+	const built = markerParts(control);
 
 	wavestrip.value = 200;
 
-	const after = markerDots(control);
+	const after = markerParts(control);
 
 	// `toEqual` compares nodes by markup, which a rebuild matches
-	expect(after.map((dot, index) => dot === built[index])).toEqual([true, true]);
+	expect(after.map((part, index) => part === built[index])).toEqual([true, true]);
+});
+
+function mountLanedWavestrip(): { control: HTMLElement; wavestrip: SonicWavestrip } {
+	const mounted = mountWavestrip('min="30" max="330" step="0" value="50"');
+
+	const band = mounted.control.querySelector<HTMLElement>('.sonic-wavestrip-markers');
+
+	// happy-dom computes an inline custom property on its own element only
+	band?.style.setProperty('--_sonic-marker-size', '2px');
+	band?.style.setProperty('--_sonic-marker-step', '2px');
+
+	return mounted;
+}
+
+test('markersFromPoint lists a cluster across lanes nearest first, and a press there seeks to the first', () => {
+	installCanvasFakes();
+
+	const { control, wavestrip } = mountLanedWavestrip();
+	const point = { clientX: 170.25, clientY: 5 };
+
+	wavestrip.markers = [199, 199.5, 200, 200.5, 201, 240].map((start) => ({
+		cue: `cue-${String(start)}`,
+		start,
+	}));
+
+	const found = wavestrip.markersFromPoint(point.clientX, point.clientY);
+
+	expect(found.map(({ cue }) => cue)).toEqual([
+		'cue-200',
+		'cue-200.5',
+		'cue-199.5',
+		'cue-201',
+		'cue-199',
+	]);
+
+	pointerAt(control, 'pointerdown', point);
+	expect(wavestrip.value).toBe(found[0]?.start);
+});
+
+test('markersFromPoint lists a region after every point marker, only where its span is painted', () => {
+	installCanvasFakes();
+
+	const { wavestrip } = mountLanedWavestrip();
+
+	wavestrip.markers = [
+		{ end: 260, label: 'Loop', start: 190 },
+		{ label: 'Point', start: 202 },
+		{ end: 300, label: 'Later', start: 280 },
+	];
+
+	const labels = (clientX: number, clientY: number): Array<string | undefined> =>
+		wavestrip.markersFromPoint(clientX, clientY).map(({ label }) => label);
+
+	expect(labels(170, 1)).toEqual(['Point', 'Loop']);
+	expect(labels(170, 40)).toEqual(['Loop']);
+	expect(labels(160, 40)).toEqual(['Loop']);
+	expect(labels(159, 40)).toEqual([]);
+	expect(labels(231, 40)).toEqual([]);
+	expect(labels(240, 40)).toEqual([]);
+	expect(labels(170, -1)).toEqual([]);
+	expect(labels(170, 49)).toEqual([]);
+});
+
+function recordDrawn(wavestrip: SonicWavestrip): Array<[unknown, HTMLElement, boolean]> {
+	const drawn: Array<[unknown, HTMLElement, boolean]> = [];
+
+	wavestrip.renderMarker = (marker, element) => {
+		element.textContent = String(marker.cue);
+		drawn.push([marker.cue, element, element.isConnected]);
+	};
+
+	return drawn;
+}
+
+test('renderMarker is given each point marker with its own detached element, and a region is left alone', () => {
+	installCanvasFakes();
+
+	const { control, wavestrip } = mountWavestrip('min="30" max="330"');
+	const drawn = recordDrawn(wavestrip);
+
+	wavestrip.markers = [
+		{ cue: 'late', start: 200 },
+		{ cue: 'span', end: 150, start: 100 },
+		{ cue: 'early', start: 50 },
+	];
+
+	expect(drawn.map(([cue, , isConnected]) => [cue, isConnected])).toEqual([
+		['early', false],
+		['late', false],
+	]);
+	expect(markerParts(control).map((part) => [part.className, part.textContent])).toEqual([
+		['sonic-wavestrip-marker', 'early'],
+		['sonic-wavestrip-region', ''],
+		['sonic-wavestrip-marker', 'late'],
+	]);
+});
+
+test('a resize, a bound write and a reconnect keep the elements a renderer was handed, and place them', () => {
+	installCanvasFakes();
+
+	const { control, wavestrip } = mountWavestrip('min="30" max="330"');
+	const drawn = recordDrawn(wavestrip);
+
+	wavestrip.markers = [
+		{ cue: 'one', start: 105 },
+		{ cue: 'two', start: 180 },
+	];
+
+	const built = markerParts(control);
+
+	FakeResizeObserver.instances.at(-1)?.report([200, 48], [200, 48]);
+	wavestrip.max = 180;
+	wavestrip.remove();
+	document.body.append(wavestrip);
+	FakeResizeObserver.instances.at(-1)?.report([300, 48], [300, 48]);
+
+	expect(drawn).toHaveLength(2);
+	expect(markerParts(control).map((part, index) => part === built[index])).toEqual([true, true]);
+	expect(built.map((part) => part.style.getPropertyValue('--_sonic-marker-from'))).toEqual([
+		'0.5',
+		'1',
+	]);
+});
+
+test('a markers write of the same content and a renderMarker write each draw every point marker afresh', () => {
+	installCanvasFakes();
+
+	const { control, wavestrip } = mountWavestrip('min="30" max="330"');
+	const drawn = recordDrawn(wavestrip);
+	const render = wavestrip.renderMarker;
+
+	wavestrip.markers = [
+		{ cue: 'one', start: 105 },
+		{ cue: 'two', start: 180 },
+	];
+
+	const sameContent = wavestrip.markers;
+
+	wavestrip.markers = sameContent;
+	wavestrip.renderMarker = render;
+
+	expect(drawn.map(([cue, , isConnected]) => [cue, isConnected])).toEqual(
+		Array.from({ length: 3 }, () => [
+			['one', false],
+			['two', false],
+		]).flat(),
+	);
+	expect(new Set(drawn.map(([, element]) => element)).size).toBe(6);
+	expect(markerParts(control).map((part, index) => part === drawn[index + 4]?.[1])).toEqual([
+		true,
+		true,
+	]);
+});
+
+test('clearing renderMarker brings back markers that paint themselves', () => {
+	installCanvasFakes();
+
+	const { control, wavestrip } = mountWavestrip('min="30" max="330"');
+
+	wavestrip.markers = [{ cue: 'one', start: 50 }];
+	recordDrawn(wavestrip);
+	expect(markerParts(control)[0]?.style.getPropertyValue('--_sonic-marker-paint')).toBe(
+		'transparent',
+	);
+
+	wavestrip.renderMarker = undefined;
+
+	const [plain] = markerParts(control);
+
+	expect(plain?.textContent).toBe('');
+	expect(plain?.style.getPropertyValue('--_sonic-marker-paint')).toBe('');
 });
 
 test('a kind names its token, and a kind that is not a plain name draws in the default colour', () => {
@@ -322,7 +493,7 @@ test('a kind names its token, and a kind that is not a plain name draws in the d
 		{ kind: 'x);background:red', start: 40 },
 	];
 
-	const [loop, hostile] = markerDots(control);
+	const [loop, hostile] = markerParts(control);
 
 	expect(loop?.style.getPropertyValue('--_sonic-marker')).toContain('--sonic-marker-loop');
 	expect(hostile?.style.getPropertyValue('--_sonic-marker')).toBe('');

@@ -3,7 +3,8 @@ import type { Locator, Page } from '@playwright/test';
 import { expect, test } from '@playwright/test';
 
 import { alphaAt, canvasPixels, paintedColour, pixelAt, softPixel } from './canvas-probe.ts';
-import { boxOf } from './pointer.ts';
+import { clear, systemColour } from './colour.ts';
+import { boxOf, noForcedColours } from './pointer.ts';
 import { readState } from './state.ts';
 
 // At DPR 2 the default 3px pitch and 0.33 gap make 6 device px a bar: 4 drawn, then 2 of gap
@@ -230,21 +231,23 @@ test('a cancellable drag past its zone matches cancelling, and revealed only whi
 });
 
 test(
-	'with fill, the strip takes its row and its ratios follow the height, while a marker size holds the dots still and sets their lanes',
+	'with fill, the strip takes its row and its ratios follow the height, while a marker size holds the markers still and sets their lanes',
 	{ tag: '@mobile' },
 	async ({ page }) => {
 		await page.goto('/fixtures/');
 
 		const strip = page.locator('#wavestrip-fill .sonic-wavestrip');
-		const dots = page.locator('#wavestrip-fill .sonic-wavestrip-marker');
+		const pointMarkers = page.locator('#wavestrip-fill .sonic-wavestrip-marker');
 
 		await strip.scrollIntoViewIfNeeded();
 		await expect(strip).toHaveCSS('block-size', '96px');
 		await expect(strip).toHaveCSS('--_sonic-wavestrip-size', '96px');
-		await expect(dots.first()).toHaveCSS('inline-size', '4px');
+		await expect(pointMarkers.first()).toHaveCSS('inline-size', '4px');
 
-		// 6.7px apart: one lane for 4px dots, where the 96px strip's own 6.2px dots would take two
-		const tops = await dots.evaluateAll((parts) => parts.map((part) => getComputedStyle(part).top));
+		// 6.7px apart: one lane for 4px markers, where the 96px strip's own 6.2px markers would take two
+		const tops = await pointMarkers.evaluateAll((parts) =>
+			parts.map((part) => getComputedStyle(part).top),
+		);
 
 		expect(tops).toEqual(['0px', '0px']);
 
@@ -253,7 +256,7 @@ test(
 		});
 		await expect(strip).toHaveCSS('block-size', '48px');
 		await expect(strip).toHaveCSS('--_sonic-wavestrip-size', '48px');
-		await expect(dots.first()).toHaveCSS('inline-size', '4px');
+		await expect(pointMarkers.first()).toHaveCSS('inline-size', '4px');
 	},
 );
 
@@ -326,8 +329,8 @@ test('a press reports dragging by its first input, and the hovered value returns
 	expect(await read('hoverValue')).toBeUndefined();
 });
 
-async function pressBy(page: Page, dot: Locator, by: { x: number; y: number }): Promise<void> {
-	const box = await boxOf(dot);
+async function pressBy(page: Page, marker: Locator, by: { x: number; y: number }): Promise<void> {
+	const box = await boxOf(marker);
 
 	await page.mouse.click(box.x + box.width / 2 + by.x, box.y + box.height / 2 + by.y);
 }
@@ -337,25 +340,25 @@ function readValue(wavestrip: Locator): Promise<number> {
 }
 
 test(
-	'a press on a dot snaps to its marker, in whichever lane it sits, and a press below a dot seeks to where it lands',
+	'a press on a point marker snaps to it, in whichever lane it sits, and a press below one seeks to where it lands',
 	{ tag: '@mobile' },
 	async ({ page }) => {
 		const { wavestrip } = await openWavestrip(page);
-		const dots = wavestrip.locator('.sonic-wavestrip-marker');
+		const pointMarkers = wavestrip.locator('.sonic-wavestrip-marker');
 		const [first, second] = await Promise.all([
-			dots.nth(0).boundingBox(),
-			dots.nth(1).boundingBox(),
+			pointMarkers.nth(0).boundingBox(),
+			pointMarkers.nth(1).boundingBox(),
 		]);
 
 		expect(second?.y).toBeGreaterThan((first?.y ?? 0) + (first?.height ?? 0));
 
-		await pressBy(page, dots.nth(0), { x: -3, y: 0 });
+		await pressBy(page, pointMarkers.nth(0), { x: -3, y: 0 });
 		expect(await readValue(wavestrip)).toBe(60);
 
-		await pressBy(page, dots.nth(1), { x: 3, y: 0 });
+		await pressBy(page, pointMarkers.nth(1), { x: 3, y: 0 });
 		expect(await readValue(wavestrip)).toBe(62);
 
-		await pressBy(page, dots.nth(0), { x: -3, y: 20 });
+		await pressBy(page, pointMarkers.nth(0), { x: -3, y: 20 });
 
 		const value = await readValue(wavestrip);
 
@@ -363,3 +366,91 @@ test(
 		expect(value).toBeLessThan(59);
 	},
 );
+
+function startsAt(wavestrip: Locator, point: { x: number; y: number }): Promise<Array<number>> {
+	return wavestrip.evaluate((element, { x, y }) => {
+		const { markersFromPoint } = element as unknown as {
+			markersFromPoint: (clientX: number, clientY: number) => Array<{ start: number }>;
+		};
+
+		return markersFromPoint.call(element, x, y).map(({ start }) => start);
+	}, point);
+}
+
+test(
+	"markersFromPoint at a point marker's center names it first, in whichever lane it sits, and a press there seeks to it",
+	{ tag: '@mobile' },
+	async ({ page }) => {
+		const { wavestrip } = await openWavestrip(page);
+		const pointMarkers = wavestrip.locator('.sonic-wavestrip-marker');
+
+		for (const [index, starts] of [[60, 62], [62, 60], [240]].entries()) {
+			const box = await boxOf(pointMarkers.nth(index));
+			const center = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+
+			expect(await startsAt(wavestrip, center)).toEqual(starts);
+
+			await page.mouse.click(center.x, center.y);
+			expect(await readValue(wavestrip)).toBe(starts[0]);
+		}
+
+		const strip = await boxOf(wavestrip.locator('canvas'));
+
+		expect(
+			await startsAt(wavestrip, { x: strip.x + strip.width * 0.55, y: strip.y + strip.height / 2 }),
+		).toEqual([150]);
+		expect(await startsAt(wavestrip, { x: strip.x + strip.width * 0.55, y: strip.y - 2 })).toEqual(
+			[],
+		);
+	},
+);
+
+async function hostDrawnMarker(
+	page: Page,
+): Promise<{ colour: string; drop: string; fill: string }> {
+	const { wavestrip } = await openWavestrip(page);
+
+	await wavestrip.evaluate((element) => {
+		if (!(element instanceof HTMLElement)) return;
+
+		element.style.setProperty('--sonic-marker-cue', 'rgb(10 20 30)');
+		element.style.setProperty('--sonic-wavestrip-marker-edge', 'rgb(1 2 3)');
+		element.style.setProperty('--sonic-wavestrip-marker-edge-width', '1px');
+		Object.assign(element, {
+			markers: [{ kind: 'cue', start: 100 }],
+			renderMarker: (_marker: unknown, markerElement: HTMLElement) => {
+				markerElement.textContent = '▲';
+			},
+		});
+	});
+
+	return wavestrip.locator('.sonic-wavestrip-marker').evaluate((markerElement) => {
+		const style = getComputedStyle(markerElement);
+
+		return { colour: style.color, drop: style.boxShadow, fill: style.backgroundColor };
+	});
+}
+
+test("a marker the host draws paints no fill or edge of its own, and its text colour is the kind's", async ({
+	page,
+}) => {
+	const drawn = await hostDrawnMarker(page);
+
+	expect(drawn.fill).toMatch(clear);
+	expect(drawn.drop).toMatch(clear);
+	expect(drawn.colour).toBe('rgb(10, 20, 30)');
+});
+
+test('in forced colours a marker the host draws takes the system text colour', async ({
+	browserName,
+	page,
+}) => {
+	test.skip(browserName === 'webkit', noForcedColours);
+	await page.emulateMedia({ forcedColors: 'active' });
+
+	const drawn = await hostDrawnMarker(page);
+
+	expect(drawn.fill).toMatch(clear);
+	expect(drawn.drop).toMatch(clear);
+	expect(drawn.colour).toBe(await systemColour(page, 'CanvasText'));
+});

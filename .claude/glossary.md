@@ -124,7 +124,7 @@ The words this library uses for its controls, their parts and their values. Wher
 
 **Ghost**: The faint line that shows where playback really is while the playhead is being held. _Avoid_: Play cursor, echo
 
-**Marker**: A labelled point or region on a wave. _Avoid_: Cue (a cue is one kind of marker, and the consumer's word), mark
+**Marker**: A labelled point or region on a wave; with no end it is a point marker, with one a region. _Avoid_: Cue (a cue is one kind of marker, and the consumer's word), mark
 
 **Region**: A stretch of a wave with a start and an end. _Avoid_: Span, range, interval
 

@@ -12,6 +12,7 @@ export { SonicToggle } from '#elements/toggle.ts';
 export type { WaveMarker } from '#elements/wave-element.ts';
 export type { LabelRender, PeaksRequest } from '#elements/waveform.ts';
 export { SonicWaveform } from '#elements/waveform.ts';
+export type { MarkerRender } from '#elements/wavestrip.ts';
 export { SonicWavestrip } from '#elements/wavestrip.ts';
 export { SonicXy } from '#elements/xy.ts';
 export { formatClock, parseClock } from '#lib/clock.ts';

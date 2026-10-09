@@ -1,5 +1,6 @@
 import type { ValueNotation } from '#elements/value-element.ts';
 import type { Surface, SurfaceFrame } from '#lib/canvas-surface.ts';
+import type { Point } from '#lib/marker-band.ts';
 import type { Seconds } from '#lib/units.ts';
 
 import { SonicValueElement } from '#elements/value-element.ts';
@@ -96,9 +97,27 @@ export abstract class SonicWaveElement<
 		if (name === 'fill') this.#surface?.setFill(this.fill);
 	}
 
+	abstract clientXOf(value: Seconds): number;
+
 	override connectedCallback(): void {
 		this.upgradeProperties('fill', 'markers');
 		super.connectedCallback();
+	}
+
+	/** Copies; none outside the canvas */
+	markersFromPoint(clientX: number, clientY: number): Array<WaveMarker> {
+		const box = this.canvas.getBoundingClientRect();
+		const isInside =
+			clientX >= box.left && clientX <= box.right && clientY >= box.top && clientY <= box.bottom;
+		if (!isInside) return [];
+
+		return this.markersInReach({ x: clientX - box.left, y: clientY - box.top }, box.width).flatMap(
+			(index) => {
+				const marker = this.#markers[index];
+
+				return marker ? [{ ...marker }] : [];
+			},
+		);
 	}
 
 	repaint(): void {
@@ -153,6 +172,8 @@ export abstract class SonicWaveElement<
 			return [Math.min(at, to), Math.max(at, to)];
 		});
 	}
+
+	protected abstract markersInReach(point: Point, widthPx: number): Array<number>;
 
 	protected abstract paint(
 		context: CanvasRenderingContext2D,

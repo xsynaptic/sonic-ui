@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 
-import { markerLanes, nearestDot } from '#lib/marker-band.ts';
+import { centersInReach, markerLanes } from '#lib/marker-band.ts';
 
 test('a marker closer than the minimum to the last in every lane opens a new one', () => {
 	expect(markerLanes([10, 12, 14], 5)).toEqual([0, 1, 2]);
@@ -14,21 +14,22 @@ test('a marker exactly the minimum away shares the lane', () => {
 	expect(markerLanes([10, 15], 5)).toEqual([0, 0]);
 });
 
-test('the nearer of two dots within reach wins, whichever comes first', () => {
+test('every center in reach comes back nearest first, whichever comes first', () => {
 	const point = { x: 50, y: 2 };
 
 	expect(
-		nearestDot(
+		centersInReach(
 			point,
 			[
 				{ x: 47, y: 2 },
 				{ x: 51, y: 2 },
+				{ x: 52, y: 5 },
 			],
 			5,
 		),
-	).toBe(1);
+	).toEqual([1, 0, 2]);
 	expect(
-		nearestDot(
+		centersInReach(
 			point,
 			[
 				{ x: 51, y: 2 },
@@ -36,24 +37,48 @@ test('the nearer of two dots within reach wins, whichever comes first', () => {
 			],
 			5,
 		),
-	).toBe(0);
+	).toEqual([0, 1]);
 });
 
-test("a press in a dot's column but below its reach finds nothing", () => {
-	expect(nearestDot({ x: 50, y: 20 }, [{ x: 50, y: 2 }], 5)).toBeUndefined();
+test('of centers equally near, the later comes first', () => {
+	expect(
+		centersInReach(
+			{ x: 50, y: 2 },
+			[
+				{ x: 48, y: 2 },
+				{ x: 50, y: 2 },
+				{ x: 52, y: 2 },
+				{ x: 50, y: 2 },
+			],
+			5,
+		),
+	).toEqual([3, 1, 2, 0]);
 });
 
-test('of two dots in one column, the lane under the press wins', () => {
-	const dots = [
+test('a center at the reach is in, and one a pixel past it is left out', () => {
+	const centers = [
+		{ x: 55, y: 2 },
+		{ x: 56, y: 2 },
+	];
+
+	expect(centersInReach({ x: 50, y: 2 }, centers, 5)).toEqual([0]);
+});
+
+test("a press in a marker's column but below its reach finds nothing", () => {
+	expect(centersInReach({ x: 50, y: 20 }, [{ x: 50, y: 2 }], 5)).toEqual([]);
+});
+
+test('of two markers in one column, the lane under the press comes first', () => {
+	const centers = [
 		{ x: 50, y: 2 },
 		{ x: 51, y: 7 },
 	];
 
-	expect(nearestDot({ x: 50, y: 6 }, dots, 5)).toBe(1);
-	expect(nearestDot({ x: 50, y: 3 }, dots, 5)).toBe(0);
+	expect(centersInReach({ x: 50, y: 6 }, centers, 5)).toEqual([1, 0]);
+	expect(centersInReach({ x: 50, y: 3 }, centers, 5)).toEqual([0, 1]);
 });
 
 test('reach is measured across both axes at once', () => {
-	expect(nearestDot({ x: 53, y: 6 }, [{ x: 50, y: 2 }], 5)).toBe(0);
-	expect(nearestDot({ x: 54, y: 6 }, [{ x: 50, y: 2 }], 5)).toBeUndefined();
+	expect(centersInReach({ x: 53, y: 6 }, [{ x: 50, y: 2 }], 5)).toEqual([0]);
+	expect(centersInReach({ x: 54, y: 6 }, [{ x: 50, y: 2 }], 5)).toEqual([]);
 });

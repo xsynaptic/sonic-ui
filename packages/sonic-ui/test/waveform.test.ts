@@ -510,3 +510,66 @@ test('clientXOf follows a paged window, and a drag that carries the page with it
 	expect(waveform.clientXOf(11.9)).toBeCloseTo(523, 9);
 	expect(waveform.clientXOf(7)).toBeCloseTo(180, 9);
 });
+
+function labelsFrom(waveform: SonicWaveform, clientX: number, clientY: number): Array<unknown> {
+	return waveform.markersFromPoint(clientX, clientY).map(({ label }) => label);
+}
+
+test('markersFromPoint names the marker whose line is under the point, on the page that is drawn', () => {
+	const { flushFrames } = installCanvasFakes({ isReducedMotion: true });
+	const { control, waveform } = mountWaveform('max="300" step="0" value="13.9"');
+
+	boxCanvas(control);
+	waveform.markers = [
+		{ label: 'This page', start: 10 },
+		{ label: 'Next page', start: 17 },
+	];
+	flushFrames();
+
+	expect(labelsFrom(waveform, 250, 48)).toEqual(['This page']);
+	expect(labelsFrom(waveform, 254, 48)).toEqual(['This page']);
+	expect(labelsFrom(waveform, 255, 48)).toEqual([]);
+	expect(labelsFrom(waveform, 250, 97)).toEqual([]);
+
+	waveform.value = 20.9;
+	flushFrames();
+	expect(labelsFrom(waveform, 250, 48)).toEqual(['Next page']);
+});
+
+test('markersFromPoint finds a region at its start line, nearest first, and not inside its span', () => {
+	const { flushFrames } = installCanvasFakes();
+	const { control, waveform } = mountWaveform('max="300" step="0" value="100"');
+
+	boxCanvas(control);
+	waveform.markers = [
+		{ end: 104, label: 'Loop', start: 100 },
+		{ label: 'Near', start: 100.02 },
+		{ label: 'Nearer', start: 100.05 },
+	];
+	flushFrames();
+
+	expect(labelsFrom(waveform, 289, 10)).toEqual(['Nearer', 'Near', 'Loop']);
+	expect(labelsFrom(waveform, 355, 10)).toEqual([]);
+});
+
+test('a marker past max is painted and found at the bound', () => {
+	const { flushFrames } = installCanvasFakes();
+	const { control, waveform } = mountWaveform('max="102" step="0" value="100"');
+	const context = waveform.querySelector('canvas')?.getContext('2d');
+	if (!context) throw new Error('The waveform has no canvas context');
+
+	const filled = vi.spyOn(context, 'fillRect');
+
+	boxCanvas(control);
+	waveform.markers = [{ label: 'Past the end', start: 103 }];
+	flushFrames();
+
+	// The marker's line and the end line, both at max
+	const linesInView = filled.mock.calls
+		.filter(([x, , width, height]) => x > 0 && width === 1 && height === 96)
+		.map(([x]) => x);
+
+	expect(linesInView).toEqual([384.5, 384.5]);
+	expect(labelsFrom(waveform, 425, 10)).toEqual(['Past the end']);
+	expect(labelsFrom(waveform, 495, 10)).toEqual([]);
+});
