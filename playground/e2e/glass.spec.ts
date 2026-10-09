@@ -24,7 +24,7 @@ function readSelectionColour(target: Locator): Promise<string> {
 }
 
 interface Depth {
-	centre: string;
+	center: string;
 	glass: string;
 	shadowAlphas: Array<number>;
 }
@@ -35,8 +35,8 @@ function readDepth(readout: Locator): Promise<Depth> {
 		if (!context) throw new Error('No 2d context');
 
 		const styles = getComputedStyle(element);
-		const [centre, glass] = styles.backgroundImage.match(/[a-z]+\([^()]*\)/g) ?? [];
-		if (centre === undefined || glass === undefined) throw new Error('The fill has no two stops');
+		const [center, glass] = styles.backgroundImage.match(/[a-z]+\([^()]*\)/g) ?? [];
+		if (center === undefined || glass === undefined) throw new Error('The fill has no two stops');
 
 		const paint = (colour: string): string => {
 			context.clearRect(0, 0, 1, 1);
@@ -48,7 +48,7 @@ function readDepth(readout: Locator): Promise<Depth> {
 		const shadows = styles.boxShadow.match(/[a-z]+\([^)]*\)/g) ?? [];
 
 		return {
-			centre: paint(centre),
+			center: paint(center),
 			glass: paint(glass),
 			shadowAlphas: shadows.map((colour) => {
 				const parts = colour.slice(colour.indexOf('(') + 1, -1).split(/[,/]/);
@@ -220,14 +220,14 @@ test("a readout's depth is its own token, and a screen's glass depth stays out o
 }) => {
 	await page.goto('/fixtures/');
 
-	await test.step('--sonic-readout-depth at 0 drops the shadow, the shine and the lighter centre of a readout; unset, it has all three', async () => {
+	await test.step('--sonic-readout-depth at 0 drops the shadow, the shine and the lighter center of a readout; unset, it has all three', async () => {
 		const host = page.locator('#level');
 		const readout = host.locator('.sonic-dial-readout');
 		const modelled = await readDepth(readout);
 
 		expect.soft(modelled.shadowAlphas).toHaveLength(2);
 		for (const alpha of modelled.shadowAlphas) expect.soft(alpha).toBeGreaterThan(0);
-		expect.soft(modelled.centre).not.toBe(modelled.glass);
+		expect.soft(modelled.center).not.toBe(modelled.glass);
 
 		await host.evaluate((element) => {
 			element.style.setProperty('--sonic-readout-depth', '0');
@@ -236,13 +236,13 @@ test("a readout's depth is its own token, and a screen's glass depth stays out o
 		const flat = await readDepth(readout);
 
 		expect.soft(flat.shadowAlphas).toEqual([0, 0]);
-		expect.soft(flat.centre).toBe(flat.glass);
+		expect.soft(flat.center).toBe(flat.glass);
 	});
 
 	await test.step('a screen with no glass depth leaves the readout of a dial inside it alone', async () => {
 		const inside = await readDepth(page.locator('#glass-dial .sonic-dial-readout'));
 
-		expect.soft(inside.centre).not.toBe(inside.glass);
+		expect.soft(inside.center).not.toBe(inside.glass);
 	});
 });
 

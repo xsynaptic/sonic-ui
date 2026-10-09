@@ -189,7 +189,7 @@ test(
 );
 
 test(
-	'with no edge shade the wave is one colour from top to centre, and a shade darkens a tinted top by its row',
+	'with no edge shade the wave is one colour from top to center, and a shade darkens a tinted top by its row',
 	{ tag: '@mobile' },
 	async ({ page }) => {
 		const { canvas, waveform } = await openWaveform(page);

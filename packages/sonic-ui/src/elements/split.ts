@@ -28,7 +28,7 @@ interface Snapshot {
 
 const modeNames = new Set<string>(['cascade', 'equal', 'proportional']);
 
-const gridSlop = 1e-9;
+const gridTolerance = 1e-9;
 
 const lockAttributes = ['data-sonic-locked', 'disabled'];
 
@@ -45,8 +45,8 @@ function gridLimits(mapping: ValueMapping, [low, high]: [number, number]): [numb
 	const top = mapping.snap(high);
 
 	return [
-		bottom < low - gridSlop ? (mapping.keyTarget('ArrowRight', bottom) ?? bottom) : bottom,
-		top > high + gridSlop ? (mapping.keyTarget('ArrowLeft', top) ?? top) : top,
+		bottom < low - gridTolerance ? (mapping.keyTarget('ArrowRight', bottom) ?? bottom) : bottom,
+		top > high + gridTolerance ? (mapping.keyTarget('ArrowLeft', top) ?? top) : top,
 	];
 }
 

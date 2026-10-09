@@ -41,7 +41,7 @@ const renderBare = template(
 	HTMLButtonElement,
 );
 
-const pressSlop = 2;
+const pressTolerance = 2;
 
 interface CapDrag {
 	hasMoved: boolean;
@@ -145,7 +145,7 @@ export class SonicToggle extends SonicPositionGroupElement {
 
 					drag.hasMoved = true;
 					this.toggleState('dragging', true);
-					if (moved >= pressSlop * drag.thresholdPx) drag.isPress = false;
+					if (moved >= pressTolerance * drag.thresholdPx) drag.isPress = false;
 					if (this.#slideTo(positionAt(drag.travel, pointer), event.pointerId))
 						drag.isPress = false;
 				},
