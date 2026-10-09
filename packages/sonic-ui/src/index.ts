@@ -3,6 +3,7 @@ export { SonicDial } from '#elements/dial.ts';
 export { SonicEnvelope } from '#elements/envelope.ts';
 export { SonicMeter } from '#elements/meter.ts';
 export { SonicNumber } from '#elements/number.ts';
+export { SonicRegion } from '#elements/region.ts';
 export { SonicSegmented } from '#elements/segmented.ts';
 export { SonicSlider } from '#elements/slider.ts';
 export { SonicSpectrum } from '#elements/spectrum.ts';

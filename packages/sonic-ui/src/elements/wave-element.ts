@@ -124,6 +124,9 @@ export abstract class SonicWaveElement<
 		this.#surface?.rebuild();
 	}
 
+	/** The time at a viewport x, clamped to the bounds and not snapped to the step */
+	abstract valueFromPoint(clientX: number, clientY: number): Seconds;
+
 	protected connect(signal: AbortSignal): void {
 		const control = this.control;
 
@@ -150,10 +153,6 @@ export abstract class SonicWaveElement<
 				selector: '[popover]',
 			});
 		this.#surface.setFill(this.fill);
-	}
-
-	protected override focusTarget(): HTMLElement {
-		return this.control;
 	}
 
 	protected abstract isEmpty(): boolean;

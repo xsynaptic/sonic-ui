@@ -58,6 +58,7 @@
 		"./meter.css": "./dist/styles/meter.css",
 		"./number.css": "./dist/styles/number.css",
 		"./panel.css": "./dist/styles/panel.css",
+		"./region.css": "./dist/styles/region.css",
 		"./ring.css": "./dist/styles/ring.css",
 		"./screen.css": "./dist/styles/screen.css",
 		"./segmented.css": "./dist/styles/segmented.css",

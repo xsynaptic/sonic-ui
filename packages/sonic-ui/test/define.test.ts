@@ -19,6 +19,7 @@ test('the define entry points register their tags', async () => {
 		'sonic-toggle',
 		'sonic-meter',
 		'sonic-number',
+		'sonic-region',
 		'sonic-segmented',
 		'sonic-slider',
 		'sonic-spectrum',

@@ -1,0 +1,88 @@
+@layer sonic.material, sonic.control;
+
+@layer sonic.control {
+	sonic-region {
+		display: none;
+	}
+
+	.sonic-region {
+		--_sonic-region-paint: var(--sonic-region-bracket, var(--_sonic-marker, var(--_sonic-ink)));
+		--_sonic-region-colour: var(--_sonic-region-paint);
+		--_sonic-region-bracket-width: var(
+			--sonic-region-bracket-width,
+			max(1px, round(var(--_sonic-unit), var(--_sonic-snap)))
+		);
+
+		position: absolute;
+		inset-block: 0;
+		inset-inline-start: calc(var(--_sonic-region-from, 0) * 100%);
+		inline-size: calc((var(--_sonic-region-to, 0) - var(--_sonic-region-from, 0)) * 100%);
+		min-inline-size: calc(2 * var(--_sonic-region-bracket-width));
+		pointer-events: none;
+		border-radius: var(--sonic-region-bracket-radius, calc(2 * var(--_sonic-unit)));
+
+		&:focus-visible {
+			outline: 2px solid transparent;
+			outline-offset: var(--sonic-focus-outline-offset, -2px);
+
+			&:not([data-sonic-pointer-focus]) {
+				outline: var(--sonic-focus-outline, 2px solid transparent);
+				box-shadow: var(--_sonic-focus-glow);
+			}
+		}
+	}
+
+	:is(.sonic-region[aria-disabled='true'], [dimmed] > .sonic-wavestrip .sonic-region) {
+		--_sonic-region-colour: color-mix(in oklab, var(--_sonic-region-paint) 45%, transparent);
+	}
+
+	.sonic-region-bracket {
+		position: absolute;
+		inset: 0;
+		box-sizing: border-box;
+		background: var(--sonic-region-fill, transparent);
+		border: var(--_sonic-region-bracket-width) solid var(--_sonic-region-colour);
+		border-radius: inherit;
+	}
+
+	.sonic-region[data-sonic-clipped~='start'] {
+		border-start-start-radius: 0;
+		border-end-start-radius: 0;
+
+		& > .sonic-region-bracket {
+			border-inline-start-width: 0;
+		}
+	}
+
+	.sonic-region[data-sonic-clipped~='end'] {
+		border-start-end-radius: 0;
+		border-end-end-radius: 0;
+
+		& > .sonic-region-bracket {
+			border-inline-end-width: 0;
+		}
+	}
+
+	@media (forced-colors: active) {
+		.sonic-region {
+			--_sonic-region-colour: CanvasText;
+
+			&:focus-visible {
+				outline-offset: 2px;
+
+				&[data-sonic-pointer-focus] {
+					outline-style: none;
+				}
+			}
+		}
+
+		:is(.sonic-region[aria-disabled='true'], [dimmed] > .sonic-wavestrip .sonic-region) {
+			--_sonic-region-colour: GrayText;
+		}
+
+		.sonic-region-bracket {
+			forced-color-adjust: none;
+			background: none;
+		}
+	}
+}

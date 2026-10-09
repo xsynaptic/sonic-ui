@@ -6,9 +6,10 @@ import type { StripRegions } from '#lib/strip-scene.ts';
 import type { TimeRegions } from '#lib/time-regions.ts';
 import type { Seconds } from '#lib/units.ts';
 
+import { RegionLayer } from '#elements/region-layer.ts';
 import { SonicWaveElement } from '#elements/wave-element.ts';
 import { createMarkerBand } from '#lib/marker-band.ts';
-import { clampProportion } from '#lib/math.ts';
+import { clamp, clampProportion } from '#lib/math.ts';
 import { readPxProperty } from '#lib/read-px-property.ts';
 import { requireChild, template } from '#lib/render.ts';
 import { scrubRegions } from '#lib/scrub.ts';
@@ -46,9 +47,10 @@ const cancelZonePx = 48;
 
 const renderWavestrip = template(
 	/* HTML */ `
-		<div class="sonic-wavestrip" role="slider" tabindex="0">
-			<canvas class="sonic-wavestrip-canvas" aria-hidden="true"></canvas>
+		<div class="sonic-wavestrip">
+			<canvas class="sonic-wavestrip-canvas" role="slider" tabindex="0"></canvas>
 			<div class="sonic-wavestrip-markers" aria-hidden="true"></div>
+			<div class="sonic-wavestrip-regions"></div>
 			<div class="sonic-wavestrip-readout" popover="manual">
 				<span></span>
 				<input
@@ -99,6 +101,16 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 		this.reflect('cancellable', isCancellable);
 	}
 
+	/** Words a region's `aria-valuetext`; unset, a region speaks its start as the strip speaks a time */
+	get formatSpokenRegion(): ((start: Seconds, end: Seconds) => string) | undefined {
+		return this.#formatSpokenRegion;
+	}
+
+	set formatSpokenRegion(format: ((start: Seconds, end: Seconds) => string) | undefined) {
+		this.#formatSpokenRegion = format;
+		this.#regions?.render();
+	}
+
 	/** One amplitude from 0 to 1 per slice of the whole track, any length; resampled to the bars and never normalised */
 	get peaks(): ArrayLike<number> | undefined {
 		return this.#peaks;
@@ -108,6 +120,16 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 		this.#peaks = peaks;
 		this.renderEmpty();
 		this.surface()?.invalidate();
+	}
+
+	/** A time a release will seek to, drawn as a scrub's edge; a hold or a hover of the strip's own is drawn instead */
+	get preview(): Seconds | undefined {
+		return this.#preview;
+	}
+
+	set preview(seconds: null | Seconds | undefined) {
+		this.#preview = Number.isFinite(seconds) ? (seconds ?? undefined) : undefined;
+		this.render();
 	}
 
 	/** Runs once per point marker on each `markers` or `renderMarker` write; the element lasts until the next */
@@ -149,6 +171,8 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 
 	#drawMarker: MarkerRender | undefined;
 
+	#formatSpokenRegion: ((start: Seconds, end: Seconds) => string) | undefined;
+
 	readonly #markerBand = createMarkerBand<WaveMarker>(
 		requireChild(this.control, '.sonic-wavestrip-markers', HTMLDivElement),
 	);
@@ -156,6 +180,10 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 	#paintedKey = '';
 
 	#peaks: ArrayLike<number> | undefined;
+
+	#preview: Seconds | undefined;
+
+	#regions: RegionLayer | undefined;
 
 	#renderMarker: MarkerRender | undefined;
 
@@ -167,25 +195,62 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 	}
 
 	override connectedCallback(): void {
-		this.upgradeProperties('buffered', 'cancellable', 'peaks', 'renderMarker');
+		this.upgradeProperties(
+			'buffered',
+			'cancellable',
+			'formatSpokenRegion',
+			'peaks',
+			'preview',
+			'renderMarker',
+		);
 		super.connectedCallback();
+	}
+
+	valueFromPoint(clientX: number, _clientY: number): Seconds {
+		const { startPx, travelPx } = this.#axis();
+		const mapping = this.mapping();
+
+		return clamp(
+			mapping.valueAt(clampProportion((clientX - startPx) / travelPx)),
+			...mapping.bounds,
+		);
 	}
 
 	protected override connect(signal: AbortSignal): void {
 		const { control } = this;
 
+		this.#regions = new RegionLayer(
+			{
+				axis: () => this.#axis(),
+				control,
+				element: this,
+				isDisabled: () => this.isDisabled(),
+				layer: requireChild(control, '.sonic-wavestrip-regions', HTMLDivElement),
+				mapping: () => this.mapping(),
+				outside: () => this.#outside(),
+				seek: (event) => {
+					if (this.input(this.valueFromPoint(event.clientX, event.clientY))) {
+						this.dispatchEvent(new Event('change', { bubbles: true }));
+					}
+				},
+				speak: ({ end, start }) =>
+					this.#formatSpokenRegion?.(start, end) ??
+					this.spokenText(start) ??
+					this.notation.format(start),
+			},
+			signal,
+		);
 		super.connect(signal);
 		this.bindHover(control, signal, {
+			changed: () => {
+				if (this.#preview !== undefined) this.render();
+			},
 			place: () => {
 				this.#placeReadout();
 			},
-			valueAt: (event) => {
-				const axis = this.#axis();
-				const at = clampProportion((event.clientX - axis.startPx) / axis.travelPx);
-				const mapping = this.mapping();
-
-				return this.#markerStartAt(event, axis) ?? mapping.snap(mapping.valueAt(at));
-			},
+			valueAt: (event) =>
+				this.#markerStartAt(event, this.#axis()) ??
+				this.mapping().snap(this.valueFromPoint(event.clientX, event.clientY)),
 		});
 		this.bindGestures(control, signal, (event) => this.#grab(event));
 	}
@@ -194,10 +259,15 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 		const surface = this.surface();
 
 		this.#placeReadout();
+		this.#regions?.follow();
 		this.showCurrentMarker(this.scrubState().played);
 		if (surface && this.#stripRegions(surface.size.width).key !== this.#paintedKey) {
 			surface.requestFrame();
 		}
+	}
+
+	protected override focusTarget(): HTMLElement {
+		return this.canvas;
 	}
 
 	protected isEmpty(): boolean {
@@ -239,6 +309,10 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 		return true;
 	}
 
+	protected override usesChild(child: Node): boolean {
+		return child instanceof Element && child.localName === 'sonic-region';
+	}
+
 	#axis(): ValueAxis & { startPx: number; topPx: number } {
 		const box = this.canvas.getBoundingClientRect();
 
@@ -271,8 +345,17 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 		return path;
 	}
 
-	#grab(event: PointerEvent): ValueAxis {
+	#grab(event: PointerEvent): undefined | ValueAxis {
 		const axis = this.#axis();
+		const marker = this.#markerStartAt(event, axis);
+		const regions = this.#regions;
+
+		if (regions?.isHeld() === true) {
+			regions.abandon();
+			return undefined;
+		}
+		if (marker === undefined && regions?.take(event) === true) return undefined;
+
 		const at = (event.clientX - axis.startPx) / axis.travelPx;
 		const outside = this.#outside();
 		const grabbed = {
@@ -281,7 +364,7 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 			travelPx: axis.travelPx,
 		};
 
-		this.input(this.#markerStartAt(event, axis) ?? this.mapping().valueAt(at));
+		this.input(marker ?? this.valueFromPoint(event.clientX, event.clientY));
 
 		return outside ? { ...grabbed, outside } : grabbed;
 	}
@@ -320,7 +403,10 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 	#stripRegions(width: number): StripRegions {
 		const mapping = this.mapping();
 		const { proportionOf } = mapping;
-		const { played, scrub } = scrubRegions(this.scrubState(), this.value, mapping);
+		const state = this.scrubState();
+		const isOwn = state.from !== undefined || this.hoverValue !== undefined;
+		const preview = isOwn || this.#preview === undefined ? undefined : proportionOf(this.#preview);
+		const { played, scrub = preview } = scrubRegions(state, this.value, mapping);
 
 		return stripRegions(
 			{

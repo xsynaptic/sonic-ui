@@ -345,6 +345,14 @@ export class SonicWaveform extends SonicWaveElement<Colour, never, Numeric> {
 		super.connectedCallback();
 	}
 
+	/** The time at a viewport x as last drawn */
+	valueFromPoint(clientX: number, _clientY: number): Seconds {
+		const { left, width } = this.canvas.getBoundingClientRect();
+		const { startSeconds, zoom } = this.#drawnWindow(width);
+
+		return clamp(startSeconds + (clientX - left) / zoom, ...this.mapping().bounds);
+	}
+
 	protected override connect(signal: AbortSignal): void {
 		super.connect(signal);
 
@@ -381,6 +389,10 @@ export class SonicWaveform extends SonicWaveElement<Colour, never, Numeric> {
 		surface?.requestFrame();
 		// No frame follows the position out of view, or before the first one paints
 		if (surface?.isVisible === false || !this.#drawn) this.showCurrentMarker(this.#sourceSeconds());
+	}
+
+	protected override focusTarget(): HTMLElement {
+		return this.control;
 	}
 
 	protected isEmpty(): boolean {
@@ -499,9 +511,15 @@ export class SonicWaveform extends SonicWaveElement<Colour, never, Numeric> {
 		return true;
 	}
 
-	#drawnX(value: Seconds, widthPx: number): number {
+	// Before the first frame, the window a centerd playhead would draw
+	#drawnWindow(widthPx: number): { startSeconds: Seconds; zoom: PixelsPerSecond } {
 		const zoom = this.#drawn?.zoom ?? this.zoom;
-		const startSeconds = this.#drawn?.startSeconds ?? this.value - widthPx / zoom / 2;
+
+		return { startSeconds: this.#drawn?.startSeconds ?? this.value - widthPx / zoom / 2, zoom };
+	}
+
+	#drawnX(value: Seconds, widthPx: number): number {
+		const { startSeconds, zoom } = this.#drawnWindow(widthPx);
 
 		return (clamp(value, ...this.mapping().bounds) - startSeconds) * zoom;
 	}

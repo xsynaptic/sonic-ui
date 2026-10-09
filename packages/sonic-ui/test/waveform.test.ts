@@ -511,6 +511,21 @@ test('clientXOf follows a paged window, and a drag that carries the page with it
 	expect(waveform.clientXOf(7)).toBeCloseTo(180, 9);
 });
 
+test('valueFromPoint reads the drawn page, so the same x a page later is a time a page later', () => {
+	const { flushFrames } = installCanvasFakes({ isReducedMotion: true });
+	const { control, waveform } = mountWaveform('min="2" max="300" step="0" value="13.9"');
+
+	boxCanvas(control);
+	flushFrames();
+	expect(waveform.valueFromPoint(250, 48)).toBeCloseTo(10, 9);
+	expect(waveform.clientXOf(waveform.valueFromPoint(333, 48))).toBeCloseTo(333, 9);
+
+	waveform.value = 20.9;
+	flushFrames();
+	expect(waveform.valueFromPoint(250, 48)).toBeCloseTo(17, 9);
+	expect(waveform.valueFromPoint(-99_999, 48)).toBe(2);
+});
+
 function labelsFrom(waveform: SonicWaveform, clientX: number, clientY: number): Array<unknown> {
 	return waveform.markersFromPoint(clientX, clientY).map(({ label }) => label);
 }

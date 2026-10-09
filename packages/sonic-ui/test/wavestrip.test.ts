@@ -13,6 +13,7 @@ afterEach(() => {
 });
 
 function mountWavestrip(attributes: string): {
+	canvas: HTMLCanvasElement;
 	control: HTMLElement;
 	wavestrip: SonicWavestrip;
 } {
@@ -26,7 +27,7 @@ function mountWavestrip(attributes: string): {
 	vi.spyOn(canvas, 'getBoundingClientRect').mockReturnValue(box);
 	FakeResizeObserver.instances.at(-1)?.report([300, 48], [300, 48]);
 
-	return { control, wavestrip };
+	return { canvas, control, wavestrip };
 }
 
 function midPointerAt(control: HTMLElement, type: string, init: PointerEventInit): void {
@@ -51,30 +52,30 @@ function readoutText(control: HTMLElement): string {
 test('a repeating key scrubs and holds writes, then changes once on keyup', () => {
 	installCanvasFakes();
 
-	const { control, wavestrip } = mountWavestrip('max="300" key-step="5" value="60"');
+	const { canvas, wavestrip } = mountWavestrip('max="300" key-step="5" value="60"');
 	const events = recordEvents(document.body);
 
-	keyAt(control, 'keydown', true);
+	keyAt(canvas, 'keydown', true);
 	wavestrip.value = 10;
-	keyAt(control, 'keydown', true);
-	keyAt(control, 'keydown', true);
+	keyAt(canvas, 'keydown', true);
+	keyAt(canvas, 'keydown', true);
 	expect(events).toEqual(['input', 'input', 'input']);
 	expect(wavestrip.value).toBe(75);
 
-	keyAt(control, 'keyup', false);
+	keyAt(canvas, 'keyup', false);
 	expect(events).toEqual(['input', 'input', 'input', 'change']);
 });
 
 test('a key scrub that loses focus changes once, and its keyup adds nothing', () => {
 	installCanvasFakes();
 
-	const { control } = mountWavestrip('max="300" key-step="5" value="60"');
+	const { canvas } = mountWavestrip('max="300" key-step="5" value="60"');
 	const events = recordEvents(document.body);
 
-	keyAt(control, 'keydown', true);
-	keyAt(control, 'keydown', true);
-	control.dispatchEvent(new FocusEvent('blur'));
-	keyAt(control, 'keyup', false);
+	keyAt(canvas, 'keydown', true);
+	keyAt(canvas, 'keydown', true);
+	canvas.dispatchEvent(new FocusEvent('blur'));
+	keyAt(canvas, 'keyup', false);
 
 	expect(events).toEqual(['input', 'input', 'change']);
 });
@@ -82,10 +83,10 @@ test('a key scrub that loses focus changes once, and its keyup adds nothing', ()
 test('a single key press changes at once', () => {
 	installCanvasFakes();
 
-	const { control } = mountWavestrip('max="300" key-step="5" value="60"');
+	const { canvas } = mountWavestrip('max="300" key-step="5" value="60"');
 	const events = recordEvents(document.body);
 
-	keyAt(control, 'keydown', false);
+	keyAt(canvas, 'keydown', false);
 
 	expect(events).toEqual(['input', 'change']);
 });
@@ -617,15 +618,15 @@ test('a key reveal takes the readout from a hover, which returns under a still p
 	installCanvasFakes();
 	vi.useFakeTimers();
 
-	const { control } = mountWavestrip(
+	const { canvas, control } = mountWavestrip(
 		'readout min="30" max="330" step="0" key-step="30" value="30"',
 	);
 
 	midPointerAt(control, 'pointermove', { clientX: 75, pointerType: 'mouse' });
 	expect(readoutAt(control)).toBe('0.25');
 
-	keyAt(control, 'keydown', false);
-	keyAt(control, 'keyup', false);
+	keyAt(canvas, 'keydown', false);
+	keyAt(canvas, 'keyup', false);
 	expect(readoutAt(control)).toBe('0.1');
 
 	vi.runAllTimers();
@@ -639,12 +640,12 @@ test('a key reveal takes the readout from a hover, which returns under a still p
 test('typed entry drops a hover, and a pointer moving while it is open brings none back', () => {
 	installCanvasFakes();
 
-	const { control } = mountWavestrip('readout min="30" max="330" step="0" value="60"');
+	const { canvas, control } = mountWavestrip('readout min="30" max="330" step="0" value="60"');
 	const entry = control.querySelector('input');
 	if (!entry) throw new Error('The wavestrip has no entry');
 
 	midPointerAt(control, 'pointermove', { clientX: 75, pointerType: 'mouse' });
-	control.dispatchEvent(
+	canvas.dispatchEvent(
 		new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'Enter' }),
 	);
 	midPointerAt(control, 'pointermove', { clientX: 150, pointerType: 'mouse' });
@@ -664,14 +665,14 @@ function scrubKey(target: HTMLElement, type: string, key: string): void {
 test('disabling mid-scrub changes once and ends the hold', () => {
 	installCanvasFakes();
 
-	const { control, wavestrip } = mountWavestrip('max="300" key-step="5" value="60"');
+	const { canvas, wavestrip } = mountWavestrip('max="300" key-step="5" value="60"');
 	const events = recordEvents(document.body);
 
-	scrubKey(control, 'keydown', 'ArrowRight');
+	scrubKey(canvas, 'keydown', 'ArrowRight');
 	wavestrip.disabled = true;
 	expect(events).toEqual(['input', 'change']);
 
-	scrubKey(control, 'keyup', 'ArrowRight');
+	scrubKey(canvas, 'keyup', 'ArrowRight');
 	wavestrip.value = 10;
 	expect(events).toEqual(['input', 'change']);
 	expect(wavestrip.value).toBe(10);
@@ -680,20 +681,20 @@ test('disabling mid-scrub changes once and ends the hold', () => {
 test('switching key mid-scrub changes for the first key, then scrubs from there with the second', () => {
 	installCanvasFakes();
 
-	const { control, wavestrip } = mountWavestrip('max="300" key-step="5" value="60"');
+	const { canvas, wavestrip } = mountWavestrip('max="300" key-step="5" value="60"');
 	const events = recordEvents(document.body);
 
-	scrubKey(control, 'keydown', 'ArrowRight');
-	scrubKey(control, 'keydown', 'ArrowRight');
-	scrubKey(control, 'keydown', 'ArrowLeft');
+	scrubKey(canvas, 'keydown', 'ArrowRight');
+	scrubKey(canvas, 'keydown', 'ArrowRight');
+	scrubKey(canvas, 'keydown', 'ArrowLeft');
 	expect(events).toEqual(['input', 'input', 'change', 'input']);
 
-	scrubKey(control, 'keyup', 'ArrowRight');
+	scrubKey(canvas, 'keyup', 'ArrowRight');
 	expect(events).toHaveLength(4);
 
-	scrubKey(control, 'keydown', 'ArrowLeft');
-	scrubKey(control, 'keydown', 'ArrowLeft');
-	scrubKey(control, 'keyup', 'ArrowLeft');
+	scrubKey(canvas, 'keydown', 'ArrowLeft');
+	scrubKey(canvas, 'keydown', 'ArrowLeft');
+	scrubKey(canvas, 'keyup', 'ArrowLeft');
 	expect(wavestrip.value).toBe(55);
 	expect(events.slice(4)).toEqual(['input', 'input', 'change']);
 });
@@ -701,7 +702,7 @@ test('switching key mid-scrub changes for the first key, then scrubs from there 
 test('with double-press="none", two presses on one spot seek twice and Enter still opens the entry', () => {
 	installCanvasFakes();
 
-	const { control, wavestrip } = mountWavestrip(
+	const { canvas, control, wavestrip } = mountWavestrip(
 		'double-press="none" min="30" max="330" step="0" value="50"',
 	);
 	const entry = control.querySelector<HTMLInputElement>('.sonic-wavestrip-entry');
@@ -720,8 +721,8 @@ test('with double-press="none", two presses on one spot seek twice and Enter sti
 	expect(wavestrip.value).toBe(230);
 
 	midPointerAt(control, 'pointerup', { clientX: 200 });
-	control.focus();
-	control.dispatchEvent(
+	canvas.focus();
+	canvas.dispatchEvent(
 		new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'Enter' }),
 	);
 	expect(entry?.hidden).toBe(false);
@@ -841,14 +842,14 @@ test('a key reveals before its input, and the reveal ends once, a second after t
 	vi.useFakeTimers();
 	installCanvasFakes();
 
-	const { control, wavestrip } = mountWavestrip(
+	const { canvas, wavestrip } = mountWavestrip(
 		'min="30" max="330" step="0" key-step="30" value="50"',
 	);
 	const trace = revealTrace(wavestrip);
 
-	keyAt(control, 'keydown', false);
+	keyAt(canvas, 'keydown', false);
 	vi.advanceTimersByTime(600);
-	keyAt(control, 'keydown', false);
+	keyAt(canvas, 'keydown', false);
 	vi.advanceTimersByTime(999);
 	expect(trace).toEqual(['sonic-reveal:50', 'input:80', 'input:110']);
 
@@ -879,29 +880,25 @@ test('a pointer that cannot be captured still drags and changes on release', () 
 test('spoken-step rounds aria-valuenow to its multiples and leaves the value alone', () => {
 	installCanvasFakes();
 
-	const { control, wavestrip } = mountWavestrip(
-		'max="300" step="0" spoken-step="0.5" value="61.3"',
-	);
+	const { canvas, wavestrip } = mountWavestrip('max="300" step="0" spoken-step="0.5" value="61.3"');
 
-	expect(control.getAttribute('aria-valuenow')).toBe('61.5');
+	expect(canvas.getAttribute('aria-valuenow')).toBe('61.5');
 	expect(wavestrip.value).toBe(61.3);
 
 	wavestrip.spokenStep = undefined;
-	expect(control.getAttribute('aria-valuenow')).toBe('61.3');
+	expect(canvas.getAttribute('aria-valuenow')).toBe('61.3');
 });
 
 test('formatSpokenValue is given the value spoken-step rounded, so the text agrees with aria-valuenow', () => {
 	installCanvasFakes();
 
-	const { control, wavestrip } = mountWavestrip(
-		'max="300" step="0" spoken-step="0.5" value="61.3"',
-	);
+	const { canvas, wavestrip } = mountWavestrip('max="300" step="0" spoken-step="0.5" value="61.3"');
 
 	wavestrip.formatSpokenValue = (value) => `${String(value)} seconds`;
-	expect(control.getAttribute('aria-valuetext')).toBe('61.5 seconds');
+	expect(canvas.getAttribute('aria-valuetext')).toBe('61.5 seconds');
 
 	wavestrip.spokenStep = undefined;
-	expect(control.getAttribute('aria-valuetext')).toBe('61.3 seconds');
+	expect(canvas.getAttribute('aria-valuetext')).toBe('61.3 seconds');
 });
 
 test('the current marker follows playback, and reports only when it changes', () => {
@@ -940,13 +937,74 @@ test('clientXOf places a value along the canvas, clamped to the bounds', () => {
 	expect(wavestrip.clientXOf(500)).toBeCloseTo(240, 9);
 });
 
+test('valueFromPoint undoes clientXOf without snapping to the step, and clamps a point past the box', () => {
+	installCanvasFakes();
+
+	const { control, wavestrip } = mountWavestrip('min="30" max="330" step="7" value="30"');
+	const canvas = control.querySelector('canvas');
+	if (!canvas) throw new Error('The wavestrip has no canvas');
+
+	vi.spyOn(canvas, 'getBoundingClientRect').mockReturnValue(new DOMRect(40, 0, 200, 48));
+
+	expect(wavestrip.valueFromPoint(90, 24)).toBeCloseTo(105, 9);
+	for (const clientX of [40, 90, 173.5]) {
+		expect(wavestrip.clientXOf(wavestrip.valueFromPoint(clientX, 24))).toBeCloseTo(clientX, 9);
+	}
+	expect(wavestrip.valueFromPoint(0, 24)).toBe(30);
+	expect(wavestrip.valueFromPoint(400, 24)).toBe(324);
+});
+
+test('a preview paints as a scrub from the played edge, repaints only when it moves, and gives way to a hold', () => {
+	const { flushFrames } = installCanvasFakes();
+	const { canvas, control, wavestrip } = mountWavestrip('min="30" max="330" step="0" value="50"');
+	const context = canvas.getContext('2d');
+	if (!context) throw new Error('The wavestrip has no canvas context');
+
+	const clipped = vi.spyOn(context, 'rect');
+	const spans = (): Array<[number, number]> => {
+		flushFrames();
+
+		const drawn = clipped.mock.calls.map(([from, , width]): [number, number] => [from, width]);
+
+		clipped.mockClear();
+
+		return drawn;
+	};
+
+	wavestrip.peaks = [0.5, 1];
+	expect(spans()).toEqual([[0, 20]]);
+
+	wavestrip.preview = 130;
+	expect(spans()).toEqual([
+		[0, 20],
+		[20, 80],
+	]);
+	expect([wavestrip.value, canvas.getAttribute('aria-valuenow')]).toEqual([50, '50']);
+
+	wavestrip.preview = 130.2;
+	expect(spans()).toEqual([]);
+
+	midPointerAt(control, 'pointerdown', { clientX: 150 });
+	midPointerAt(control, 'pointermove', { clientX: 200 });
+	expect(spans()).toEqual([
+		[0, 20],
+		[20, 180],
+	]);
+
+	midPointerAt(control, 'pointerup', { clientX: 200 });
+	wavestrip.preview = undefined;
+	expect(spans()).toEqual([[0, 200]]);
+});
+
 function openEntry(control: HTMLElement): HTMLInputElement {
 	const entry = control.querySelector('input');
 	if (!entry) throw new Error('The wavestrip has no entry');
 
-	control.dispatchEvent(
-		new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'Enter' }),
-	);
+	control
+		.querySelector('canvas')
+		?.dispatchEvent(
+			new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'Enter' }),
+		);
 
 	return entry;
 }
@@ -962,11 +1020,11 @@ test('with no formatter set, a strip shows, types and speaks a clock in the lang
 	installCanvasFakes();
 	document.body.lang = 'en';
 
-	const { control, wavestrip } = mountWavestrip('max="4000" step="0" value="83.47"');
+	const { canvas, control, wavestrip } = mountWavestrip('max="4000" step="0" value="83.47"');
 	const events = recordEvents(document.body);
 
 	expect(wavestrip.valueText).toBe('1:23');
-	expect(control.getAttribute('aria-valuetext')).toBe('1 minute, 23 seconds');
+	expect(canvas.getAttribute('aria-valuetext')).toBe('1 minute, 23 seconds');
 	expect([wavestrip.formatValue, wavestrip.parseValue, wavestrip.formatSpokenValue]).toEqual([
 		undefined,
 		undefined,
@@ -984,7 +1042,7 @@ test('with no formatter set, a strip shows, types and speaks a clock in the lang
 	commitEntry(openEntry(control), '1:02:05');
 	expect(wavestrip.value).toBe(3725);
 	expect(events).toEqual(['input', 'change']);
-	expect(control.getAttribute('aria-valuetext')).toBe('1 hour, 2 minutes, 5 seconds');
+	expect(canvas.getAttribute('aria-valuetext')).toBe('1 hour, 2 minutes, 5 seconds');
 });
 
 test.each(['', '1:', 'abc'])('an entry left as %j changes nothing', (typed) => {
@@ -1003,10 +1061,10 @@ test('a strip with nothing set at all writes a whole clock, and speaks zero as s
 	installCanvasFakes();
 	document.body.lang = 'en';
 
-	const { control, wavestrip } = mountWavestrip('');
+	const { canvas, control, wavestrip } = mountWavestrip('');
 
 	expect(wavestrip.valueText).toBe('0:00');
-	expect(control.getAttribute('aria-valuetext')).toBe('0 seconds');
+	expect(canvas.getAttribute('aria-valuetext')).toBe('0 seconds');
 	expect(openEntry(control).value).toBe('0:00');
 });
 
@@ -1022,7 +1080,7 @@ test('the spoken clock follows the nearest lang, and an unreadable one falls bac
 		strip.setAttribute('value', '3725');
 		parent.append(strip);
 
-		return strip.querySelector('.sonic-wavestrip')?.getAttribute('aria-valuetext');
+		return strip.querySelector('.sonic-wavestrip-canvas')?.getAttribute('aria-valuetext');
 	});
 
 	expect(french).toMatch(/heure.+minutes.+secondes/);
@@ -1042,12 +1100,12 @@ test('without Intl.DurationFormat the strip still binds and speaks the clock', (
 
 	Reflect.deleteProperty(Intl, 'DurationFormat');
 	try {
-		const { control } = mountWavestrip('max="4000" step="5" value="3725"');
+		const { canvas } = mountWavestrip('max="4000" step="5" value="3725"');
 
-		expect(control.getAttribute('aria-valuetext')).toBe('1:02:05');
+		expect(canvas.getAttribute('aria-valuetext')).toBe('1:02:05');
 
-		control.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'ArrowRight' }));
-		expect(control.getAttribute('aria-valuetext')).toBe('1:02:10');
+		canvas.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'ArrowRight' }));
+		expect(canvas.getAttribute('aria-valuetext')).toBe('1:02:10');
 	} finally {
 		Object.assign(Intl, { DurationFormat: durationFormat });
 	}
@@ -1056,31 +1114,31 @@ test('without Intl.DurationFormat the strip still binds and speaks the clock', (
 test('formatValue replaces the text and the spoken text, and the entry still opens on a clock', () => {
 	installCanvasFakes();
 
-	const { control, wavestrip } = mountWavestrip('max="300" step="0" value="83.47"');
+	const { canvas, control, wavestrip } = mountWavestrip('max="300" step="0" value="83.47"');
 
 	wavestrip.formatValue = (seconds) => `${seconds.toFixed(1)} s`;
 
 	expect(wavestrip.valueText).toBe('83.5 s');
-	expect(control.getAttribute('aria-valuetext')).toBe('83.5 s');
+	expect(canvas.getAttribute('aria-valuetext')).toBe('83.5 s');
 	expect(openEntry(control).value).toBe('1:23');
 });
 
 test('formatSpokenValue replaces only the spoken text', () => {
 	installCanvasFakes();
 
-	const { control, wavestrip } = mountWavestrip('max="300" step="0" value="83.47"');
+	const { canvas, wavestrip } = mountWavestrip('max="300" step="0" value="83.47"');
 
 	wavestrip.formatSpokenValue = (seconds) => `${String(Math.floor(seconds))} seconds in`;
 
 	expect(wavestrip.valueText).toBe('1:23');
-	expect(control.getAttribute('aria-valuetext')).toBe('83 seconds in');
+	expect(canvas.getAttribute('aria-valuetext')).toBe('83 seconds in');
 });
 
 test('the spoken clock is given the value spoken-step rounded', () => {
 	installCanvasFakes();
 	document.body.lang = 'en';
 
-	const { control } = mountWavestrip('max="300" step="0" spoken-step="5" value="83.47"');
+	const { canvas } = mountWavestrip('max="300" step="0" spoken-step="5" value="83.47"');
 
-	expect(control.getAttribute('aria-valuetext')).toBe('1 minute, 25 seconds');
+	expect(canvas.getAttribute('aria-valuetext')).toBe('1 minute, 25 seconds');
 });

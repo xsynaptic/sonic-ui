@@ -123,7 +123,7 @@
 		--_sonic-marker-step: calc(var(--_sonic-marker-size) + var(--_sonic-marker-edge));
 		--_sonic-marker-default: var(--sonic-marker, var(--_sonic-ink));
 		--_sonic-wavestrip-wave: var(
-			--sonic-wave,
+			--sonic-unplayed,
 			color-mix(in oklab, var(--_sonic-ink) 30%, var(--_sonic-unlit))
 		);
 		--_sonic-wavestrip-buffered: var(
@@ -144,7 +144,6 @@
 		touch-action: var(--sonic-touch-action, pan-y);
 		cursor: ew-resize;
 		user-select: none;
-		box-shadow: var(--_sonic-focus-shadow);
 	}
 
 	[fill] > .sonic-wavestrip,
@@ -166,9 +165,10 @@
 		display: block;
 		inline-size: 100%;
 		block-size: 100%;
+		box-shadow: var(--_sonic-focus-shadow);
 	}
 
-	.sonic-wavestrip-markers {
+	:is(.sonic-wavestrip-markers, .sonic-wavestrip-regions) {
 		position: absolute;
 		inset: 0;
 		pointer-events: none;

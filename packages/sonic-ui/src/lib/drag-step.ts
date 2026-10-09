@@ -39,7 +39,7 @@ interface DragStep {
 	value: number | undefined;
 }
 
-const fineFactor = 0.1;
+export const fineFactor = 0.1;
 const mouseDragThresholdPx = 3;
 const touchDragThresholdPx = 7;
 
