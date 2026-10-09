@@ -13,10 +13,10 @@
 		);
 		--_sonic-arc-shade: radial-gradient(
 			closest-side,
-			rgb(from var(--_sonic-shade) r g b / calc(0.55 * var(--_sonic-relief)))
+			color-mix(in srgb, var(--_sonic-shade) calc(55% * var(--_sonic-relief)), transparent)
 				calc(100% - var(--_sonic-arc-width)),
 			transparent calc(100% - var(--_sonic-arc-width) * 0.4),
-			rgb(from var(--_sonic-shade) r g b / calc(0.25 * var(--_sonic-relief))) 100%
+			color-mix(in srgb, var(--_sonic-shade) calc(25% * var(--_sonic-relief)), transparent) 100%
 		);
 	}
 }

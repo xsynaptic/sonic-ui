@@ -485,7 +485,7 @@
 			background: var(--_sonic-slider-indicator);
 			border-radius: calc(var(--_sonic-slider-indicator-width) / 2);
 			box-shadow: inset 0 0 calc(0.75 * var(--_sonic-unit))
-				rgb(from var(--_sonic-shade) r g b / calc(0.55 * var(--_sonic-relief)));
+				color-mix(in srgb, var(--_sonic-shade) calc(55% * var(--_sonic-relief)), transparent);
 		}
 	}
 

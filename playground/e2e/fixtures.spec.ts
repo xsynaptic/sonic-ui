@@ -1,11 +1,12 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test } from '@playwright/test';
+import { expect } from '@playwright/test';
 
 import { collectConsole } from './console-messages.ts';
+import { strippedProject, test } from './stripped.ts';
 
 test(
 	'the fixtures have no axe violations, keep every scale mark inside its control, and load with a clean console',
-	{ tag: '@mobile' },
+	{ tag: ['@mobile', '@stripped'] },
 	async ({ browserName, page }, testInfo) => {
 		const messages = collectConsole(page);
 
@@ -54,7 +55,7 @@ test(
 );
 
 // axe exempts custom-element hosts from `aria-prohibited-attr` and never checks that a name reaches the inner control
-test('each control takes its name from the host', async ({ page }) => {
+test('each control takes its name from the host', { tag: '@stripped' }, async ({ page }) => {
 	await page.goto('/fixtures/');
 
 	await expect(page.getByRole('slider', { name: 'Level' })).toBeVisible();
@@ -64,3 +65,16 @@ test('each control takes its name from the host', async ({ page }) => {
 	await expect(page.getByRole('radiogroup', { name: 'Mode' })).toBeVisible();
 	await expect(page.getByRole('radio', { checked: true, name: 'LP' })).toBeVisible();
 });
+
+test(
+	'a wave strip speaks its position as a duration, or as the clock where `Intl.DurationFormat` is missing',
+	{ tag: '@stripped' },
+	async ({ page }, testInfo) => {
+		await page.goto('/fixtures/');
+
+		await expect(page.locator('#wavestrip-fill .sonic-wavestrip')).toHaveAttribute(
+			'aria-valuetext',
+			testInfo.project.name === strippedProject ? '2:30' : '2 minutes, 30 seconds',
+		);
+	},
+);

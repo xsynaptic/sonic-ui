@@ -10,7 +10,7 @@ interface ReadoutView {
 const canPopover = 'togglePopover' in HTMLElement.prototype;
 
 // Without anchor positioning the bubble opens away from its control
-export const isUnanchored = canPopover && !CSS.supports('anchor-name', '--a');
+export const isUnanchored = !CSS.supports('anchor-name', '--a');
 
 let readoutCount = 0;
 

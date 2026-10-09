@@ -14,7 +14,7 @@
 			color-mix(
 				in oklab,
 				var(--_sonic-glass-slab) calc(100% * var(--_sonic-relief)),
-				light-dark(oklch(97% 0.003 286deg), var(--_sonic-glass-slab))
+				color-mix(in oklab, Canvas 97%, #000)
 			)
 		);
 		--_sonic-glass: var(--_sonic-glass-own, var(--_sonic-glass-base));

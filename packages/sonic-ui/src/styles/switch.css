@@ -369,7 +369,7 @@
 				calc((var(--_sonic-switch-ball) - var(--_sonic-switch-size)) / 2);
 			box-shadow:
 				inset 0 0 calc(1.5 * var(--_sonic-unit)) calc(0.4 * var(--_sonic-unit))
-					rgb(from var(--_sonic-shade) r g b / calc(0.3 * var(--_sonic-relief))),
+					color-mix(in srgb, var(--_sonic-shade) calc(30% * var(--_sonic-relief)), transparent),
 				0 0 0 var(--_sonic-switch-outline) var(--_sonic-switch-rim),
 				var(--_sonic-focus-shadow);
 			translate: calc(var(--_sonic-switch-along-x) * var(--_sonic-switch-throw))

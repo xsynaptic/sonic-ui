@@ -270,7 +270,7 @@
 	:state(ladder) > .sonic-meter > .sonic-meter-bar::after {
 		background: radial-gradient(
 				circle var(--_sonic-meter-ladder-radius),
-				rgb(from var(--_sonic-shine) r g b / calc(0.45 * var(--_sonic-relief))),
+				color-mix(in srgb, var(--_sonic-shine) calc(45% * var(--_sonic-relief)), transparent),
 				transparent
 			)
 			0 100% / 100% var(--_sonic-meter-pitch) repeat-y;

@@ -84,12 +84,12 @@
 					transparent
 						calc(
 							var(--_sonic-xy-x-low) * var(--_sonic-xy-travel-x) + var(--_sonic-xy-puck) / 2 *
-								sign(var(--_sonic-xy-x-low))
+								clamp(0, var(--_sonic-xy-x-low) * 100000, 1)
 						),
 					var(--_sonic-xy-lit) 0
 						calc(
 							var(--_sonic-xy-x-high) * var(--_sonic-xy-travel-x) + var(--_sonic-xy-puck) / 2 *
-								(2 - sign(1 - var(--_sonic-xy-x-high)))
+								(2 - clamp(0, (1 - var(--_sonic-xy-x-high)) * 100000, 1))
 						),
 					transparent 0
 				),
@@ -109,12 +109,12 @@
 					transparent
 						calc(
 							var(--_sonic-xy-y-low) * var(--_sonic-xy-travel-y) + var(--_sonic-xy-puck) / 2 *
-								sign(var(--_sonic-xy-y-low))
+								clamp(0, var(--_sonic-xy-y-low) * 100000, 1)
 						),
 					var(--_sonic-xy-lit) 0
 						calc(
 							var(--_sonic-xy-y-high) * var(--_sonic-xy-travel-y) + var(--_sonic-xy-puck) / 2 *
-								(2 - sign(1 - var(--_sonic-xy-y-high)))
+								(2 - clamp(0, (1 - var(--_sonic-xy-y-high)) * 100000, 1))
 						),
 					transparent 0
 				),

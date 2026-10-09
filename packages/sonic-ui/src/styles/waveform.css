@@ -135,7 +135,7 @@
 		--_sonic-waveform-lit: var(--_sonic-lit);
 		--_sonic-waveform-wave: var(--_sonic-waveform-lit);
 		--_sonic-waveform-shade: var(--_sonic-shade);
-		--_sonic-waveform-shade-clear: rgb(from var(--_sonic-shade) r g b / 0%);
+		--_sonic-waveform-shade-clear: color-mix(in srgb, var(--_sonic-shade) 0%, transparent);
 		--_sonic-waveform-edge-shade: var(--sonic-waveform-edge-shade, 0);
 		--_sonic-waveform-band-opacity: calc(
 			var(--sonic-waveform-band-opacity, 1) * var(--_sonic-waveform-band-dim, 1)

@@ -2,7 +2,7 @@
 	:is(.sonic-led, .sonic-meter) {
 		--_sonic-lens-glint: linear-gradient(
 			var(--_sonic-light-fall),
-			rgb(from var(--_sonic-shine) r g b / calc(0.1 * var(--_sonic-relief))),
+			color-mix(in srgb, var(--_sonic-shine) calc(10% * var(--_sonic-relief)), transparent),
 			transparent 60%
 		);
 		--_sonic-lens-modelled: calc(100% * var(--_sonic-relief));

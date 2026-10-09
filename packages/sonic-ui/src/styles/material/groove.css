@@ -2,10 +2,10 @@
 	:is(.sonic-meter, .sonic-slider) {
 		--_sonic-groove:
 			inset var(--_sonic-cast-x) var(--_sonic-cast-y) calc(0.75 * var(--_sonic-unit))
-				rgb(from var(--_sonic-shade) r g b / calc(0.55 * var(--_sonic-relief))),
+				color-mix(in srgb, var(--_sonic-shade) calc(55% * var(--_sonic-relief)), transparent),
 			inset 0 0 calc(0.5 * var(--_sonic-unit))
-				rgb(from var(--_sonic-shade) r g b / calc(0.3 * var(--_sonic-relief))),
+				color-mix(in srgb, var(--_sonic-shade) calc(30% * var(--_sonic-relief)), transparent),
 			calc(0.5 * var(--_sonic-cast-x)) calc(0.5 * var(--_sonic-cast-y)) 0
-				rgb(from var(--_sonic-shine) r g b / calc(0.06 * var(--_sonic-relief)));
+				color-mix(in srgb, var(--_sonic-shine) calc(6% * var(--_sonic-relief)), transparent);
 	}
 }

@@ -93,4 +93,4 @@ A skin is one rule that sets tokens on a class; copy `dist/skins/flat.css` to st
 
 An LED inside a control also needs `led.css`, and a button inside a ring needs `button.css`. Only a missing `core.css` or control sheet is warned about, so check a control that draws wrong against this table.
 
-Targets current Chrome and Edge, Safari 26 and Firefox 147. No control mirrors for right-to-left. MIT licensed.
+Tested in current Chrome, Firefox and Safari. Known to work from Chrome 111, Safari 16.4 and Firefox 128; older versions are best effort. No control mirrors for right-to-left. MIT licensed.

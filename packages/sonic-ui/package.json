@@ -81,7 +81,7 @@
 		"imports": {}
 	},
 	"scripts": {
-		"build": "tsdown && node ../../scripts/lower-sheets.ts",
+		"build": "tsdown && node ../../scripts/compile-sheets.ts",
 		"check-types": "tsc --noEmit"
 	},
 	"devDependencies": {

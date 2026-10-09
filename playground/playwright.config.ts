@@ -1,5 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
+import { strippedProject } from './e2e/stripped.ts';
+
 const port = 4331;
 
 export default defineConfig({
@@ -11,6 +13,7 @@ export default defineConfig({
 		{ name: 'firefox', use: { ...devices['Desktop Firefox'] } },
 		{ name: 'webkit', use: { ...devices['Desktop Safari'] } },
 		{ grep: /@mobile/, name: 'mobile-webkit', use: { ...devices['iPhone 17'] } },
+		{ grep: /@stripped/, name: strippedProject, use: { ...devices['Desktop Chrome'] } },
 	],
 	reporter: [['list'], ['html', { open: 'never', outputFolder: './temp/playwright-report' }]],
 	retries: 0,

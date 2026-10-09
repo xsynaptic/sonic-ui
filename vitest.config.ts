@@ -9,6 +9,7 @@ export default defineConfig({
 		exclude: [...configDefaults.exclude, '.cache/**', '.claude/worktrees/**'],
 		include: ['**/*.test.ts'],
 		restoreMocks: true,
+		setupFiles: ['packages/sonic-ui/test/setup.ts'],
 		silent: 'passed-only',
 		unstubGlobals: true,
 	},

@@ -28,6 +28,7 @@ Tokens, hook classes, attributes, events and `:state()` names are the API. Renam
 - Layout stays inside the control's box; only focus and the readout popover paint past it, and only a target (`--sonic-target-size`, unset by default; a press control's, or a slider's across its breadth) takes presses past it.
 - A touch outside the part that owns a gesture still scrolls the page.
 - Forced colours: drawn parts opt out and take system colours; the focusable element stays forced so its outline paints.
+- CSS is written for the floor (Chrome 111, Safari 16.4, Firefox 128): where an older function, unit or property does the same job, use it. A newer one with no equal goes on `aboveFloor` in `stylelint.config.mjs`, with what an older browser loses.
 - A private value that script or a canvas reads is registered with `@property`; a raw token does not resolve there.
 - A control uses only the children it documents, and puts its control back when removed.
 - A control draws on connect: until then attributes and properties are held as values, and the drawn parts, form value and states are written in the one render `connect` runs.
