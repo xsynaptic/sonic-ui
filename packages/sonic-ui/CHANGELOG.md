@@ -1,5 +1,19 @@
 # @xsynaptic/sonic-ui
 
+## 0.26.0
+
+### Minor Changes
+
+- - Breaking: a state is an attribute on the control's drawn part, `data-sonic-<state>`, and no longer a custom state on the host. `sonic-slider:state(dragging) > .sonic-slider` becomes `.sonic-slider[data-sonic-dragging]`; a region's is on its `.sonic-region`. Every look that follows a state now draws at the browser floor, a meter's ladder included.
+  - Breaking: the mark on a button, an option or a toggle position held down by a key or a pointer is `data-sonic-active`, renamed from `data-sonic-pressed`, which on `.sonic-button` is now the `pressed` state.
+  - Wave controls and the spectrum: a canvas that parses no `color-mix()` is handed a colour it does take, so in an older Chrome the wave strip's unplayed bars no longer paint black and the waveform's edge shade no longer throws.
+  - Region: `tabindex="-1"` on `<sonic-region>` takes its part out of the tab order, as on a value control.
+
+### Patch Changes
+
+- - Value controls: the spoken formatter runs only when the spoken value or the formatter changes, and a wave strip with no `<sonic-region>` no longer calls it twice per write. A changed `lang` is heard at the next spoken value.
+  - Older browsers: a closed readout stays out of the layout without the popover API, snapped edges fall back to a hairline without `round()`, and three rules no longer drop where `:state()` is missing.
+
 ## 0.25.1
 
 ### Patch Changes
