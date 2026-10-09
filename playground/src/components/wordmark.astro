@@ -1,15 +1,23 @@
 ---
 // The ring is open at the bottom, so its ink stops at 0.9344 of its box; sized so that ink spans the i's dot to the s's foot
 // The gap is an o's right bearing, the o-s kerning and the tracking, so the dial sits where an o would
+
+interface Props {
+	href?: string;
+}
+
+const { href } = Astro.props;
+
+const Name = href ? 'a' : 'span';
 ---
 
 <span class="wordmark">
 	<span class="wordmark-dial">
-		<sonic-dial aria-hidden="true" inert value="64"></sonic-dial>
+		<sonic-dial aria-label="Wordmark dial" default="64" value="64"></sonic-dial>
 	</span>
-	<span>
+	<Name class="wordmark-name" href={href}>
 		sonic<span class="wordmark-hyphen">-</span>ui
-	</span>
+	</Name>
 </span>
 
 <style>
@@ -21,6 +29,7 @@
 		--sonic-dial-gap-ratio: initial;
 		--sonic-dial-ring-ratio: initial;
 		--sonic-dial-size: 0.8123em;
+		--sonic-focus: oklch(76.9% 0.165 70deg);
 		--sonic-ink: initial;
 		--sonic-lit: initial;
 		--sonic-relief: initial;
@@ -29,12 +38,15 @@
 
 		display: inline-flex;
 		align-items: baseline;
+		line-height: 1;
+		white-space: nowrap;
+	}
+
+	.wordmark-name {
 		font-family: var(--font-plex-sans), sans-serif;
 		font-style: italic;
 		font-weight: 700;
-		line-height: 1;
 		letter-spacing: -0.02em;
-		white-space: nowrap;
 	}
 
 	.wordmark-dial {
