@@ -339,6 +339,23 @@ test('a fine mover among coarse siblings is held to what they can absorb, mid-dr
 	expect(valuesOf(members)).toEqual([60, 20, 20]);
 });
 
+test('a write the siblings cannot absorb on their own steps is turned back, and the total holds', async () => {
+	const { members } = await mountSplit(
+		'',
+		sliders(
+			'<sonic-slider max="6" value="2"></sonic-slider>',
+			'<sonic-slider max="6" step="2" value="6"></sonic-slider>',
+			'<sonic-slider max="6" step="3" value="0"></sonic-slider>',
+		),
+	);
+	const [first] = members;
+	if (!first) throw new Error('No member');
+
+	first.value = 0;
+	await nextTask();
+	expect(valuesOf(members)).toEqual([2, 6, 0]);
+});
+
 test('an arrow on a fine mover among coarse siblings steps to the next value they can absorb', async () => {
 	const coarse = '<sonic-slider step="5" value="25"></sonic-slider>';
 	const { members, split } = await mountSplit('', sliders(50, coarse, coarse));

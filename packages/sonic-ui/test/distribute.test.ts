@@ -192,6 +192,19 @@ test('a held-back mover lands on the nearest value its siblings can absorb, eith
 	expect(distribute(snapshot, rule, { index: 0, target: 47 })).toEqual([45, 30, 25]);
 });
 
+test.each(['cascade', 'equal', 'proportional'] as const)(
+	'%s: a move that only a sibling stepping the other way could absorb holds every member',
+	(mode) => {
+		const snapshot = [
+			member(2, { max: 6 }),
+			member(6, { max: 6, step: 2 }),
+			member(0, { max: 6, step: 3 }),
+		];
+
+		expect(distribute(snapshot, { mode, total: 8 }, { index: 0, target: 0 })).toEqual([2, 6, 0]);
+	},
+);
+
 test('a move with a direction never lands back where it started while a value that way can be reached', () => {
 	const snapshot = [member(50), member(25, { step: 5 }), member(25, { step: 5 })];
 	const rule = { mode: 'proportional', total: 100 } as const;
@@ -402,5 +415,46 @@ test('on one step grid the total holds, bounds hold, and every sibling lands wit
 		expect(moved, label).toBe(clamp(target, ...splitLimits(snapshot, 0, total)));
 		expect(moved + sum(rest), label).toBe(total);
 		expectNearShares(rest, siblings, { exact, label, step });
+	}
+});
+
+function expectHeld(
+	result: Array<number>,
+	members: Array<SplitMember>,
+	held: { label: string; target: number; total: number },
+): void {
+	expect(result[0], held.label).toBe(held.target);
+	expect(sum(result), held.label).toBe(held.total);
+	for (const [at, { isFree, max, min, value }] of members.entries()) {
+		const landed = result[at] ?? NaN;
+
+		expect(landed, held.label).toBeGreaterThanOrEqual(min);
+		expect(landed, held.label).toBeLessThanOrEqual(max);
+		expect(isFree || landed === value, held.label).toBe(true);
+	}
+}
+
+test('on one step grid, with members locked, every mode reaches each target inside the limits and holds the total', () => {
+	const random = seeded(20_261_010);
+	const modes = ['cascade', 'equal', 'proportional'] as const;
+
+	for (let run = 0; run < 500; run += 1) {
+		const { snapshot, step } = drawCase(random);
+		const mode = modes[Math.floor(random() * modes.length)] ?? 'cascade';
+		const members = snapshot.map((entry, at) =>
+			at > 1 && random() < 0.3 ? { ...entry, isFree: false } : entry,
+		);
+		const total = sum(members.map(({ value }) => value));
+		const [low, high] = splitLimits(members, 0, total);
+
+		for (let target = low; target <= high; target += step) {
+			const label = `run ${String(run)}: ${mode} step ${String(step)} to ${String(target)}`;
+
+			expectHeld(distribute(members, { mode, total }, { index: 0, target }), members, {
+				label,
+				target,
+				total,
+			});
+		}
 	}
 });

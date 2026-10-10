@@ -338,3 +338,31 @@ test('End on an endless mapping lands on the last step despite float residue in 
 		-6.2,
 	);
 });
+
+test.each([
+	[{ max: 360, step: 7 }, 52],
+	[{ max: 370, min: 10, step: 7.5 }, 48],
+	[{ max: 3.3, step: 0.25 }, 14],
+	[{ max: 0.7, min: -0.2, step: 0.1 }, 9],
+	[{ max: 10, step: 3 }, 4],
+])('on an endless %o, snap and the keys land on one grid of %d', (spec, count) => {
+	const endless = mappingOf({ isWrapping: true, ...spec });
+	const [min, max] = endless.bounds;
+	const grid = [min];
+
+	for (let turn = 0; turn < 2 * count; turn += 1) {
+		const next = endless.keyTarget('ArrowUp', grid.at(-1) ?? min);
+		if (next === undefined || next === min) break;
+
+		grid.push(next);
+	}
+
+	expect(grid).toHaveLength(count);
+	for (const value of grid) {
+		expect(endless.snap(value)).toBe(value);
+		expect(endless.keyTarget('ArrowDown', endless.keyTarget('ArrowUp', value) ?? NaN)).toBe(value);
+	}
+	for (let sample = -37; sample <= 74; sample += 1) {
+		expect(grid).toContain(endless.snap(min + (sample * (max - min)) / 37));
+	}
+});

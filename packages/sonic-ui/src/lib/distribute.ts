@@ -349,10 +349,7 @@ function close(
 		return attempt && Math.abs(attempt.left) <= epsilon ? [attempt.values] : [];
 	});
 
-	return (
-		nearest(closed, move, { landed, start: mover.value }) ??
-		landing.values.with(index, targets[0] ?? landed)
-	);
+	return nearest(closed, move, { landed, start: mover.value }) ?? members.map(({ value }) => value);
 }
 
 export function distribute(
