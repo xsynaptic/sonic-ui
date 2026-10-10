@@ -9,18 +9,18 @@ class SeamControl extends SonicValueElement {
 
 	readonly played: Array<number> = [];
 
-	readonly #control = Object.assign(document.createElement('div'), {
+	protected override readonly control = Object.assign(document.createElement('div'), {
 		innerHTML: '<div popover="manual"><span></span><input hidden /></div>',
 	});
 
-	control(): HTMLElement {
-		return this.#control;
+	drawn(): HTMLElement {
+		return this.control;
 	}
 
 	protected connect(signal: AbortSignal): void {
-		this.keepControl(this.#control, signal);
+		this.keepControl(signal);
 		this.render();
-		this.bindGestures(this.#control, signal, () => {
+		this.bindGestures(signal, () => {
 			const axis = { position: (event: PointerEvent) => event.clientX, travelPx: 200 };
 
 			return this.fromProportion === undefined
@@ -31,10 +31,6 @@ class SeamControl extends SonicValueElement {
 
 	protected draw(): void {
 		// Nothing drawn beyond the ARIA the base writes
-	}
-
-	protected override focusTarget(): HTMLElement {
-		return this.#control;
 	}
 
 	protected override scrubChanged(): void {
@@ -61,15 +57,15 @@ test('a value written mid-drag moves where the scrub played and leaves the drag 
 	seam.addEventListener('change', () => {
 		changed.push(seam.value);
 	});
-	pointerAt(seam.control(), 'pointerdown', { clientX: 100 });
-	pointerAt(seam.control(), 'pointermove', { clientX: 150 });
+	pointerAt(seam.drawn(), 'pointerdown', { clientX: 100 });
+	pointerAt(seam.drawn(), 'pointermove', { clientX: 150 });
 	seam.value = 10;
 	seam.setAttribute('value', '20');
 
 	expect(seam.played).toEqual([40, 10, 20]);
 	expect(seam.value).toBe(65);
 
-	pointerAt(seam.control(), 'pointerup', { clientX: 150 });
+	pointerAt(seam.drawn(), 'pointerup', { clientX: 150 });
 	expect(events).toEqual(['input', 'change']);
 	expect(changed).toEqual([65]);
 });
@@ -78,8 +74,8 @@ test('a grab carrying fromProportion starts the drag there rather than at the va
 	const seam = mountSeam('min="-40" max="40" value="0"');
 
 	seam.fromProportion = 0.75;
-	pointerAt(seam.control(), 'pointerdown', { clientX: 100 });
-	pointerAt(seam.control(), 'pointermove', { clientX: 120 });
+	pointerAt(seam.drawn(), 'pointerdown', { clientX: 100 });
+	pointerAt(seam.drawn(), 'pointermove', { clientX: 120 });
 
 	expect(seam.value).toBe(28);
 });
@@ -94,7 +90,7 @@ test('a link watch hears a scripted write, a change of bounds and a key press, u
 
 	seam.value = 20;
 	seam.setAttribute('max', '15');
-	pressKey(seam.control(), 'ArrowDown');
+	pressKey(seam.drawn(), 'ArrowDown');
 	expect(seen).toEqual([20, 15, 10]);
 
 	unwatch();
@@ -119,13 +115,13 @@ test("a link's input leaves the value alone while the seam's own drag holds it",
 	const seam = mountSeam('value="40"');
 	const link = linkValue(seam);
 
-	pointerAt(seam.control(), 'pointerdown', { clientX: 100 });
-	pointerAt(seam.control(), 'pointermove', { clientX: 150 });
+	pointerAt(seam.drawn(), 'pointerdown', { clientX: 100 });
+	pointerAt(seam.drawn(), 'pointermove', { clientX: 150 });
 
 	expect(link.input(10)).toBe(false);
 	expect(seam.value).toBe(65);
 
-	pointerAt(seam.control(), 'pointerup', { clientX: 150 });
+	pointerAt(seam.drawn(), 'pointerup', { clientX: 150 });
 	expect(link.input(10)).toBe(true);
 });
 
@@ -135,19 +131,19 @@ test('a limit stops a drag and the keys inside it, and leaves the bounds and pro
 	const values: Array<number> = [];
 
 	link.model.setLimit([20, 65]);
-	pointerAt(seam.control(), 'pointerdown', { clientX: 0 });
+	pointerAt(seam.drawn(), 'pointerdown', { clientX: 0 });
 	for (const clientX of [1000, -1000]) {
-		pointerAt(seam.control(), 'pointermove', { clientX });
+		pointerAt(seam.drawn(), 'pointermove', { clientX });
 		values.push(seam.value);
 	}
-	pointerAt(seam.control(), 'pointerup', { clientX: -1000 });
-	pressKey(seam.control(), 'End');
+	pointerAt(seam.drawn(), 'pointerup', { clientX: -1000 });
+	pressKey(seam.drawn(), 'End');
 	values.push(seam.value);
-	pressKey(seam.control(), 'Home');
+	pressKey(seam.drawn(), 'Home');
 	values.push(seam.value);
 
 	expect(values).toEqual([65, 20, 65, 20]);
-	expect(seam.control().getAttribute('aria-valuemax')).toBe('110');
+	expect(seam.drawn().getAttribute('aria-valuemax')).toBe('110');
 
 	seam.value = 100;
 	expect(seam.value).toBe(100);
@@ -159,8 +155,8 @@ test('a cleared limit lets a drag reach the maximum again', () => {
 
 	link.model.setLimit([20, 65]);
 	link.model.setLimit(undefined);
-	pointerAt(seam.control(), 'pointerdown', { clientX: 0 });
-	pointerAt(seam.control(), 'pointermove', { clientX: 1000 });
+	pointerAt(seam.drawn(), 'pointerdown', { clientX: 0 });
+	pointerAt(seam.drawn(), 'pointermove', { clientX: 1000 });
 
 	expect(seam.value).toBe(110);
 });
@@ -170,9 +166,9 @@ test('a link reads held from the press until the release', () => {
 	const link = linkValue(seam);
 	const held: Array<boolean> = [link.isHeld()];
 
-	pointerAt(seam.control(), 'pointerdown', { clientX: 0 });
+	pointerAt(seam.drawn(), 'pointerdown', { clientX: 0 });
 	held.push(link.isHeld());
-	pointerAt(seam.control(), 'pointerup', { clientX: 0 });
+	pointerAt(seam.drawn(), 'pointerup', { clientX: 0 });
 	held.push(link.isHeld());
 
 	expect(held).toEqual([false, true, false]);

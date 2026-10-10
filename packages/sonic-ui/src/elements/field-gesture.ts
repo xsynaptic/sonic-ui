@@ -1,10 +1,11 @@
-import type { ReadoutClaim } from '#elements/readout-claim.ts';
 import type { FieldAxis, FieldDragState, FieldPoint } from '#lib/field.ts';
 import type { ValueModel } from '#lib/value-model.ts';
 
-import { revealDelay } from '#elements/readout-claim.ts';
+import { ReadoutClaim, revealDelay } from '#elements/readout-claim.ts';
+import { createDoublePress } from '#lib/double-press.ts';
 import { dragThresholdPx } from '#lib/drag-step.ts';
 import { pointerMove, pointerPosition, startFieldDrag, stepFieldDrag } from '#lib/field.ts';
+import { isMenuPress, isResetPress } from '#lib/modifier-press.ts';
 import { bindDrag } from '#lib/pointer-drag.ts';
 
 interface FieldAxisHold {
@@ -24,19 +25,27 @@ export interface FieldInput {
 	y?: number | undefined;
 }
 
-interface FieldGestureOptions<Hold extends FieldHold> {
-	claim: ReadoutClaim;
+interface RevealOptions {
+	element: HTMLElement;
+	renderReadout: () => void;
+	toggle: (state: 'dragging' | 'revealed', isOn: boolean) => void;
+}
+
+interface FieldGestureOptions<Hold extends FieldHold> extends RevealOptions {
 	grab: (event: PointerEvent) => Hold | undefined;
 	input: (hold: Hold, next: FieldInput) => void;
-	lift?: (hold: Hold, event: PointerEvent) => void;
 	release: (hold: Hold, moved: Array<FieldAxis>) => void;
-	toggle: (isDragging: boolean) => void;
+	reset?: () => void;
+	resetsOnDoublePress?: () => boolean;
 }
 
 export interface FieldGesture<Hold> {
+	concealKeys: () => void;
 	current: () => Hold | undefined;
 	end: () => void;
+	isRevealed: () => boolean;
 	pointerType: () => string | undefined;
+	revealKeys: () => void;
 }
 
 interface Held<Hold> {
@@ -61,14 +70,41 @@ function startAxis(hold: FieldAxisHold | undefined) {
 	return { from, mapping, proportion: hold.proportion ?? mapping.proportionOf(from), travelPx };
 }
 
+function createReveal({ element, renderReadout, toggle }: RevealOptions) {
+	let isRevealed = false;
+
+	const show = (): void => {
+		if (claim.isRevealed !== isRevealed) {
+			isRevealed = claim.isRevealed;
+			toggle('revealed', isRevealed);
+			element.dispatchEvent(new Event('sonic-reveal', { bubbles: true }));
+		}
+		renderReadout();
+	};
+	const claim = new ReadoutClaim(show);
+
+	return { claim, show };
+}
+
 export function bindFieldGesture<Hold extends FieldHold>(
 	target: HTMLElement,
 	options: FieldGestureOptions<Hold>,
 	signal: AbortSignal,
 ): FieldGesture<Hold> {
-	const { claim } = options;
+	const { reset, resetsOnDoublePress } = options;
+	const { claim, show } = createReveal(options);
+	const doublePress = reset && resetsOnDoublePress ? createDoublePress() : undefined;
 
 	let pointerType: string | undefined;
+
+	const grab = (event: PointerEvent): Hold | undefined => {
+		if (isMenuPress(event)) return undefined;
+		if (!reset || !isResetPress(event)) return options.grab(event);
+
+		reset();
+
+		return undefined;
+	};
 
 	const drag = bindDrag<Held<Hold>>(
 		target,
@@ -80,7 +116,7 @@ export function bindFieldGesture<Hold extends FieldHold>(
 				// Set first, so an `input` the grab itself fires can read it
 				pointerType = event.pointerType;
 
-				const hold = options.grab(event);
+				const hold = grab(event);
 				if (!hold) {
 					pointerType = undefined;
 					return;
@@ -101,8 +137,8 @@ export function bindFieldGesture<Hold extends FieldHold>(
 					}),
 				};
 			},
-			lift: ({ hold }, event) => {
-				options.lift?.(hold, event);
+			lift: (_held, event) => {
+				if (doublePress?.press(event) === true && resetsOnDoublePress?.() === true) reset?.();
 			},
 			move: (held, event) => {
 				const { axes } = held.hold;
@@ -113,7 +149,10 @@ export function bindFieldGesture<Hold extends FieldHold>(
 				);
 
 				held.state = step.state;
-				if (step.state.isEngaged) claim.reveal('drag');
+				if (step.state.isEngaged) {
+					claim.reveal('drag');
+					show();
+				}
 				options.input(held.hold, step);
 			},
 			release: ({ from, hold }) => {
@@ -124,10 +163,32 @@ export function bindFieldGesture<Hold extends FieldHold>(
 				);
 				pointerType = undefined;
 			},
-			toggle: options.toggle,
+			toggle: (isDragging) => {
+				options.toggle('dragging', isDragging);
+			},
 		},
 		signal,
 	);
 
-	return { current: () => drag.current()?.hold, end: drag.end, pointerType: () => pointerType };
+	target.addEventListener(
+		'pointercancel',
+		() => {
+			doublePress?.forget();
+		},
+		{ signal },
+	);
+
+	return {
+		concealKeys: () => {
+			if (claim.conceal('keys')) show();
+		},
+		current: () => drag.current()?.hold,
+		end: drag.end,
+		isRevealed: () => claim.isRevealed,
+		pointerType: () => pointerType,
+		revealKeys: () => {
+			claim.reveal('keys');
+			show();
+		},
+	};
 }

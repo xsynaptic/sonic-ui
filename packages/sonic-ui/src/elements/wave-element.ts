@@ -1,14 +1,13 @@
 import type { ValueNotation } from '#elements/value-element.ts';
 import type { Surface, SurfaceFrame } from '#lib/canvas-surface.ts';
+import type { BoxProbe } from '#lib/check-styles.ts';
 import type { Point } from '#lib/marker-band.ts';
 import type { Seconds } from '#lib/units.ts';
 
 import { SonicValueElement } from '#elements/value-element.ts';
-import { bindSurface } from '#lib/canvas-surface.ts';
+import { bindControlSurface } from '#lib/canvas-surface.ts';
 import { formatClock, parseClock } from '#lib/clock.ts';
 import { spokenDuration } from '#lib/spoken-duration.ts';
-
-declare const __DEV__: boolean;
 
 declare global {
 	interface HTMLElementEventMap {
@@ -66,11 +65,14 @@ export abstract class SonicWaveElement<
 		this.render();
 	}
 
+	protected override readonly boxProbe: BoxProbe = {
+		property: 'margin-bottom',
+		selector: '[popover]',
+	};
+
 	protected abstract readonly canvas: HTMLCanvasElement;
 
 	protected abstract readonly colours: Record<Colour, `--_sonic-${string}`>;
-
-	protected abstract readonly control: HTMLElement;
 
 	protected abstract readonly lengths: Record<Length, `--_sonic-${string}`>;
 
@@ -82,7 +84,7 @@ export abstract class SonicWaveElement<
 
 	protected abstract readonly numbers: Record<Numeric, `--_sonic-${string}`>;
 
-	protected abstract readonly sheet: string;
+	protected abstract override readonly sheet: string;
 
 	protected abstract readonly sizeProperty: `--_sonic-${string}`;
 
@@ -130,12 +132,13 @@ export abstract class SonicWaveElement<
 	protected connect(signal: AbortSignal): void {
 		const control = this.control;
 
-		this.keepControl(control, signal);
+		this.keepControl(signal);
 		this.renderEmpty();
-		this.#surface = bindSurface({
+		this.#surface = bindControlSurface({
 			canvas: this.canvas,
 			colours: this.colours,
-			fill: { control, sizeProperty: this.sizeProperty },
+			control,
+			fill: this.fill,
 			lengths: this.lengths,
 			numbers: this.numbers,
 			paint: (context, frame) => {
@@ -145,14 +148,9 @@ export abstract class SonicWaveElement<
 				this.renderMarkers();
 			},
 			signal,
+			sizeProperty: this.sizeProperty,
 		});
 		this.render();
-		if (__DEV__)
-			this.checkStyles(control, this.sheet, {
-				property: 'margin-bottom',
-				selector: '[popover]',
-			});
-		this.#surface.setFill(this.fill);
 	}
 
 	protected abstract isEmpty(): boolean;
@@ -199,10 +197,6 @@ export abstract class SonicWaveElement<
 
 		this.#current = current;
 		this.dispatchEvent(new Event('sonic-marker', { bubbles: true }));
-	}
-
-	protected override stateTarget(): HTMLElement {
-		return this.control;
 	}
 
 	protected surface(): Surface | undefined {

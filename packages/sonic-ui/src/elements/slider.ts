@@ -1,4 +1,5 @@
 import type { ValueAxis } from '#elements/value-gestures.ts';
+import type { BoxProbe } from '#lib/check-styles.ts';
 import type { TimeRegions } from '#lib/time-regions.ts';
 
 import { createModulation } from '#elements/modulation.ts';
@@ -8,8 +9,6 @@ import { clampProportion } from '#lib/math.ts';
 import { requireChild, template } from '#lib/render.ts';
 import { scrubRegions } from '#lib/scrub.ts';
 import { sortedRegions } from '#lib/time-regions.ts';
-
-declare const __DEV__: boolean;
 
 declare global {
 	interface HTMLElementTagNameMap {
@@ -122,11 +121,18 @@ export class SonicSlider extends SonicValueElement {
 		this.reflect('spring', isSpring);
 	}
 
+	protected override readonly boxProbe: BoxProbe = {
+		property: 'margin-bottom',
+		selector: '[popover]',
+	};
+
+	protected override readonly control = renderSlider();
+
+	protected override readonly sheet = 'slider.css';
+
 	#buffered: Array<[number, number]> = [];
 
-	readonly #slider = renderSlider();
-
-	readonly #modulation = createModulation(this.#slider, 'slider', (isModulated) => {
+	readonly #modulation = createModulation(this.control, 'slider', (isModulated) => {
 		this.toggleState('modulated', isModulated);
 	});
 
@@ -144,7 +150,7 @@ export class SonicSlider extends SonicValueElement {
 	}
 
 	protected connect(signal: AbortSignal): void {
-		const slider = this.#slider;
+		const slider = this.control;
 		const cap = requireChild(slider, '.sonic-slider-cap', HTMLDivElement);
 
 		bindScale(
@@ -173,9 +179,7 @@ export class SonicSlider extends SonicValueElement {
 			},
 		});
 		this.render();
-		if (__DEV__)
-			this.checkStyles(slider, 'slider.css', { property: 'margin-bottom', selector: '[popover]' });
-		this.bindGestures(slider, signal, (event) => {
+		this.bindGestures(signal, (event) => {
 			const axis = this.#axis(slider, cap);
 			if (event.target instanceof Node && cap.contains(event.target)) return axis;
 
@@ -198,13 +202,9 @@ export class SonicSlider extends SonicValueElement {
 			origin: this.originValue(),
 			value: this.value,
 		});
-		this.#renderBuffered(this.#slider);
-		this.#renderScrub(this.#slider);
-		this.#placeReadout(this.#slider);
-	}
-
-	protected override focusTarget(): HTMLElement {
-		return this.#slider;
+		this.#renderBuffered(this.control);
+		this.#renderScrub(this.control);
+		this.#placeReadout(this.control);
 	}
 
 	protected override scrubChanged(): void {
@@ -217,10 +217,6 @@ export class SonicSlider extends SonicValueElement {
 
 	protected override springTarget(): number | undefined {
 		return this.spring ? this.originValue() : undefined;
-	}
-
-	protected override stateTarget(): HTMLElement {
-		return this.#slider;
 	}
 
 	#axis(slider: HTMLElement, cap: HTMLElement): SliderAxis {

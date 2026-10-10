@@ -1,7 +1,7 @@
+import type { BoxProbe } from '#lib/check-styles.ts';
+
 import { SonicRadioGroupElement } from '#elements/radio-group.ts';
 import { template } from '#lib/render.ts';
-
-declare const __DEV__: boolean;
 
 declare global {
 	interface HTMLElementTagNameMap {
@@ -24,17 +24,15 @@ const renderOption = template(
 );
 
 export class SonicSegmented extends SonicRadioGroupElement {
-	protected readonly group = renderSegmented();
+	protected override readonly boxProbe: BoxProbe = {
+		property: 'padding-inline-start',
+		ratio: '--_sonic-segmented-padding-ratio',
+		selector: '.sonic-segmented-cap',
+	};
 
-	protected override connect(signal: AbortSignal): void {
-		super.connect(signal);
-		if (__DEV__)
-			this.checkStyles(this.group, 'segmented.css', {
-				property: 'padding-inline-start',
-				ratio: '--_sonic-segmented-padding-ratio',
-				selector: '.sonic-segmented-cap',
-			});
-	}
+	protected override readonly control = renderSegmented();
+
+	protected override readonly sheet = 'segmented.css';
 
 	protected renderOption(): HTMLButtonElement {
 		return renderOption();

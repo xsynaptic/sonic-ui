@@ -40,7 +40,7 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 		this.render();
 	}
 
-	protected abstract readonly group: HTMLElement;
+	protected abstract override readonly control: HTMLElement;
 
 	#value = '';
 
@@ -63,7 +63,7 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 	}
 
 	protected connect(signal: AbortSignal): void {
-		const group = this.group;
+		const group = this.control;
 
 		this.upgradeProperties('value');
 		mirrorChildren(
@@ -137,13 +137,13 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 
 		const option = target.closest('[role="radio"]');
 
-		return option instanceof HTMLButtonElement && option.parentElement === this.group
+		return option instanceof HTMLButtonElement && option.parentElement === this.control
 			? option
 			: undefined;
 	}
 
 	protected options(): Array<HTMLButtonElement> {
-		return [...this.group.children].filter(
+		return [...this.control.children].filter(
 			(child): child is HTMLButtonElement =>
 				child instanceof HTMLButtonElement && child.getAttribute('role') === 'radio',
 		);
@@ -165,7 +165,7 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 	}
 
 	protected refocusAt(index: number): void {
-		if (this.group.matches(':focus-within')) this.options()[index]?.focus();
+		if (this.control.matches(':focus-within')) this.options()[index]?.focus();
 	}
 
 	protected releaseTarget(index: number): number | undefined {
@@ -188,7 +188,7 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 			writeAttribute(option, 'aria-checked', String(option === checked));
 			writeAttribute(option, 'tabindex', option === focusable ? '0' : '-1');
 		}
-		this.forwardNaming(this.group, true);
+		this.forwardNaming(this.control, true);
 		// eslint-disable-next-line unicorn/no-null -- `null` submits nothing
 		this.writeFormValue(checked ? this.#value : null, this.#value);
 	}
@@ -206,10 +206,6 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 
 		this.value = next;
 		this.dispatchEvent(new Event('change', { bubbles: true }));
-	}
-
-	protected override stateTarget(): HTMLElement {
-		return this.group;
 	}
 
 	protected stepFrom(from: number, step: number): number | undefined {
@@ -255,7 +251,7 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 	}
 
 	#copyOptions(copies: Array<Node>): void {
-		const group = this.group;
+		const group = this.control;
 		const options = this.options();
 		const focused = this.optionOf(group.querySelector(':scope > :focus'));
 		const focusedValue = focused && optionValue(focused);

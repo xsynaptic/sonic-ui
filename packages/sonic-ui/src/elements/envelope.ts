@@ -1,10 +1,10 @@
 import type { FieldGesture, FieldHold } from '#elements/field-gesture.ts';
 import type { ValueLink } from '#elements/value-element.ts';
 import type { AdsrCurves, AdsrProportions, AdsrShape } from '#lib/adsr-shape.ts';
+import type { BoxProbe } from '#lib/check-styles.ts';
 import type { FieldAxis, FieldPoint } from '#lib/field.ts';
 
 import { bindFieldGesture } from '#elements/field-gesture.ts';
-import { ReadoutClaim } from '#elements/readout-claim.ts';
 import { Readout } from '#elements/readout.ts';
 import { SonicElement } from '#elements/sonic-element.ts';
 import { linkValue, SonicValueElement } from '#elements/value-element.ts';
@@ -169,6 +169,10 @@ export class SonicEnvelope extends SonicElement {
 		this.reflect('release-curve', id);
 	}
 
+	get revealed(): boolean {
+		return this.hasState('revealed');
+	}
+
 	get sustain(): string {
 		return this.getAttribute('sustain') ?? '';
 	}
@@ -177,37 +181,40 @@ export class SonicEnvelope extends SonicElement {
 		this.reflect('sustain', id);
 	}
 
+	protected override readonly boxProbe: BoxProbe = {
+		property: 'margin-bottom',
+		selector: '[popover]',
+	};
+
+	protected override readonly control = renderEnvelope();
+
+	protected override readonly sheet = 'envelope.css';
+
 	readonly #bindings = new Map<string, Binding>();
 
-	readonly #claim = new ReadoutClaim(() => {
-		this.#renderReadout();
-	});
+	readonly #curveHandles = stageParts(this.control, 'sonic-envelope-curve', curveStages);
 
-	readonly #envelope = renderEnvelope();
+	readonly #fill = requireChild(this.control, '.sonic-envelope-fill', SVGElement);
 
-	readonly #curveHandles = stageParts(this.#envelope, 'sonic-envelope-curve', curveStages);
-
-	readonly #fill = requireChild(this.#envelope, '.sonic-envelope-fill', SVGElement);
-
-	readonly #floor = requireChild(this.#envelope, '.sonic-envelope-floor', SVGElement);
+	readonly #floor = requireChild(this.control, '.sonic-envelope-floor', SVGElement);
 
 	#gesture: FieldGesture<HandleHold> | undefined;
 
-	readonly #graph = requireChild(this.#envelope, '.sonic-envelope-graph', SVGElement);
+	readonly #graph = requireChild(this.control, '.sonic-envelope-graph', SVGElement);
 
-	readonly #handles = stageParts(this.#envelope, 'sonic-envelope-handle', timeStages);
+	readonly #handles = stageParts(this.control, 'sonic-envelope-handle', timeStages);
 
 	#held: HTMLElement | undefined;
 
 	#isDriving = false;
 
-	readonly #line = requireChild(this.#envelope, '.sonic-envelope-line', SVGElement);
+	readonly #line = requireChild(this.control, '.sonic-envelope-line', SVGElement);
 
 	readonly #readout = new Readout(
-		requireChild(this.#envelope, '.sonic-envelope-readout', HTMLDivElement),
+		requireChild(this.control, '.sonic-envelope-readout', HTMLDivElement),
 	);
 
-	readonly #reticle = requireChild(this.#envelope, '.sonic-envelope-reticle', HTMLDivElement);
+	readonly #reticle = requireChild(this.control, '.sonic-envelope-reticle', HTMLDivElement);
 
 	#shape: AdsrShape = adsrShape({});
 
@@ -232,16 +239,9 @@ export class SonicEnvelope extends SonicElement {
 	}
 
 	protected connect(signal: AbortSignal): void {
-		const envelope = this.#envelope;
-
-		this.keepControl(envelope, signal);
+		this.keepControl(signal);
 		this.#bind();
-		if (__DEV__)
-			this.checkStyles(envelope, 'envelope.css', {
-				property: 'margin-bottom',
-				selector: '[popover]',
-			});
-		this.#bindPointer(envelope, signal);
+		this.#bindPointer(this.control, signal);
 		signal.addEventListener(
 			'abort',
 			() => {
@@ -249,10 +249,6 @@ export class SonicEnvelope extends SonicElement {
 			},
 			{ once: true },
 		);
-	}
-
-	protected override stateTarget(): HTMLElement {
-		return this.#envelope;
 	}
 
 	#bind(): void {
@@ -276,7 +272,7 @@ export class SonicEnvelope extends SonicElement {
 		this.#gesture = bindFieldGesture(
 			envelope,
 			{
-				claim: this.#claim,
+				element: this,
 				grab: (event) => this.#grab(event),
 				input: ({ drives }, next) => {
 					this.#isDriving = true;
@@ -295,8 +291,11 @@ export class SonicEnvelope extends SonicElement {
 						binding.link.change();
 					}
 				},
-				toggle: (isDragging) => {
-					this.toggleState('dragging', isDragging);
+				renderReadout: () => {
+					this.#renderReadout();
+				},
+				toggle: (state, isOn) => {
+					this.toggleState(state, isOn);
 				},
 			},
 			signal,
@@ -447,7 +446,7 @@ export class SonicEnvelope extends SonicElement {
 
 		this.#readout.show({
 			anchor: drag.part,
-			isOpen: this.#claim.isRevealed && this.readout,
+			isOpen: this.#gesture?.isRevealed() === true && this.readout,
 			text: drag.drives.map(({ binding }) => binding.element.valueText).join(', '),
 		});
 	}

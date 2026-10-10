@@ -247,7 +247,7 @@ export class SonicWaveform extends SonicWaveElement<Colour, never, Numeric> {
 		this.reflect('zoom-min', value);
 	}
 
-	protected readonly control = renderWaveform();
+	protected override readonly control = renderWaveform();
 
 	protected readonly canvas = requireChild(
 		this.control,
@@ -261,7 +261,7 @@ export class SonicWaveform extends SonicWaveElement<Colour, never, Numeric> {
 
 	protected readonly numbers = waveformNumbers;
 
-	protected readonly sheet = 'waveform.css';
+	protected override readonly sheet = 'waveform.css';
 
 	protected readonly sizeProperty = '--_sonic-waveform-size';
 
@@ -369,7 +369,7 @@ export class SonicWaveform extends SonicWaveElement<Colour, never, Numeric> {
 		};
 
 		this.#zoomGesture = bindZoom(this.control, zoomTarget, signal);
-		this.bindGestures(this.control, signal, () => this.#grab());
+		this.bindGestures(signal, () => this.#grab());
 		// After the value keys, which stand down once a key is taken
 		bindZoomKeys(this.control, zoomTarget, signal);
 		if (!('fonts' in document)) return;
@@ -389,10 +389,6 @@ export class SonicWaveform extends SonicWaveElement<Colour, never, Numeric> {
 		surface?.requestFrame();
 		// No frame follows the position out of view, or before the first one paints
 		if (surface?.isVisible === false || !this.#drawn) this.showCurrentMarker(this.#sourceSeconds());
-	}
-
-	protected override focusTarget(): HTMLElement {
-		return this.control;
 	}
 
 	protected isEmpty(): boolean {

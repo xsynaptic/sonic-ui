@@ -147,7 +147,7 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 		if (this.isBound()) this.renderMarkers();
 	}
 
-	protected readonly control = renderWavestrip();
+	protected override readonly control = renderWavestrip();
 
 	protected readonly canvas = requireChild(
 		this.control,
@@ -161,7 +161,7 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 
 	protected readonly numbers = {};
 
-	protected readonly sheet = 'wavestrip.css';
+	protected override readonly sheet = 'wavestrip.css';
 
 	protected readonly sizeProperty = '--_sonic-wavestrip-size';
 
@@ -252,7 +252,7 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 				this.#markerStartAt(event, this.#axis()) ??
 				this.mapping().snap(this.valueFromPoint(event.clientX, event.clientY)),
 		});
-		this.bindGestures(control, signal, (event) => this.#grab(event));
+		this.bindGestures(signal, (event) => this.#grab(event));
 	}
 
 	protected draw(): void {

@@ -1,10 +1,10 @@
+import type { BoxProbe } from '#lib/check-styles.ts';
+
 import { SonicPositionGroupElement } from '#elements/position-group.ts';
 import { isUnder } from '#elements/radio-group.ts';
 import { bindDrag, capturePointer } from '#lib/pointer-drag.ts';
 import { soleStep } from '#lib/positions.ts';
 import { requireChild, template } from '#lib/render.ts';
-
-declare const __DEV__: boolean;
 
 declare global {
 	interface HTMLElementTagNameMap {
@@ -47,11 +47,18 @@ const pressCenterZone = 0.08;
 export class SonicSwitch extends SonicPositionGroupElement {
 	protected readonly bare = renderBare();
 
+	protected override readonly boxProbe: BoxProbe = {
+		property: 'padding-top',
+		selector: '.sonic-switch-label',
+	};
+
+	protected override readonly control = renderSwitch();
+
 	protected readonly defaultOrientation = 'vertical';
 
-	protected readonly group = renderSwitch();
+	protected override readonly sheet = 'switch.css';
 
-	readonly #bat = requireChild(this.group, '.sonic-switch-bat', HTMLSpanElement);
+	readonly #bat = requireChild(this.control, '.sonic-switch-bat', HTMLSpanElement);
 
 	#isClickSwallowed = false;
 
@@ -61,21 +68,16 @@ export class SonicSwitch extends SonicPositionGroupElement {
 		const target = this.pressTarget(index);
 		if (this.isOptionDisabled(target) || !this.isMomentary(target)) return false;
 
-		capturePointer(this.group, event.pointerId);
+		capturePointer(this.control, event.pointerId);
 		this.hold(target, event.pointerId);
 
 		return true;
 	}
 
 	protected override connect(signal: AbortSignal): void {
-		const group = this.group;
+		const group = this.control;
 
 		super.connect(signal);
-		if (__DEV__)
-			this.checkStyles(group, 'switch.css', {
-				property: 'padding-top',
-				selector: '.sonic-switch-label',
-			});
 
 		this.bare.addEventListener(
 			'click',
@@ -132,7 +134,7 @@ export class SonicSwitch extends SonicPositionGroupElement {
 				lift: (press, event) => {
 					this.#isClickSwallowed = true;
 					if (press.hasMoved || this.isDisabled()) return;
-					if (!isUnder(this.group, event.clientX, event.clientY)) return;
+					if (!isUnder(this.control, event.clientX, event.clientY)) return;
 
 					this.#pressBat(event);
 				},
@@ -176,7 +178,7 @@ export class SonicSwitch extends SonicPositionGroupElement {
 		const count = this.positions().length;
 		const at = index < 0 || count < 2 ? 0 : (2 * index) / (count - 1) - 1;
 
-		this.group.style.setProperty('--_sonic-switch-at', String(at));
+		this.control.style.setProperty('--_sonic-switch-at', String(at));
 	}
 
 	#sideStep(from: number, event: PointerEvent): number | undefined {

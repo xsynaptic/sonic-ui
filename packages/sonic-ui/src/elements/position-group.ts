@@ -113,7 +113,7 @@ export abstract class SonicPositionGroupElement extends SonicRadioGroupElement {
 		this.upgradeProperties('defaultChecked', 'checked', 'orientation');
 		super.connect(signal);
 		this.#holding = bindHold(
-			this.group,
+			this.control,
 			{
 				canHold: () => !this.isDisabled(),
 				leave: 'focusout',
@@ -180,7 +180,7 @@ export abstract class SonicPositionGroupElement extends SonicRadioGroupElement {
 	protected override render(): void {
 		if (!this.isBound()) return;
 
-		const group = this.group;
+		const group = this.control;
 		const count = this.options().length;
 
 		if (count === 0) {
@@ -215,14 +215,14 @@ export abstract class SonicPositionGroupElement extends SonicRadioGroupElement {
 		const rest = restOf(this.positions(), this.checkedIndex());
 		if (rest === undefined) return;
 
-		const isFocused = this.group.contains(this.ownerDocument.activeElement);
+		const isFocused = this.control.contains(this.ownerDocument.activeElement);
 
 		this.select(rest);
 		if (isFocused) this.options()[rest]?.focus();
 	}
 
 	#renderBare(): void {
-		const group = this.group;
+		const group = this.control;
 		const bare = this.bare;
 		const isChecked = this.checked;
 

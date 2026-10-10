@@ -1,3 +1,4 @@
+import type { BoxProbe } from '#lib/check-styles.ts';
 import type { ToggleTravel } from '#lib/toggle-travel.ts';
 
 import { SonicPositionGroupElement } from '#elements/position-group.ts';
@@ -57,17 +58,25 @@ interface CapDrag {
 export class SonicToggle extends SonicPositionGroupElement {
 	protected readonly bare = renderBare();
 
+	protected override readonly boxProbe: BoxProbe = {
+		property: 'margin-top',
+		ratio: '--_sonic-toggle-gap-ratio',
+		selector: '.sonic-toggle-cap',
+	};
+
+	protected override readonly control = renderToggle();
+
 	protected readonly defaultOrientation = 'horizontal';
 
-	protected readonly group = renderToggle();
+	protected override readonly sheet = 'toggle.css';
 
-	readonly #cap = requireChild(this.group, '.sonic-toggle-cap', HTMLSpanElement);
+	readonly #cap = requireChild(this.control, '.sonic-toggle-cap', HTMLSpanElement);
 
 	#draggedTo: number | undefined;
 
 	#hasWarnedOfLegends = false;
 
-	readonly #well = requireChild(this.group, '.sonic-toggle-well', HTMLSpanElement);
+	readonly #well = requireChild(this.control, '.sonic-toggle-well', HTMLSpanElement);
 
 	// Every press is the toggle's own, so the base's slide-off never starts
 	protected override claimPress(): boolean {
@@ -76,12 +85,6 @@ export class SonicToggle extends SonicPositionGroupElement {
 
 	protected override connect(signal: AbortSignal): void {
 		super.connect(signal);
-		if (__DEV__)
-			this.checkStyles(this.group, 'toggle.css', {
-				property: 'margin-top',
-				ratio: '--_sonic-toggle-gap-ratio',
-				selector: '.sonic-toggle-cap',
-			});
 		this.bare.addEventListener(
 			'click',
 			(event) => {
@@ -113,7 +116,7 @@ export class SonicToggle extends SonicPositionGroupElement {
 		if (!this.isBound()) return;
 
 		if (__DEV__) this.#checkLegends();
-		this.group.style.setProperty('--_sonic-toggle-count', String(this.positions().length));
+		this.control.style.setProperty('--_sonic-toggle-count', String(this.positions().length));
 		this.#placeCap(this.#draggedTo ?? this.#restingAt());
 		super.render();
 		for (const [index, option] of this.options().entries()) {
@@ -127,12 +130,12 @@ export class SonicToggle extends SonicPositionGroupElement {
 
 	#bindCap(signal: AbortSignal): void {
 		bindDrag<CapDrag>(
-			this.group,
+			this.control,
 			{
 				grab: (event) => this.#grab(event),
 				lift: (drag, event) => {
 					if (!drag.isPress || drag.isHolding || this.isDisabled()) return;
-					if (!isUnder(this.group, event.clientX, event.clientY)) return;
+					if (!isUnder(this.control, event.clientX, event.clientY)) return;
 
 					this.#press(drag.position);
 				},
@@ -173,7 +176,7 @@ export class SonicToggle extends SonicPositionGroupElement {
 	}
 
 	#fixedLegend(): Element | undefined {
-		return [...this.children].find((child) => child !== this.group && !super.isMirrored(child));
+		return [...this.children].find((child) => child !== this.control && !super.isMirrored(child));
 	}
 
 	#grab(event: PointerEvent): CapDrag | undefined {
@@ -210,7 +213,7 @@ export class SonicToggle extends SonicPositionGroupElement {
 	}
 
 	#placeCap(at: number): void {
-		this.group.style.setProperty('--_sonic-toggle-at', String(at));
+		this.control.style.setProperty('--_sonic-toggle-at', String(at));
 	}
 
 	#press(position: number): void {

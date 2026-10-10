@@ -309,6 +309,8 @@ export abstract class SonicValueElement extends SonicFormElement {
 		return this.#textFor(this.#model.value);
 	}
 
+	protected abstract override readonly control: HTMLElement;
+
 	// `Number.parseFloat`, as `Number('')` is 0; an emptied field should leave the value alone
 	protected readonly notation: ValueNotation = { format: String, parse: Number.parseFloat };
 
@@ -381,10 +383,10 @@ export abstract class SonicValueElement extends SonicFormElement {
 	}
 
 	protected bindGestures(
-		control: HTMLElement,
 		signal: AbortSignal,
 		grab: (event: PointerEvent) => undefined | ValueAxis,
 	): void {
+		const control = this.control;
 		const bubble = control.querySelector<HTMLElement>('[popover]');
 
 		if (bubble) this.#readout = { anchor: control, bubble: new Readout(bubble) };
@@ -472,7 +474,9 @@ export abstract class SonicValueElement extends SonicFormElement {
 
 	protected abstract draw(): void;
 
-	protected abstract override focusTarget(): HTMLElement;
+	protected override focusTarget(): HTMLElement {
+		return this.control;
+	}
 
 	protected input(next: number): boolean {
 		const previous = this.#model.value;
@@ -554,8 +558,13 @@ export abstract class SonicValueElement extends SonicFormElement {
 		return undefined;
 	}
 
-	protected travelPx(control: HTMLElement, property: `--_sonic-${string}`): number {
-		return Math.max(1, readPxProperty(getComputedStyle(control), property, fallbackTravelPx));
+	protected upwardAxis(travelProperty: `--_sonic-${string}`): ValueAxis {
+		const styles = getComputedStyle(this.control);
+
+		return {
+			position: (event) => -event.clientY,
+			travelPx: Math.max(1, readPxProperty(styles, travelProperty, fallbackTravelPx)),
+		};
 	}
 
 	#entryText(): string {

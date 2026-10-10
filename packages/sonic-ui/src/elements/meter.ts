@@ -7,8 +7,6 @@ import { parseNumberList } from '#lib/number-list.ts';
 import { template } from '#lib/render.ts';
 import { linearTaper } from '#lib/taper.ts';
 
-declare const __DEV__: boolean;
-
 declare global {
 	interface HTMLElementTagNameMap {
 		'sonic-meter': SonicMeter;
@@ -152,6 +150,10 @@ export class SonicMeter extends SonicElement {
 		this.reflect('value', value);
 	}
 
+	protected override readonly control = renderMeter();
+
+	protected override readonly sheet = 'meter.css';
+
 	#bar = -Infinity;
 
 	#carryMs = 0;
@@ -165,8 +167,6 @@ export class SonicMeter extends SonicElement {
 	#lastFrame: number | undefined;
 
 	#level = 0;
-
-	readonly #meter = renderMeter();
 
 	#peak = -Infinity;
 
@@ -208,7 +208,7 @@ export class SonicMeter extends SonicElement {
 			'value',
 			'level',
 		);
-		this.keepControl(this.#meter, signal);
+		this.keepControl(signal);
 		this.#renderSegments();
 		this.#render(now);
 		this.#schedule(now);
@@ -221,11 +221,6 @@ export class SonicMeter extends SonicElement {
 			},
 			{ once: true },
 		);
-		if (__DEV__) this.checkStyles(this.#meter, 'meter.css');
-	}
-
-	protected override stateTarget(): HTMLElement {
-		return this.#meter;
 	}
 
 	#isSettled(now: number): boolean {
@@ -266,7 +261,7 @@ export class SonicMeter extends SonicElement {
 	#render(now: number): void {
 		if (!this.isBound()) return;
 
-		const meter = this.#meter;
+		const meter = this.control;
 
 		const origin = this.origin === undefined ? 0 : this.#proportionOf(this.origin);
 
@@ -296,7 +291,7 @@ export class SonicMeter extends SonicElement {
 	#renderSegments(): void {
 		if (!this.isBound()) return;
 
-		const meter = this.#meter;
+		const meter = this.control;
 		const segments = this.#segments;
 
 		this.toggleState('ladder', segments !== undefined);
@@ -313,7 +308,7 @@ export class SonicMeter extends SonicElement {
 	}
 
 	#renderStill(bar: number): void {
-		const { style } = this.#meter;
+		const { style } = this.control;
 
 		style.setProperty('--_sonic-meter-bar', String(bar));
 		style.setProperty('--_sonic-meter-peak-hold', '0');

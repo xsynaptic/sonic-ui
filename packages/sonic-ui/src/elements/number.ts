@@ -1,8 +1,6 @@
 import { SonicValueElement } from '#elements/value-element.ts';
 import { requireChild, template } from '#lib/render.ts';
 
-declare const __DEV__: boolean;
-
 declare global {
 	interface HTMLElementTagNameMap {
 		'sonic-number': SonicNumber;
@@ -35,9 +33,11 @@ export class SonicNumber extends SonicValueElement {
 		this.reflect('press', gesture);
 	}
 
-	readonly #number = renderNumber();
+	protected override readonly control = renderNumber();
 
-	readonly #digits = requireChild(this.#number, '.sonic-number-value', HTMLSpanElement);
+	protected override readonly sheet = 'number.css';
+
+	readonly #digits = requireChild(this.control, '.sonic-number-value', HTMLSpanElement);
 
 	override connectedCallback(): void {
 		this.upgradeProperties('press');
@@ -45,15 +45,9 @@ export class SonicNumber extends SonicValueElement {
 	}
 
 	protected connect(signal: AbortSignal): void {
-		const number = this.#number;
-
-		this.keepControl(number, signal);
+		this.keepControl(signal);
 		this.render();
-		if (__DEV__) this.checkStyles(number, 'number.css');
-		this.bindGestures(number, signal, () => ({
-			position: (event) => -event.clientY,
-			travelPx: this.travelPx(number, '--_sonic-number-travel'),
-		}));
+		this.bindGestures(signal, () => this.upwardAxis('--_sonic-number-travel'));
 	}
 
 	protected override controlRole(): 'spinbutton' {
@@ -62,14 +56,6 @@ export class SonicNumber extends SonicValueElement {
 
 	protected draw(): void {
 		this.#digits.textContent = this.valueText;
-	}
-
-	protected override focusTarget(): HTMLElement {
-		return this.#number;
-	}
-
-	protected override stateTarget(): HTMLElement {
-		return this.#number;
 	}
 
 	protected override tapTarget(): number | undefined {

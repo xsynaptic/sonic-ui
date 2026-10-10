@@ -1,3 +1,4 @@
+import type { BoxProbe } from '#lib/check-styles.ts';
 import type { Hold } from '#lib/hold.ts';
 
 import { SonicFormElement } from '#elements/form-element.ts';
@@ -8,8 +9,6 @@ import { mirrorChildren } from '#lib/mirror-children.ts';
 import { capturePointer } from '#lib/pointer-drag.ts';
 import { placeChildren, requireChild, template } from '#lib/render.ts';
 import { writeAttribute } from '#lib/write-attribute.ts';
-
-declare const __DEV__: boolean;
 
 declare global {
 	interface HTMLElementTagNameMap {
@@ -123,7 +122,15 @@ export class SonicButton extends SonicFormElement {
 		this.reflect('value', value);
 	}
 
-	readonly #button = renderButton();
+	protected override readonly boxProbe: BoxProbe = {
+		property: 'padding-inline-start',
+		ratio: '--_sonic-button-padding-ratio',
+		selector: '.sonic-button-cap > :not(svg, .sonic-led)',
+	};
+
+	protected override readonly control = renderButton();
+
+	protected override readonly sheet = 'button.css';
 
 	#holding: Hold | undefined;
 
@@ -142,11 +149,11 @@ export class SonicButton extends SonicFormElement {
 	}
 
 	protected override activate(): void {
-		this.#button.click();
+		this.control.click();
 	}
 
 	protected connect(signal: AbortSignal): void {
-		const button = this.#button;
+		const button = this.control;
 		const cap = requireChild(button, '.sonic-button-cap', HTMLSpanElement);
 
 		this.upgradeProperties(
@@ -173,12 +180,6 @@ export class SonicButton extends SonicFormElement {
 			signal,
 		);
 		this.render();
-		if (__DEV__)
-			this.checkStyles(button, 'button.css', {
-				property: 'padding-inline-start',
-				ratio: '--_sonic-button-padding-ratio',
-				selector: '.sonic-button-cap > :not(svg, .sonic-led)',
-			});
 
 		button.addEventListener(
 			'click',
@@ -201,13 +202,13 @@ export class SonicButton extends SonicFormElement {
 	}
 
 	protected override focusTarget(): HTMLElement {
-		return this.#button;
+		return this.control;
 	}
 
 	protected render(): void {
 		if (!this.isBound()) return;
 
-		const button = this.#button;
+		const button = this.control;
 
 		writeAttribute(button, 'disabled', this.isDisabled() ? '' : undefined);
 		writeAttribute(button, 'aria-disabled', this.#isSoftDisabled() ? 'true' : undefined);
@@ -226,10 +227,6 @@ export class SonicButton extends SonicFormElement {
 
 	protected restoreState(state: string): void {
 		if (this.latching) this.pressed = state === 'true';
-	}
-
-	protected override stateTarget(): HTMLElement {
-		return this.#button;
 	}
 
 	#bindMomentary(button: HTMLButtonElement, signal: AbortSignal): void {
@@ -293,7 +290,7 @@ export class SonicButton extends SonicFormElement {
 	#showLegend(): void {
 		const legend = this.legend;
 
-		for (const part of this.#button.querySelectorAll<HTMLElement | SVGElement>(
+		for (const part of this.control.querySelectorAll<HTMLElement | SVGElement>(
 			':scope > .sonic-button-cap > [data-sonic-when]',
 		)) {
 			const when = part.dataset.sonicWhen ?? '';

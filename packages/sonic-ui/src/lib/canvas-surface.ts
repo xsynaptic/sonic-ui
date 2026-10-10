@@ -51,6 +51,16 @@ interface SurfaceOptions<Colour extends string, Length extends string, Numeric e
 	signal: AbortSignal;
 }
 
+interface ControlSurfaceOptions<
+	Colour extends string,
+	Length extends string,
+	Numeric extends string,
+> extends Omit<SurfaceOptions<Colour, Length, Numeric>, 'fill'> {
+	control: HTMLElement;
+	fill: boolean;
+	sizeProperty: PrivateProperty;
+}
+
 function deviceRatio(): number {
 	return globalThis.devicePixelRatio || 1;
 }
@@ -408,4 +418,17 @@ export function bindSurface<
 	Numeric extends string = never,
 >(options: SurfaceOptions<Colour, Length, Numeric>): Surface {
 	return new CanvasSurface(options);
+}
+
+export function bindControlSurface<
+	Colour extends string,
+	Length extends string = never,
+	Numeric extends string = never,
+>(options: ControlSurfaceOptions<Colour, Length, Numeric>): Surface {
+	const { control, fill, sizeProperty, ...surfaceOptions } = options;
+	const surface = bindSurface({ ...surfaceOptions, fill: { control, sizeProperty } });
+
+	surface.setFill(fill);
+
+	return surface;
 }

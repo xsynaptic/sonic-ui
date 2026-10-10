@@ -344,3 +344,48 @@ test('the readout is anchored to the held part alone', () => {
 	expect(anchors()).toEqual([bubble.style.getPropertyValue('position-anchor'), '']);
 	expect(bubble.style.getPropertyValue('position-anchor')).toMatch(/^--sonic-readout-\d+$/);
 });
+
+function mountRevealing(): { reveals: Array<string>; rig: Rig } {
+	const rig = mount(
+		`<section><div id="dials">${dialMarkup}</div><sonic-envelope ${bound}></sonic-envelope></section>`,
+	);
+	const control = requireChild(rig.envelope, '.sonic-envelope', HTMLDivElement);
+	const reveals: Array<string> = [];
+
+	requireChild(document.body, 'section', HTMLElement).addEventListener('sonic-reveal', (event) => {
+		const from = event.target instanceof Element ? event.target.localName : '';
+
+		reveals.push(`${from} ${String(control.matches('[data-sonic-revealed]'))}`);
+	});
+
+	return { reveals, rig };
+}
+
+test('a handle drag marks the envelope revealed and reports it once as it engages, and once more when let go', () => {
+	const { reveals, rig } = mountRevealing();
+	const handle = rig.handle('decay');
+
+	pointerAt(handle, 'pointerdown', { clientX: 100, clientY: 100 });
+	expect(reveals).toEqual([]);
+
+	pointerAt(handle, 'pointermove', { clientX: 125, clientY: 80 });
+	pointerAt(handle, 'pointermove', { clientX: 130, clientY: 80 });
+	expect(reveals).toEqual(['sonic-envelope true']);
+	expect(rig.envelope.revealed).toBe(true);
+
+	pointerAt(handle, 'pointerup', { clientX: 130, clientY: 80 });
+	expect(reveals).toEqual(['sonic-envelope true', 'sonic-envelope false']);
+});
+
+test('a press let go before the reveal delay reports no reveal', () => {
+	const { reveals, rig } = mountRevealing();
+	const handle = rig.handle('attack');
+
+	vi.useFakeTimers();
+	pointerAt(handle, 'pointerdown', { clientX: 100, clientY: 100 });
+	vi.advanceTimersByTime(100);
+	pointerAt(handle, 'pointerup', { clientX: 100, clientY: 100 });
+	vi.advanceTimersByTime(1000);
+
+	expect(reveals).toEqual([]);
+});

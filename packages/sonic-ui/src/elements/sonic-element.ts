@@ -1,3 +1,6 @@
+import type { BoxProbe } from '#lib/check-styles.ts';
+
+import { checkStyles } from '#lib/check-styles.ts';
 import { toNumber } from '#lib/math.ts';
 import { appendOnce, checkChildren } from '#lib/owned-control.ts';
 import { writeAttribute } from '#lib/write-attribute.ts';
@@ -6,57 +9,7 @@ declare const __DEV__: boolean;
 
 const namingAttributes = ['aria-describedby', 'aria-label', 'aria-labelledby'];
 
-const checkedSheets = new WeakMap<object, Set<string>>();
-
 const canReferElements = 'ariaLabelledByElements' in Element.prototype;
-
-interface StyleProbe {
-	selector?: string;
-	sheet: string;
-	token: string;
-}
-
-// A padding or margin the sheets leave at zero only where `ratio` is zero
-interface BoxProbe {
-	property: string;
-	ratio?: `--_sonic-${string}`;
-	selector?: string;
-}
-
-function isLost(drawn: Element, { token }: StyleProbe): boolean {
-	return getComputedStyle(drawn).getPropertyValue(token) === '';
-}
-
-const hostBoxProperties = [
-	'margin-top',
-	'margin-right',
-	'margin-bottom',
-	'margin-left',
-	'padding-top',
-	'padding-right',
-	'padding-bottom',
-	'padding-left',
-	'width',
-	'height',
-];
-
-// An environment with no computed styles answers '', which is no box property
-function readHostBox(host: Element): string | undefined {
-	const style = getComputedStyle(host);
-	if (style.display === 'none') return undefined;
-	if (style.display !== 'contents') return 'display';
-
-	return hostBoxProperties.find(
-		(property) => !['', '0px', 'auto'].includes(style.getPropertyValue(property)),
-	);
-}
-
-function isZeroed(control: Element, { property, ratio, selector }: BoxProbe): boolean {
-	const part = selector === undefined ? control : control.querySelector(selector);
-	if (!part || getComputedStyle(part).getPropertyValue(property) !== '0px') return false;
-
-	return ratio === undefined || Number(getComputedStyle(control).getPropertyValue(ratio)) !== 0;
-}
 
 function writeLabelledBy(target: Element, labels: Array<Element>): void {
 	const current = target.ariaLabelledByElements;
@@ -84,9 +37,15 @@ export abstract class SonicElement extends HTMLElement {
 		this.reflect('disabled', isDisabled);
 	}
 
+	declare protected readonly boxProbe: BoxProbe | undefined;
+
+	declare protected readonly control: HTMLElement | undefined;
+
 	// happy-dom has no `ElementInternals`
 	protected readonly internals =
 		'attachInternals' in HTMLElement.prototype ? this.attachInternals() : undefined;
+
+	declare protected readonly sheet: string | undefined;
 
 	#connection: AbortController | undefined;
 
@@ -119,6 +78,10 @@ export abstract class SonicElement extends HTMLElement {
 			this.#connection = undefined;
 			throw error;
 		}
+
+		const { boxProbe: box, control, sheet } = this;
+
+		if (__DEV__ && control && sheet !== undefined) checkStyles(this, { box, control, sheet });
 	}
 
 	connectedMoveCallback(): void {
@@ -146,46 +109,6 @@ export abstract class SonicElement extends HTMLElement {
 		}
 
 		if (!this.isDisabled() && !this.#focused()) target.focus(options);
-	}
-
-	protected checkStyles(control: HTMLElement, sheet: string, box?: BoxProbe): void {
-		if (!__DEV__) return;
-
-		const elementClass = this.constructor;
-		const checked = checkedSheets.get(elementClass) ?? new Set<string>();
-		const part = ({ selector }: StyleProbe): Element | undefined =>
-			selector === undefined ? control : (this.querySelector(selector) ?? undefined);
-		// An LED inherits `--_sonic-unit` from its control, so a token of its own probes it
-		const probes: Array<StyleProbe> = [
-			{ sheet: 'material/core.css', token: '--_sonic-unlit' },
-			{ sheet, token: '--_sonic-unit' },
-			{ selector: '.sonic-led', sheet: 'led.css', token: '--_sonic-led-lens-ratio' },
-		].filter((probe) => !checked.has(probe.sheet) && part(probe) !== undefined);
-		const isResetChecked = !box || checked.has('reset');
-		const isBoxChecked = isResetChecked && checked.has('host');
-		if (isBoxChecked && probes.length === 0) return;
-
-		checkedSheets.set(elementClass, checked);
-		for (const probe of probes) checked.add(probe.sheet);
-		requestAnimationFrame(() => {
-			const missing: Array<string> = [];
-
-			for (const probe of probes) {
-				const drawn = control.isConnected ? part(probe) : undefined;
-
-				if (!drawn) checked.delete(probe.sheet);
-				else if (isLost(drawn, probe)) missing.push(`@xsynaptic/sonic-ui/${probe.sheet}`);
-			}
-			if (missing.length === 0) {
-				this.#checkBox(control, checked, box);
-				return;
-			}
-
-			checked.add('host').add('reset');
-			console.warn(
-				`<${this.localName}> draws blank without ${missing.join(' and ')} (or controls.css)`,
-			);
-		});
 	}
 
 	protected abstract connect(signal: AbortSignal): void;
@@ -222,7 +145,10 @@ export abstract class SonicElement extends HTMLElement {
 	}
 
 	// A morph against server HTML, or a stray `innerHTML`, deletes the control
-	protected keepControl(control: Element, signal: AbortSignal): void {
+	protected keepControl(signal: AbortSignal): void {
+		const control = this.control;
+		if (!control) return;
+
 		const keep = (): void => {
 			appendOnce(this, control);
 			if (__DEV__)
@@ -271,7 +197,7 @@ export abstract class SonicElement extends HTMLElement {
 	}
 
 	protected stateTarget(): Element | undefined {
-		return undefined;
+		return this.control;
 	}
 
 	protected toggleState(state: string, isOn: boolean): void {
@@ -294,33 +220,6 @@ export abstract class SonicElement extends HTMLElement {
 
 	protected usesChild(_child: Node): boolean {
 		return false;
-	}
-
-	// Once a class; a sheet that is missing has already said why the control looks wrong
-	#checkBox(control: HTMLElement, checked: Set<string>, box: BoxProbe | undefined): void {
-		if (!__DEV__ || !control.isConnected) return;
-
-		if (!checked.has('host')) this.#checkHost(checked);
-		if (!box || checked.has('reset') || !isZeroed(control, box)) return;
-
-		checked.add('reset');
-		console.warn(
-			`<${this.localName}> has lost its ${box.property} to a rule outside a layer, which beats every sonic rule; import that stylesheet into a layer declared before sonic`,
-		);
-	}
-
-	#checkHost(checked: Set<string>): void {
-		if (!__DEV__) return;
-
-		const hostBox = readHostBox(this);
-		if (hostBox === undefined) return;
-
-		checked.add('host');
-		console.warn(
-			hostBox === 'display'
-				? `<${this.localName}> is given a display, but it has to stay display: contents; lay it out through a parent or a wrapper`
-				: `<${this.localName}> is display: contents and has no box, so its ${hostBox} does nothing; set it on a parent or a wrapper`,
-		);
 	}
 
 	#focused(): HTMLElement | undefined {

@@ -2,11 +2,9 @@ import type { Surface, SurfaceFrame } from '#lib/canvas-surface.ts';
 import type { Decibels } from '#lib/units.ts';
 
 import { SonicElement } from '#elements/sonic-element.ts';
-import { bindSurface } from '#lib/canvas-surface.ts';
+import { bindControlSurface } from '#lib/canvas-surface.ts';
 
-declare const __DEV__: boolean;
-
-export abstract class SonicDisplayElement<
+export abstract class SonicAnalyserElement<
 	Colour extends string,
 	Numeric extends string = never,
 > extends SonicElement {
@@ -56,11 +54,11 @@ export abstract class SonicDisplayElement<
 
 	protected abstract readonly colours: Record<Colour, `--_sonic-${string}`>;
 
-	protected abstract readonly control: HTMLElement;
+	protected abstract override readonly control: HTMLElement;
 
 	protected abstract readonly numbers: Record<Numeric, `--_sonic-${string}`>;
 
-	protected abstract readonly sheet: string;
+	protected abstract override readonly sheet: string;
 
 	protected abstract readonly sizeProperty: `--_sonic-${string}`;
 
@@ -86,7 +84,6 @@ export abstract class SonicDisplayElement<
 		this.#surface?.requestFrame();
 	}
 
-	// fallow-ignore-next-line code-duplication -- the wave controls keep their own copy of the surface binding
 	repaint(): void {
 		this.#surface?.rebuild();
 	}
@@ -94,19 +91,19 @@ export abstract class SonicDisplayElement<
 	protected connect(signal: AbortSignal): void {
 		const control = this.control;
 
-		this.keepControl(control, signal);
-		this.#surface = bindSurface({
+		this.keepControl(signal);
+		this.#surface = bindControlSurface({
 			canvas: this.canvas,
 			colours: this.colours,
-			fill: { control, sizeProperty: this.sizeProperty },
+			control,
+			fill: this.fill,
 			numbers: this.numbers,
 			paint: (context, frame) => {
 				this.#paint(context, frame);
 			},
 			signal,
+			sizeProperty: this.sizeProperty,
 		});
-		if (__DEV__) this.checkStyles(control, this.sheet);
-		this.#surface.setFill(this.fill);
 	}
 
 	protected abstract paint(

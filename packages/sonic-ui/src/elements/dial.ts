@@ -1,9 +1,9 @@
+import type { BoxProbe } from '#lib/check-styles.ts';
+
 import { createModulation } from '#elements/modulation.ts';
 import { bindScale } from '#elements/scale.ts';
 import { SonicValueElement } from '#elements/value-element.ts';
 import { requireChild, template } from '#lib/render.ts';
-
-declare const __DEV__: boolean;
 
 declare global {
 	interface HTMLElementTagNameMap {
@@ -71,9 +71,16 @@ export class SonicDial extends SonicValueElement {
 		this.#modulation.write(value, this.isBound() ? this.mapping() : undefined);
 	}
 
-	readonly #dial = renderDial();
+	protected override readonly boxProbe: BoxProbe = {
+		property: 'margin-bottom',
+		selector: '[popover]',
+	};
 
-	readonly #modulation = createModulation(this.#dial, 'dial', (isModulated) => {
+	protected override readonly control = renderDial();
+
+	protected override readonly sheet = 'dial.css';
+
+	readonly #modulation = createModulation(this.control, 'dial', (isModulated) => {
 		this.toggleState('modulated', isModulated);
 	});
 
@@ -83,7 +90,7 @@ export class SonicDial extends SonicValueElement {
 	}
 
 	protected connect(signal: AbortSignal): void {
-		const dial = this.#dial;
+		const dial = this.control;
 
 		bindScale(
 			this,
@@ -91,12 +98,7 @@ export class SonicDial extends SonicValueElement {
 			signal,
 		);
 		this.render();
-		if (__DEV__)
-			this.checkStyles(dial, 'dial.css', { property: 'margin-bottom', selector: '[popover]' });
-		this.bindGestures(dial, signal, () => ({
-			position: (event) => -event.clientY,
-			travelPx: this.travelPx(dial, '--_sonic-dial-travel'),
-		}));
+		this.bindGestures(signal, () => this.upwardAxis('--_sonic-dial-travel'));
 	}
 
 	protected draw(): void {
@@ -108,15 +110,7 @@ export class SonicDial extends SonicValueElement {
 		});
 	}
 
-	protected override focusTarget(): HTMLElement {
-		return this.#dial;
-	}
-
 	protected override isWrapping(): boolean {
 		return this.endless;
-	}
-
-	protected override stateTarget(): HTMLElement {
-		return this.#dial;
 	}
 }

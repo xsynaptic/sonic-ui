@@ -1,23 +1,19 @@
 import type { FieldGesture, FieldHold, FieldInput } from '#elements/field-gesture.ts';
+import type { BoxProbe } from '#lib/check-styles.ts';
 import type { FieldAxis } from '#lib/field.ts';
 import type { ValueSpec } from '#lib/value-mapping.ts';
 import type { ValueModel } from '#lib/value-model.ts';
 
 import { bindFieldGesture } from '#elements/field-gesture.ts';
 import { SonicFormElement } from '#elements/form-element.ts';
-import { ReadoutClaim } from '#elements/readout-claim.ts';
 import { Readout } from '#elements/readout.ts';
-import { createDoublePress } from '#lib/double-press.ts';
 import { pointerPosition } from '#lib/field.ts';
 import { focusByPointer } from '#lib/focus-by-pointer.ts';
 import { clampProportion, toNumber } from '#lib/math.ts';
-import { isMenuPress, isResetPress } from '#lib/modifier-press.ts';
 import { requireChild, template } from '#lib/render.ts';
 import { resetKeys } from '#lib/value-mapping.ts';
 import { createValueModel } from '#lib/value-model.ts';
 import { writeAttribute } from '#lib/write-attribute.ts';
-
-declare const __DEV__: boolean;
 
 declare global {
 	interface HTMLElementTagNameMap {
@@ -266,23 +262,22 @@ export class SonicXy extends SonicFormElement {
 		this.reflect('y-taper', curve);
 	}
 
-	readonly #claim = new ReadoutClaim(() => {
-		this.#renderReadout();
-	});
+	protected override readonly boxProbe: BoxProbe = {
+		property: 'margin-bottom',
+		selector: '[popover]',
+	};
+
+	protected override readonly control = renderXy();
+
+	protected override readonly sheet = 'xy.css';
 
 	#currentAxis: FieldAxis = 'x';
 
-	readonly #doublePress = createDoublePress();
-
-	readonly #xy = renderXy();
-
-	readonly #field = requireChild(this.#xy, '.sonic-xy-field', HTMLDivElement);
+	readonly #field = requireChild(this.control, '.sonic-xy-field', HTMLDivElement);
 
 	#formatValue: ((value: number, axis: FieldAxis) => string) | undefined;
 
 	#gesture: FieldGesture<FieldHold> | undefined;
-
-	#isRevealed = false;
 
 	readonly #models: Record<FieldAxis, ValueModel> = {
 		x: createValueModel(() => this.#spec('x')),
@@ -290,13 +285,13 @@ export class SonicXy extends SonicFormElement {
 	};
 
 	readonly #parts: Record<FieldAxis, HTMLDivElement> = {
-		x: requireChild(this.#xy, '[data-sonic-axis="x"]', HTMLDivElement),
-		y: requireChild(this.#xy, '[data-sonic-axis="y"]', HTMLDivElement),
+		x: requireChild(this.control, '[data-sonic-axis="x"]', HTMLDivElement),
+		y: requireChild(this.control, '[data-sonic-axis="y"]', HTMLDivElement),
 	};
 
-	readonly #puck = requireChild(this.#xy, '.sonic-xy-puck', HTMLDivElement);
+	readonly #puck = requireChild(this.control, '.sonic-xy-puck', HTMLDivElement);
 
-	readonly #readout = new Readout(requireChild(this.#xy, '.sonic-xy-readout', HTMLDivElement));
+	readonly #readout = new Readout(requireChild(this.control, '.sonic-xy-readout', HTMLDivElement));
 
 	attributeChangedCallback(name: string): void {
 		if ((name === 'x' || name === 'y') && this.#gesture?.current()) return;
@@ -339,12 +334,10 @@ export class SonicXy extends SonicFormElement {
 	}
 
 	protected connect(signal: AbortSignal): void {
-		const xy = this.#xy;
+		const xy = this.control;
 
-		this.keepControl(xy, signal);
+		this.keepControl(signal);
 		this.render();
-		if (__DEV__)
-			this.checkStyles(xy, 'xy.css', { property: 'margin-bottom', selector: '[popover]' });
 		this.#bindPointer(xy, signal);
 		this.#bindKeys(xy, signal);
 	}
@@ -356,7 +349,7 @@ export class SonicXy extends SonicFormElement {
 	protected render(): void {
 		if (!this.isBound()) return;
 
-		const { style } = this.#xy;
+		const { style } = this.control;
 
 		for (const axis of axes) {
 			const model = this.#models[axis];
@@ -378,10 +371,6 @@ export class SonicXy extends SonicFormElement {
 		this.y = y;
 	}
 
-	protected override stateTarget(): HTMLElement {
-		return this.#xy;
-	}
-
 	#axisText(axis: FieldAxis): string {
 		const { value } = this.#models[axis];
 		const label = this.getAttribute(`${axis}-label`) ?? axis.toUpperCase();
@@ -399,8 +388,7 @@ export class SonicXy extends SonicFormElement {
 				if (!move && !(resetKeys.has(event.key) && this.#hasDefault())) return;
 
 				event.preventDefault();
-				this.#claim.reveal('keys');
-				this.#renderReadout();
+				this.#gesture?.revealKeys();
 				if (move) this.#keyTo(...move);
 				else this.#reset();
 			},
@@ -411,14 +399,14 @@ export class SonicXy extends SonicFormElement {
 			(event) => {
 				// A key on the other axis moves focus between the two parts
 				if (event.relatedTarget instanceof Node && xy.contains(event.relatedTarget)) return;
-				if (this.#claim.conceal('keys')) this.#renderReadout();
+				this.#gesture?.concealKeys();
 			},
 			{ signal },
 		);
 		signal.addEventListener(
 			'abort',
 			() => {
-				if (this.#claim.conceal('keys')) this.#renderReadout();
+				this.#gesture?.concealKeys();
 			},
 			{ once: true },
 		);
@@ -433,44 +421,36 @@ export class SonicXy extends SonicFormElement {
 			},
 			{ signal },
 		);
-		xy.addEventListener(
-			'pointercancel',
-			() => {
-				this.#doublePress.forget();
-			},
-			{ signal },
-		);
 		this.#gesture = bindFieldGesture(
 			xy,
 			{
-				claim: this.#claim,
+				element: this,
 				grab: (event) => {
-					if (this.isDisabled() || isMenuPress(event)) return;
+					if (this.isDisabled()) return;
 
 					focusByPointer(this.focusTarget());
-					if (!isResetPress(event)) {
-						this.toggleState('dragging', true);
+					this.toggleState('dragging', true);
 
-						return this.#grab(event);
-					}
-
-					this.#reset();
-
-					return;
+					return this.#grab(event);
 				},
 				input: (_hold, next) => {
-					if (!this.#input(next)) this.#renderReadout();
-				},
-				lift: (_hold, event) => {
-					if (!this.#doublePress.press(event) || this.doublePress !== 'reset') return;
-
-					this.#reset();
+					this.#input(next);
 				},
 				release: (_hold, moved) => {
 					if (moved.length > 0) this.dispatchEvent(new Event('change', { bubbles: true }));
 				},
-				toggle: (isDragging) => {
-					this.toggleState('dragging', isDragging);
+				renderReadout: () => {
+					this.#renderReadout();
+				},
+				reset: () => {
+					if (this.isDisabled()) return;
+
+					focusByPointer(this.focusTarget());
+					this.#reset();
+				},
+				resetsOnDoublePress: () => this.doublePress === 'reset',
+				toggle: (state, isOn) => {
+					this.toggleState(state, isOn);
 				},
 			},
 			signal,
@@ -577,18 +557,11 @@ export class SonicXy extends SonicFormElement {
 	}
 
 	#renderReadout(): void {
-		const { isRevealed } = this.#claim;
-
 		this.#readout.show({
 			anchor: this.#puck,
-			isOpen: isRevealed && this.readout,
+			isOpen: this.#gesture?.isRevealed() === true && this.readout,
 			text: this.#valueText('x'),
 		});
-		if (isRevealed === this.#isRevealed) return;
-
-		this.#isRevealed = isRevealed;
-		this.toggleState('revealed', isRevealed);
-		this.dispatchEvent(new Event('sonic-reveal', { bubbles: true }));
 	}
 
 	#reset(): void {

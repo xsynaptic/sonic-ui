@@ -1,7 +1,7 @@
 import type { SurfaceFrame, SurfaceLook, SurfaceSize } from '#lib/canvas-surface.ts';
 import type { FrequencyAxis } from '#lib/spectrum-columns.ts';
 
-import { SonicDisplayElement } from '#elements/display-element.ts';
+import { SonicAnalyserElement } from '#elements/analyser-element.ts';
 import { requireChild, template } from '#lib/render.ts';
 import {
 	columnEdges,
@@ -139,9 +139,9 @@ function paintHolds(
 	context.fill();
 }
 
-export class SonicSpectrum extends SonicDisplayElement<Colour, Numeric> {
+export class SonicSpectrum extends SonicAnalyserElement<Colour, Numeric> {
 	static override readonly observedAttributes = [
-		...SonicDisplayElement.observedAttributes,
+		...SonicAnalyserElement.observedAttributes,
 		'frequency-max',
 		'frequency-min',
 		'grid',
@@ -195,7 +195,7 @@ export class SonicSpectrum extends SonicDisplayElement<Colour, Numeric> {
 		this.reflect('sample-rate', hertz);
 	}
 
-	protected readonly control = renderSpectrum();
+	protected override readonly control = renderSpectrum();
 
 	protected readonly canvas = requireChild(
 		this.control,
@@ -207,7 +207,7 @@ export class SonicSpectrum extends SonicDisplayElement<Colour, Numeric> {
 
 	protected readonly numbers = numbers;
 
-	protected readonly sheet = 'spectrum.css';
+	protected override readonly sheet = 'spectrum.css';
 
 	protected readonly sizeProperty = '--_sonic-spectrum-size';
 
