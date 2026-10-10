@@ -1,5 +1,12 @@
 # @xsynaptic/sonic-ui
 
+## 0.27.0
+
+### Minor Changes
+
+- - Envelope: a handle drag reports its reveal as the other controls with a readout do, with `data-sonic-revealed` on `.sonic-envelope`, a bubbling `sonic-reveal` event and a read-only `revealed` property.
+  - The `FieldAxis` and `SplitMode` types are exported.
+
 ## 0.26.0
 
 ### Minor Changes
