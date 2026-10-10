@@ -12,7 +12,7 @@ export async function canvasPixels(
 ): Promise<Array<Pixel>> {
 	return canvas.evaluate(
 		(element, [columns, rowFraction]) => {
-			if (!(element instanceof HTMLCanvasElement)) throw new Error('Not a canvas');
+			if (!(element instanceof HTMLCanvasElement)) throw new TypeError('Not a canvas');
 
 			const copy = document.createElement('canvas');
 

@@ -44,7 +44,7 @@ function mountSeam(attributes: string): SeamControl {
 	document.body.innerHTML = `<seam-control ${attributes}></seam-control>`;
 
 	const seam = document.querySelector('seam-control');
-	if (!(seam instanceof SeamControl)) throw new Error('The control did not render');
+	if (!(seam instanceof SeamControl)) throw new TypeError('The control did not render');
 
 	return seam;
 }

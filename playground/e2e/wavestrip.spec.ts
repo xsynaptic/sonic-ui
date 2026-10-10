@@ -30,7 +30,7 @@ async function openWavestrip(page: Page): Promise<{ canvas: Locator; wavestrip: 
 
 function readWidth(canvas: Locator): Promise<{ css: number; device: number }> {
 	return canvas.evaluate((element) => {
-		if (!(element instanceof HTMLCanvasElement)) throw new Error('Not a canvas');
+		if (!(element instanceof HTMLCanvasElement)) throw new TypeError('Not a canvas');
 
 		return { css: element.getBoundingClientRect().width, device: element.width };
 	});

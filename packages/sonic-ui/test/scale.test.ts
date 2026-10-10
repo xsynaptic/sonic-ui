@@ -10,7 +10,7 @@ async function mount(markup: string): Promise<HTMLElement> {
 	await nextTask();
 
 	const host = document.body.firstElementChild;
-	if (!(host instanceof HTMLElement)) throw new Error('Nothing rendered');
+	if (!(host instanceof HTMLElement)) throw new TypeError('Nothing rendered');
 
 	return host;
 }

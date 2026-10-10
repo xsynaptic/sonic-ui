@@ -11,7 +11,7 @@ test.beforeEach(async ({ page }) => {
 
 function readFormData(page: Page): Promise<Array<[string, string]>> {
 	return page.locator('#patch').evaluate((form) => {
-		if (!(form instanceof HTMLFormElement)) throw new Error('#patch is not a form');
+		if (!(form instanceof HTMLFormElement)) throw new TypeError('#patch is not a form');
 
 		return [...new FormData(form)].map(([name, value]) => [
 			name,

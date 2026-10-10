@@ -90,10 +90,10 @@ function namedStops(names: ReadonlyArray<string>): Format {
 	};
 }
 
-function parseScaled(text: string, unit: RegExp, factor: number): number {
+function parseScaled(text: string, unit: RegExp): number {
 	const value = parseNumber(text);
 
-	return unit.test(text) ? value * factor : value;
+	return unit.test(text) ? value * 1000 : value;
 }
 
 const formats = new Map<string, Format>([
@@ -127,7 +127,7 @@ const formats = new Map<string, Format>([
 				value >= 1000
 					? `${(value / 1000).toFixed(value >= 10_000 ? 1 : 2)} kHz`
 					: `${value < 10 ? value.toFixed(2) : String(Math.round(value))} Hz`,
-			parse: (text) => parseScaled(text, /k/i, 1000),
+			parse: (text) => parseScaled(text, /k/i),
 		},
 	],
 	[
@@ -135,7 +135,7 @@ const formats = new Map<string, Format>([
 		{
 			format: (value) =>
 				value >= 1000 ? `${(value / 1000).toFixed(2)} s` : `${String(Math.round(value))} ms`,
-			parse: (text) => parseScaled(text.trim(), /^[^m]*s$/i, 1000),
+			parse: (text) => parseScaled(text.trim(), /^[^m]*s$/i),
 		},
 	],
 	['note', { format: formatNote, parse: parseNote }],

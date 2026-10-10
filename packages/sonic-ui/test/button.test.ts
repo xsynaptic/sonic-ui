@@ -12,7 +12,8 @@ function mountButton(attributes: string): { button: HTMLButtonElement; host: Son
 		attributes,
 		'<svg data-icon="parsed"></svg>',
 	);
-	if (!(control instanceof HTMLButtonElement)) throw new Error('The control has no native button');
+	if (!(control instanceof HTMLButtonElement))
+		throw new TypeError('The control has no native button');
 
 	return { button: control, host };
 }
@@ -450,7 +451,7 @@ test('a Meta keyup leaves a momentary button held by a pointer alone', () => {
 test('a cloned button discards the native button it was cloned with', async () => {
 	const { host } = mountControl('sonic-button', '', '<span id="label">Play</span>');
 	const clone = host.cloneNode(true);
-	if (!(clone instanceof HTMLElement)) throw new Error('The clone is not an element');
+	if (!(clone instanceof HTMLElement)) throw new TypeError('The clone is not an element');
 
 	document.body.append(clone);
 	await nextTask();

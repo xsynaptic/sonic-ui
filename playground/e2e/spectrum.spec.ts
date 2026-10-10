@@ -38,7 +38,7 @@ async function openSpectrum(page: Page): Promise<Probe> {
 		.toBe(255);
 
 	const { height, width } = await canvas.evaluate((element) => {
-		if (!(element instanceof HTMLCanvasElement)) throw new Error('Not a canvas');
+		if (!(element instanceof HTMLCanvasElement)) throw new TypeError('Not a canvas');
 
 		return { height: element.height, width: element.width };
 	});
