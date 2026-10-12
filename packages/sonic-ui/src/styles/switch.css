@@ -60,6 +60,8 @@
 			var(--_sonic-switch-cap) calc(100% - 20% * var(--_sonic-relief)),
 			var(--_sonic-shade)
 		);
+		--_sonic-switch-ease: cubic-bezier(0.34, 1.3, 0.64, 1);
+		--_sonic-switch-duration: 120ms;
 
 		display: inline-grid;
 		flex-shrink: 0;
@@ -67,7 +69,7 @@
 		place-items: center;
 		line-height: 1;
 		user-select: none;
-		transition: --_sonic-switch-at 90ms cubic-bezier(0.4, 0, 0.2, 1);
+		transition: --_sonic-switch-at var(--_sonic-switch-duration) var(--_sonic-switch-ease);
 
 		@media (prefers-reduced-motion: reduce) {
 			transition: none;

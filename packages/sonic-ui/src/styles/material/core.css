@@ -44,6 +44,7 @@
 		--_sonic-shine: var(--sonic-shine, #fff);
 		--_sonic-press-duration: var(--sonic-press-duration, 60ms);
 		--_sonic-fade-duration: var(--sonic-fade-duration, 120ms);
+		--_sonic-ease: cubic-bezier(0.4, 0, 0.2, 1);
 		--_sonic-light-tilt: var(--sonic-light-tilt, 17deg);
 		--_sonic-light-fall: calc(180deg - var(--_sonic-light-tilt));
 		--_sonic-cast-x: calc(sin(var(--_sonic-light-tilt)) * var(--_sonic-unit));

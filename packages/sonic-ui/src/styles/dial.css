@@ -330,15 +330,38 @@
 						calc(
 							var(--_sonic-dial-face-drift) * var(--_sonic-dial-angle) - var(--_sonic-light-tilt)
 						),
-					color-mix(in srgb, var(--_sonic-shine) calc(16% * var(--_sonic-relief)), transparent),
+					color-mix(
+						in srgb,
+						var(--_sonic-shine) calc(16% * var(--_sonic-relief) * var(--_sonic-gloss)),
+						transparent
+					),
 					transparent 12%,
-					color-mix(in srgb, var(--_sonic-shade) calc(10% * var(--_sonic-relief)), transparent) 25%,
+					color-mix(
+							in srgb,
+							var(--_sonic-shade) calc(10% * var(--_sonic-relief) * var(--_sonic-gloss)),
+							transparent
+						)
+						25%,
 					transparent 38%,
-					color-mix(in srgb, var(--_sonic-shine) calc(12% * var(--_sonic-relief)), transparent) 50%,
+					color-mix(
+							in srgb,
+							var(--_sonic-shine) calc(12% * var(--_sonic-relief) * var(--_sonic-gloss)),
+							transparent
+						)
+						50%,
 					transparent 62%,
-					color-mix(in srgb, var(--_sonic-shade) calc(10% * var(--_sonic-relief)), transparent) 75%,
+					color-mix(
+							in srgb,
+							var(--_sonic-shade) calc(10% * var(--_sonic-relief) * var(--_sonic-gloss)),
+							transparent
+						)
+						75%,
 					transparent 88%,
-					color-mix(in srgb, var(--_sonic-shine) calc(16% * var(--_sonic-relief)), transparent)
+					color-mix(
+						in srgb,
+						var(--_sonic-shine) calc(16% * var(--_sonic-relief) * var(--_sonic-gloss)),
+						transparent
+					)
 				),
 				var(--_sonic-face);
 			box-shadow: var(--_sonic-face-shadow);

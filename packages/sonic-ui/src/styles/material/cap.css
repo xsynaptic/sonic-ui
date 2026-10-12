@@ -22,6 +22,7 @@
 		--_sonic-focus: var(--sonic-focus, oklch(90% 0.23 128deg));
 		--_sonic-focus-strength: var(--sonic-focus-glow, 1);
 		--_sonic-disabled-opacity: var(--sonic-disabled-opacity, 1);
+		--_sonic-gloss: var(--sonic-gloss, 1);
 		--_sonic-ink: var(--sonic-ink, currentcolor);
 		--_sonic-etch: color-mix(in oklab, var(--_sonic-ink) 30%, transparent);
 		--_sonic-ink-disabled: var(--sonic-ink-disabled, var(--_sonic-etch));
@@ -56,14 +57,24 @@
 		--_sonic-sheen: linear-gradient(
 			calc(var(--_sonic-light-fall) - 58deg),
 			transparent 20%,
-			color-mix(in srgb, var(--_sonic-shine) calc(10% * var(--_sonic-relief)), transparent) 45%,
+			color-mix(
+					in srgb,
+					var(--_sonic-shine) calc(10% * var(--_sonic-relief) * var(--_sonic-gloss)),
+					transparent
+				)
+				45%,
 			transparent 55%,
-			color-mix(in srgb, var(--_sonic-shade) calc(6% * var(--_sonic-relief)), transparent) 80%
+			color-mix(
+					in srgb,
+					var(--_sonic-shade) calc(6% * var(--_sonic-relief) * var(--_sonic-gloss)),
+					transparent
+				)
+				80%
 		);
 		--_sonic-press-transition:
-			scale var(--_sonic-press-duration) cubic-bezier(0.4, 0, 0.2, 1),
-			translate var(--_sonic-press-duration) cubic-bezier(0.4, 0, 0.2, 1),
-			box-shadow var(--_sonic-press-duration) cubic-bezier(0.4, 0, 0.2, 1);
+			scale var(--_sonic-press-duration) var(--_sonic-ease),
+			translate var(--_sonic-press-duration) var(--_sonic-ease),
+			box-shadow var(--_sonic-press-duration) var(--_sonic-ease);
 		--_sonic-face-shadow:
 			inset var(--_sonic-cast-x) var(--_sonic-cast-y) calc(1.5 * var(--_sonic-unit))
 				color-mix(in srgb, var(--_sonic-shade) calc(35% * var(--_sonic-relief)), transparent),

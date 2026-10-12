@@ -61,6 +61,7 @@
 	}
 
 	.sonic-slider {
+		--_sonic-gloss: var(--sonic-gloss, 0);
 		--_sonic-slider-groove-rest: var(--sonic-slider-groove-ratio, 0.15);
 		--_sonic-slider-groove-hover-delay: 0s;
 		--_sonic-slider-groove-ratio: calc(
@@ -476,7 +477,7 @@
 
 		&::before {
 			inset: var(--_sonic-slider-bevel);
-			background: var(--_sonic-face);
+			background: var(--_sonic-sheen), var(--_sonic-face);
 			border-radius: max(0px, var(--_sonic-slider-corner) - var(--_sonic-slider-bevel));
 			box-shadow: var(--_sonic-face-shadow);
 		}
