@@ -26,6 +26,8 @@ The words this library uses for its controls, their parts and their values. Wher
 
 **Number box**: A value control shown as digits. It is dragged, stepped or typed into. _Avoid_: Spinner, stepper, value field
 
+**Barrel**: A look on the number box in which the values roll past a fixed line, the neighbouring values dimmer above and below. _Avoid_: Drum, wheel, thumbwheel (that is a ridged cap on a slider)
+
 **Segmented**: A row of joined caps, one of which is always chosen. _Avoid_: Selector, radio group, button bank
 
 **XY pad**: A control that sets two values at once by moving a puck around a field. _Avoid_: Plane, joystick, touchpad
@@ -48,7 +50,9 @@ The words this library uses for its controls, their parts and their values. Wher
 
 **Waveform**: The close-up view of a wave, which scrolls under a fixed playhead. _Avoid_: Detail view, scrolling waveform
 
-**Spectrum**: A display of level against frequency, drawn as one filled shape that rises at once and falls at a set rate. _Avoid_: Analyser (the node that feeds it), FFT, spectrograph
+**Spectrum**: A display of level against frequency, drawn as one filled shape or as a bar per band, which rises at once and falls at a set rate.
+
+**Ticker**: A display of one line of text that scrolls at a steady rate when it does not fit its box and stands still when it does. _Avoid_: Marquee, scroller, crawl _Avoid_: Analyser (the node that feeds it), FFT, spectrograph
 
 **Wavestrip**: The overview of a whole track, drawn as bars and scrubbed to seek. _Avoid_: Overview waveform, stripe, seek bar
 
@@ -112,7 +116,7 @@ The words this library uses for its controls, their parts and their values. Wher
 
 **Peaks**: The amplitude summary, worked out ahead of time, that a wave control draws. Bands sit beside them and colour what they draw. _Avoid_: Data, samples, waveform data
 
-**Band**: One of the frequency ranges a wave's levels are split into, with a level per band per frame. _Avoid_: Bin (one frequency of a spectrum), zone (a stretch of a level display)
+**Band**: One of the frequency ranges levels are split into: a wave's, with a level per band per frame, or a spectrum's, drawn as a bar each. _Avoid_: Bin (one frequency of a spectrum), zone (a stretch of a level display)
 
 **Normalize**: To scale a band mix so that its strongest channel is at full, as peak normalising does a signal. `--sonic-waveform-band-normalize` sets how far: at 0 the mix is the weighted average of the band colours and stays inside the palette, at 1 it is fully normalized. _Avoid_: Lift (in grading that raises the shadows), brighten, boost; "normalized" for a proportion
 
@@ -205,6 +209,8 @@ The words this library uses for its controls, their parts and their values. Wher
 **Target**: The region around a press control that takes its presses, or across a slider's breadth that takes its drags. It is the control's own box unless `--sonic-target-size` makes it larger. _Avoid_: Hit area, touch target, tap target, hitbox
 
 **Relief**: How strongly the light models a surface: its bevels, ridges, grooves, sheen and cast shadows. `--sonic-relief` scales it from 0, flat, to 1. _Avoid_: Depth (one part's own token), elevation, shadow
+
+**Gloss**: How strongly a cap's face catches the light as a sheen, apart from its bevels. `--sonic-gloss` scales it: 0 is matte, 1 the default. _Avoid_: Shine (the pole), finish, specular
 
 **Shade**: The dark pole of the light: the colour a surface is mixed towards where it turns from the light or lies in shadow. `--sonic-shade` sets it; black by default. _Avoid_: Shadow (one thing drawn with it), dark, black
 
