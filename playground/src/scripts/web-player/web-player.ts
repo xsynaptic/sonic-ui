@@ -6,6 +6,7 @@ import {
 	SonicDial,
 	SonicSegmented,
 	SonicSlider,
+	SonicTicker,
 	SonicWaveform,
 	SonicWavestrip,
 } from '@xsynaptic/sonic-ui';
@@ -20,7 +21,7 @@ import { createStream, tracks } from '#scripts/web-player/stream.ts';
 import { bindZoom } from '#scripts/zoom.ts';
 
 const barSpec = {
-	artist: HTMLElement,
+	artist: SonicTicker,
 	detail: SonicWaveform,
 	next: SonicButton,
 	panelButton: SonicButton,
@@ -28,7 +29,7 @@ const barSpec = {
 	previous: SonicButton,
 	seek: SonicSlider,
 	time: HTMLButtonElement,
-	title: HTMLElement,
+	title: SonicTicker,
 	wave: SonicWavestrip,
 };
 
@@ -80,8 +81,8 @@ function renderText(state: StreamState, bar: Bar): void {
 	const isRemaining = bar.time.getAttribute('aria-pressed') === 'true';
 	const shown = isRemaining ? positionSeconds - track.durationSeconds : positionSeconds;
 
-	writeText(bar.title, track.title);
-	writeText(bar.artist, track.artist);
+	if (bar.title.text !== track.title) bar.title.text = track.title;
+	if (bar.artist.text !== track.artist) bar.artist.text = track.artist;
 	writeText(bar.time, state.isLoaded ? formatClock(shown) : '--:--');
 }
 

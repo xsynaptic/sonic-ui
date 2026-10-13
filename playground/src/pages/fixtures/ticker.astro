@@ -1,0 +1,49 @@
+---
+import Document from '#components/document.astro';
+import '#styles/playground.css';
+
+const long = 'Night drive through the valley, extended mix, recorded live at the reservoir';
+---
+
+<Document
+	bodyClass="bg-ground text-text"
+	scheme="dark"
+	skin="amber"
+	title="sonic-ui fixtures, ticker"
+>
+	<main class="flex flex-col items-center gap-8 p-8 text-sm [--sonic-ticker-hold:400ms] [--sonic-ticker-rate:200px]">
+		<h1 class="sr-only">Ticker</h1>
+		<div class="w-48">
+			<sonic-ticker id="fits">Night drive</sonic-ticker>
+		</div>
+		<div class="w-48">
+			<sonic-ticker id="long">{long}</sonic-ticker>
+		</div>
+		<div class="w-48" id="resized">
+			<sonic-ticker id="steady">{long}</sonic-ticker>
+		</div>
+		<div class="w-48">
+			<sonic-ticker id="link-first">
+				<a class="underline" href="#inside">
+					The label's page
+				</a>
+				keeps the whole catalogue in one place
+			</sonic-ticker>
+		</div>
+		<div class="w-48">
+			<sonic-ticker id="link-last">
+				The whole catalogue is kept, in full, on{' '}
+				<a class="underline" href="#last">
+					the label's page
+				</a>
+			</sonic-ticker>
+		</div>
+		<a class="block w-48" href="#wrapped" id="wrapper">
+			<sonic-ticker id="wrapped">{long}</sonic-ticker>
+		</a>
+		<div class="h-[200vh]"></div>
+	</main>
+	<script>
+		import '@xsynaptic/sonic-ui/define/ticker';
+	</script>
+</Document>

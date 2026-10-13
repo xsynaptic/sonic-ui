@@ -5,6 +5,7 @@ import '#define/dial.ts';
 import '#define/meter.ts';
 import '#define/number.ts';
 import '#define/segmented.ts';
+import '#define/ticker.ts';
 
 import { nextTask } from './helpers.ts';
 
@@ -117,5 +118,24 @@ test('a link inside a button warns once across two instances, naming both tags',
 	expect(messages).toHaveLength(1);
 	expect(messages[0]).toContain('<sonic-button>');
 	expect(messages[0]).toContain('<a>');
+	warn.mockRestore();
+});
+
+test('a ticker accepts a link, and still warns on a custom element', async () => {
+	const warn = vi.spyOn(console, 'warn').mockReturnValue();
+
+	document.body.innerHTML =
+		'<sonic-ticker>Out now: <a href="/release/">the album</a></sonic-ticker>';
+	await nextTask();
+
+	expect(document.querySelector('.sonic-ticker-tape a')).not.toBeNull();
+	expect(mirrorWarnings(warn)).toEqual([]);
+
+	document.body.innerHTML = '<sonic-ticker><x-chip>New</x-chip></sonic-ticker>';
+	await nextTask();
+
+	expect(mirrorWarnings(warn)).toHaveLength(1);
+	expect(mirrorWarnings(warn)[0]).toContain('<sonic-ticker>');
+	expect(mirrorWarnings(warn)[0]).toContain('<x-chip>');
 	warn.mockRestore();
 });

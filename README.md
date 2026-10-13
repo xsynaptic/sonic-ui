@@ -59,7 +59,7 @@ The API may change before 1.0. Setup, and the rules every control follows, are i
 | Value controls | dial, slider, number box, XY pad, envelope, split |
 | Press controls | button, switch, toggle, segmented                 |
 | Waves          | waveform, wavestrip                               |
-| Displays       | meter, spectrum, LED, ring, screen, panel         |
+| Displays       | meter, spectrum, ticker, LED, ring, screen, panel |
 
 ## How it is built
 

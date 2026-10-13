@@ -9,9 +9,12 @@ const checkedMirrors = new WeakSet<object>();
 
 const hostSlots = new WeakMap<HTMLElement, MirrorSlots>();
 
-const interactive = 'a[href], button, input, select, textarea, [tabindex]';
+const interactive = 'button, input, select, textarea, [tabindex]';
+
+const link = 'a[href]';
 
 interface Mirror {
+	canCopyLinks?: boolean;
 	control: Element;
 	copy: (original: ChildNode) => Node | undefined;
 	isCopied?: (child: Node) => boolean;
@@ -19,18 +22,19 @@ interface Mirror {
 	place: (copies: Array<Node>) => void;
 }
 
-function unmirrorable(original: Node): Element | undefined {
+function unmirrorable(original: Node, selector: string): Element | undefined {
 	if (!(original instanceof Element)) return undefined;
 
 	return [original, ...original.querySelectorAll('*')].find(
-		(element) => element.matches(interactive) || element.localName.includes('-'),
+		(element) => element.matches(selector) || element.localName.includes('-'),
 	);
 }
 
-function checkMirrored(host: HTMLElement, originals: Array<Node>): void {
+function checkMirrored(host: HTMLElement, originals: Array<Node>, canCopyLinks: boolean): void {
 	if (!__DEV__ || checkedMirrors.has(host.constructor)) return;
 
-	const [found] = originals.flatMap((original) => unmirrorable(original) ?? []);
+	const selector = canCopyLinks ? interactive : `${link}, ${interactive}`;
+	const [found] = originals.flatMap((original) => unmirrorable(original, selector) ?? []);
 	if (!found) return;
 
 	checkedMirrors.add(host.constructor);
@@ -67,7 +71,14 @@ function isCopiedChange(
 
 export function mirrorChildren(
 	host: HTMLElement,
-	{ control, copy, isCopied = () => true, isPassed = () => false, place }: Mirror,
+	{
+		canCopyLinks = false,
+		control,
+		copy,
+		isCopied = () => true,
+		isPassed = () => false,
+		place,
+	}: Mirror,
 	signal: AbortSignal,
 ): void {
 	const slots = hostSlots.get(host) ?? attachSlots(host);
@@ -85,7 +96,7 @@ export function mirrorChildren(
 		const originals = children.filter((child) => isCopied(child));
 
 		if (__DEV__) {
-			checkMirrored(host, originals);
+			checkMirrored(host, originals, canCopyLinks);
 			checkChildren(
 				host,
 				children.filter((child) => !isCopied(child) && !isPassed(child)),

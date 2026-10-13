@@ -1,0 +1,104 @@
+@layer sonic.material, sonic.control;
+
+@property --_sonic-ticker-rate {
+	syntax: '<length>';
+	inherits: false;
+	initial-value: 40px;
+}
+
+@property --_sonic-ticker-hold {
+	syntax: '<time>';
+	inherits: false;
+	initial-value: 2s;
+}
+
+@property --_sonic-ticker-fade {
+	syntax: '<length>';
+	inherits: false;
+	initial-value: 12px;
+}
+
+@property --_sonic-ticker-fade-start {
+	syntax: '<length>';
+	inherits: false;
+	initial-value: 0;
+}
+
+@property --_sonic-ticker-fade-end {
+	syntax: '<length>';
+	inherits: false;
+	initial-value: 0;
+}
+
+@property --_sonic-ticker-cancel-zone {
+	syntax: '<length>';
+	inherits: false;
+	initial-value: 48px;
+}
+
+@layer sonic.control {
+	:has(> .sonic-ticker):not([hidden]) {
+		display: contents;
+	}
+
+	:is(sonic-ticker:not(:defined, [hidden]), .sonic-ticker) {
+		display: block;
+		min-inline-size: 0;
+		max-inline-size: 100%;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.sonic-ticker {
+		--_sonic-ticker-rate: var(--sonic-ticker-rate, 40px);
+		--_sonic-ticker-hold: var(--sonic-ticker-hold, 2s);
+		--_sonic-ticker-fade: var(--sonic-ticker-fade, 0.75rem);
+		--_sonic-ticker-cancel-zone: var(--sonic-cancel-zone, 48px);
+
+		user-select: none;
+	}
+
+	.sonic-ticker[data-sonic-overflowing] {
+		text-overflow: clip;
+		touch-action: var(--sonic-touch-action, pan-y);
+		mask: linear-gradient(
+			to right,
+			transparent,
+			#000 var(--_sonic-ticker-fade-start),
+			#000 calc(100% - var(--_sonic-ticker-fade-end)),
+			transparent
+		);
+
+		& > .sonic-ticker-tape {
+			display: inline-block;
+		}
+	}
+
+	.sonic-ticker[data-sonic-overflowing]:not(:any-link *) {
+		cursor: grab;
+	}
+
+	.sonic-ticker[data-sonic-overflowing][data-sonic-dragging],
+	.sonic-ticker[data-sonic-dragging] :any-link {
+		cursor: grabbing;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.sonic-ticker[data-sonic-overflowing]:not(
+				[data-sonic-clipped~='start'],
+				[data-sonic-dragging]
+			) {
+			text-overflow: ellipsis;
+			mask: none;
+
+			& > .sonic-ticker-tape {
+				display: inline;
+			}
+		}
+	}
+
+	.sonic-ticker:focus-within {
+		mask: none;
+	}
+}

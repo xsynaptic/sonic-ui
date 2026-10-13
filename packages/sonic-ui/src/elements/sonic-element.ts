@@ -47,6 +47,8 @@ export abstract class SonicElement extends HTMLElement {
 
 	declare protected readonly sheet: string | undefined;
 
+	declare protected readonly sheetToken: `--_sonic-${string}` | undefined;
+
 	#connection: AbortController | undefined;
 
 	readonly #states = new Set<string>();
@@ -79,9 +81,10 @@ export abstract class SonicElement extends HTMLElement {
 			throw error;
 		}
 
-		const { boxProbe: box, control, sheet } = this;
+		const { boxProbe: box, control, sheet, sheetToken: token } = this;
 
-		if (__DEV__ && control && sheet !== undefined) checkStyles(this, { box, control, sheet });
+		if (__DEV__ && control && sheet !== undefined)
+			checkStyles(this, { box, control, sheet, token });
 	}
 
 	connectedMoveCallback(): void {

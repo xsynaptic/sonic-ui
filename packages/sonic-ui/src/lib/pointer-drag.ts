@@ -1,6 +1,8 @@
 interface DragHandlers<Drag> {
 	cancel?: (drag: Drag) => void;
 	grab: (event: PointerEvent) => Drag | undefined;
+	// Capturing on press would swallow a click on a link inside the target; the caller captures once the press is a drag
+	isCaptureLate?: boolean;
 	lift?: (drag: Drag, event: PointerEvent) => void;
 	move: (drag: Drag, event: PointerEvent) => void;
 	release?: (drag: Drag) => void;
@@ -25,6 +27,7 @@ export function bindDrag<Drag>(
 	handlers: DragHandlers<Drag>,
 	signal: AbortSignal,
 ): PointerDrag<Drag> {
+	const isCaptureLate = handlers.isCaptureLate === true;
 	let held: undefined | { drag: Drag; pointerId: number };
 
 	const end = (): void => {
@@ -37,7 +40,7 @@ export function bindDrag<Drag>(
 		handlers.release?.(drag);
 	};
 	const whileHeld = (
-		type: 'lostpointercapture' | 'pointercancel' | 'pointermove' | 'pointerup',
+		type: 'lostpointercapture' | 'pointercancel' | 'pointerleave' | 'pointermove' | 'pointerup',
 		handle: (drag: Drag, event: PointerEvent) => void,
 	): void => {
 		target.addEventListener(
@@ -61,7 +64,7 @@ export function bindDrag<Drag>(
 
 			held = { drag, pointerId: event.pointerId };
 			handlers.toggle?.(true);
-			capturePointer(target, event.pointerId);
+			if (!isCaptureLate) capturePointer(target, event.pointerId);
 		},
 		{ signal },
 	);
@@ -70,7 +73,15 @@ export function bindDrag<Drag>(
 		handlers.cancel?.(drag);
 		end();
 	});
-	whileHeld('lostpointercapture', end);
+	// Capturing late takes a touch away from the child it landed on, and that child's `lostpointercapture` bubbles up here
+	whileHeld('lostpointercapture', (_drag, event) => {
+		if (!isCaptureLate || event.target === target) end();
+	});
+	if (isCaptureLate) {
+		whileHeld('pointerleave', (_drag, event) => {
+			if (!target.hasPointerCapture(event.pointerId)) end();
+		});
+	}
 	whileHeld('pointerup', (drag, event) => {
 		end();
 		handlers.lift?.(drag, event);

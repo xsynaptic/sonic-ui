@@ -66,6 +66,7 @@ export interface StyleCheck {
 	box?: BoxProbe | undefined;
 	control: HTMLElement;
 	sheet: string;
+	token?: string | undefined;
 }
 
 // Once a class; a sheet that is missing has already said why the control looks wrong
@@ -81,20 +82,28 @@ function checkReset(host: Element, { box, control }: StyleCheck, checked: Set<st
 	);
 }
 
+function sheetProbes(sheet: string, token: string | undefined): Array<StyleProbe> {
+	const led = { selector: '.sonic-led', sheet: 'led.css', token: '--_sonic-led-lens-ratio' };
+	if (token !== undefined) return [{ sheet, token }, led];
+
+	return [
+		{ sheet: 'material/core.css', token: '--_sonic-unlit' },
+		{ sheet, token: '--_sonic-unit' },
+		led,
+	];
+}
+
 export function checkStyles(host: Element, check: StyleCheck): void {
 	if (!__DEV__) return;
 
-	const { box, control, sheet } = check;
+	const { box, control, sheet, token } = check;
 	const elementClass = host.constructor;
 	const checked = checkedSheets.get(elementClass) ?? new Set<string>();
 	const part = ({ selector }: StyleProbe): Element | undefined =>
 		selector === undefined ? control : (host.querySelector(selector) ?? undefined);
-	// An LED inherits `--_sonic-unit` from its control, so a token of its own probes it
-	const probes: Array<StyleProbe> = [
-		{ sheet: 'material/core.css', token: '--_sonic-unlit' },
-		{ sheet, token: '--_sonic-unit' },
-		{ selector: '.sonic-led', sheet: 'led.css', token: '--_sonic-led-lens-ratio' },
-	].filter((probe) => !checked.has(probe.sheet) && part(probe) !== undefined);
+	const probes = sheetProbes(sheet, token).filter(
+		(probe) => !checked.has(probe.sheet) && part(probe) !== undefined,
+	);
 	const isResetChecked = !box || checked.has('reset');
 	const isBoxChecked = isResetChecked && checked.has('host');
 	if (isBoxChecked && probes.length === 0) return;

@@ -88,6 +88,7 @@ A skin is one rule that sets tokens on a class; copy `dist/skins/flat.css` to st
 | `slider.css`    | core, cap, glass, readout, value, groove, scale |
 | `spectrum.css`  | core                                            |
 | `switch.css`    | core, cap                                       |
+| `ticker.css`    |                                                 |
 | `toggle.css`    | core, cap, well, keycap                         |
 | `waveform.css`  | core, cap, glass, readout, value                |
 | `wavestrip.css` | core, cap, glass, readout, value                |

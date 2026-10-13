@@ -17,6 +17,7 @@ import SliderSpecimens from '#components/specimens/slider.astro';
 import SpectrumSpecimens from '#components/specimens/spectrum.astro';
 import SplitSpecimens from '#components/specimens/split.astro';
 import SwitchSpecimens from '#components/specimens/switch.astro';
+import TickerSpecimens from '#components/specimens/ticker.astro';
 import ToggleSpecimens from '#components/specimens/toggle.astro';
 import Tuner from '#components/specimens/tuner.astro';
 import WaveformSpecimens from '#components/specimens/waveform.astro';
@@ -47,6 +48,7 @@ const sections = [
 	{ id: 'led', label: 'LED' },
 	{ id: 'meter', label: 'Meter' },
 	{ id: 'screen', label: 'Screen' },
+	{ id: 'ticker', label: 'Ticker' },
 	{ id: 'wavestrip', label: 'Wavestrip' },
 	{ id: 'waveform', label: 'Waveform' },
 	{ id: 'spectrum', label: 'Spectrum' },
@@ -135,6 +137,9 @@ const sections = [
 	<Section id="screen" title="Screen">
 		<ScreenSpecimens />
 	</Section>
+	<Section id="ticker" title="Ticker">
+		<TickerSpecimens />
+	</Section>
 	<Section id="wavestrip" title="Wavestrip">
 		<WavestripSpecimens />
 	</Section>
@@ -165,6 +170,7 @@ const sections = [
 			import '#scripts/specimens/xy.ts';
 			import '#scripts/specimens/screen-follow.ts';
 			import '#scripts/specimens/split.ts';
+			import '#scripts/specimens/ticker.ts';
 			import '#scripts/specimens/legend.ts';
 			import '#scripts/specimens/zoom.ts';
 			import '#scripts/specimens/bracket.ts';

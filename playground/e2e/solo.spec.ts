@@ -57,8 +57,8 @@ function readPaint(page: Page): Promise<Record<string, string>> {
 
 test('the README table lists the material each sheet is drawn with', async () => {
 	const readme = await readFile(readmePath, 'utf8');
-	const rows = [...readme.matchAll(/^\| `(.+?)\.css`\s*\| (.+?)\s*\|$/gm)].map(
-		([, sheet = '', material = '']) => [sheet, material.split(', ')],
+	const rows = [...readme.matchAll(/^\| `(.+?)\.css`\s*\|\s*(.*?)\s*\|$/gm)].map(
+		([, sheet = '', material = '']) => [sheet, material === '' ? [] : material.split(', ')],
 	);
 
 	expect(Object.fromEntries(rows)).toEqual(sheetMaterial);

@@ -50,9 +50,9 @@ The words this library uses for its controls, their parts and their values. Wher
 
 **Waveform**: The close-up view of a wave, which scrolls under a fixed playhead. _Avoid_: Detail view, scrolling waveform
 
-**Spectrum**: A display of level against frequency, drawn as one filled shape or as a bar per band, which rises at once and falls at a set rate.
+**Spectrum**: A display of level against frequency, drawn as one filled shape or as a bar per band, which rises at once and falls at a set rate. _Avoid_: Analyser (the node that feeds it), FFT, spectrograph
 
-**Ticker**: A display of one line of text that scrolls at a steady rate when it does not fit its box and stands still when it does. _Avoid_: Marquee, scroller, crawl _Avoid_: Analyser (the node that feeds it), FFT, spectrograph
+**Ticker**: A display of one line of content that scrolls there and back when it does not fit its box. _Avoid_: Marquee, scroller, crawl
 
 **Wavestrip**: The overview of a whole track, drawn as bars and scrubbed to seek. _Avoid_: Overview waveform, stripe, seek bar
 
@@ -103,6 +103,8 @@ The words this library uses for its controls, their parts and their values. Wher
 **Readout**: The bubble that shows a control's value while it is being moved. _Avoid_: Tooltip, value label
 
 **Entry**: The text field in a readout where a value is typed. _Avoid_: Input, edit box
+
+**Tape**: The part of a ticker that moves. _Avoid_: Line, track, strip
 
 ### Envelope
 
@@ -189,6 +191,12 @@ The words this library uses for its controls, their parts and their values. Wher
 **Endless**: Turning with no end stops, so the value wraps from maximum round to minimum. _Avoid_: Wrapping, infinite, encoder
 
 **Spring**: Going back to the origin when let go. _Avoid_: Sprung, snap-back, self-centering
+
+**Hold** (of a ticker): The wait at each end of its travel. _Avoid_: Dwell, rest, pause
+
+**Overflowing**: Holding more content than fits the box. _Avoid_: Scrolling, truncated
+
+**Clipped**: Having content past one end of the box, as a region or a ticker's tape can. _Avoid_: Cut, cropped
 
 ### Skinning
 

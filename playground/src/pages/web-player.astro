@@ -90,8 +90,12 @@ import PageHeader from '#components/page-header.astro';
 				</div>
 				<div class="flex min-w-40 flex-1 items-center gap-3">
 					<div class="grid min-w-0 flex-1 leading-tight">
-						<p class="truncate text-sm text-text-strong" data-title></p>
-						<p class="truncate text-xs text-text-muted" data-artist></p>
+						<p class="min-w-0 text-sm text-text-strong">
+							<sonic-ticker cancellable data-title></sonic-ticker>
+						</p>
+						<p class="min-w-0 text-xs text-text-muted">
+							<sonic-ticker cancellable data-artist></sonic-ticker>
+						</p>
 					</div>
 					<button
 						aria-label="Remaining time"

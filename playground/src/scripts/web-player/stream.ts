@@ -45,7 +45,12 @@ interface Player {
 }
 
 export const tracks: Array<Track> = [
-	{ artist: 'An artist', durationSeconds: 252, peaks: seededPeaks(11), title: 'First track' },
+	{
+		artist: 'An artist',
+		durationSeconds: 252,
+		peaks: seededPeaks(11),
+		title: 'First track (extended version)',
+	},
 	{ artist: 'Another artist', durationSeconds: 178, peaks: seededPeaks(12), title: 'Second track' },
 	{
 		artist: 'A third artist',

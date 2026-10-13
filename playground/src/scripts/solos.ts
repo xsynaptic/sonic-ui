@@ -19,6 +19,7 @@ export const sheetMaterial: Record<string, Array<string>> = {
 	slider: ['core', 'cap', 'glass', 'readout', 'value', 'groove', 'scale'],
 	spectrum: ['core'],
 	switch: ['core', 'cap'],
+	ticker: [],
 	toggle: ['core', 'cap', 'well', 'keycap'],
 	waveform: ['core', 'cap', 'glass', 'readout', 'value'],
 	wavestrip: ['core', 'cap', 'glass', 'readout', 'value'],
@@ -100,6 +101,10 @@ export const solos: Record<string, Solo> = {
 		markup:
 			'<sonic-switch aria-label="Talk" value="off"><span data-sonic-value="off">Off</span><span data-sonic-value="on">On</span></sonic-switch>',
 		sheets: ['switch'],
+	},
+	ticker: {
+		markup: '<sonic-ticker>A title that scrolls when it does not fit</sonic-ticker>',
+		sheets: ['ticker'],
 	},
 	toggle: {
 		markup:

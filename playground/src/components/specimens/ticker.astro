@@ -1,0 +1,44 @@
+---
+import Cell from '#components/specimens/cell.astro';
+import SpecimenGrid from '#components/specimens/specimen-grid.astro';
+
+const long = 'A long title that runs well past the end of the box it sits in';
+---
+
+<SpecimenGrid size="wide">
+	<Cell id="ticker-short" label="Fits">
+		<div class="w-64 max-w-full text-sm text-text-strong">
+			<sonic-ticker>A short title</sonic-ticker>
+		</div>
+	</Cell>
+	<Cell id="ticker-long" label="Does not fit">
+		<div class="w-64 max-w-full text-sm text-text-strong">
+			<sonic-ticker data-ticker>{long}</sonic-ticker>
+		</div>
+	</Cell>
+	<Cell id="ticker-link" label="A link inside">
+		<div class="w-64 max-w-full text-sm text-text-strong">
+			<sonic-ticker data-ticker>
+				A long title that runs well past the end of the box, with{' '}
+				<a class="underline" href="#ticker">
+					a link
+				</a>
+			</sonic-ticker>
+		</div>
+	</Cell>
+	<Cell id="ticker-screen" label="On a screen">
+		<div class="sonic-screen w-64 max-w-full font-mono text-sm">
+			<sonic-ticker data-ticker>{long}</sonic-ticker>
+		</div>
+	</Cell>
+	<Cell id="ticker-cancellable" label="Cancellable">
+		<div class="w-64 max-w-full text-sm text-text-strong">
+			<sonic-ticker cancellable data-ticker>
+				{long}
+			</sonic-ticker>
+		</div>
+	</Cell>
+	<Cell id="ticker-paused" label="Pause every ticker">
+		<sonic-toggle aria-labelledby="ticker-paused" data-ticker-paused></sonic-toggle>
+	</Cell>
+</SpecimenGrid>

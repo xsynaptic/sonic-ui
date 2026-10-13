@@ -8,9 +8,9 @@ import type { Seconds } from '#lib/units.ts';
 
 import { RegionLayer } from '#elements/region-layer.ts';
 import { SonicWaveElement } from '#elements/wave-element.ts';
+import { outsideCancelZone } from '#lib/cancel-zone.ts';
 import { createMarkerBand } from '#lib/marker-band.ts';
 import { clamp, clampProportion } from '#lib/math.ts';
-import { readPxProperty } from '#lib/read-px-property.ts';
 import { requireChild, template } from '#lib/render.ts';
 import { scrubRegions } from '#lib/scrub.ts';
 import { stripBars, stripGroove, stripRegions } from '#lib/strip-scene.ts';
@@ -42,8 +42,6 @@ const lengths = {
 	pitch: '--_sonic-wavestrip-bar-pitch',
 	radiusRatio: '--_sonic-wavestrip-bar-radius-ratio',
 } as const;
-
-const cancelZonePx = 48;
 
 const renderWavestrip = template(
 	/* HTML */ `
@@ -384,14 +382,7 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 	#outside(): ((event: PointerEvent) => boolean) | undefined {
 		if (!this.cancellable) return undefined;
 
-		const box = this.control.getBoundingClientRect();
-		const zone = readPxProperty(
-			getComputedStyle(this.control),
-			'--_sonic-cancel-zone',
-			cancelZonePx,
-		);
-
-		return (event) => event.clientY < box.top - zone || event.clientY > box.bottom + zone;
+		return outsideCancelZone(this.control, '--_sonic-cancel-zone');
 	}
 
 	#placeReadout(): void {
