@@ -1,5 +1,18 @@
 # @xsynaptic/sonic-ui
 
+## 0.28.0
+
+### Minor Changes
+
+- `--sonic-gloss` scales a cap's sheen apart from `--sonic-relief`: 0 is matte, 1 the default. A slider cap has no sheen until the token is set, so there `1` is not the same as unset.
+- - `<sonic-ticker>`: one line of content that scrolls there and back when it does not fit its box, registered by `./define/ticker` with `ticker.css`, which needs no material sheet. It stands still with an ellipsis under reduced motion, and pauses under a mouse, while a link round it has keyboard focus, off screen, and while `paused` is set. A drag along the line moves the tape; with `cancellable` a drag that strays past `--sonic-cancel-zone`, shared with the wave strip, puts it back. `text` replaces the content. A link among the children is copied and still navigates.
+  - Ticker surface: tokens `--sonic-ticker-rate` (a length a second, `40px`), `--sonic-ticker-hold` (`2s`) and `--sonic-ticker-fade` (`0.75rem`); hook classes `.sonic-ticker` and `.sonic-ticker-tape`; states `data-sonic-overflowing`, `data-sonic-dragging`, `data-sonic-cancelling` and `data-sonic-paused`, and `data-sonic-clipped` naming each end with content past it.
+
+### Patch Changes
+
+- Switch and toggle: the bat and the cap land with a small overshoot, and the switch's flip takes 120ms, up from 90ms.
+- Split: a move the siblings cannot absorb on their own steps is turned back, so the total holds across mixed step grids.
+
 ## 0.27.0
 
 ### Minor Changes
