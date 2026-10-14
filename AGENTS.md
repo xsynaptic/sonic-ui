@@ -52,6 +52,13 @@ Library changes get a changeset (`pnpm changeset`). Until 1.0, keep changesets s
 
 The package README is written for an agent wiring the library into an app. Until 1.0 it holds setup and the contracts every control shares, and nothing about one control. A single control's behaviour, however surprising, goes in the changeset; update the README only when a change adds or breaks a contract that crosses controls, or moves a row of its material table.
 
+## Playground
+
+- `@xsynaptic/sonic-ui/define` gets a `<script>` of its own ahead of the others; within one entry the bundler can hoist a shared chunk past it.
+- Spacing belongs to `Section`, `SpecimenGrid` and `Cell`; a specimen sets only a control's size token, plus a panel's padding or a stereo meter pair's gap. A specimen that fits no existing grid size or cell span is a question for the operator.
+- A specimen earns its place by showing something no other on its page shows. Captions name a use (Volume, Cutoff), except in the States group that closes a page.
+- `/fixtures/` holds only what a test or `scripts/capture.ts` drives.
+
 ## Visual checks
 
 When a person needs to judge how something looks, show it to them live in the playground and give them the URL.
