@@ -52,7 +52,7 @@ interface TapeDrag {
 }
 
 export class SonicTicker extends SonicElement {
-	static override readonly observedAttributes = ['paused'];
+	static override readonly observedAttributes = ['disabled', 'paused'];
 
 	// fallow-ignore-next-line code-duplication -- one accessor pair per reflected attribute
 	get cancellable(): boolean {
@@ -78,8 +78,13 @@ export class SonicTicker extends SonicElement {
 	}
 
 	set text(text: string | undefined) {
+		const next = text ?? '';
+
+		// A host that re-renders the same title would otherwise restart the tape
+		if (this.#holds(next)) return;
+
 		for (const original of this.#originals()) original.remove();
-		if (text !== undefined && text !== '') this.prepend(text);
+		if (next !== '') this.prepend(next);
 	}
 
 	protected override readonly control = renderTicker();
@@ -87,6 +92,8 @@ export class SonicTicker extends SonicElement {
 	protected override readonly sheet = 'ticker.css';
 
 	protected override readonly sheetToken = '--_sonic-ticker-fade';
+
+	#drag: undefined | { end: () => void };
 
 	#fade = fadePx;
 
@@ -112,20 +119,29 @@ export class SonicTicker extends SonicElement {
 
 	#running: Running | undefined;
 
+	readonly #tape = requireChild(this.control, '.sonic-ticker-tape', HTMLSpanElement);
+
 	#travel: TickerTravel = { distance: 0, hold: holdMs, rate: ratePxPerSecond };
 
-	attributeChangedCallback(): void {
+	attributeChangedCallback(name: string): void {
+		if (name === 'disabled' && this.isBound()) {
+			this.#drag?.end();
+			this.#run(this.#tape, { from: 0, heading: 1 });
+		}
+
 		this.render();
 	}
 
 	protected connect(signal: AbortSignal): void {
 		const control = this.control;
-		const tape = requireChild(control, '.sonic-ticker-tape', HTMLSpanElement);
+		const tape = this.#tape;
 		const measure = (): void => {
 			this.#measure(tape);
 		};
 		const observer = new ResizeObserver(measure);
 		const drag = this.#bindDrag(tape, signal);
+
+		this.#drag = drag;
 
 		this.upgradeProperties('cancellable', 'paused', 'text');
 		mirrorChildren(
@@ -200,7 +216,7 @@ export class SonicTicker extends SonicElement {
 			control,
 			{
 				grab: (event) => {
-					if (this.#travel.distance <= 0) return;
+					if (this.#travel.distance <= 0 || this.isDisabled()) return;
 
 					return {
 						from: 0,
@@ -320,6 +336,14 @@ export class SonicTicker extends SonicElement {
 		);
 	}
 
+	#holds(text: string): boolean {
+		const [only, ...rest] = this.#originals();
+		if (only === undefined) return text === '';
+		if (rest.length > 0 || !(only instanceof Text)) return false;
+
+		return only.data === text;
+	}
+
 	#isPaused(): boolean {
 		return (
 			this.paused ||
@@ -370,7 +394,10 @@ export class SonicTicker extends SonicElement {
 
 	#run(tape: HTMLElement, departure: TickerDeparture = this.#where()): void {
 		const canTravel =
-			!this.#isFocusInside && !this.#reducedMotion.matches && !this.hasState('dragging');
+			!this.#isFocusInside &&
+			!this.#reducedMotion.matches &&
+			!this.hasState('dragging') &&
+			!this.isDisabled();
 		const leg = canTravel ? tickerLeg(this.#travel, departure) : undefined;
 
 		this.#stop();

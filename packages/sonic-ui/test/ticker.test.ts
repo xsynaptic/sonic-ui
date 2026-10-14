@@ -172,6 +172,31 @@ test('new content of the same width starts over, and content that now fits ends 
 	expect(legs).toHaveLength(before + 1);
 });
 
+test('the same text written again leaves the tape where it is', async () => {
+	const { finish, legs } = fakeLegs();
+	const { ticker } = await mountTicker('A long title', 300, 355);
+
+	finish();
+
+	const before = legs.length;
+	const original = ticker.firstChild;
+
+	ticker.text = 'A long title';
+	await nextTask();
+
+	expect(ticker.firstChild).toBe(original);
+	expect(legs).toHaveLength(before);
+});
+
+test('the same words as a link are still replaced by plain text', async () => {
+	const { tape, ticker } = await mountTicker('<a href="/release/">Title</a>', 300, 180);
+
+	ticker.text = 'Title';
+	await nextTask();
+
+	expect(tape.getHTML()).toBe('Title');
+});
+
 test('a press drags the tape once it has moved past the threshold, clamps at each end and lets go into a leg from there', async () => {
 	const { legs } = fakeLegs();
 	const { control, tape } = await mountTicker('A long title', 300, 355);
@@ -304,6 +329,45 @@ test('content that fits is not dragged', async () => {
 
 	expect(control.matches('[data-sonic-dragging]')).toBe(false);
 	expect(tape.style.translate).toBe('');
+});
+
+test('disabled mid-drag, the tape lets go back at the start with no leg and takes no press, and enabled it sets off after the hold', async () => {
+	const { legs } = fakeLegs();
+	const { control, tape, ticker } = await mountTicker('A long title', 300, 355);
+	const before = legs.length;
+
+	pointerAt(control, 'pointerdown', { clientX: 200 });
+	pointerAt(control, 'pointermove', { clientX: 190 });
+	pointerAt(control, 'pointermove', { clientX: 170 });
+	expect(tape.style.translate).toBe('-20px');
+
+	ticker.disabled = true;
+	expect(control.matches('[data-sonic-dragging]')).toBe(false);
+	expect(tape.style.translate).toBe('');
+	expect(control.dataset.sonicClipped).toBe('end');
+
+	pointerAt(control, 'pointermove', { clientX: 150 });
+	pointerAt(control, 'pointerup', { clientX: 150 });
+	pointerAt(control, 'pointerdown', { clientX: 200 });
+	pointerAt(control, 'pointermove', { clientX: 150 });
+	expect(control.matches('[data-sonic-dragging]')).toBe(false);
+	expect(tape.style.translate).toBe('');
+	expect(legs).toHaveLength(before);
+
+	pointerAt(control, 'pointerup', { clientX: 150 });
+	ticker.disabled = false;
+	expect(legs.at(-1)).toEqual({ delay: 2000, duration: 1375, translate: ['0px', '-55px'] });
+});
+
+test('a ticker disabled from the start runs no leg', async () => {
+	const { legs } = fakeLegs();
+
+	Object.assign(widths, { box: 300, tape: 355 });
+	document.body.innerHTML = '<sonic-ticker disabled>A long title</sonic-ticker>';
+	await nextTask();
+
+	expect(document.querySelector('.sonic-ticker')?.matches('[data-sonic-overflowing]')).toBe(true);
+	expect(legs).toEqual([]);
 });
 
 test('text replaces every child, keeps the control and reads back', async () => {

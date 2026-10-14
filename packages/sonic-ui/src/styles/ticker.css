@@ -59,7 +59,7 @@
 		user-select: none;
 	}
 
-	.sonic-ticker[data-sonic-overflowing] {
+	.sonic-ticker[data-sonic-overflowing]:not([disabled] > *) {
 		text-overflow: clip;
 		touch-action: var(--sonic-touch-action, pan-y);
 		mask: linear-gradient(
@@ -75,7 +75,7 @@
 		}
 	}
 
-	.sonic-ticker[data-sonic-overflowing]:not(:any-link *) {
+	.sonic-ticker[data-sonic-overflowing]:not(:any-link *, [disabled] > *) {
 		cursor: grab;
 	}
 

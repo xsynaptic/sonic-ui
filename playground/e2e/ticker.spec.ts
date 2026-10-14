@@ -282,6 +282,56 @@ test('new content mid-travel puts the tape back at the start, held', async ({ pa
 	await expect(ticker.locator('.sonic-ticker')).toHaveAttribute('data-sonic-clipped', 'end');
 });
 
+test('the same text written mid-travel leaves the tape where it is', async ({ page }) => {
+	const ticker = page.locator('#steady');
+	const position = await holdMidTravel(ticker);
+
+	expect(position).toBeGreaterThan(50);
+	await ticker.evaluate((host: HTMLElement & { text: string }) => {
+		const { text } = host;
+
+		host.text = text;
+	});
+	await page.evaluate(
+		() =>
+			new Promise((resolve) => {
+				setTimeout(resolve, 0);
+			}),
+	);
+
+	expect(await positionOf(ticker)).toBe(position);
+});
+
+test('disabled mid-travel, the tape rests at the start under the ellipsis with no mask and no grab', async ({
+	page,
+}) => {
+	const ticker = page.locator('#steady');
+	const control = ticker.locator('.sonic-ticker');
+
+	expect(await holdMidTravel(ticker)).toBeGreaterThan(50);
+	await ticker.evaluate((host: HTMLElement & { disabled: boolean }) => {
+		host.disabled = true;
+	});
+
+	const tape = await readTape(ticker);
+
+	expect(tape).toMatchObject({
+		clipped: 'end',
+		display: 'inline',
+		isOverflowing: true,
+		mask: 'none',
+		position: 0,
+	});
+	expect(tape.leg).toBeUndefined();
+	expect(
+		await control.evaluate((element) => {
+			const { cursor, textOverflow } = getComputedStyle(element);
+
+			return { cursor, textOverflow };
+		}),
+	).toEqual({ cursor: 'auto', textOverflow: 'ellipsis' });
+});
+
 test(
 	'paused by the host, the tape stops where it is and carries on from there',
 	{ tag: '@mobile' },
