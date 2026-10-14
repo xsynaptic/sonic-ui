@@ -1,5 +1,11 @@
 # @xsynaptic/sonic-ui
 
+## 0.28.1
+
+### Patch Changes
+
+- Ticker: setting `text` to the text it already shows no longer sends the tape back to the start, and `disabled` now holds the ticker at rest with no scrolling and no drag.
+
 ## 0.28.0
 
 ### Minor Changes
