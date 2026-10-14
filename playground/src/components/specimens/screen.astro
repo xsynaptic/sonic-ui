@@ -1,31 +1,37 @@
 ---
 import Cell from '#components/specimens/cell.astro';
+import Section from '#components/specimens/section.astro';
 import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 
 const screens = [
 	{ id: 'screen-frequency', label: 'Frequency', text: '440 Hz' },
 	{ id: 'screen-gain', label: 'Gain', text: '−6.0 dB' },
-	{ id: 'screen-note', label: 'Note', text: 'C♯3' },
 ];
 ---
 
-<SpecimenGrid>
-	{screens.map((screen) => (
-		<Cell id={screen.id} label={screen.label} span="wide">
-			<div aria-labelledby={screen.id} class="sonic-screen min-w-30 font-mono text-sm" role="group">
-				{screen.text}
+<Section title="Text">
+	<SpecimenGrid>
+		{screens.map((screen) => (
+			<Cell id={screen.id} label={screen.label} span="wide">
+				<div
+					aria-labelledby={screen.id}
+					class="sonic-screen min-w-30 font-mono text-sm"
+					role="group"
+				>
+					{screen.text}
+				</div>
+			</Cell>
+		))}
+	</SpecimenGrid>
+	<SpecimenGrid size="large">
+		<Cell id="screen-note" label="Note" span="wide">
+			<div
+				aria-labelledby="screen-note"
+				class="sonic-screen min-w-72 font-mono text-4xl [--sonic-screen-size:6rem]"
+				role="group"
+			>
+				C♯3
 			</div>
 		</Cell>
-	))}
-</SpecimenGrid>
-<SpecimenGrid size="large">
-	<Cell id="screen-large-frequency" label="Frequency, large" span="wide">
-		<div
-			aria-labelledby="screen-large-frequency"
-			class="sonic-screen min-w-72 font-mono text-4xl [--sonic-screen-size:6rem]"
-			role="group"
-		>
-			440 Hz
-		</div>
-	</Cell>
-</SpecimenGrid>
+	</SpecimenGrid>
+</Section>

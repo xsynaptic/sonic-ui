@@ -2,6 +2,7 @@
 import Lock from '@lucide/astro/icons/lock';
 
 import Cell from '#components/specimens/cell.astro';
+import Section from '#components/specimens/section.astro';
 import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 
 const sliders = [
@@ -16,59 +17,64 @@ const modes = [
 ] as const;
 ---
 
-<SpecimenGrid>
-	<div class="grid w-full justify-items-center gap-6" data-split-demo>
-		<sonic-segmented aria-label="Mode" class="font-mono" data-split-mode value="proportional">
-			{modes.map(([value, label]) => (
-				<span data-sonic-value={value}>{label}</span>
-			))}
-		</sonic-segmented>
-		<sonic-split aria-label="Three-way split" class="flex gap-8">
-			{sliders.map((slider) => (
-				<div class="grid justify-items-center gap-2">
-					<sonic-slider
-						aria-labelledby={slider.id}
-						class="[--sonic-slider-length:9rem]"
-						orientation="vertical"
-						value={slider.value}
-					></sonic-slider>
-					<span
-						aria-hidden="true"
-						class="sonic-screen font-mono text-xs tabular-nums min-w-10 [--sonic-screen-size:1.25rem]"
-						data-split-readout
-					>
-						{slider.value}
-					</span>
-					<sonic-button aria-label={`Lock ${slider.label}`} data-split-lock latching>
-						<Lock aria-hidden="true" />
-					</sonic-button>
-					<span
-						class="font-mono text-[0.625rem] tracking-[0.14em] text-text-muted uppercase"
-						id={slider.id}
-					>
-						{slider.label}
-					</span>
+<Section title="Shares">
+	<SpecimenGrid>
+		<div class="contents" data-split-demo>
+			<Cell id="split-mode" label="Mode" span="full">
+				<sonic-segmented
+					aria-labelledby="split-mode"
+					class="font-mono"
+					data-split-mode
+					value="proportional"
+				>
+					{modes.map(([value, label]) => (
+						<span data-sonic-value={value}>{label}</span>
+					))}
+				</sonic-segmented>
+			</Cell>
+			<sonic-split aria-label="Three-way split" class="contents">
+				{sliders.map((slider) => (
+					<Cell id={slider.id} isStacked={true} label={slider.label}>
+						<sonic-slider
+							aria-labelledby={slider.id}
+							class="[--sonic-slider-length:9rem]"
+							orientation="vertical"
+							value={slider.value}
+						></sonic-slider>
+						<span
+							aria-hidden="true"
+							class="sonic-screen min-w-10 font-mono text-xs tabular-nums [--sonic-screen-size:1.25rem]"
+							data-split-readout
+						>
+							{slider.value}
+						</span>
+						<sonic-button aria-label={`Lock ${slider.label}`} data-split-lock latching>
+							<Lock aria-hidden="true" />
+						</sonic-button>
+					</Cell>
+				))}
+			</sonic-split>
+		</div>
+	</SpecimenGrid>
+</Section>
+<Section title="Members">
+	<SpecimenGrid>
+		<sonic-split aria-label="Mixed members" class="contents" total="150">
+			<Cell id="split-dial" label="Low">
+				<sonic-dial aria-labelledby="split-dial" readout value="60"></sonic-dial>
+			</Cell>
+			<Cell id="split-slider" label="Mid" span="wide">
+				<sonic-slider aria-labelledby="split-slider" readout value="50"></sonic-slider>
+			</Cell>
+			<Cell id="split-number" label="High">
+				<div class="sonic-screen w-fit [font-family:var(--sonic-glass-font,var(--font-mono))] [--sonic-screen-inset-ratio:0] [--sonic-screen-size:1.75rem]">
+					<sonic-number aria-labelledby="split-number" value="40"></sonic-number>
 				</div>
-			))}
+			</Cell>
 		</sonic-split>
-	</div>
-</SpecimenGrid>
-<SpecimenGrid size="large">
-	<sonic-split
-		aria-label="Mixed members"
-		class="flex w-full flex-wrap items-end justify-center gap-8"
-		total="150"
-	>
-		<Cell id="split-dial" label="Dial">
-			<sonic-dial aria-labelledby="split-dial" readout value="60"></sonic-dial>
-		</Cell>
-		<Cell id="split-slider" label="Slider" span="wide">
-			<sonic-slider aria-labelledby="split-slider" readout value="50"></sonic-slider>
-		</Cell>
-		<Cell id="split-number" label="Number box">
-			<div class="sonic-screen w-fit [font-family:var(--sonic-glass-font,var(--font-mono))] [--sonic-screen-inset-ratio:0] [--sonic-screen-size:1.75rem]">
-				<sonic-number aria-labelledby="split-number" value="40"></sonic-number>
-			</div>
-		</Cell>
-	</sonic-split>
-</SpecimenGrid>
+	</SpecimenGrid>
+</Section>
+
+<script>
+	import '#scripts/specimens/split.ts';
+</script>

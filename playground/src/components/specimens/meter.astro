@@ -1,9 +1,9 @@
 ---
 import Cell from '#components/specimens/cell.astro';
+import Section from '#components/specimens/section.astro';
 import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 
 const ladder = '-30 -25 -20 -16 -13 -10 -7 -4 0';
-const shortLadder = '-24 -12 -6 -3 0';
 const ballistics = [
 	{ id: 'meter-ppm-1', label: 'PPM I', mode: 'ppm-1' },
 	{ id: 'meter-ppm-2', label: 'PPM II', mode: 'ppm-2' },
@@ -11,101 +11,65 @@ const ballistics = [
 ];
 ---
 
-<SpecimenGrid>
-	<Cell id="meter-stereo" label="Stereo">
-		<div aria-labelledby="meter-stereo" class="flex gap-1" role="group">
-			<sonic-meter></sonic-meter>
-			<sonic-meter></sonic-meter>
-		</div>
-	</Cell>
-	<Cell id="meter-horizontal" label="Horizontal" span="wide">
-		<div aria-labelledby="meter-horizontal" class="grid gap-1" role="group">
-			<sonic-meter orientation="horizontal"></sonic-meter>
-			<sonic-meter orientation="horizontal"></sonic-meter>
-		</div>
-	</Cell>
-	<Cell id="meter-ladder" label="Ladder">
-		<div
-			aria-labelledby="meter-ladder"
-			class="flex gap-1 [--sonic-meter-clip-from:-4] [--sonic-meter-hot-from:-10]"
-			role="group"
-		>
-			<sonic-meter segments={ladder}></sonic-meter>
-			<sonic-meter segments={ladder}></sonic-meter>
-		</div>
-	</Cell>
-	<Cell id="meter-reduction" label="Reduction">
-		<div aria-labelledby="meter-reduction" role="group">
-			<sonic-meter data-demo="reduction" max="0" min="-24" origin="0" value="0"></sonic-meter>
-		</div>
-	</Cell>
-	<Cell id="meter-short-ladder" label="Short ladder" span="wide">
-		<div aria-labelledby="meter-short-ladder" class="grid gap-1" role="group">
-			<sonic-meter orientation="horizontal" segments={shortLadder}></sonic-meter>
-			<sonic-meter orientation="horizontal" segments={shortLadder}></sonic-meter>
-		</div>
-	</Cell>
-	<Cell id="meter-correlation" label="Correlation" span="wide">
-		<div aria-labelledby="meter-correlation" role="group">
-			<sonic-meter
-				data-demo="correlation"
-				max="1"
-				min="-1"
-				orientation="horizontal"
-				origin="0"
-				value="0"
-			></sonic-meter>
-		</div>
-	</Cell>
-	{ballistics.map(({ id, label, mode }) => (
-		<Cell id={id} label={label}>
-			<div aria-labelledby={id} role="group">
-				<sonic-meter ballistics={mode} />
+<Section title="Levels">
+	<SpecimenGrid>
+		<Cell id="meter-stereo" label="Master">
+			<div aria-labelledby="meter-stereo" class="flex gap-1" role="group">
+				<sonic-meter></sonic-meter>
+				<sonic-meter></sonic-meter>
 			</div>
 		</Cell>
-	))}
-	<Cell id="meter-peak" label="Peak report" span="wide">
-		<div
-			aria-labelledby="meter-peak"
-			class="grid justify-items-center gap-2"
-			data-peak-report="-1"
-			role="group"
-		>
-			<sonic-meter orientation="horizontal" />
-			<div class="flex gap-2 font-mono text-[0.5rem]">
-				<sonic-button aria-label="Read peak" data-peak-read>
-					<span aria-hidden="true">PEAK</span>
-				</sonic-button>
-				<sonic-button aria-label="Reset peak" data-peak-reset>
-					<span aria-hidden="true">RST</span>
-				</sonic-button>
+		<Cell id="meter-ladder" label="Channel">
+			<div
+				aria-labelledby="meter-ladder"
+				class="flex gap-1 [--sonic-meter-clip-from:-4] [--sonic-meter-hot-from:-10]"
+				role="group"
+			>
+				<sonic-meter segments={ladder}></sonic-meter>
+				<sonic-meter segments={ladder}></sonic-meter>
 			</div>
-			<p class="min-h-4 font-mono text-[0.625rem] text-text">
-				<span role="status" />
-				<span class="text-danger" role="alert" />
-			</p>
-		</div>
-	</Cell>
-</SpecimenGrid>
-<SpecimenGrid size="large">
-	<Cell id="meter-large-stereo" label="Stereo, large">
-		<div
-			aria-labelledby="meter-large-stereo"
-			class="flex gap-2 [--sonic-meter-length:16rem] [--sonic-meter-size:1.5rem]"
-			role="group"
-		>
-			<sonic-meter></sonic-meter>
-			<sonic-meter></sonic-meter>
-		</div>
-	</Cell>
-	<Cell id="meter-large-ladder" label="Ladder, large">
-		<div
-			aria-labelledby="meter-large-ladder"
-			class="flex gap-2 [--sonic-meter-clip-from:-4] [--sonic-meter-hot-from:-10] [--sonic-meter-length:16rem] [--sonic-meter-size:1.5rem]"
-			role="group"
-		>
-			<sonic-meter segments={ladder}></sonic-meter>
-			<sonic-meter segments={ladder}></sonic-meter>
-		</div>
-	</Cell>
-</SpecimenGrid>
+		</Cell>
+		<Cell id="meter-horizontal" label="Output" span="wide">
+			<div aria-labelledby="meter-horizontal" class="grid gap-1" role="group">
+				<sonic-meter orientation="horizontal"></sonic-meter>
+				<sonic-meter orientation="horizontal"></sonic-meter>
+			</div>
+		</Cell>
+	</SpecimenGrid>
+</Section>
+<Section title="Values">
+	<SpecimenGrid>
+		<Cell id="meter-reduction" label="Reduction">
+			<div aria-labelledby="meter-reduction" role="group">
+				<sonic-meter data-demo="reduction" max="0" min="-24" origin="0" value="0"></sonic-meter>
+			</div>
+		</Cell>
+		<Cell id="meter-correlation" label="Correlation" span="wide">
+			<div aria-labelledby="meter-correlation" role="group">
+				<sonic-meter
+					data-demo="correlation"
+					max="1"
+					min="-1"
+					orientation="horizontal"
+					origin="0"
+					value="0"
+				></sonic-meter>
+			</div>
+		</Cell>
+	</SpecimenGrid>
+</Section>
+<Section title="Ballistics">
+	<SpecimenGrid>
+		{ballistics.map(({ id, label, mode }) => (
+			<Cell id={id} label={label}>
+				<div aria-labelledby={id} role="group">
+					<sonic-meter ballistics={mode} />
+				</div>
+			</Cell>
+		))}
+	</SpecimenGrid>
+</Section>
+
+<script>
+	import '#scripts/specimens/motion.ts';
+</script>

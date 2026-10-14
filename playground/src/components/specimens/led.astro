@@ -1,80 +1,54 @@
 ---
-import Power from '@lucide/astro/icons/power';
-import Repeat from '@lucide/astro/icons/repeat';
-
 import Cell from '#components/specimens/cell.astro';
+import Section from '#components/specimens/section.astro';
 import SpecimenGrid from '#components/specimens/specimen-grid.astro';
+
+const lamps = [
+	{ id: 'led-off', label: 'Off' },
+	{ id: 'led-on', label: 'Lit', lit: '' },
+	{ id: 'led-idle', label: 'Idle', lit: 'idle' },
+	{ id: 'led-ok', label: 'Ok', lit: 'ok' },
+	{ id: 'led-warning', label: 'Warning', lit: 'warning' },
+	{ id: 'led-danger', label: 'Danger', lit: 'danger' },
+];
 ---
 
-<SpecimenGrid>
-	<Cell id="led-off" label="Off">
-		<span class="sonic-led"></span>
-	</Cell>
-	<Cell id="led-on" label="On">
-		<span class="sonic-led" data-sonic-lit></span>
-	</Cell>
-	<Cell id="led-green" label="Green">
-		<span class="sonic-led [--sonic-lit:#22c55e]" data-sonic-lit></span>
-	</Cell>
-	<Cell id="led-ok" label="Ok">
-		<span class="sonic-led" data-sonic-lit="ok"></span>
-	</Cell>
-	<Cell id="led-idle" label="Idle">
-		<span class="sonic-led" data-sonic-lit="idle"></span>
-	</Cell>
-	<Cell id="led-warning" label="Warning">
-		<span class="sonic-led" data-sonic-lit="warning"></span>
-	</Cell>
-	<Cell id="led-danger" label="Danger">
-		<span class="sonic-led" data-sonic-lit="danger"></span>
-	</Cell>
-	<Cell id="led-status" label="Status">
-		<span class="sonic-led" data-sonic-lit></span>
-		<span class="sonic-led" data-sonic-lit="warning"></span>
-		<span class="sonic-led" data-sonic-lit="danger"></span>
-	</Cell>
-	<Cell id="led-input" label="Phono or line">
-		<sonic-button
-			aria-labelledby="led-input"
-			class="font-mono [--sonic-button-font-ratio:0.25]"
-			data-two-colour
-			latching
-		>
-			<span class="sonic-led" data-sonic-lit="ok"></span>
-			<span aria-hidden="true">PH</span>
-		</sonic-button>
-	</Cell>
-	<Cell id="led-power" label="Power">
-		<sonic-button aria-labelledby="led-power" latching pressed>
-			<span class="sonic-led"></span>
-		</sonic-button>
-	</Cell>
-	<Cell id="led-loop" label="Loop">
-		<sonic-button aria-labelledby="led-loop" latching>
-			<span class="sonic-led"></span>
-			<Repeat aria-hidden="true" />
-		</sonic-button>
-	</Cell>
-	<Cell id="led-sync" label="Sync">
-		<sonic-button aria-labelledby="led-sync" class="font-mono text-[0.5rem]" latching>
-			<span class="sonic-led"></span>
-			<span aria-hidden="true">SYNC</span>
-		</sonic-button>
-	</Cell>
-</SpecimenGrid>
-<SpecimenGrid size="large">
-	<Cell id="led-large-power" label="Power, large">
-		<sonic-button
-			aria-labelledby="led-large-power"
-			class="[--sonic-button-size:6rem]"
-			latching
-			pressed
-		>
-			<span class="sonic-led"></span>
-			<Power aria-hidden="true" />
-		</sonic-button>
-	</Cell>
-	<Cell id="led-large-ok" label="Ok, large">
-		<span class="sonic-led [--sonic-led-size:2rem]" data-sonic-lit="ok"></span>
-	</Cell>
-</SpecimenGrid>
+<Section title="Lit colours">
+	<SpecimenGrid>
+		{lamps.map((lamp) => (
+			<Cell id={lamp.id} label={lamp.label}>
+				<span class="sonic-led" data-sonic-lit={lamp.lit}></span>
+			</Cell>
+		))}
+	</SpecimenGrid>
+</Section>
+<Section title="On buttons">
+	<SpecimenGrid>
+		<Cell id="led-input" label="Phono or line">
+			<sonic-button
+				aria-labelledby="led-input"
+				class="font-mono [--sonic-button-font-ratio:0.25]"
+				data-two-colour
+				latching
+			>
+				<span class="sonic-led" data-sonic-lit="ok"></span>
+				<span aria-hidden="true">PH</span>
+			</sonic-button>
+		</Cell>
+		<Cell id="led-power" label="Power">
+			<sonic-button aria-labelledby="led-power" latching pressed>
+				<span class="sonic-led"></span>
+			</sonic-button>
+		</Cell>
+		<Cell id="led-sync" label="Sync">
+			<sonic-button aria-labelledby="led-sync" class="font-mono text-[0.5rem]" latching>
+				<span class="sonic-led"></span>
+				<span aria-hidden="true">SYNC</span>
+			</sonic-button>
+		</Cell>
+	</SpecimenGrid>
+</Section>
+
+<script>
+	import '#scripts/two-colour.ts';
+</script>

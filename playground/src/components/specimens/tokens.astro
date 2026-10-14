@@ -1,0 +1,22 @@
+---
+import InstrumentPanel from '#components/specimens/instrument-panel.astro';
+import TokenList from '#components/specimens/token-list.astro';
+---
+
+<div class="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]" data-tokens>
+	<div data-tokens-panel>
+		<InstrumentPanel />
+	</div>
+	<TokenList />
+	<span aria-hidden="true" class="hidden" data-tokens-probe></span>
+</div>
+
+<script>
+	import '#scripts/markers.ts';
+	import '#scripts/peaks.ts';
+	import '#scripts/samples.ts';
+	import '#scripts/specimens/motion.ts';
+	import '#scripts/specimens/screen-follow.ts';
+	import '#scripts/specimens/tokens.ts';
+	import '#scripts/specimens/xy.ts';
+</script>

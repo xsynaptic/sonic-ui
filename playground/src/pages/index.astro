@@ -1,28 +1,7 @@
 ---
-import Play from '@lucide/astro/icons/play';
-
+import LandingTiles from '#components/landing-tiles.astro';
 import Layout from '#components/layout.astro';
-import ButtonSpecimens from '#components/specimens/button.astro';
-import DialSpecimens from '#components/specimens/dial.astro';
-import EnvelopeSpecimens from '#components/specimens/envelope.astro';
-import LedSpecimens from '#components/specimens/led.astro';
-import MeterSpecimens from '#components/specimens/meter.astro';
-import NumberSpecimens from '#components/specimens/number.astro';
-import PanelSpecimens from '#components/specimens/panel.astro';
-import RingSpecimens from '#components/specimens/ring.astro';
-import ScreenSpecimens from '#components/specimens/screen.astro';
-import Section from '#components/specimens/section.astro';
-import SegmentedSpecimens from '#components/specimens/segmented.astro';
-import SliderSpecimens from '#components/specimens/slider.astro';
-import SpectrumSpecimens from '#components/specimens/spectrum.astro';
-import SplitSpecimens from '#components/specimens/split.astro';
-import SwitchSpecimens from '#components/specimens/switch.astro';
-import TickerSpecimens from '#components/specimens/ticker.astro';
-import ToggleSpecimens from '#components/specimens/toggle.astro';
-import Tuner from '#components/specimens/tuner.astro';
-import WaveformSpecimens from '#components/specimens/waveform.astro';
-import WavestripSpecimens from '#components/specimens/wavestrip.astro';
-import XySpecimens from '#components/specimens/xy.astro';
+import RunButton from '#components/run-button.astro';
 import Wordmark from '#components/wordmark.astro';
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
@@ -34,29 +13,7 @@ const demos = [
 	},
 	{ href: `${base}/tape-echo/`, label: 'Tape echo', lead: 'A two-head echo on Web Audio' },
 	{ href: `${base}/web-player/`, label: 'Web player', lead: 'A docked bar on a simulated stream' },
-];
-
-const sections = [
-	{ id: 'overview', label: import.meta.env.DEV ? 'Tuner' : 'Overview' },
-	{ id: 'dial', label: 'Dial' },
-	{ id: 'slider', label: 'Slider' },
-	{ id: 'button', label: 'Button' },
-	{ id: 'switch', label: 'Switch' },
-	{ id: 'toggle', label: 'Toggle' },
-	{ id: 'segmented', label: 'Segmented' },
-	{ id: 'number', label: 'Number box' },
-	{ id: 'led', label: 'LED' },
-	{ id: 'meter', label: 'Meter' },
-	{ id: 'screen', label: 'Screen' },
-	{ id: 'ticker', label: 'Ticker' },
-	{ id: 'wavestrip', label: 'Wavestrip' },
-	{ id: 'waveform', label: 'Waveform' },
-	{ id: 'spectrum', label: 'Spectrum' },
-	{ id: 'xy', label: 'XY pad' },
-	{ id: 'envelope', label: 'Envelope' },
-	{ id: 'ring', label: 'Ring' },
-	{ id: 'split', label: 'Split' },
-	{ id: 'panel', label: 'Panel' },
+	{ href: `${base}/tokens/`, label: 'Tokens', lead: 'See what each token does to a control' },
 ];
 ---
 
@@ -64,17 +21,15 @@ const sections = [
 	description="Native custom elements for audio interfaces: dials, sliders, meters, waveforms and more, skinned with tokens."
 	title="sonic-ui"
 >
-	<sonic-button aria-label="Run" data-run latching pressed slot="controls">
-		<Play aria-hidden="true" />
-	</sonic-button>
+	<RunButton slot="controls" />
 	<header class="mb-10 grid justify-items-start gap-5">
 		<h1 class="text-[clamp(2.75rem,13vw,6rem)] leading-none text-text-strong">
 			<Wordmark />
 		</h1>
 		<p class="max-w-2xl text-lg leading-relaxed text-text-muted">
 			Native custom elements for audio interfaces: dials, sliders, meters, waveforms and more,
-			skinned with tokens. Every control is on this page: drag one, press one, or focus it and use
-			the keyboard.
+			skinned with tokens. Every tile below is live: drag one, press one, or open its page for the
+			rest.
 		</p>
 		<pre class="rounded bg-surface px-3 py-2 font-mono text-[0.8125rem] text-text">pnpm add @xsynaptic/sonic-ui</pre>
 		<ul aria-label="Demos" class="flex flex-wrap gap-3">
@@ -90,98 +45,5 @@ const sections = [
 			))}
 		</ul>
 	</header>
-	<nav aria-label="Contents" class="mb-10">
-		<ul class="flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs">
-			{sections.map((section) => (
-				<li>
-					<a
-						class="inline-flex min-h-6 items-center text-text-muted underline-offset-4 hover:text-text-strong hover:underline"
-						href={`#${section.id}`}
-					>
-						{section.label}
-					</a>
-				</li>
-			))}
-		</ul>
-	</nav>
-	<Section id="overview" title={import.meta.env.DEV ? 'Tuner' : 'Overview'}>
-		<Tuner />
-	</Section>
-	<Section id="dial" title="Dial">
-		<DialSpecimens />
-	</Section>
-	<Section id="slider" title="Slider">
-		<SliderSpecimens />
-	</Section>
-	<Section id="button" title="Button">
-		<ButtonSpecimens />
-	</Section>
-	<Section id="switch" title="Switch">
-		<SwitchSpecimens />
-	</Section>
-	<Section id="toggle" title="Toggle">
-		<ToggleSpecimens />
-	</Section>
-	<Section id="segmented" title="Segmented">
-		<SegmentedSpecimens />
-	</Section>
-	<Section id="number" title="Number box">
-		<NumberSpecimens />
-	</Section>
-	<Section id="led" title="LED">
-		<LedSpecimens />
-	</Section>
-	<Section id="meter" title="Meter">
-		<MeterSpecimens />
-	</Section>
-	<Section id="screen" title="Screen">
-		<ScreenSpecimens />
-	</Section>
-	<Section id="ticker" title="Ticker">
-		<TickerSpecimens />
-	</Section>
-	<Section id="wavestrip" title="Wavestrip">
-		<WavestripSpecimens />
-	</Section>
-	<Section id="waveform" title="Waveform">
-		<WaveformSpecimens />
-	</Section>
-	<Section id="spectrum" title="Spectrum">
-		<SpectrumSpecimens />
-	</Section>
-	<Section id="xy" title="XY pad">
-		<XySpecimens />
-	</Section>
-	<Section id="envelope" title="Envelope">
-		<EnvelopeSpecimens />
-	</Section>
-	<Section id="ring" title="Ring">
-		<RingSpecimens />
-	</Section>
-	<Section id="split" title="Split">
-		<SplitSpecimens />
-	</Section>
-	<Section id="panel" title="Panel">
-		<PanelSpecimens />
-	</Section>
-	<Fragment slot="scripts">
-		<script>
-			import '#scripts/specimens/motion.ts';
-			import '#scripts/specimens/xy.ts';
-			import '#scripts/specimens/screen-follow.ts';
-			import '#scripts/specimens/split.ts';
-			import '#scripts/specimens/ticker.ts';
-			import '#scripts/specimens/legend.ts';
-			import '#scripts/specimens/zoom.ts';
-			import '#scripts/specimens/bracket.ts';
-			import '#scripts/specimens/preview.ts';
-			import '#scripts/buffered.ts';
-			import '#scripts/samples.ts';
-			import '#scripts/markers.ts';
-			import '#scripts/peaks.ts';
-			import '#scripts/spectrum-frames.ts';
-			import '#scripts/specimens/tuner.ts';
-			import '#scripts/two-colour.ts';
-		</script>
-	</Fragment>
+	<LandingTiles />
 </Layout>

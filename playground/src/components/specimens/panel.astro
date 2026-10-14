@@ -1,45 +1,54 @@
 ---
+import Cell from '#components/specimens/cell.astro';
+import Section from '#components/specimens/section.astro';
+import SpecimenGrid from '#components/specimens/specimen-grid.astro';
+
 const panels = [
-	{ depth: undefined, id: 'panel-raised', title: 'Raised' },
-	{ depth: '0rem', id: 'panel-printed', title: 'Printed' },
-	{ depth: '-0.125rem', id: 'panel-tray', title: 'Tray' },
+	{ depth: undefined, id: 'panel-raised', label: 'Raised', title: 'Filter' },
+	{ depth: '0rem', id: 'panel-printed', label: 'Printed', title: 'Delay' },
+	{ depth: '-0.125rem', id: 'panel-tray', label: 'Tray', title: 'Tone' },
 	{
 		depth: undefined,
 		id: 'panel-tinted',
+		label: 'Tinted',
 		text: 'light-dark(oklch(30% 0.06 255deg), oklch(92% 0.03 255deg))',
 		tint: 'light-dark(oklch(91% 0.045 255deg), oklch(33% 0.07 255deg))',
-		title: 'Tinted',
+		title: 'Output',
 	},
 ];
 ---
 
-<div class="grid grid-cols-[repeat(auto-fill,minmax(13rem,1fr))] gap-4 surface p-5 text-text-muted">
-	{panels.map((panel) => (
-		<section
-			aria-labelledby={panel.id}
-			class="sonic-panel grid gap-3 p-4"
-			style={{
-				'--sonic-panel': panel.tint,
-				'--sonic-panel-depth': panel.depth,
-				'--sonic-panel-text': panel.text,
-			}}
-		>
-			<h3
-				class="sonic-panel-title font-mono text-[0.625rem] tracking-[0.14em] uppercase"
-				id={panel.id}
-			>
-				{panel.title}
-			</h3>
-			<div class="flex items-center justify-center gap-4">
-				<sonic-dial aria-label={`${panel.title} level`} value="60"></sonic-dial>
-				<sonic-button aria-label={`${panel.title} on`} latching>
-					<span class="sonic-led"></span>
-				</sonic-button>
-			</div>
-			<hr class="sonic-panel-rule" />
-			<div class="flex justify-center">
-				<sonic-switch aria-label={`${panel.title} sync`}></sonic-switch>
-			</div>
-		</section>
-	))}
-</div>
+<Section title="Depths">
+	<SpecimenGrid>
+		{panels.map((panel) => (
+			<Cell id={`${panel.id}-caption`} label={panel.label} span="wide">
+				<section
+					aria-labelledby={panel.id}
+					class="sonic-panel grid w-full gap-3 p-4"
+					style={{
+						'--sonic-panel': panel.tint,
+						'--sonic-panel-depth': panel.depth,
+						'--sonic-panel-text': panel.text,
+					}}
+				>
+					<h3
+						class="sonic-panel-title font-mono text-[0.625rem] tracking-[0.14em] uppercase"
+						id={panel.id}
+					>
+						{panel.title}
+					</h3>
+					<div class="flex items-center justify-center gap-4">
+						<sonic-dial aria-label={`${panel.title} level`} value="60"></sonic-dial>
+						<sonic-button aria-label={`${panel.title} on`} latching>
+							<span class="sonic-led"></span>
+						</sonic-button>
+					</div>
+					<hr class="sonic-panel-rule" />
+					<div class="flex justify-center">
+						<sonic-switch aria-label={`${panel.title} sync`}></sonic-switch>
+					</div>
+				</section>
+			</Cell>
+		))}
+	</SpecimenGrid>
+</Section>

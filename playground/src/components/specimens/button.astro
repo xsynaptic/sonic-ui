@@ -1,5 +1,5 @@
 ---
-import ListMusic from '@lucide/astro/icons/list-music';
+import Circle from '@lucide/astro/icons/circle';
 import Play from '@lucide/astro/icons/play';
 import SkipForward from '@lucide/astro/icons/skip-forward';
 import Volume from '@lucide/astro/icons/volume';
@@ -8,135 +8,93 @@ import Volume2 from '@lucide/astro/icons/volume-2';
 
 import Cell from '#components/specimens/cell.astro';
 import MuteButton from '#components/specimens/mute-button.astro';
+import Section from '#components/specimens/section.astro';
 import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 
 const hotCues = ['oklch(76.9% 0.165 70deg)', '#22c55e', '#38bdf8', '#e879f9'];
+const pill =
+	'[--sonic-button-face-radius-ratio:0.5] [--sonic-button-font-ratio:0.6] [--sonic-button-padding-ratio:0.5] [--sonic-button-radius-ratio:0.5] [--sonic-button-size:1.25rem]';
 ---
 
-<SpecimenGrid>
-	<Cell id="button-play" label="Play">
-		<sonic-button aria-labelledby="button-play">
-			<Play aria-hidden="true" />
-		</sonic-button>
-	</Cell>
-	<Cell id="button-mute" label="Mute">
-		<MuteButton isPressed={true} labelledby="button-mute" />
-	</Cell>
-	<Cell id="button-momentary" label="Momentary">
-		<sonic-button aria-labelledby="button-momentary" momentary />
-	</Cell>
-	<Cell id="button-armed" label="Armed">
-		<sonic-button aria-labelledby="button-armed" armed latching>
-			<Play aria-hidden="true" />
-		</sonic-button>
-	</Cell>
-	<Cell id="button-armed-led" label="Armed, LED">
-		<sonic-button aria-labelledby="button-armed-led" armed latching>
-			<span class="sonic-led"></span>
-		</sonic-button>
-	</Cell>
-	<Cell id="button-hot-cues" label="Hot cues" span="wide">
-		{hotCues.map((colour, index) => (
-			<sonic-button
-				aria-label={`Hot cue ${String(index + 1)}`}
-				armed
-				class="font-mono"
-				latching
-				pressed={index === 1 || undefined}
-				style={{ '--sonic-lit': colour }}
-			>
-				<span aria-hidden="true">{index + 1}</span>
+<Section title="Legends">
+	<SpecimenGrid>
+		<Cell id="button-play" label="Play">
+			<sonic-button aria-labelledby="button-play">
+				<Play aria-hidden="true" />
 			</sonic-button>
-		))}
-	</Cell>
-	<Cell id="button-labels" label="Labels" span="wide">
-		<sonic-button latching pressed>
-			<span>Shuffle</span>
-		</sonic-button>
-		<sonic-button>
-			<span>Clear</span>
-		</sonic-button>
-		<sonic-button
-			class="[--sonic-button-face-radius-ratio:0.5] [--sonic-button-font-ratio:0.6] [--sonic-button-padding-ratio:0.5] [--sonic-button-radius-ratio:0.5] [--sonic-button-size:1.25rem]"
-			latching
-		>
-			<span>Shuffle</span>
-		</sonic-button>
-		<sonic-button class="[--sonic-button-face-radius-ratio:0.5] [--sonic-button-font-ratio:0.6] [--sonic-button-padding-ratio:0.5] [--sonic-button-radius-ratio:0.5] [--sonic-button-size:1.25rem]">
-			<span>Clear</span>
-		</sonic-button>
-	</Cell>
-	<Cell id="button-loading" label="Loading">
-		<sonic-button aria-labelledby="button-loading" busy>
-			<Play aria-hidden="true" />
-		</sonic-button>
-	</Cell>
-	<Cell id="button-next" label="Soft-disabled">
-		<sonic-button aria-labelledby="button-next" soft-disabled>
-			<SkipForward aria-hidden="true" />
-		</sonic-button>
-	</Cell>
-	<Cell id="button-disabled" label="Disabled">
-		<sonic-button aria-labelledby="button-disabled" disabled>
-			<Play aria-hidden="true" />
-		</sonic-button>
-	</Cell>
-	<Cell id="button-legend" label="Level, by legend">
-		<sonic-button aria-labelledby="button-legend" data-legends="low medium full" legend="low">
-			<Volume aria-hidden="true" data-sonic-when="low" />
-			<Volume1 aria-hidden="true" data-sonic-when="medium" />
-			<Volume2 aria-hidden="true" data-sonic-when="full" />
-		</sonic-button>
-	</Cell>
-	<Cell id="button-popup" label="Opens a popup">
-		<sonic-button
-			aria-labelledby="button-popup"
-			controls="button-popup"
-			expanded="false"
-			popup="dialog"
-		>
-			<ListMusic aria-hidden="true" />
-		</sonic-button>
-	</Cell>
-	<Cell id="button-busy-delay" label="Loads after 400ms">
-		<sonic-button
-			aria-labelledby="button-busy-delay"
-			busy
-			class="[--sonic-button-busy-delay:400ms]"
-		>
-			<Play aria-hidden="true" />
-		</sonic-button>
-	</Cell>
-	<Cell id="button-target-size" label="Target size, 44px">
-		<sonic-button
-			aria-labelledby="button-target-size"
-			class="[--sonic-button-size:1.5rem] [--sonic-target-size:2.75rem]"
-		>
-			<Play aria-hidden="true" />
-		</sonic-button>
-	</Cell>
-</SpecimenGrid>
-<SpecimenGrid size="large">
-	<Cell id="button-large-play" label="Play, large">
-		<sonic-button aria-labelledby="button-large-play" class="[--sonic-button-size:6rem]">
-			<Play aria-hidden="true" />
-		</sonic-button>
-	</Cell>
-	<Cell id="button-large-mute" label="Mute, large">
-		<div class="[--sonic-button-size:6rem]">
-			<MuteButton isPressed={true} labelledby="button-large-mute" />
-		</div>
-	</Cell>
-	<Cell id="button-large-loading" label="Loading, large">
-		<sonic-button aria-labelledby="button-large-loading" busy class="[--sonic-button-size:6rem]">
-			<Play aria-hidden="true" />
-		</sonic-button>
-	</Cell>
-	<Cell id="button-large-momentary" label="Momentary, large">
-		<sonic-button
-			aria-labelledby="button-large-momentary"
-			class="[--sonic-button-size:6rem]"
-			momentary
-		/>
-	</Cell>
-</SpecimenGrid>
+		</Cell>
+		<Cell id="button-mute" label="Mute">
+			<MuteButton isPressed={true} labelledby="button-mute" />
+		</Cell>
+		<Cell id="button-volume" label="Volume">
+			<sonic-button aria-labelledby="button-volume" data-legends="low medium full" legend="low">
+				<Volume aria-hidden="true" data-sonic-when="low" />
+				<Volume1 aria-hidden="true" data-sonic-when="medium" />
+				<Volume2 aria-hidden="true" data-sonic-when="full" />
+			</sonic-button>
+		</Cell>
+		<Cell id="button-shuffle" label="Shuffle and clear" span="wide">
+			<sonic-button latching pressed>
+				<span>Shuffle</span>
+			</sonic-button>
+			<sonic-button>
+				<span>Clear</span>
+			</sonic-button>
+			<sonic-button class={pill} latching>
+				<span>Shuffle</span>
+			</sonic-button>
+			<sonic-button class={pill}>
+				<span>Clear</span>
+			</sonic-button>
+		</Cell>
+	</SpecimenGrid>
+</Section>
+<Section title="Lights">
+	<SpecimenGrid>
+		<Cell id="button-cue" label="Cue">
+			<sonic-button aria-labelledby="button-cue" momentary />
+		</Cell>
+		<Cell id="button-record" label="Record">
+			<sonic-button aria-labelledby="button-record" armed latching>
+				<Circle aria-hidden="true" />
+			</sonic-button>
+		</Cell>
+		<Cell id="button-hot-cues" label="Hot cues" span="wide">
+			{hotCues.map((colour, index) => (
+				<sonic-button
+					aria-label={`Hot cue ${String(index + 1)}`}
+					armed
+					class="font-mono"
+					latching
+					pressed={index === 1 || undefined}
+					style={{ '--sonic-lit': colour }}
+				>
+					<span aria-hidden="true">{index + 1}</span>
+				</sonic-button>
+			))}
+		</Cell>
+	</SpecimenGrid>
+</Section>
+<Section title="States">
+	<SpecimenGrid>
+		<Cell id="button-loading" label="Loading">
+			<sonic-button aria-labelledby="button-loading" busy>
+				<Play aria-hidden="true" />
+			</sonic-button>
+		</Cell>
+		<Cell id="button-next" label="Soft-disabled">
+			<sonic-button aria-labelledby="button-next" soft-disabled>
+				<SkipForward aria-hidden="true" />
+			</sonic-button>
+		</Cell>
+		<Cell id="button-disabled" label="Disabled">
+			<sonic-button aria-labelledby="button-disabled" disabled>
+				<Play aria-hidden="true" />
+			</sonic-button>
+		</Cell>
+	</SpecimenGrid>
+</Section>
+
+<script>
+	import '#scripts/specimens/legend.ts';
+</script>

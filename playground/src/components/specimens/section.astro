@@ -1,10 +1,10 @@
 ---
 interface Props {
-	id: string;
 	title: string;
 }
 
-const { id, title } = Astro.props;
+const { title } = Astro.props;
+const id = title.toLowerCase().replaceAll(' ', '-');
 ---
 
 <section class="mb-14 scroll-mt-24 border-t border-line pt-8" id={id}>

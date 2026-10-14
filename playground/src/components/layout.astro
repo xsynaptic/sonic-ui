@@ -16,10 +16,10 @@ const { description, title } = Astro.props;
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const pages = [
-	{ href: `${base}/`, label: 'Specimens' },
 	{ href: `${base}/club-mixer/`, label: 'Club mixer' },
 	{ href: `${base}/tape-echo/`, label: 'Tape echo' },
 	{ href: `${base}/web-player/`, label: 'Web player' },
+	{ href: `${base}/tokens/`, label: 'Tokens' },
 ];
 const skins = ['default', 'flat', 'amber', 'slate', 'lime', 'ivory'];
 const schemes = [
@@ -42,6 +42,13 @@ const linkClass =
 		} catch {
 			// Private windows can refuse storage
 		}
+	</script>
+	<script>
+		import '@xsynaptic/sonic-ui/define';
+	</script>
+	<script>
+		import '#scripts/skin.ts';
+		import '#scripts/formats.ts';
 	</script>
 	<nav class="top-0 sm:sticky z-10 border-b border-line bg-ground/90 backdrop-blur">
 		<div class="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-2 sm:px-8">
@@ -87,11 +94,5 @@ const linkClass =
 	<main class="mx-auto max-w-6xl px-4 py-10 sm:px-8" id="top">
 		<slot />
 	</main>
-	<script>
-		import '@xsynaptic/sonic-ui/define';
-
-		import '#scripts/skin.ts';
-		import '#scripts/formats.ts';
-	</script>
 	<slot name="scripts" />
 </Document>

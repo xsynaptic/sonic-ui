@@ -1,0 +1,57 @@
+---
+import type { Control } from '#scripts/controls.ts';
+
+import Layout from '#components/layout.astro';
+import PageHeader from '#components/page-header.astro';
+import RunButton from '#components/run-button.astro';
+import { categories, controls } from '#scripts/controls.ts';
+
+interface Props {
+	control: Control;
+	hasRun: boolean;
+}
+
+const { control, hasRun } = Astro.props;
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const groups = categories.map((category) => ({
+	...category,
+	members: controls.filter((member) => member.category === category.id),
+}));
+---
+
+<Layout description={control.lead} title={`${control.name}, sonic-ui`}>
+	<Fragment slot="controls">{hasRun ? <RunButton /> : undefined}</Fragment>
+	<div class="grid gap-x-12 gap-y-8 lg:grid-cols-[9rem_minmax(0,1fr)]">
+		<nav aria-label="Catalogue" class="lg:sticky lg:top-20 lg:self-start">
+			<div class="grid gap-3 lg:gap-6">
+				{groups.map((group) => (
+					<div class="flex flex-wrap items-baseline gap-x-4 gap-y-1 lg:grid lg:gap-1">
+						<h2 class="font-mono text-[0.625rem] font-bold tracking-[0.14em] text-text-strong uppercase lg:mb-1">
+							{group.label}
+						</h2>
+						<ul class="flex flex-wrap gap-x-4 lg:grid lg:gap-0.5">
+							{group.members.map((member) => (
+								<li>
+									<a
+										aria-current={member.slug === control.slug ? 'page' : undefined}
+										class="inline-flex min-h-6 items-center text-sm text-text-muted underline-offset-4 hover:text-text-strong aria-[current=page]:text-text-strong aria-[current=page]:underline"
+										href={`${base}/${member.slug}/`}
+									>
+										{member.name}
+									</a>
+								</li>
+							))}
+						</ul>
+					</div>
+				))}
+			</div>
+		</nav>
+		<div>
+			<PageHeader title={control.name} usage={control.usage}>
+				<Fragment slot="lead">{control.lead}</Fragment>
+			</PageHeader>
+			<slot />
+		</div>
+	</div>
+</Layout>

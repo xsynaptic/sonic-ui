@@ -1,0 +1,300 @@
+---
+import Repeat from '@lucide/astro/icons/repeat';
+
+import type { Slug } from '#scripts/controls.ts';
+
+import Cell from '#components/specimens/cell.astro';
+import FilterModes from '#components/specimens/filter-modes.astro';
+import Section from '#components/specimens/section.astro';
+import SpecimenGrid from '#components/specimens/specimen-grid.astro';
+import { categories, controls } from '#scripts/controls.ts';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+function tile(slug: Slug) {
+	const control = controls.find((entry) => entry.slug === slug);
+	if (!control) throw new Error(`No control ${slug}`);
+
+	return { href: `${base}/${slug}/`, id: `tile-${slug}`, label: control.name };
+}
+
+const masterStops = Array.from({ length: 11 }, (_stop, index) => index);
+const faderMarks = [
+	[10, '+10'],
+	[0, '0'],
+	[-10, '−10'],
+	[-30, '−30'],
+	[-60, '∞'],
+] as const;
+const hotCues = ['oklch(76.9% 0.165 70deg)', '#22c55e', '#38bdf8', '#e879f9'];
+const stages = [
+	{ format: 'milliseconds', label: 'Attack', stage: 'attack', value: 40 },
+	{ format: 'milliseconds', label: 'Decay', stage: 'decay', value: 300 },
+	{ format: 'percent', label: 'Sustain', stage: 'sustain', value: 60 },
+	{ format: 'milliseconds', label: 'Release', stage: 'release', value: 700 },
+];
+const shares = [
+	{ label: 'A', value: 50 },
+	{ label: 'B', value: 30 },
+	{ label: 'C', value: 20 },
+];
+---
+
+<Section title={categories[0].label}>
+	<SpecimenGrid>
+		<Cell {...tile('dial')} span="wide">
+			<sonic-dial
+				aria-labelledby="tile-dial"
+				class="[--sonic-dial-size:4rem] [--sonic-dial-scale-font-ratio:0.16]"
+				default="7"
+				max="10"
+				readout
+				step="0.5"
+				value="7"
+			>
+				{masterStops.map((stop) => (
+					<span data-sonic-value={stop}>{stop}</span>
+				))}
+			</sonic-dial>
+		</Cell>
+		<Cell {...tile('slider')}>
+			<sonic-slider
+				aria-labelledby="tile-slider"
+				class="[--sonic-slider-length:8rem] [--sonic-slider-size:3.25rem]"
+				data-format="db-kill"
+				default="0"
+				max="10"
+				midpoint="-12"
+				min="-60"
+				orientation="vertical"
+				readout
+				step="0.5"
+				value="0"
+			>
+				{faderMarks.map(([value, text]) => (
+					<span data-sonic-value={value}>{text}</span>
+				))}
+			</sonic-slider>
+		</Cell>
+		<Cell {...tile('button')} span="wide">
+			{hotCues.map((colour, index) => (
+				<sonic-button
+					aria-label={`Hot cue ${String(index + 1)}`}
+					armed
+					class="font-mono"
+					latching
+					pressed={index === 1 || undefined}
+					style={{ '--sonic-lit': colour }}
+				>
+					<span aria-hidden="true">{index + 1}</span>
+				</sonic-button>
+			))}
+		</Cell>
+		<Cell {...tile('switch')}>
+			<sonic-switch
+				aria-labelledby="tile-switch"
+				class="font-mono text-text uppercase"
+				orientation="horizontal"
+				value="off"
+			>
+				<span data-sonic-value="1">1</span>
+				<span data-sonic-value="off">Off</span>
+				<span data-sonic-value="2">2</span>
+			</sonic-switch>
+		</Cell>
+		<Cell {...tile('toggle')}>
+			<sonic-toggle aria-labelledby="tile-toggle" class="font-mono uppercase" value="a">
+				<span data-sonic-lit data-sonic-value="a">
+					A
+				</span>
+				<span data-sonic-value="off">Off</span>
+				<span data-sonic-lit="ok" data-sonic-value="b">
+					B
+				</span>
+			</sonic-toggle>
+		</Cell>
+		<Cell {...tile('segmented')} span="wide">
+			<sonic-segmented aria-labelledby="tile-segmented" class="font-mono" value="lp">
+				<FilterModes hasNotch={true} />
+			</sonic-segmented>
+		</Cell>
+		<Cell {...tile('number')}>
+			<div class="sonic-screen w-fit [font-family:var(--sonic-glass-font,var(--font-mono))] [--sonic-screen-inset-ratio:0] [--sonic-screen-size:1.75rem]">
+				<sonic-number
+					aria-labelledby="tile-number"
+					data-format="bpm"
+					default="120"
+					max="300"
+					min="20"
+					step="0.1"
+					value="120"
+				></sonic-number>
+			</div>
+		</Cell>
+		<Cell {...tile('xy')} span="wide">
+			<div class="sonic-screen">
+				<sonic-xy aria-labelledby="tile-xy" readout x="30" y="60"></sonic-xy>
+			</div>
+		</Cell>
+		<Cell {...tile('envelope')} isStacked={true} span="full">
+			<sonic-envelope
+				aria-labelledby="tile-envelope"
+				attack="tile-envelope-attack"
+				decay="tile-envelope-decay"
+				readout
+				release="tile-envelope-release"
+				sustain="tile-envelope-sustain"
+			></sonic-envelope>
+			<Cell id="tile-envelope-stages" label="Stages" span="wide">
+				{stages.map((stage) => (
+					<sonic-dial
+						aria-label={stage.label}
+						data-format={stage.format}
+						id={`tile-envelope-${stage.stage}`}
+						max={stage.format === 'percent' ? undefined : 2000}
+						midpoint={stage.format === 'percent' ? undefined : 200}
+						readout
+						value={stage.value}
+					></sonic-dial>
+				))}
+			</Cell>
+		</Cell>
+		<Cell {...tile('split')} span="wide">
+			<sonic-split aria-labelledby="tile-split" class="contents">
+				{shares.map((share) => (
+					<sonic-slider
+						aria-label={`Share ${share.label}`}
+						class="[--sonic-slider-length:7rem]"
+						orientation="vertical"
+						readout
+						value={share.value}
+					></sonic-slider>
+				))}
+			</sonic-split>
+		</Cell>
+	</SpecimenGrid>
+</Section>
+<Section title={categories[1].label}>
+	<SpecimenGrid>
+		<Cell {...tile('led')}>
+			<sonic-button
+				aria-labelledby="tile-led"
+				class="font-mono [--sonic-button-font-ratio:0.25]"
+				data-two-colour
+				latching
+			>
+				<span class="sonic-led" data-sonic-lit="ok"></span>
+				<span aria-hidden="true">PH</span>
+			</sonic-button>
+		</Cell>
+		<Cell {...tile('meter')}>
+			<div aria-labelledby="tile-meter" class="flex gap-1" role="group">
+				<sonic-meter></sonic-meter>
+				<sonic-meter></sonic-meter>
+			</div>
+		</Cell>
+		<Cell {...tile('screen')} span="wide">
+			<div
+				aria-labelledby="tile-screen"
+				class="sonic-screen min-w-30 font-mono text-sm"
+				role="group"
+			>
+				440 Hz
+			</div>
+		</Cell>
+	</SpecimenGrid>
+	<SpecimenGrid size="wide">
+		<Cell {...tile('ticker')}>
+			<div class="sonic-screen w-64 max-w-full font-mono text-sm">
+				<sonic-ticker data-ticker>
+					A long title that runs well past the end of the box it sits in
+				</sonic-ticker>
+			</div>
+		</Cell>
+		<Cell {...tile('wavestrip')}>
+			<sonic-wavestrip
+				aria-labelledby="tile-wavestrip"
+				cancellable
+				class="[--sonic-marker-hot:oklch(78%_0.15_85deg)] [--sonic-wavestrip-length:20rem] [--sonic-wavestrip-marker-ratio:0.28]"
+				data-format="clock"
+				data-marker-shapes
+				data-markers="30:hot=A 60..95:intro 96:hot=B 150:hot=C 156:hot=D 215:hot=E 260:hot=F~"
+				data-peaks="14"
+				key-step="5"
+				max="300"
+				readout
+				value="120"
+			></sonic-wavestrip>
+		</Cell>
+		<Cell {...tile('waveform')}>
+			<sonic-waveform
+				aria-labelledby="tile-waveform"
+				class="[--sonic-waveform-length:20rem]"
+				data-bands="3"
+				data-format="clock-tenths"
+				data-markers="146=Intro 151.5=Second_track 158=Outro~"
+				data-samples="22"
+				key-step="1"
+				max="300"
+				playing={true}
+				readout
+				step="0"
+				style={{
+					'--sonic-waveform-band-1': 'oklch(75% 0.19 25deg)',
+					'--sonic-waveform-band-2': 'oklch(75% 0.19 150deg)',
+					'--sonic-waveform-band-3': 'oklch(75% 0.19 275deg)',
+				}}
+				value="150"
+			></sonic-waveform>
+		</Cell>
+		<Cell {...tile('spectrum')}>
+			<div aria-labelledby="tile-spectrum" class="sonic-screen" role="group">
+				<sonic-spectrum
+					class="[--sonic-spectrum-length:20rem]"
+					data-spectrum-shape="2"
+				></sonic-spectrum>
+			</div>
+		</Cell>
+		<Cell {...tile('panel')}>
+			<section aria-labelledby="tile-panel-title" class="sonic-panel grid w-full gap-3 p-4">
+				<h3
+					class="sonic-panel-title font-mono text-[0.625rem] tracking-[0.14em] uppercase"
+					id="tile-panel-title"
+				>
+					Filter
+				</h3>
+				<div class="flex items-center justify-center gap-4">
+					<sonic-dial aria-label="Filter level" value="60"></sonic-dial>
+					<sonic-button aria-label="Filter on" latching>
+						<span class="sonic-led"></span>
+					</sonic-button>
+				</div>
+				<hr class="sonic-panel-rule" />
+				<div class="flex justify-center">
+					<sonic-switch aria-label="Filter sync"></sonic-switch>
+				</div>
+			</section>
+		</Cell>
+	</SpecimenGrid>
+</Section>
+<Section title={categories[2].label}>
+	<SpecimenGrid>
+		<Cell {...tile('ring')}>
+			<span class="sonic-ring [--sonic-ring-size:calc(2rem/0.75)]" data-ring-loop>
+				<sonic-button aria-labelledby="tile-ring" latching pressed>
+					<Repeat aria-hidden="true" />
+				</sonic-button>
+			</span>
+		</Cell>
+	</SpecimenGrid>
+</Section>
+
+<script>
+	import '#scripts/markers.ts';
+	import '#scripts/peaks.ts';
+	import '#scripts/samples.ts';
+	import '#scripts/specimens/motion.ts';
+	import '#scripts/specimens/ticker.ts';
+	import '#scripts/spectrum-frames.ts';
+	import '#scripts/two-colour.ts';
+</script>

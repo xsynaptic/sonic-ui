@@ -4,71 +4,66 @@ import ZoomIn from '@lucide/astro/icons/zoom-in';
 import ZoomOut from '@lucide/astro/icons/zoom-out';
 
 import Cell from '#components/specimens/cell.astro';
+import Section from '#components/specimens/section.astro';
 import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 
 const markers = '30 60..95:intro 140 150 215 260~';
 
-const strips = [
-	{ id: 'wavestrip-default', label: 'Default', seed: 1 },
-	{ id: 'wavestrip-dimmed', isDimmed: true, label: 'Dimmed', seed: 3 },
-	{ id: 'wavestrip-disabled', isDisabled: true, label: 'Disabled', seed: 4 },
-	{ id: 'wavestrip-empty', label: 'Empty' },
+interface Strip {
+	hasGlass?: boolean;
+	hasShapes?: boolean;
+	id: string;
+	isDimmed?: boolean;
+	isDisabled?: boolean;
+	label: string;
+	markers?: string;
+	seed?: number;
+	tokens?: string;
+}
+
+const tracks: Array<Strip> = [
+	{ id: 'wavestrip-default', label: 'Track', seed: 1 },
 	{
 		id: 'wavestrip-stacked',
-		label: 'Stacked markers',
+		label: 'Mix',
 		markers: '30 32 34 36 60..95:intro 140 142 215 216 217 260~',
 		seed: 6,
 	},
 	{
 		hasShapes: true,
 		id: 'wavestrip-shapes',
-		label: 'Hot cues, drawn by the host',
+		label: 'Hot cues',
 		markers: '30:hot=A 60..95:intro 96:hot=B 150:hot=C 156:hot=D 215:hot=E 260:hot=F~',
 		seed: 14,
 		tokens: '[--sonic-marker-hot:oklch(78%_0.15_85deg)] [--sonic-wavestrip-marker-ratio:0.28]',
 	},
-	{ hasGlass: true, id: 'wavestrip-glass', label: 'On glass', seed: 10 },
-	{
-		hasGlass: true,
-		id: 'wavestrip-glass-flat',
-		label: 'On flat glass',
-		screenClass: '[--sonic-glass-depth:0]',
-		seed: 5,
-	},
+	{ hasGlass: true, id: 'wavestrip-glass', label: 'Deck', seed: 10 },
+];
+
+const states: Array<Strip> = [
+	{ id: 'wavestrip-empty', label: 'Empty' },
+	{ id: 'wavestrip-dimmed', isDimmed: true, label: 'Dimmed', seed: 3 },
+	{ id: 'wavestrip-disabled', isDisabled: true, label: 'Disabled', seed: 4 },
 ];
 
 interface RegionCell {
 	id: string;
 	label: string;
-	regions: Array<{
-		end: number;
-		isDisabled?: boolean;
-		kind?: string;
-		label: string;
-		start: number;
-	}>;
+	regions: Array<{ end: number; kind?: string; label: string; start: number }>;
 	seed: number;
 	tokens?: string;
 }
 
-const loop = { end: 150, label: 'Loop', start: 90 };
-
 const regionCells: Array<RegionCell> = [
 	{
 		id: 'region-plain',
-		label: 'Region: drag it, or focus it and press an arrow',
-		regions: [loop],
+		label: 'Loop',
+		regions: [{ end: 150, label: 'Loop', start: 90 }],
 		seed: 21,
 	},
 	{
-		id: 'region-disabled',
-		label: 'Region, disabled',
-		regions: [{ ...loop, isDisabled: true }],
-		seed: 23,
-	},
-	{
 		id: 'region-overlap',
-		label: 'Two regions: the later takes the press',
+		label: 'Cue regions',
 		regions: [
 			{ end: 160, kind: 'cue', label: 'Earlier', start: 60 },
 			{ end: 220, kind: 'hot', label: 'Later', start: 120 },
@@ -79,18 +74,132 @@ const regionCells: Array<RegionCell> = [
 ];
 ---
 
-<SpecimenGrid size="wide">
-	{strips.map((strip) => (
-		<Cell id={strip.id} label={strip.label}>
-			<div class:list={[strip.hasGlass && 'sonic-screen', strip.screenClass]}>
+<Section title="Tracks">
+	<SpecimenGrid size="wide">
+		{tracks.map((strip) => (
+			<Cell id={strip.id} label={strip.label}>
+				<div class:list={[strip.hasGlass && 'sonic-screen']}>
+					<sonic-wavestrip
+						aria-labelledby={strip.id}
+						cancellable
+						class:list={['[--sonic-wavestrip-length:20rem]', strip.tokens]}
+						data-buffered="0 150 190 230"
+						data-format="clock"
+						data-marker-shapes={strip.hasShapes}
+						data-markers={strip.markers ?? markers}
+						data-peaks={strip.seed}
+						key-step="5"
+						max="300"
+						readout
+						value="120"
+					></sonic-wavestrip>
+				</div>
+			</Cell>
+		))}
+	</SpecimenGrid>
+</Section>
+<Section title="Regions">
+	<SpecimenGrid size="wide">
+		{regionCells.map((cell) => (
+			<Cell id={cell.id} label={cell.label}>
+				<sonic-wavestrip
+					aria-labelledby={cell.id}
+					cancellable
+					class:list={['[--sonic-wavestrip-length:20rem]', cell.tokens]}
+					data-format="clock"
+					data-peaks={cell.seed}
+					key-step="5"
+					max="300"
+					readout
+					value="30"
+				>
+					{cell.regions.map((region) => (
+						<sonic-region
+							aria-label={region.label}
+							end={region.end}
+							kind={region.kind}
+							start={region.start}
+						/>
+					))}
+				</sonic-wavestrip>
+			</Cell>
+		))}
+		<Cell id="region-window" isStacked={true} label="Window" span="full">
+			<div class="contents" data-bracket-specimen data-zoom-specimen>
+				<sonic-waveform
+					aria-label="Detail"
+					class="[--sonic-waveform-length:min(48rem,80vw)]"
+					data-format="clock-tenths"
+					data-samples="8"
+					key-step="1"
+					max="300"
+					readout
+					step="0"
+					value="120"
+				></sonic-waveform>
+				<Cell id="region-window-zoom" label="Zoom">
+					<sonic-button aria-label="Zoom in" data-zoom="1">
+						<ZoomIn aria-hidden="true" />
+					</sonic-button>
+					<sonic-button aria-label="Zoom out" data-zoom="-1">
+						<ZoomOut aria-hidden="true" />
+					</sonic-button>
+				</Cell>
+				<sonic-wavestrip
+					aria-label="Overview"
+					cancellable
+					class="[--sonic-wavestrip-length:min(48rem,80vw)]"
+					data-format="clock"
+					data-peaks="8"
+					key-step="5"
+					max="300"
+					readout
+					step="0"
+					value="120"
+				>
+					<sonic-region aria-label="Stretch shown above"></sonic-region>
+				</sonic-wavestrip>
+			</div>
+		</Cell>
+		<Cell id="region-preview" isStacked={true} label="Preview">
+			<div class="contents" data-preview-specimen>
+				<sonic-wavestrip
+					aria-labelledby="region-preview"
+					class="[--sonic-wavestrip-length:20rem]"
+					data-format="clock"
+					data-peaks="32"
+					key-step="5"
+					max="300"
+					readout
+					value="60"
+				/>
+				<Cell id="region-preview-time" label="Preview time">
+					<sonic-slider
+						aria-labelledby="region-preview-time"
+						class="[--sonic-slider-length:16rem] [--sonic-slider-size:1rem]"
+						data-format="clock"
+						max="300"
+						readout
+						step="0"
+						value="200"
+					/>
+					<sonic-button aria-label="Clear the preview">
+						<X aria-hidden="true" />
+					</sonic-button>
+				</Cell>
+			</div>
+		</Cell>
+	</SpecimenGrid>
+</Section>
+<Section title="States">
+	<SpecimenGrid size="wide">
+		{states.map((strip) => (
+			<Cell id={strip.id} label={strip.label}>
 				<sonic-wavestrip
 					aria-labelledby={strip.id}
-					cancellable
-					class:list={['[--sonic-wavestrip-length:20rem]', strip.tokens]}
-					data-buffered="0 150 190 230"
+					class="[--sonic-wavestrip-length:20rem]"
 					data-format="clock"
-					data-marker-shapes={strip.hasShapes}
-					data-markers={strip.markers ?? markers}
+					data-markers={markers}
 					data-peaks={strip.seed}
 					dimmed={strip.isDimmed}
 					disabled={strip.isDisabled}
@@ -99,138 +208,17 @@ const regionCells: Array<RegionCell> = [
 					readout
 					value="120"
 				></sonic-wavestrip>
-			</div>
-		</Cell>
-	))}
-</SpecimenGrid>
-<SpecimenGrid size="wide">
-	<Cell id="wavestrip-fill" label="Fills its row">
-		<div class="flex h-24 w-80">
-			<sonic-wavestrip
-				aria-labelledby="wavestrip-fill"
-				class="[--sonic-touch-action:none] [--sonic-wavestrip-length:100%]"
-				data-format="clock"
-				data-markers={markers}
-				data-peaks="9"
-				fill
-				key-step="5"
-				max="300"
-				readout
-				spoken-step="1"
-				step="0"
-				value="120"
-			></sonic-wavestrip>
-		</div>
-	</Cell>
-	<Cell id="wavestrip-large" label="Large" span="full">
-		<sonic-wavestrip
-			aria-labelledby="wavestrip-large"
-			cancellable
-			class="[--sonic-wavestrip-length:min(48rem,80vw)] [--sonic-wavestrip-marker-ratio:0.14] [--sonic-wavestrip-size:5rem]"
-			data-buffered="0 150 190 230"
-			data-format="clock"
-			data-markers={markers}
-			data-peaks="8"
-			key-step="5"
-			max="300"
-			readout
-			value="120"
-		></sonic-wavestrip>
-	</Cell>
-	<Cell
-		id="wavestrip-bracket"
-		label="Bracket round the stretch shown above: drag it to scroll, zoom to resize it"
-		span="full"
-	>
-		<div class="flex flex-col items-center gap-3" data-bracket-specimen data-zoom-specimen>
-			<sonic-waveform
-				aria-label="Detail"
-				class="[--sonic-waveform-length:min(48rem,80vw)]"
-				data-format="clock-tenths"
-				data-samples="8"
-				key-step="1"
-				max="300"
-				readout
-				step="0"
-				value="120"
-			></sonic-waveform>
-			<div class="flex gap-1 [--sonic-button-size:1.5rem]">
-				<sonic-button aria-label="Zoom in" data-zoom="1">
-					<ZoomIn aria-hidden="true" />
-				</sonic-button>
-				<sonic-button aria-label="Zoom out" data-zoom="-1">
-					<ZoomOut aria-hidden="true" />
-				</sonic-button>
-			</div>
-			<sonic-wavestrip
-				aria-label="Overview"
-				cancellable
-				class="[--sonic-wavestrip-length:min(48rem,80vw)]"
-				data-format="clock"
-				data-peaks="8"
-				key-step="5"
-				max="300"
-				readout
-				step="0"
-				value="120"
-			>
-				<sonic-region aria-label="Stretch shown above"></sonic-region>
-			</sonic-wavestrip>
-		</div>
-	</Cell>
-</SpecimenGrid>
-<SpecimenGrid size="wide">
-	{regionCells.map((cell) => (
-		<Cell id={cell.id} label={cell.label}>
-			<sonic-wavestrip
-				aria-labelledby={cell.id}
-				cancellable
-				class:list={['[--sonic-wavestrip-length:20rem]', cell.tokens]}
-				data-format="clock"
-				data-peaks={cell.seed}
-				key-step="5"
-				max="300"
-				readout
-				value="30"
-			>
-				{cell.regions.map((region) => (
-					<sonic-region
-						aria-label={region.label}
-						disabled={region.isDisabled}
-						end={region.end}
-						kind={region.kind}
-						start={region.start}
-					/>
-				))}
-			</sonic-wavestrip>
-		</Cell>
-	))}
-	<Cell id="region-preview" label="Preview, set by the slider">
-		<div class="grid justify-items-center gap-3" data-preview-specimen>
-			<sonic-wavestrip
-				aria-labelledby="region-preview"
-				class="[--sonic-wavestrip-length:20rem]"
-				data-format="clock"
-				data-peaks="32"
-				key-step="5"
-				max="300"
-				readout
-				value="60"
-			/>
-			<div class="flex items-center gap-2 [--sonic-button-size:1.5rem]">
-				<sonic-slider
-					aria-label="Preview time"
-					class="[--sonic-slider-length:16rem] [--sonic-slider-size:1rem]"
-					data-format="clock"
-					max="300"
-					readout
-					step="0"
-					value="200"
-				/>
-				<sonic-button aria-label="Clear the preview">
-					<X aria-hidden="true" />
-				</sonic-button>
-			</div>
-		</div>
-	</Cell>
-</SpecimenGrid>
+			</Cell>
+		))}
+	</SpecimenGrid>
+</Section>
+
+<script>
+	import '#scripts/buffered.ts';
+	import '#scripts/markers.ts';
+	import '#scripts/peaks.ts';
+	import '#scripts/samples.ts';
+	import '#scripts/specimens/bracket.ts';
+	import '#scripts/specimens/preview.ts';
+	import '#scripts/specimens/zoom.ts';
+</script>

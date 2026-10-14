@@ -1,13 +1,13 @@
-import type { TunerToken } from '#scripts/specimens/tuner-tokens.ts';
+import type { Token } from '#scripts/specimens/token-groups.ts';
 
-import { resolvedProperty, tokenGroups } from '#scripts/specimens/tuner-tokens.ts';
+import { resolvedProperty, tokenGroups } from '#scripts/specimens/token-groups.ts';
 
 interface Row {
 	baseline: string;
 	from: string;
 	input: HTMLInputElement | HTMLSelectElement;
 	output: HTMLOutputElement | undefined;
-	token: TunerToken;
+	token: Token;
 }
 
 interface Reader {
@@ -73,68 +73,42 @@ function collectRows(root: HTMLElement): Array<Row> {
 	return rows;
 }
 
-function report(changed: Array<Row>, tools: HTMLElement): void {
-	const count = tools.querySelector('[data-tuner-count]');
-	const output = tools.querySelector<HTMLElement>('[data-tuner-output]');
-	if (!count || !output) return;
-
-	output.textContent = changed.map((row) => `${row.token.token}: ${valueOf(row)};`).join('\n');
-	output.hidden = changed.length === 0;
-	count.textContent = changed.length === 0 ? 'No tokens set' : `${String(changed.length)} set`;
-}
-
-function render(rows: Array<Row>, tools: HTMLElement | null): void {
-	const changed = rows.filter((row) => row.input.value !== row.baseline);
-
+function render(rows: Array<Row>): void {
 	for (const row of rows) {
 		if (row.output) row.output.textContent = valueOf(row);
-		if (changed.includes(row)) document.body.style.setProperty(row.token.token, valueOf(row));
-		else document.body.style.removeProperty(row.token.token);
+		if (row.input.value === row.baseline) document.body.style.removeProperty(row.token.token);
+		else document.body.style.setProperty(row.token.token, valueOf(row));
 	}
-	if (tools) report(changed, tools);
 }
 
 function rebase(rows: Array<Row>, reader: Reader): void {
 	for (const row of rows) document.body.style.removeProperty(row.token.token);
 	for (const row of rows) {
-		const isTuned = row.baseline !== '' && row.input.value !== row.baseline;
-		const tuned = row.input.value;
-
 		row.input.value = readBaseline(row, reader);
 		row.baseline = row.input.value;
-		if (isTuned) row.input.value = tuned;
 	}
 }
 
-function bindTuner(root: HTMLElement, reader: Reader): void {
-	const tools = root.querySelector<HTMLElement>('[data-tuner-tools]');
+function bindTokens(root: HTMLElement, reader: Reader): void {
 	const rows = collectRows(root);
-	const update = (): void => {
-		render(rows, tools);
-	};
 	const refresh = (): void => {
 		rebase(rows, reader);
-		update();
+		render(rows);
 	};
 
-	for (const row of rows) row.input.addEventListener('input', update);
-	tools?.querySelector('[data-tuner-reset]')?.addEventListener('click', () => {
-		for (const row of rows) row.input.value = row.baseline;
-		update();
-	});
-	tools?.querySelector('[data-tuner-copy]')?.addEventListener('click', () => {
-		void navigator.clipboard.writeText(
-			tools.querySelector('[data-tuner-output]')?.textContent ?? '',
-		);
-	});
+	for (const row of rows) {
+		row.input.addEventListener('input', () => {
+			render(rows);
+		});
+	}
 	document.addEventListener('playground-skin', refresh);
 	matchMedia('(forced-colors: active)').addEventListener('change', refresh);
 	refresh();
 }
 
-const tuner = document.querySelector<HTMLElement>('[data-tuner]');
-const panel = tuner?.querySelector<HTMLElement>('[data-tuner-panel]');
-const probe = tuner?.querySelector<HTMLElement>('[data-tuner-probe]');
+const root = document.querySelector<HTMLElement>('[data-tokens]');
+const panel = root?.querySelector<HTMLElement>('[data-tokens-panel]');
+const probe = root?.querySelector<HTMLElement>('[data-tokens-probe]');
 const context = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
 
-if (tuner && panel && probe && context) bindTuner(tuner, { context, panel, probe });
+if (root && panel && probe && context) bindTokens(root, { context, panel, probe });

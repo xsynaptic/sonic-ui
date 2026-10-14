@@ -3,7 +3,26 @@ import ZoomIn from '@lucide/astro/icons/zoom-in';
 import ZoomOut from '@lucide/astro/icons/zoom-out';
 
 import Cell from '#components/specimens/cell.astro';
+import Section from '#components/specimens/section.astro';
 import SpecimenGrid from '#components/specimens/specimen-grid.astro';
+
+interface Wave {
+	bands?: number;
+	className?: string;
+	hasGlass?: boolean;
+	id: string;
+	isDimmed?: boolean;
+	isDisabled?: boolean;
+	isInert?: boolean;
+	isPlaying?: boolean;
+	label: string;
+	markers?: string;
+	pending?: string;
+	seed: number;
+	sizeClass?: string;
+	style?: string;
+	zoom?: number;
+}
 
 function ramp(bandCount: number): string {
 	return Array.from({ length: bandCount }, (_band, band) => {
@@ -22,143 +41,128 @@ const tonal = [
 	'--sonic-waveform-band-tilt: 6',
 ].join('; ');
 
-const waveforms = [
-	{ id: 'waveform-playing', isPlaying: true, label: 'Playing', seed: 7 },
-	{ id: 'waveform-paused', label: 'Paused', seed: 8 },
-	{ id: 'waveform-pending', label: 'Pending', pending: '151 162', seed: 9 },
-	{ id: 'waveform-rate', isPlaying: true, label: 'Double speed', rate: 2, seed: 14 },
+const groups: Array<{ hasZoom?: boolean; title: string; waves: Array<Wave> }> = [
 	{
-		className: [
-			'[--sonic-waveform-playhead-width:1px] [--sonic-waveform-label-fade-end:0]',
-			'[--sonic-waveform-label-font:ui-monospace,monospace] [--sonic-waveform-label-font-ratio:0.1]',
-			'[--sonic-waveform-label-scrim:light-dark(rgb(255_255_255/60%),rgb(0_0_0/50%))]',
-		].join(' '),
-		id: 'waveform-tokens',
-		label: 'Thin playhead, label tokens',
-		pending: '153 162',
-		seed: 16,
+		hasZoom: true,
+		title: 'Playback',
+		waves: [
+			{ id: 'waveform-playing', isPlaying: true, label: 'Track', seed: 7 },
+			{
+				className: '[--sonic-waveform-label-fade-start:0.5]',
+				id: 'waveform-mix',
+				isPlaying: true,
+				label: 'Mix',
+				markers:
+					'146=First_artist|Opening 151.5=Second_artist|Second_track 158=Third_artist|Outro~',
+				seed: 18,
+			},
+		],
 	},
 	{
-		id: 'waveform-scroll',
-		isPlaying: true,
-		label: 'Scrolls under reduced motion',
-		motion: 'scroll',
-		seed: 17,
+		title: 'Bands',
+		waves: [
+			{ bands: 3, id: 'waveform-bands', isPlaying: true, label: 'Low, mid, high', seed: 22 },
+			{
+				bands: 3,
+				hasGlass: true,
+				id: 'waveform-bands-tonal',
+				isPlaying: true,
+				label: 'Tonal',
+				seed: 28,
+				style: tonal,
+			},
+		],
 	},
 	{
-		className: '[--sonic-waveform-label-fade-start:0.5]',
-		id: 'waveform-late-fade',
-		isPlaying: true,
-		label: 'Drawn label, late fade',
-		markers: '146=First_artist|Opening 151.5=Second_artist|Second_track 158=Third_artist|Outro~',
-		seed: 18,
-	},
-	{ hasGlass: true, id: 'waveform-glass', isPlaying: true, label: 'On glass', seed: 19 },
-	{
-		hasGlass: true,
-		id: 'waveform-glass-flat',
-		label: 'On flat glass',
-		screenClass: '[--sonic-glass-depth:0]',
-		seed: 10,
-	},
-	{
-		hasGlass: true,
-		id: 'waveform-inert',
-		isInert: true,
-		isPlaying: true,
-		label: 'Inert, a small display',
-		markers: '',
-		seed: 21,
-		sizeClass: '[--sonic-waveform-length:6rem] [--sonic-waveform-size:2rem]',
-		zoom: 96,
-	},
-	{ bands: 3, id: 'waveform-bands', isPlaying: true, label: 'Three bands', seed: 22 },
-	{ bands: 5, id: 'waveform-bands-five', isPlaying: true, label: 'Five bands', seed: 23 },
-	{ bands: 3, id: 'waveform-bands-dimmed', isDimmed: true, label: 'Bands, dimmed', seed: 24 },
-	{ bands: 3, id: 'waveform-bands-disabled', isDisabled: true, label: 'Bands, disabled', seed: 25 },
-	{
-		bands: 3,
-		bandsMissing: '149.5 162',
-		id: 'waveform-bands-part',
-		label: 'Bands part loaded, beside a pending region',
-		pending: '151 162',
-		seed: 26,
+		title: 'Glass',
+		waves: [
+			{ hasGlass: true, id: 'waveform-glass', isPlaying: true, label: 'Deck', seed: 19 },
+			{
+				hasGlass: true,
+				id: 'waveform-inert',
+				isInert: true,
+				isPlaying: true,
+				label: 'Thumbnail',
+				markers: '',
+				seed: 21,
+				sizeClass: '[--sonic-waveform-length:6rem] [--sonic-waveform-size:2rem]',
+				zoom: 96,
+			},
+		],
 	},
 	{
-		bands: 3,
-		className: '[--sonic-waveform-edge-shade:0.8]',
-		id: 'waveform-bands-edge',
-		isPlaying: true,
-		label: 'Bands under a deep edge shade',
-		seed: 27,
-	},
-	{
-		bands: 3,
-		hasGlass: true,
-		id: 'waveform-bands-tonal',
-		isPlaying: true,
-		label: 'Bands, tonal palette',
-		seed: 28,
-		style: tonal,
+		title: 'States',
+		waves: [
+			{ id: 'waveform-pending', label: 'Pending', pending: '151 162', seed: 9 },
+			{ bands: 3, id: 'waveform-dimmed', isDimmed: true, label: 'Dimmed', seed: 24 },
+			{ bands: 3, id: 'waveform-disabled', isDisabled: true, label: 'Disabled', seed: 25 },
+		],
 	},
 ];
 ---
 
-<SpecimenGrid size="wide">
-	{waveforms.map((waveform) => (
-		<Cell id={waveform.id} label={waveform.label}>
-			<div class:list={[waveform.hasGlass && 'sonic-screen', waveform.screenClass]}>
-				<sonic-waveform
-					aria-labelledby={waveform.id}
-					class:list={[waveform.sizeClass ?? '[--sonic-waveform-length:20rem]', waveform.className]}
-					data-bands={waveform.bands}
-					data-bands-missing={waveform.bandsMissing}
-					data-format="clock-tenths"
-					data-markers={waveform.markers ?? '146=Intro 151.5=Second_track 158=Outro~'}
-					data-pending={waveform.pending}
-					data-samples={waveform.seed}
-					dimmed={waveform.isDimmed}
-					disabled={waveform.isDisabled}
-					inert={waveform.isInert}
-					key-step="1"
-					max="300"
-					playback-rate={waveform.rate}
-					playing={waveform.isPlaying}
-					readout
-					reduced-motion={waveform.motion}
-					step="0"
-					style={
-						waveform.style ?? (waveform.bands === undefined ? undefined : ramp(waveform.bands))
-					}
-					value="150"
-					zoom={waveform.zoom}
-				></sonic-waveform>
-			</div>
-		</Cell>
-	))}
-	<Cell id="waveform-zoom" label="Zoom">
-		<div class="flex flex-col items-center gap-2 sm:flex-row" data-zoom-specimen>
-			<sonic-waveform
-				aria-labelledby="waveform-zoom"
-				class="[--sonic-waveform-length:20rem]"
-				data-format="clock-tenths"
-				data-markers="146 151.5 158~"
-				data-samples="12"
-				key-step="1"
-				max="300"
-				playing={true}
-				readout
-				step="0"
-				value="150"
-			></sonic-waveform>
-			<div class="flex gap-1 [--sonic-button-size:1.5rem] sm:flex-col">
-				<sonic-button aria-label="Zoom in" data-zoom="1">
-					<ZoomIn aria-hidden="true" />
-				</sonic-button>
-				<sonic-button aria-label="Zoom out" data-zoom="-1">
-					<ZoomOut aria-hidden="true" />
-				</sonic-button>
-			</div>
-		</div>
-	</Cell>
-</SpecimenGrid>
+{groups.map((group) => (
+	<Section title={group.title}>
+		<SpecimenGrid size="wide">
+			{group.waves.map((wave) => (
+				<Cell id={wave.id} label={wave.label}>
+					<div class:list={[wave.hasGlass && 'sonic-screen']}>
+						<sonic-waveform
+							aria-labelledby={wave.id}
+							class:list={[wave.sizeClass ?? '[--sonic-waveform-length:20rem]', wave.className]}
+							data-bands={wave.bands}
+							data-format="clock-tenths"
+							data-markers={wave.markers ?? '146=Intro 151.5=Second_track 158=Outro~'}
+							data-pending={wave.pending}
+							data-samples={wave.seed}
+							dimmed={wave.isDimmed}
+							disabled={wave.isDisabled}
+							inert={wave.isInert}
+							key-step="1"
+							max="300"
+							playing={wave.isPlaying}
+							readout
+							step="0"
+							style={wave.style ?? (wave.bands === undefined ? undefined : ramp(wave.bands))}
+							value="150"
+							zoom={wave.zoom}
+						></sonic-waveform>
+					</div>
+				</Cell>
+			))}
+			{group.hasZoom ? (
+				<Cell id="waveform-zoom" isStacked={true} label="Detail">
+					<div class="contents" data-zoom-specimen>
+						<sonic-waveform
+							aria-labelledby="waveform-zoom"
+							class="[--sonic-waveform-length:20rem]"
+							data-format="clock-tenths"
+							data-markers="146 151.5 158~"
+							data-samples="12"
+							key-step="1"
+							max="300"
+							playing={true}
+							readout
+							step="0"
+							value="150"
+						></sonic-waveform>
+						<Cell id="waveform-zoom-buttons" label="Zoom">
+							<sonic-button aria-label="Zoom in" data-zoom="1">
+								<ZoomIn aria-hidden="true" />
+							</sonic-button>
+							<sonic-button aria-label="Zoom out" data-zoom="-1">
+								<ZoomOut aria-hidden="true" />
+							</sonic-button>
+						</Cell>
+					</div>
+				</Cell>
+			) : undefined}
+		</SpecimenGrid>
+	</Section>
+))}
+
+<script>
+	import '#scripts/markers.ts';
+	import '#scripts/samples.ts';
+	import '#scripts/specimens/zoom.ts';
+</script>

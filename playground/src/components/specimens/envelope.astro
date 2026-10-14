@@ -1,5 +1,7 @@
 ---
 import Cell from '#components/specimens/cell.astro';
+import Section from '#components/specimens/section.astro';
+import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 
 type Control = 'sonic-dial' | 'sonic-slider';
 
@@ -8,8 +10,8 @@ type Stage = 'attack' | 'decay' | 'delay' | 'hold' | 'release' | 'sustain';
 interface Rig {
 	control: Control;
 	hasCurves: boolean;
-	hasGlass?: boolean;
 	id: string;
+	label: string;
 	stages: Array<Stage>;
 	title: string;
 }
@@ -53,57 +55,53 @@ function build(rig: Rig) {
 				Tag: 'sonic-dial' as const,
 			})),
 		],
-		hasGlass: rig.hasGlass ?? false,
+		id: rig.id,
+		label: rig.label,
 		title: rig.title,
 	};
 }
 
 const rigs: Array<Rig> = [
-	{ control: 'sonic-dial', hasCurves: false, id: 'envelope-adsr', stages: adsr, title: 'ADSR' },
-	{ control: 'sonic-dial', hasCurves: true, id: 'envelope-curved', stages: adsr, title: 'Curves' },
+	{
+		control: 'sonic-dial',
+		hasCurves: true,
+		id: 'envelope-curved',
+		label: 'Amp',
+		stages: adsr,
+		title: 'Curves',
+	},
 	{
 		control: 'sonic-dial',
 		hasCurves: false,
 		id: 'envelope-dahdsr',
+		label: 'Filter',
 		stages: ['delay', 'attack', 'hold', 'decay', 'sustain', 'release'],
-		title: 'Delay and hold',
+		title: 'Stages',
 	},
 	{
 		control: 'sonic-slider',
 		hasCurves: false,
 		id: 'envelope-sliders',
+		label: 'Pitch',
 		stages: adsr,
-		title: 'Over sliders',
-	},
-	{
-		control: 'sonic-dial',
-		hasCurves: true,
-		hasGlass: true,
-		id: 'envelope-glass',
-		stages: adsr,
-		title: 'On glass',
+		title: 'Sliders',
 	},
 ];
 
 const panels = rigs.map((rig) => build(rig));
 ---
 
-<div class="grid gap-3 lg:grid-cols-2">
-	{panels.map((panel) => (
-		<div class="grid justify-items-center gap-5 surface p-5 last:odd:lg:col-span-2">
-			<p class="justify-self-start font-mono text-[0.625rem] tracking-[0.16em] text-text-muted uppercase">
-				{panel.title}
-			</p>
-			<div class:list={[panel.hasGlass && 'sonic-screen']}>
-				<sonic-envelope {...panel.bindings} readout />
-			</div>
-			<div class="flex flex-wrap justify-center gap-5">
-				{panel.dials.map(({ attributes, label, Tag }) => (
-					<Cell id={`${attributes.id}-label`} label={label}>
-						<Tag {...attributes} readout />
-					</Cell>
-				))}
-			</div>
-		</div>
-	))}
-</div>
+{panels.map((panel) => (
+	<Section title={panel.title}>
+		<SpecimenGrid>
+			<Cell id={`${panel.id}-label`} label={panel.label} span="full">
+				<sonic-envelope {...panel.bindings} aria-labelledby={`${panel.id}-label`} readout />
+			</Cell>
+			{panel.dials.map(({ attributes, label, Tag }) => (
+				<Cell id={`${attributes.id}-label`} label={label}>
+					<Tag {...attributes} readout />
+				</Cell>
+			))}
+		</SpecimenGrid>
+	</Section>
+))}

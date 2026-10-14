@@ -1,0 +1,20 @@
+---
+import Layout from '#components/layout.astro';
+import PageHeader from '#components/page-header.astro';
+import RunButton from '#components/run-button.astro';
+import Tokens from '#components/specimens/tokens.astro';
+---
+
+<Layout
+	description="Change sonic-ui's tokens on a live panel of controls and see what each one does."
+	title="Tokens, sonic-ui"
+>
+	<RunButton slot="controls" />
+	<PageHeader title="Tokens">
+		<Fragment slot="lead">
+			A panel of common controls beside the tokens that style them. Change a token to see which
+			parts it reaches, or pick a skin above to start from its values.
+		</Fragment>
+	</PageHeader>
+	<Tokens />
+</Layout>

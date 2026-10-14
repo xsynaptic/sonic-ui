@@ -21,18 +21,17 @@ import PageHeader from '#components/page-header.astro';
 >
 	<PageHeader title="Web player">
 		<Fragment slot="lead">
-			A docked player bar on a simulated stream. Scrub past the loaded range to see it buffer, then
-			open the waveform to watch its peaks arrive.
+			A docked player bar on a simulated stream. Press Play and the waveform fills in as its peaks
+			arrive; scrub past the loaded range to see it buffer.
 		</Fragment>
 	</PageHeader>
-	<div class="flex min-h-80 flex-col surface p-3">
-		<div class="flex-1"></div>
+	<div class="surface p-3">
 		<section
 			aria-label="Player"
 			class="sonic-panel @container relative [--sonic-marker-intro:oklch(72%_0.13_200deg)] [--sonic-dial-size:2rem] [--sonic-button-size:2rem]"
 			data-web-player
 		>
-			<div class="relative border-b border-line p-2" data-panel hidden>
+			<div class="relative border-b border-line p-2" data-panel>
 				<sonic-waveform
 					aria-label="Waveform"
 					class="[--sonic-waveform-length:100%] [--sonic-waveform-size:7.5rem]"
@@ -113,7 +112,7 @@ import PageHeader from '#components/page-header.astro';
 					<span data-sonic-value="1.5">1.5×</span>
 					<span data-sonic-value="2">2×</span>
 				</sonic-segmented>
-				<sonic-button aria-label="Show waveform" data-panel-button disabled latching>
+				<sonic-button aria-label="Show waveform" data-panel-button disabled latching pressed>
 					<AudioWaveform aria-hidden="true" />
 				</sonic-button>
 				<div class="flex items-center gap-2">

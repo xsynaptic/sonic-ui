@@ -1,91 +1,75 @@
 ---
 import Cell from '#components/specimens/cell.astro';
+import Section from '#components/specimens/section.astro';
 import SpecimenGrid from '#components/specimens/specimen-grid.astro';
+
+const screen =
+	'sonic-screen w-fit [font-family:var(--sonic-glass-font,var(--font-mono))] [--sonic-screen-inset-ratio:0] [--sonic-screen-size:1.75rem]';
 ---
 
-<SpecimenGrid>
-	<Cell id="number-tempo" label="Tempo">
-		<div class="sonic-screen w-fit [font-family:var(--sonic-glass-font,var(--font-mono))] [--sonic-screen-inset-ratio:0] [--sonic-screen-size:1.75rem]">
-			<sonic-number
-				aria-labelledby="number-tempo"
-				data-format="bpm"
-				default="120"
-				max="300"
-				min="20"
-				step="0.1"
-				value="120"
-			></sonic-number>
-		</div>
-	</Cell>
-	<Cell id="number-frequency" label="Frequency">
-		<div class="sonic-screen w-fit [font-family:var(--sonic-glass-font,var(--font-mono))] [--sonic-screen-inset-ratio:0] [--sonic-screen-size:1.75rem]">
-			<sonic-number
-				aria-labelledby="number-frequency"
-				data-format="hertz"
-				max="20000"
-				min="20"
-				taper="log"
-				value="440"
-			></sonic-number>
-		</div>
-	</Cell>
-	<Cell id="number-transpose" label="Transpose">
-		<div class="sonic-screen w-fit [font-family:var(--sonic-glass-font,var(--font-mono))] [--sonic-screen-inset-ratio:0] [--sonic-screen-size:1.75rem]">
-			<sonic-number
-				aria-labelledby="number-transpose"
-				data-format="semitones"
-				default="0"
-				double-press="reset"
-				max="24"
-				min="-24"
-				value="-5"
-			></sonic-number>
-		</div>
-	</Cell>
-	<Cell id="number-loop" label="Loop">
-		<div class="sonic-screen w-fit [font-family:var(--sonic-glass-font,var(--font-mono))] [--sonic-screen-inset-ratio:0] [--sonic-screen-size:1.75rem]">
-			<sonic-number
-				aria-labelledby="number-loop"
-				data-format="beats"
-				positions="0.03125 0.0625 0.125 0.25 0.5 1 2 4 8 16 32"
-				value="4"
-			></sonic-number>
-		</div>
-	</Cell>
-	<Cell id="number-note" label="Note">
-		<div class="sonic-screen w-fit [font-family:var(--sonic-glass-font,var(--font-mono))] [--sonic-screen-inset-ratio:0] [--sonic-screen-size:1.75rem]">
-			<sonic-number
-				aria-labelledby="number-note"
-				data-format="note"
-				positions="3 6 8 12 16 18 24 32 36 48 64 72 96 144 192"
-				value="48"
-			></sonic-number>
-		</div>
-	</Cell>
-	<Cell id="number-disabled" label="Disabled">
-		<div class="sonic-screen w-fit [font-family:var(--sonic-glass-font,var(--font-mono))] [--sonic-screen-inset-ratio:0] [--sonic-screen-size:1.75rem]">
-			<sonic-number
-				aria-labelledby="number-disabled"
-				data-format="percent"
-				disabled
-				value="60"
-			></sonic-number>
-		</div>
-	</Cell>
-</SpecimenGrid>
-<SpecimenGrid size="large">
-	<Cell id="number-large-tempo" label="Tempo, large">
-		<div class="sonic-screen w-fit [font-family:var(--sonic-glass-font,var(--font-mono))] [--sonic-screen-inset-ratio:0] [--sonic-screen-size:3.5rem]">
-			<sonic-number
-				aria-labelledby="number-large-tempo"
-				class="[--sonic-number-size:3.5rem]"
-				data-format="bpm"
-				default="120"
-				max="300"
-				min="20"
-				step="0.1"
-				value="120"
-			></sonic-number>
-		</div>
-	</Cell>
-</SpecimenGrid>
+<Section title="Values">
+	<SpecimenGrid>
+		<Cell id="number-tempo" label="Tempo">
+			<div class={screen}>
+				<sonic-number
+					aria-labelledby="number-tempo"
+					data-format="bpm"
+					default="120"
+					max="300"
+					min="20"
+					step="0.1"
+					value="120"
+				></sonic-number>
+			</div>
+		</Cell>
+		<Cell id="number-frequency" label="Frequency">
+			<div class={screen}>
+				<sonic-number
+					aria-labelledby="number-frequency"
+					data-format="hertz"
+					max="20000"
+					min="20"
+					taper="log"
+					value="440"
+				></sonic-number>
+			</div>
+		</Cell>
+		<Cell id="number-transpose" label="Transpose">
+			<div class={screen}>
+				<sonic-number
+					aria-labelledby="number-transpose"
+					data-format="semitones"
+					default="0"
+					double-press="reset"
+					max="24"
+					min="-24"
+					value="-5"
+				></sonic-number>
+			</div>
+		</Cell>
+		<Cell id="number-loop" label="Loop">
+			<div class={screen}>
+				<sonic-number
+					aria-labelledby="number-loop"
+					data-format="beats"
+					positions="0.03125 0.0625 0.125 0.25 0.5 1 2 4 8 16 32"
+					value="4"
+				></sonic-number>
+			</div>
+		</Cell>
+	</SpecimenGrid>
+</Section>
+<Section title="States">
+	<SpecimenGrid>
+		<Cell id="number-disabled" label="Disabled">
+			<div class={screen}>
+				<sonic-number
+					aria-labelledby="number-disabled"
+					data-format="percent"
+					disabled
+					value="60"
+				></sonic-number>
+			</div>
+		</Cell>
+	</SpecimenGrid>
+</Section>

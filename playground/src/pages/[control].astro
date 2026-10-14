@@ -1,0 +1,65 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
+import type { AstroComponentFactory } from 'astro/runtime/server/index.js';
+
+import type { Slug } from '#scripts/controls.ts';
+
+import ControlLayout from '#components/control-layout.astro';
+import ButtonSpecimens from '#components/specimens/button.astro';
+import DialSpecimens from '#components/specimens/dial.astro';
+import EnvelopeSpecimens from '#components/specimens/envelope.astro';
+import LedSpecimens from '#components/specimens/led.astro';
+import MeterSpecimens from '#components/specimens/meter.astro';
+import NumberSpecimens from '#components/specimens/number.astro';
+import PanelSpecimens from '#components/specimens/panel.astro';
+import RingSpecimens from '#components/specimens/ring.astro';
+import ScreenSpecimens from '#components/specimens/screen.astro';
+import SegmentedSpecimens from '#components/specimens/segmented.astro';
+import SliderSpecimens from '#components/specimens/slider.astro';
+import SpectrumSpecimens from '#components/specimens/spectrum.astro';
+import SplitSpecimens from '#components/specimens/split.astro';
+import SwitchSpecimens from '#components/specimens/switch.astro';
+import TickerSpecimens from '#components/specimens/ticker.astro';
+import ToggleSpecimens from '#components/specimens/toggle.astro';
+import WaveformSpecimens from '#components/specimens/waveform.astro';
+import WavestripSpecimens from '#components/specimens/wavestrip.astro';
+import XySpecimens from '#components/specimens/xy.astro';
+import { controls } from '#scripts/controls.ts';
+
+export const getStaticPaths = (() => {
+	const pages: Record<Slug, { hasRun: boolean; Specimens: AstroComponentFactory }> = {
+		button: { hasRun: false, Specimens: ButtonSpecimens },
+		dial: { hasRun: true, Specimens: DialSpecimens },
+		envelope: { hasRun: false, Specimens: EnvelopeSpecimens },
+		led: { hasRun: false, Specimens: LedSpecimens },
+		meter: { hasRun: true, Specimens: MeterSpecimens },
+		number: { hasRun: false, Specimens: NumberSpecimens },
+		panel: { hasRun: false, Specimens: PanelSpecimens },
+		ring: { hasRun: true, Specimens: RingSpecimens },
+		screen: { hasRun: false, Specimens: ScreenSpecimens },
+		segmented: { hasRun: false, Specimens: SegmentedSpecimens },
+		slider: { hasRun: true, Specimens: SliderSpecimens },
+		spectrum: { hasRun: false, Specimens: SpectrumSpecimens },
+		split: { hasRun: false, Specimens: SplitSpecimens },
+		switch: { hasRun: false, Specimens: SwitchSpecimens },
+		ticker: { hasRun: true, Specimens: TickerSpecimens },
+		toggle: { hasRun: false, Specimens: ToggleSpecimens },
+		waveform: { hasRun: true, Specimens: WaveformSpecimens },
+		wavestrip: { hasRun: false, Specimens: WavestripSpecimens },
+		xy: { hasRun: false, Specimens: XySpecimens },
+	};
+
+	return controls.map((control) => ({
+		params: { control: control.slug },
+		props: { control, ...pages[control.slug] },
+	}));
+}) satisfies GetStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { control, hasRun, Specimens } = Astro.props;
+---
+
+<ControlLayout control={control} hasRun={hasRun}>
+	<Specimens />
+</ControlLayout>

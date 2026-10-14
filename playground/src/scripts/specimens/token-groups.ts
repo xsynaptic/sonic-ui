@@ -23,12 +23,12 @@ interface ChoiceToken extends TokenBase {
 	options: Array<{ label: string; value: string }>;
 }
 
-export type TunerToken = ChoiceToken | ColourToken | RangeToken;
+export type Token = ChoiceToken | ColourToken | RangeToken;
 
 interface TokenGroup {
 	from: string;
 	name: string;
-	tokens: Array<TunerToken>;
+	tokens: Array<Token>;
 }
 
 function colour(
@@ -47,7 +47,7 @@ function range(
 	return { kind: 'range', label, max, min, step, token, unit };
 }
 
-export function resolvedProperty(token: TunerToken): string {
+export function resolvedProperty(token: Token): string {
 	return token.resolved ?? token.token.replace('--sonic-', '--_sonic-');
 }
 

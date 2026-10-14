@@ -1,11 +1,15 @@
 ---
 interface Props {
+	href?: string;
 	id: string;
+	isStacked?: boolean;
 	label: string;
 	span?: 'full' | 'wide';
 }
 
-const { id, label, span } = Astro.props;
+const { href, id, isStacked = false, label, span } = Astro.props;
+const captionClass =
+	'text-center font-mono text-[0.625rem] tracking-[0.14em] text-balance text-text-muted uppercase';
 ---
 
 <div
@@ -15,13 +19,20 @@ const { id, label, span } = Astro.props;
 		{ 'w-[calc(var(--specimen-cell)*2+1rem)]': span === 'wide', 'w-full': span === 'full' },
 	]}
 >
-	<div class="flex items-center justify-center gap-2">
+	<div class:list={['flex items-center justify-center', isStacked ? 'flex-col gap-3' : 'gap-2']}>
 		<slot />
 	</div>
-	<span
-		class="text-center font-mono text-[0.625rem] tracking-[0.14em] text-balance text-text-muted uppercase"
-		id={id}
-	>
-		{label}
-	</span>
+	{href === undefined ? (
+		<span class={captionClass} id={id}>
+			{label}
+		</span>
+	) : (
+		<a
+			class:list={[captionClass, 'text-text-strong underline-offset-4 hover:underline']}
+			href={href}
+			id={id}
+		>
+			{label}
+		</a>
+	)}
 </div>
