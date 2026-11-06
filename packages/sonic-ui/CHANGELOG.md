@@ -1,5 +1,12 @@
 # @xsynaptic/sonic-ui
 
+## 0.28.2
+
+### Patch Changes
+
+- An endless dial now spaces its `positions` evenly round the turn and wraps from the last to the first, and an endless value that rounds onto `max` wraps to `min`. The waveform and wavestrip ignore a typed time that isn't in clock form, such as `1:75` or `1e2`.
+- In development, a warning now flags a second copy of the package defining a tag that's already registered.
+
 ## 0.28.1
 
 ### Patch Changes

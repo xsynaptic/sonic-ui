@@ -1,9 +1,11 @@
-import { expect, test } from 'vitest';
+import { fc, test } from '@fast-check/vitest';
+import { expect } from 'vitest';
 
 import type { SplitMember, SplitMode } from '#lib/distribute.ts';
 
 import { distribute, splitLimits } from '#lib/distribute.ts';
 import { clamp } from '#lib/math.ts';
+import { valueMapping } from '#lib/value-mapping.ts';
 
 import { mappingOf } from './helpers.ts';
 
@@ -458,3 +460,112 @@ test('on one step grid, with members locked, every mode reaches each target insi
 		}
 	}
 });
+
+const gridMember = fc
+	.record(
+		{
+			isFree: fc.constantFrom(true, true, true, false),
+			min: fc.constantFrom(0, 1),
+			share: fc.double({ max: 1, min: 0, noNaN: true }),
+			span: fc.constantFrom(6, 10),
+			step: fc.constantFrom(0.5, 1, 2, 3),
+		},
+		{ noNullPrototype: true },
+	)
+	.map(({ isFree, min, share, span, step }): SplitMember => {
+		const mapping = valueMapping({
+			isNotched: false,
+			isWrapping: false,
+			max: min + span,
+			min,
+			step,
+			taper: 'linear',
+		});
+		const [low, high] = mapping.bounds;
+
+		return {
+			isFree,
+			max: high,
+			min: low,
+			snap: mapping.snap,
+			stepFrom: (from, direction) =>
+				mapping.keyTarget(direction > 0 ? 'ArrowRight' : 'ArrowLeft', from) ?? from,
+			value: mapping.snap(min + share * span),
+		};
+	});
+
+test.prop(
+	{
+		direction: fc.constantFrom<-1 | 0 | 1>(-1, 0, 1),
+		drawn: fc.array(gridMember, { maxLength: 4, minLength: 3 }),
+		mode: fc.constantFrom<SplitMode>('cascade', 'equal', 'proportional'),
+		seed: fc.nat(),
+		share: fc.double({ max: 1, min: 0, noNaN: true }),
+	},
+	{ numRuns: 10_000 },
+)(
+	'on mixed step grids a move holds the total, every bound and grid, and the locked members',
+	({ direction, drawn, mode, seed, share }) => {
+		const index = seed % drawn.length;
+		const snapshot = drawn.map((entry, at) => (at === index ? { ...entry, isFree: true } : entry));
+		const mover = snapshot[index];
+		if (!mover) throw new Error('No mover');
+
+		const total = sum(snapshot.map(({ value }) => value));
+		const target = mover.snap(mover.min + share * (mover.max - mover.min));
+		const result = distribute(snapshot, { mode, total }, { direction, index, target });
+
+		expect(sum(result)).toBeCloseTo(total, 9);
+		for (const [at, { isFree, max, min, snap, value }] of snapshot.entries()) {
+			const landed = result[at] ?? NaN;
+
+			expect(landed).toBeGreaterThanOrEqual(min);
+			expect(landed).toBeLessThanOrEqual(max);
+			expect(snap(landed)).toBe(landed);
+			if (!isFree) expect(landed).toBe(value);
+		}
+	},
+);
+
+test.prop(
+	{
+		aim: fc.nat(),
+		drawn: fc.array(
+			fc.record(
+				{
+					isFree: fc.boolean(),
+					low: fc.nat(3),
+					share: fc.nat(),
+					span: fc.integer({ max: 12, min: 1 }),
+				},
+				{ noNullPrototype: true },
+			),
+			{ maxLength: 5, minLength: 2 },
+		),
+		mode: fc.constantFrom<SplitMode>('cascade', 'equal', 'proportional'),
+		seed: fc.nat(),
+		step: fc.constantFrom(0.25, 1, 5),
+	},
+	{ numRuns: 3000 },
+)(
+	'on one step grid a move lands the mover on its target, held to its limits',
+	({ aim, drawn, mode, seed, step }) => {
+		const index = seed % drawn.length;
+		const snapshot = drawn.map(({ isFree, low, share, span }, at) =>
+			member((low + (share % (span + 1))) * step, {
+				isFree: isFree || at === index,
+				max: (low + span) * step,
+				min: low * step,
+				step,
+			}),
+		);
+		const mover = snapshot[index];
+		if (!mover) throw new Error('No mover');
+
+		const total = sum(snapshot.map(({ value }) => value));
+		const target = mover.min + (aim % ((mover.max - mover.min) / step + 1)) * step;
+		const landed = distribute(snapshot, { mode, total }, { index, target })[index];
+
+		expect(landed).toBe(clamp(target, ...splitLimits(snapshot, index, total)));
+	},
+);

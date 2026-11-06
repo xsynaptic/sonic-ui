@@ -14,11 +14,15 @@ export function parseNumberList(text: null | string): Array<number> | undefined 
 	return numbers.length >= 2 ? numbers : undefined;
 }
 
-export function nearestPosition(positions: ReadonlyArray<number>, value: number): number {
+export function nearestPosition(
+	positions: ReadonlyArray<number>,
+	value: number,
+	distance = (position: number) => Math.abs(position - value),
+): number {
 	let nearest = positions[0] ?? value;
 
 	for (const position of positions) {
-		if (Math.abs(position - value) < Math.abs(nearest - value)) nearest = position;
+		if (distance(position) < distance(nearest)) nearest = position;
 	}
 
 	return nearest;

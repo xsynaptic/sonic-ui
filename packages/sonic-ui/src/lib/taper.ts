@@ -1,4 +1,4 @@
-import { clampProportion } from '#lib/math.ts';
+import { clampProportion, wrapProportion } from '#lib/math.ts';
 
 export interface Taper {
 	proportionOf: (value: number) => number;
@@ -64,5 +64,19 @@ export function listTaper(positions: ReadonlyArray<number>): Taper {
 			return (above - 1 + (value - low) / (high - low)) / last;
 		},
 		valueAt: (proportion) => positions[Math.round(clampProportion(proportion) * last)] ?? NaN,
+	};
+}
+
+export function ringTaper(positions: ReadonlyArray<number>, span: number): Taper {
+	const count = positions.length;
+	const first = positions[0] ?? 0;
+	const firstAfterOneTurn = first + span;
+	const list = listTaper([...positions, firstAfterOneTurn]);
+
+	return {
+		proportionOf: (value) =>
+			wrapProportion(list.proportionOf(value < first ? value + span : value)),
+		valueAt: (proportion) =>
+			positions[Math.round(wrapProportion(proportion) * count) % count] ?? NaN,
 	};
 }

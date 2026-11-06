@@ -2,7 +2,7 @@ import type { Taper } from '#lib/taper.ts';
 
 import { clamp, decimalPlaces, roundTo, trimFloat } from '#lib/math.ts';
 import { nearestPosition } from '#lib/number-list.ts';
-import { linearTaper, listTaper, logTaper, skewTaper } from '#lib/taper.ts';
+import { linearTaper, listTaper, logTaper, ringTaper, skewTaper } from '#lib/taper.ts';
 
 export interface ValueSpec {
 	detent?: number;
@@ -40,9 +40,21 @@ const keySteps = new Map([
 	['PageUp', pageSteps],
 ]);
 
-function curveOf(spec: ValueSpec, max: number): Taper | undefined {
-	const { min, positions } = spec;
-	if (positions) return listTaper(positions);
+function positionsIn(spec: ValueSpec, max: number): ReadonlyArray<number> | undefined {
+	if (!spec.isWrapping) return spec.positions;
+
+	const withinTurn = spec.positions?.filter((position) => position >= spec.min && position < max);
+
+	return withinTurn && withinTurn.length >= 2 ? withinTurn : undefined;
+}
+
+function curveOf(
+	spec: ValueSpec,
+	max: number,
+	positions: ReadonlyArray<number> | undefined,
+): Taper | undefined {
+	const { min } = spec;
+	if (positions) return spec.isWrapping ? ringTaper(positions, max - min) : listTaper(positions);
 	if (spec.isNotched || spec.isWrapping) return undefined;
 
 	const log = spec.taper === 'log' ? logTaper(min, max) : undefined;
@@ -66,17 +78,18 @@ function countSteps(spec: ValueSpec, range: number): number {
 }
 
 export function valueMapping(spec: ValueSpec): ValueMapping {
-	const { min, positions, step } = spec;
+	const { min, step } = spec;
 	const max = Math.max(min, spec.max);
 	const range = max - min;
+	const positions = positionsIn(spec, max);
 	const count = countSteps(spec, range);
 	const isStepped = step > 0 && !positions;
-	const curve = curveOf(spec, max);
+	const curve = curveOf(spec, max, positions);
 	const taper = curve ?? linearTaper(min, max);
 
 	// Decimal places, since significant digits keep the float residue beside 0
 	function round(value: number): number {
-		if (step <= 0) return trimFloat(value);
+		if (!isStepped) return trimFloat(value);
 
 		return roundTo(value, Math.max(decimalPlaces(step), decimalPlaces(min)));
 	}
@@ -101,7 +114,9 @@ export function valueMapping(spec: ValueSpec): ValueMapping {
 		if (!spec.isWrapping) return clamp(value, ...bounds);
 		if (range <= 0) return min;
 
-		return round(min + wrap(value, range));
+		const wrapped = round(min + wrap(value, range));
+
+		return wrapped >= max ? min : wrapped;
 	}
 
 	// A step that does not divide the range leaves a short seam, where a value goes to the nearer side
@@ -114,8 +129,20 @@ export function valueMapping(spec: ValueSpec): ValueMapping {
 		return round(min + Math.round(offset / step) * step);
 	}
 
+	function snapPosition(list: ReadonlyArray<number>, value: number): number {
+		if (!spec.isWrapping) return nearestPosition(list, value);
+
+		const wrapped = bound(value);
+
+		return nearestPosition(list, wrapped, (position) => {
+			const gap = Math.abs(position - wrapped);
+
+			return Math.min(gap, range - gap);
+		});
+	}
+
 	function snap(value: number): number {
-		if (positions) return nearestPosition(positions, value);
+		if (positions) return snapPosition(positions, value);
 		if (step <= 0) return bound(round(value));
 		if (spec.isWrapping) return ring(value, range);
 
@@ -124,7 +151,11 @@ export function valueMapping(spec: ValueSpec): ValueMapping {
 
 	function stepBy(from: number, steps: number, size: number): number {
 		if (positions) {
-			const index = clamp(positions.indexOf(from) + steps, 0, positions.length - 1);
+			const { length } = positions;
+			const moved = positions.indexOf(from) + steps;
+			const index = spec.isWrapping
+				? ((moved % length) + length) % length
+				: clamp(moved, 0, length - 1);
 
 			return positions[index] ?? from;
 		}
@@ -152,7 +183,7 @@ export function valueMapping(spec: ValueSpec): ValueMapping {
 	}
 
 	function end(size: number): number {
-		if (!spec.isWrapping) return bounds[1];
+		if (positions || !spec.isWrapping) return bounds[1];
 
 		return min + (isStepped ? top : (Math.ceil(range / size) - 1) * size);
 	}

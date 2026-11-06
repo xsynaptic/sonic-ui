@@ -179,6 +179,32 @@ describe('a value list', () => {
 
 		expect([200, 400].map((value) => high.proportionOf(value))).toEqual([0.5, 1]);
 	});
+
+	test('an endless list sits evenly round the turn, and its keys wrap', () => {
+		const ring = mappingOf({ isWrapping: true, max: 360, positions: [0, 90, 180, 270] });
+
+		expect([0, 90, 180, 270].map((value) => ring.proportionOf(value))).toEqual([
+			0, 0.25, 0.5, 0.75,
+		]);
+		expect(ring.keyTarget('ArrowRight', 270)).toBe(0);
+		expect(ring.keyTarget('ArrowLeft', 0)).toBe(270);
+		expect(ring.keyTarget('End', 90)).toBe(270);
+		expect(ring.snap(350)).toBe(0);
+	});
+
+	test('an endless list keeps only the positions from min up to max', () => {
+		const ring = mappingOf({ isWrapping: true, positions: [1, 2, 4, 8, 16, 32, 64, 128] });
+
+		expect(ring.keyTarget('End', 1)).toBe(64);
+		expect(ring.keyTarget('ArrowRight', 64)).toBe(1);
+		expect(ring.proportionOf(64)).toBeCloseTo(6 / 7, 12);
+	});
+});
+
+test('an endless value that rounds onto max wraps to min', () => {
+	expect(mappingOf({ isWrapping: true, max: 30, min: 20, step: 0 }).snap(-5.000444502915e-12)).toBe(
+		20,
+	);
 });
 
 describe('a taper', () => {
