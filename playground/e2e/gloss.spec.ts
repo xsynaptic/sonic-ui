@@ -31,7 +31,7 @@ function readSheen(page: Page, { kind, pseudo, selector }: Sheen): Promise<numbe
 			}
 			layers.push(layer.trim());
 
-			const sheen = layers.find((candidate) => candidate.startsWith(`${gradientKind ?? ''}-`));
+			const sheen = layers.find((candidate) => candidate.startsWith(`${gradientKind}-`));
 
 			if (sheen === undefined) return NaN;
 
@@ -43,7 +43,7 @@ function readSheen(page: Page, { kind, pseudo, selector }: Sheen): Promise<numbe
 
 			return Math.max(...alphas);
 		},
-		[kind, pseudo],
+		[kind, pseudo] as const,
 	);
 }
 

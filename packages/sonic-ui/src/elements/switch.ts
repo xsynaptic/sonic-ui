@@ -189,7 +189,7 @@ export class SonicSwitch extends SonicPositionGroupElement {
 		const side = Math.abs(offset) < pressCenterZone ? 1 : Math.sign(offset);
 		const toward = this.stepFrom(from, side);
 
-		return toward !== undefined && toward !== from ? toward : this.stepFrom(from, -side);
+		return toward === undefined || toward === from ? this.stepFrom(from, -side) : toward;
 	}
 
 	#throwBy(direction: number, pointerId: number): void {

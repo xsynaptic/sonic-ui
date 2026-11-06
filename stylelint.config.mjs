@@ -61,6 +61,7 @@ export default {
 			// Public tokens stay unset so a consumer can set them at any scope; the controls resolve them into private values
 			files: ['packages/sonic-ui/src/styles/**/*.css'],
 			rules: {
+				'a11y/no-outline-none': null,
 				'custom-property-pattern': '^_?sonic-[a-z0-9]+(-[a-z0-9]+)*$',
 				'property-disallowed-list': ['/^--sonic-/'],
 				'selector-disallowed-list': [

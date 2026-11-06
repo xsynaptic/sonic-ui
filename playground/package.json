@@ -16,20 +16,20 @@
 		"test-e2e-full": "astro build && playwright test"
 	},
 	"dependencies": {
-		"@astrojs/react": "^7.0.1",
-		"@lucide/astro": "^1.55.0",
-		"@tailwindcss/vite": "^4.3.3",
+		"@astrojs/react": "^7.1.2",
+		"@lucide/astro": "^1.67.0",
+		"@tailwindcss/vite": "^4.3.4",
 		"@xsynaptic/sonic-ui": "*",
-		"astro": "^7.3.8",
-		"react": "^19.3.0",
-		"react-dom": "^19.3.0",
-		"tailwindcss": "^4.3.3",
+		"astro": "^7.4.5",
+		"react": "^19.3.1",
+		"react-dom": "^19.3.1",
+		"tailwindcss": "^4.3.4",
 		"tone": "15.1.22"
 	},
 	"devDependencies": {
-		"@astrojs/check": "^0.9.10",
-		"@axe-core/playwright": "^4.13.0",
-		"@playwright/test": "^1.64.0",
+		"@astrojs/check": "^0.9.12",
+		"@axe-core/playwright": "^4.14.0",
+		"@playwright/test": "^1.64.1",
 		"@types/react": "^19.3.0",
 		"@types/react-dom": "^19.3.0",
 		"typescript": "^6.0.3"

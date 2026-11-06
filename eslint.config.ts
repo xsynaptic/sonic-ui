@@ -52,6 +52,18 @@ export default getConfig([
 		},
 	},
 	{
+		files: ['**/*.test.ts', 'playground/e2e/**/*'],
+		rules: {
+			'unicorn/consistent-boolean-name': 'off',
+		},
+	},
+	{
+		files: ['stylelint.config.mjs'],
+		rules: {
+			'unicorn/no-null': 'off',
+		},
+	},
+	{
 		files: ['packages/sonic-ui/src/define.ts'],
 		rules: {
 			'perfectionist/sort-imports': ['error', { sortSideEffects: true, type: 'natural' }],

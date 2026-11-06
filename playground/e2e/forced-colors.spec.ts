@@ -153,8 +153,8 @@ test('drawn parts opt out of forced colours, and the indicator, the number box a
 	await test.step('every drawn part opts out of forced colours and paints, and every focusable element stays forced', async () => {
 		const parts = await page.evaluate((selectors) => {
 			return selectors.map((selector) => {
-				const [element, pseudo] = selector.split('::', 2);
-				const found = document.querySelector(element ?? '');
+				const [element = '', pseudo] = selector.split('::', 2);
+				const found = document.querySelector(element);
 				if (!found) return { missing: true, selector };
 
 				const style = getComputedStyle(found, pseudo === undefined ? undefined : `::${pseudo}`);
