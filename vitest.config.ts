@@ -1,5 +1,7 @@
 import { configDefaults, defineConfig } from 'vitest/config';
 
+const STRYKER_MUTATOR_WORKER = process.env.STRYKER_MUTATOR_WORKER;
+
 // Playwright owns the `*.spec.ts` files in `playground/e2e`
 export default defineConfig({
 	define: { __DEV__: 'true' },
@@ -11,12 +13,11 @@ export default defineConfig({
 		restoreMocks: true,
 		setupFiles: [
 			'packages/sonic-ui/test/setup.ts',
-			...(process.env.STRYKER_MUTATOR_WORKER === undefined
-				? []
-				: ['packages/sonic-ui/test/stryker-seed.ts']),
+			...(STRYKER_MUTATOR_WORKER === undefined ? [] : ['packages/sonic-ui/test/stryker-seed.ts']),
 		],
 		silent: 'passed-only',
-		testTimeout: 15_000,
+		// Under Stryker a failed test counts as a kill, so a slow mutant is left to Stryker's own timeout
+		testTimeout: STRYKER_MUTATOR_WORKER === undefined ? 15_000 : 0,
 		unstubGlobals: true,
 	},
 });

@@ -4,13 +4,8 @@
 	"testRunner": "vitest",
 	"plugins": ["@stryker-mutator/vitest-runner"],
 	"coverageAnalysis": "perTest",
-	"incrementalFile": ".cache/stryker/incremental.json",
-	"mutate": [
-		"packages/sonic-ui/src/**/*.ts",
-		"!packages/sonic-ui/src/define.ts",
-		"!packages/sonic-ui/src/define/**",
-		"!packages/sonic-ui/src/index.ts"
-	],
+	"warnings": { "slow": false },
+	"mutate": ["packages/sonic-ui/src/lib/**/*.ts"],
 	"ignorePatterns": [
 		"**",
 		"!package.json",
@@ -22,8 +17,7 @@
 		"packages/sonic-ui/node_modules/**"
 	],
 	"tempDirName": ".cache/stryker-tmp",
-	"reporters": ["progress", "clear-text", "html", "json"],
-	"clearTextReporter": { "allowColor": false, "maxTestsToLog": 2 },
-	"htmlReporter": { "fileName": ".cache/stryker/mutation-report.html" },
-	"jsonReporter": { "fileName": ".cache/stryker/mutation-report.json" }
+	"timeoutMS": 20000,
+	"reporters": ["clear-text"],
+	"clearTextReporter": { "allowColor": false, "maxTestsToLog": 2 }
 }
