@@ -140,6 +140,29 @@ test("a handle drag reports its pointer type through its dials' changes, then dr
 	expect(envelope.pointerType).toBeUndefined();
 });
 
+test.each([
+	['attack', 'attack'],
+	['attackCurve', 'attack-curve'],
+	['decay', 'decay'],
+	['decayCurve', 'decay-curve'],
+	['delay', 'delay'],
+	['hold', 'hold'],
+	['release', 'release'],
+	['releaseCurve', 'release-curve'],
+	['sustain', 'sustain'],
+] as const)(
+	'the %s property reads the id in %s, and an empty string once it is removed',
+	(property, attribute) => {
+		const envelope = document.createElement('sonic-envelope');
+
+		envelope.setAttribute(attribute, 'source');
+		expect(envelope[property]).toBe('source');
+
+		envelope.removeAttribute(attribute);
+		expect(envelope[property]).toBe('');
+	},
+);
+
 test('a time handle has no level to move', () => {
 	const { dials, events, handle } = mountBound();
 
@@ -216,6 +239,8 @@ test("a disabled dial's handle does not move it, and the other axis still drags"
 	const { dials, handle } = mountBound();
 
 	dials.decay.disabled = true;
+	expect(handle('decay').matches('[data-sonic-disabled]')).toBe(false);
+
 	drag(handle('decay'), { x: 25, y: -20 });
 	expect([dials.decay.value, dials.sustain.value]).toEqual([350, -18]);
 

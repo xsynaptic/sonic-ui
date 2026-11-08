@@ -151,3 +151,9 @@ test.each([
 		expect(drag({ detent: 0, from, moves, spec: endless })).toEqual(expected);
 	},
 );
+
+test('on an endless mapping a drag that has turned once is still held by a detent away from the seam', () => {
+	const endless = { isWrapping: true, max: 360 };
+
+	expect(drag({ detent: 180, from: 190, moves: [150, 160], spec: endless })).toEqual([168, 180]);
+});

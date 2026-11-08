@@ -174,6 +174,29 @@ test('a drag past what the siblings can give turns back at once, as it does from
 	expect(valuesOf(members)).toEqual([60, 30, 10]);
 });
 
+test.each([
+	[70, [68, 29, 3]],
+	[20, [36, 29, 35]],
+])(
+	"a drag to %d past a limit off the mover's grid stops on the last step inside it",
+	async (to, expected) => {
+		const { members } = await mountSplit(
+			'',
+			sliders(
+				'<sonic-slider step="4" value="48"></sonic-slider>',
+				'<sonic-slider data-sonic-locked value="29"></sonic-slider>',
+				'<sonic-slider max="38" value="23"></sonic-slider>',
+			),
+		);
+		const [first] = members;
+		if (!first) throw new Error('No member');
+
+		await drag(first, [to]);
+
+		expect(valuesOf(members)).toEqual(expected);
+	},
+);
+
 test('a script write on a locked member lands, the others make room, and it stays locked', async () => {
 	const { members } = await mountSplit(
 		'',

@@ -8,7 +8,9 @@ export interface AttributeWrite {
 
 type Lifecycle = { kind: 'connect' } | { kind: 'disconnect' } | { kind: 'tick' };
 
-export type Step<Write> = Lifecycle | { kind: 'write'; write: Write };
+// A move is a persisting router's: removed, written and put back in one task
+export type Step<Write> =
+	Lifecycle | { kind: 'move'; writes: Array<Write> } | { kind: 'write'; write: Write };
 
 type Weighted<Write> = fc.Arbitrary<Write> | { arbitrary: fc.Arbitrary<Write>; weight: number };
 
@@ -22,6 +24,7 @@ export function attributeWrite(
 export function stepsOf<Write>(
 	writes: ReadonlyArray<Weighted<Write>>,
 ): fc.Arbitrary<Array<Step<Write>>> {
+	const weighted = writes.map((own) => ('weight' in own ? own : { arbitrary: own, weight: 1 }));
 	const step = fc.oneof(
 		{
 			arbitrary: fc.constantFrom<Step<Write>>(
@@ -31,14 +34,16 @@ export function stepsOf<Write>(
 			),
 			weight: 9,
 		},
-		...writes.map((write) => {
-			const { arbitrary, weight } = 'weight' in write ? write : { arbitrary: write, weight: 1 };
-
-			return {
-				arbitrary: arbitrary.map((own): Step<Write> => ({ kind: 'write', write: own })),
-				weight,
-			};
-		}),
+		{
+			arbitrary: fc
+				.array(fc.oneof(...weighted), { maxLength: 3, minLength: 1 })
+				.map((own): Step<Write> => ({ kind: 'move', writes: own })),
+			weight: 3,
+		},
+		...weighted.map(({ arbitrary, weight }) => ({
+			arbitrary: arbitrary.map((own): Step<Write> => ({ kind: 'write', write: own })),
+			weight,
+		})),
 	);
 
 	return fc.array(step, { maxLength: 16, size: 'medium' });
@@ -75,6 +80,14 @@ async function runStep<Write>(run: Run<Write>, step: Step<Write>): Promise<void>
 		}
 		case 'disconnect': {
 			run.host.remove();
+			return;
+		}
+		case 'move': {
+			const { isConnected } = run.host;
+
+			run.host.remove();
+			for (const write of step.writes) run.apply(write);
+			if (isConnected) document.body.append(run.host);
 			return;
 		}
 		case 'tick': {

@@ -75,6 +75,7 @@ test.each([
 	['PageUp', 340, 10],
 	['PageDown', 32.5, 10],
 	['PageUp', 10, 85],
+	['PageUp', 85, 160],
 ])(
 	'%s from %d on an endless mapping with a detent at the seam targets %d',
 	(key, from, expected) => {
@@ -306,6 +307,12 @@ test.each([10, 0])('an endless mapping from 10 to %d holds min', (max) => {
 	expect(collapsed.snap(5)).toBe(10);
 	expect(collapsed.keyTarget('End', 5)).toBe(10);
 	expect(collapsed.keyTarget('ArrowUp', 10)).toBe(10);
+});
+
+test('End on a continuous endless mapping lands a hundredth of the turn short of min', () => {
+	expect(mappingOf({ isWrapping: true, max: 370, min: 10, step: 0 }).keyTarget('End', 100)).toBe(
+		366.4,
+	);
 });
 
 test('an endless mapping wraps a value a float short of max to min', () => {

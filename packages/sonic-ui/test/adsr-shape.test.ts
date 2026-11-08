@@ -51,6 +51,27 @@ test('an unbound sustain reads full level, and an unbound decay drops straight d
 	]);
 });
 
+test('the path starts with a move, draws upward from the floor at 1, and the fill closes it', () => {
+	const { fill, stroke } = adsrPath(
+		adsrShape({ attack: 0.5, decay: 0.25, release: 1, sustain: 0.6 }),
+	);
+
+	expect(stroke).toBe('M0 1L0 1L0.125 0L0.125 0L0.1875 0.4L0.4375 0.4L0.6875 1');
+	expect(fill).toBe(`${stroke}Z`);
+});
+
+test('a curved leg is sampled at 23 even steps between its ends', () => {
+	const { handles, points } = adsrShape({ attack: 1, decay: 1, sustain: 0.5 }, { decay: 4 });
+	const [start = NaN, end = NaN] = handles.map(({ x }) => x);
+	const samples = points.filter(({ x }) => x > start && x < end);
+
+	expect(points).toHaveLength(7 + 23);
+	expect(samples).toHaveLength(23);
+	for (const [index, { x }] of samples.entries()) {
+		expect(x).toBeCloseTo(start + ((index + 1) * (end - start)) / 24, 9);
+	}
+});
+
 test('with no release bound the line still drops to the floor, so the fill closes along it', () => {
 	const { stroke } = adsrPath(adsrShape({ attack: 1, sustain: 0.5 }));
 
