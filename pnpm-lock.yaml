@@ -208,6 +208,9 @@ importers:
       fallow:
         specifier: ^3.40.0
         version: 3.40.0
+      fast-check:
+        specifier: ^4.10.2
+        version: 4.10.2
       globals:
         specifier: ^17.14.0
         version: 17.14.0

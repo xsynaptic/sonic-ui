@@ -18,6 +18,7 @@
 	],
 	"tempDirName": ".cache/stryker-tmp",
 	"timeoutMS": 20000,
-	"reporters": ["clear-text"],
-	"clearTextReporter": { "allowColor": false, "maxTestsToLog": 2 }
+	"reporters": ["clear-text", "json"],
+	"clearTextReporter": { "allowColor": false, "maxTestsToLog": 2 },
+	"jsonReporter": { "fileName": ".cache/stryker/mutation.json" }
 }
