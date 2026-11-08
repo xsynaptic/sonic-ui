@@ -359,6 +359,15 @@ describe('an endless mapping whose step of 7 does not divide its 360', () => {
 	});
 });
 
+test.each([
+	[{ max: 10, step: 2 }, 0.7, 0],
+	[{ max: 360, step: 90 }, 44.6, 0],
+	[{ max: 1, step: 0.2 }, 0.06, 0],
+	[{ max: 3.3, step: 1 }, 3.2985, 0],
+])('on an endless %o, %d snaps to the nearer step, %d', (spec, value, expected) => {
+	expect(mappingOf({ isWrapping: true, ...spec }).snap(value)).toBe(expected);
+});
+
 test('End on an endless mapping lands on the last step despite float residue in its range', () => {
 	expect(mappingOf({ isWrapping: true, max: -6.1, min: -7, step: 0.1 }).keyTarget('End', -7)).toBe(
 		-6.2,

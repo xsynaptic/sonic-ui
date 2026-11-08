@@ -8,5 +8,8 @@ export default {
 				'eslint-plugin-jsx-a11y',
 			],
 		},
+		'packages/sonic-ui': {
+			entry: ['test/stryker-seed.ts'],
+		},
 	},
 } satisfies KnipConfig;

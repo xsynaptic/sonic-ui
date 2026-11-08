@@ -4,7 +4,7 @@
 	"testRunner": "vitest",
 	"plugins": ["@stryker-mutator/vitest-runner"],
 	"coverageAnalysis": "perTest",
-	"disableBail": true,
+	"incrementalFile": ".cache/stryker/incremental.json",
 	"mutate": [
 		"packages/sonic-ui/src/**/*.ts",
 		"!packages/sonic-ui/src/define.ts",

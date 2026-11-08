@@ -22,7 +22,7 @@ const anySpec = fc
 				{ nil: undefined },
 			),
 			range: fc.constantFrom(0, 0.9, 1, 3.3, 10, 360, 1000),
-			step: fc.constantFrom(0, 0.01, 0.1, 0.25, 0.3, 1, 7.5),
+			step: fc.constantFrom(0, 0.01, 0.1, 0.2, 0.25, 0.3, 1, 2, 7.5, 90),
 			taper: fc.constantFrom('linear', 'log'),
 		},
 		{ noNullPrototype: true },
@@ -52,6 +52,66 @@ test.prop([anySpec, anyValue], runs)('snap keeps its own output', (spec, value) 
 
 	expect(mapping.snap(snapped)).toBe(snapped);
 });
+
+function stepDistances(spec: ValueSpec, value: number): Array<[number, number]> {
+	const range = spec.max - spec.min;
+	const count = spec.isWrapping
+		? Math.ceil(range / spec.step - 1e-9)
+		: Math.floor(range / spec.step + 1e-9) + 1;
+	const grid = Array.from({ length: count }, (_, index) => spec.min + index * spec.step);
+
+	return grid.map((step) => {
+		if (!spec.isWrapping) return [step, Math.abs(step - value)];
+
+		const gap = (((step - value) % range) + range) % range;
+
+		return [step, Math.min(gap, range - gap)];
+	});
+}
+
+test.prop(
+	[
+		anySpec.filter((spec) => spec.step > 0 && !spec.positions && spec.max > spec.min),
+		fc.integer({ max: 2, min: -2 }),
+		fc.double({ max: 1, min: 0, noNaN: true }),
+	],
+	runs,
+)(
+	'a stepped value snaps to the nearest step, round the turn when endless',
+	(spec, turns, along) => {
+		const value = spec.min + (turns + along) * (spec.max - spec.min);
+		const snapped = valueMapping(spec).snap(value);
+		const distances = stepDistances(spec, value);
+		const nearest = Math.min(...distances.map(([, distance]) => distance));
+		const [, landed = NaN] =
+			distances.find(([step]) => Math.abs(step - snapped) < 1e-9 * Math.max(1, Math.abs(step))) ??
+			[];
+
+		expect(landed).toBeLessThanOrEqual(nearest + 1e-9 * Math.max(1, Math.abs(value)));
+	},
+);
+
+test.prop(
+	[
+		anySpec.filter(
+			(spec) =>
+				spec.isWrapping && !spec.positions && spec.midpoint === undefined && spec.max > spec.min,
+		),
+		fc.double({ max: 1, min: 0, noNaN: true }),
+	],
+	runs,
+)(
+	'an endless proportion inside the bounds matches the clamped one, round the turn',
+	(spec, along) => {
+		const endless = valueMapping({ ...spec, taper: 'linear' });
+		const clamped = valueMapping({ ...spec, isWrapping: false, taper: 'linear' });
+		const value = clamped.bounds[0] + along * (clamped.bounds[1] - clamped.bounds[0]);
+
+		const apart = Math.abs(endless.proportionOf(value) - clamped.proportionOf(value)) % 1;
+
+		expect(Math.min(apart, 1 - apart)).toBeLessThan(1e-9);
+	},
+);
 
 test.prop([clampedSpec, anyValue], runs)(
 	'a clamped value snaps inside the bounds',
@@ -106,6 +166,30 @@ test.prop(
 		const from = mapping.snap(value);
 
 		expect(mapping.keyTarget(key, from)).not.toBe(from);
+	},
+);
+
+test.prop(
+	{
+		along: fc.double({ max: 1, min: 0, noNaN: true }),
+		key: steppingKey,
+		spec: clampedSpec.filter((spec) => spec.detent !== undefined),
+		stride: keyStep,
+	},
+	runs,
+)(
+	'a clamped key stops on the detent only when the detent lies inside its move',
+	({ along, key, spec, stride }) => {
+		const { detent = NaN, ...free } = spec;
+		const mapping = valueMapping(spec);
+		const from = mapping.snap(spec.min + along * (spec.max - spec.min));
+		const unheld = valueMapping(free).keyTarget(key, from, stride) ?? NaN;
+		const caught = mapping.snap(detent);
+		const isInside =
+			Math.sign(caught - from) === Math.sign(unheld - from) &&
+			Math.abs(caught - from) < Math.abs(unheld - from);
+
+		expect(mapping.keyTarget(key, from, stride)).toBe(isInside ? caught : unheld);
 	},
 );
 

@@ -206,6 +206,8 @@ export class SonicEnvelope extends SonicElement {
 
 	#held: HTMLElement | undefined;
 
+	#isBindingStale = false;
+
 	#isDriving = false;
 
 	readonly #line = requireChild(this.control, '.sonic-envelope-line', SVGElement);
@@ -229,13 +231,18 @@ export class SonicEnvelope extends SonicElement {
 			this.#draw();
 			return;
 		}
-		if (bindableNames.has(name)) this.#bind();
-		else this.#renderReadout();
+		if (!bindableNames.has(name)) {
+			this.#renderReadout();
+			return;
+		}
+		if (this.isConnected) this.#bind();
+		else this.#isBindingStale = true;
 	}
 
 	override connectedCallback(): void {
 		this.upgradeProperties(...adsrStages, 'attackCurve', 'decayCurve', 'readout', 'releaseCurve');
 		super.connectedCallback();
+		if (this.#isBindingStale) this.#bind();
 	}
 
 	protected connect(signal: AbortSignal): void {
@@ -252,6 +259,7 @@ export class SonicEnvelope extends SonicElement {
 	}
 
 	#bind(): void {
+		this.#isBindingStale = false;
 		this.#gesture?.end();
 		this.#unbind();
 		for (const name of bindable) {

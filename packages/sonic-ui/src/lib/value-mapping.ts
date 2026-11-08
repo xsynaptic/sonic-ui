@@ -105,7 +105,7 @@ export function valueMapping(spec: ValueSpec): ValueMapping {
 	const bounds = limits();
 
 	function wrap(value: number, span: number): number {
-		const offset = round((((value - min) % span) + span) % span);
+		const offset = trimFloat((((value - min) % span) + span) % span);
 
 		return offset >= span ? 0 : offset;
 	}
@@ -114,7 +114,7 @@ export function valueMapping(spec: ValueSpec): ValueMapping {
 		if (!spec.isWrapping) return clamp(value, ...bounds);
 		if (range <= 0) return min;
 
-		const wrapped = round(min + wrap(value, range));
+		const wrapped = trimFloat(min + wrap(value, range));
 
 		return wrapped >= max ? min : wrapped;
 	}

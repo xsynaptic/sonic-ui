@@ -9,8 +9,14 @@ export default defineConfig({
 		exclude: [...configDefaults.exclude, '.cache/**', '.claude/worktrees/**'],
 		include: ['**/*.test.ts'],
 		restoreMocks: true,
-		setupFiles: ['packages/sonic-ui/test/setup.ts'],
+		setupFiles: [
+			'packages/sonic-ui/test/setup.ts',
+			...(process.env.STRYKER_MUTATOR_WORKER === undefined
+				? []
+				: ['packages/sonic-ui/test/stryker-seed.ts']),
+		],
 		silent: 'passed-only',
+		testTimeout: 15_000,
 		unstubGlobals: true,
 	},
 });
