@@ -47,17 +47,19 @@
 				color-mix(in oklab, var(--_sonic-lit) calc(24% * var(--_sonic-relief)), transparent)
 		);
 		--_sonic-legend-lit-from: var(--_sonic-lit);
+
+		/* Alpha-only relative colours stay in oklab; Chromium 158 drops the hue converting to oklch */
 		--_sonic-legend-lit: color-mix(
 			in oklab,
 			var(--sonic-cap) 0%,
-			oklch(
+			oklab(
 				from
 					color-mix(
 						in oklab,
-						oklch(from var(--_sonic-ink) l c h / clamp(0, (0.6 - l) * 1000, 1)),
-						oklch(from var(--_sonic-legend-lit-from) l c h / 0.1%)
+						oklab(from var(--_sonic-ink) l a b / clamp(0, (0.6 - l) * 1000, 1)),
+						oklab(from var(--_sonic-legend-lit-from) l a b / 0.1%)
 					)
-					l c h / 100%
+					l a b / 100%
 			)
 		);
 	}

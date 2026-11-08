@@ -3,7 +3,7 @@ const anyValue = ['/^.+$/'];
 // Supported at the floor (Chrome 111, Safari 16.4, Firefox 128) but flagged, since Baseline 2022 sits just under it
 const atFloor = {
 	ignoreAtRules: ['property', 'container'],
-	ignoreFunctions: ['color-mix', 'oklch', 'sin', 'cos', 'tan', 'atan2'],
+	ignoreFunctions: ['color-mix', 'oklab', 'oklch', 'sin', 'cos', 'tan', 'atan2'],
 	ignoreProperties: {
 		'container-type': anyValue,
 		'forced-color-adjust': anyValue,
