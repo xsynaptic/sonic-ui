@@ -193,6 +193,12 @@ describe('a value list', () => {
 		expect(ring.snap(350)).toBe(0);
 	});
 
+	test('an endless list above zero measures the gap past its last position by the turn', () => {
+		const ring = mappingOf({ isWrapping: true, max: 370, min: 10, positions: [40, 130, 220, 310] });
+
+		expect([355, 25].map((value) => ring.proportionOf(value))).toEqual([0.875, 0.9583333333333334]);
+	});
+
 	test('an endless list keeps only the positions from min up to max', () => {
 		const ring = mappingOf({ isWrapping: true, positions: [1, 2, 4, 8, 16, 32, 64, 128] });
 
@@ -235,7 +241,7 @@ describe('a taper', () => {
 		['ArrowUp', 25, 26],
 		['ArrowDown', 25, 24],
 		['PageUp', 25, 36],
-		['PageDown', 25, 16],
+		['PageDown', 25, 15],
 		['ArrowUp', 0, 1],
 		['Home', 25, 0],
 		['End', 25, 100],

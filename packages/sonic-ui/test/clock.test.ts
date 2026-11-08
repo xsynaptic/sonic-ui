@@ -27,6 +27,7 @@ test.each([
 	['−1:02:05', -3725],
 	['1:2', 62],
 	['1:23.5', 83.5],
+	['1:05.25', 65.25],
 ])('%j reads as %j seconds', (text, seconds) => {
 	expect(parseClock(text)).toBe(seconds);
 });

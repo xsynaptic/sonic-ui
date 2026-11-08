@@ -99,3 +99,13 @@ test('the levels settle only once the hold has landed too', () => {
 	runTo(levels, [4000, 4700, 100]);
 	expect(areSettled(levels, floor)).toBe(true);
 });
+
+test('the hold counts its 1,500ms from when it was taken, not from zero', () => {
+	const levels = createLevels(1);
+
+	receiveLevels(levels, [-10], floor);
+	stepLevels(levels, { elapsedMs: 16, floor, isHeld: true, isHoldStepped: false, nowMs: 5000 });
+	runTo(levels, [5000, 6000, 20]);
+
+	expect(levels.holds[0]).toBe(-10);
+});

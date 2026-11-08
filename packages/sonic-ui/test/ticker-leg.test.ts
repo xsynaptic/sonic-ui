@@ -119,3 +119,13 @@ test('a distance shorter than the reach of both fades never shows either in full
 		start: { delay: 1500, duration: 500, widths: [0, 8] },
 	});
 });
+
+test('a leg picked up midway times its fades by the distance it has left', () => {
+	const midway = tickerLeg({ distance: 120, hold: 0, rate: 50 }, { from: 40, heading: 1 });
+	if (!midway) throw new Error('No leg');
+
+	expect(legFades(midway, 120, 12)).toEqual({
+		end: { delay: 880, duration: 720, widths: [12, 0] },
+		start: { delay: 80, duration: 0, widths: [12, 12] },
+	});
+});

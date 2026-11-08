@@ -47,6 +47,7 @@ test('a number box steps through its positions and a typed value snaps to the ne
 test('a list drops its repeats, and one left with a single number is no list', () => {
 	expect(parseNumberList('3 1 3 2 1')).toEqual([1, 2, 3]);
 	expect(parseNumberList('5 5, 5')).toBeUndefined();
+	expect(parseNumberList('100, 0')).toEqual([0, 100]);
 });
 
 // A step tie rounds up; whether a list tie should follow it is undecided

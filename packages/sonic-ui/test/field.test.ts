@@ -112,3 +112,22 @@ test('each axis steps along its own mapping', () => {
 		}),
 	).toEqual([[3557, 6]]);
 });
+
+test('a lock goes to the axis furthest from where the drag started, and never to an absent one', () => {
+	const x = axisStart({});
+	const y = axisStart({});
+	const away = startFieldDrag({ position: { x: 100, y: 100 }, thresholdPx: 3, x, y });
+	const lockMove = { isFine: false, isLocked: true, x: 101, y: 120 };
+
+	expect(stepFieldDrag({ x: x.mapping, y: y.mapping }, away, lockMove)).toMatchObject({
+		x: undefined,
+		y: 60,
+	});
+
+	const flat = startFieldDrag({ position: { x: 0, y: 0 }, thresholdPx: 3, x });
+
+	expect(stepFieldDrag({ x: x.mapping }, flat, { ...lockMove, x: 10, y: 40 })).toMatchObject({
+		x: 55,
+		y: undefined,
+	});
+});

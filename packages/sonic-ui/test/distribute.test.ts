@@ -151,6 +151,67 @@ test('a move by nobody spreads the gap to the total over every free member', () 
 	expect(distribute(members([20, 20, 20]), { mode: 'equal', total: 90 })).toEqual([30, 30, 30]);
 });
 
+test('a move by nobody reaches the total across mixed grids, stepping a member right up to its max', () => {
+	expect(
+		distribute(
+			[
+				member(0, { max: 5, step: 5 }),
+				member(0, { max: 2, step: 2 }),
+				member(0, { max: 3, step: 3 }),
+			],
+			{ mode: 'cascade', total: 2 },
+		),
+	).toEqual([0, 2, 0]);
+	expect(
+		distribute([member(0, { max: 0.5, step: 0.5 }), member(0, { max: 6, step: 3 })], {
+			mode: 'equal',
+			total: 6,
+		}),
+	).toEqual([0, 6]);
+
+	const cascade = distribute(
+		[
+			member(0.5, { max: 1, step: 0.5 }),
+			member(0, { max: 5, step: 5 }),
+			member(2, { max: 2 }),
+			member(0, { max: 0.5, step: 0.5 }),
+			member(0, { max: 0.5, step: 0.5 }),
+		],
+		{ mode: 'cascade', total: 5.5 },
+	);
+
+	expect(sum(cascade)).toBe(5.5);
+});
+
+test('on mixed grids a held-back mover still lands on the nearest value its siblings can absorb', () => {
+	const coarse = [
+		member(2, { max: 2, step: 2 }),
+		member(3.5, { max: 4, step: 0.5 }),
+		member(0, { max: 0.5, step: 0.5 }),
+		member(5, { max: 10, step: 5 }),
+	];
+
+	expect(
+		distribute(coarse, { mode: 'proportional', total: 10.5 }, { index: 1, target: 0 }),
+	).toEqual([0, 0.5, 0, 10]);
+
+	const capped = [member(1, { max: 1 }), member(4, { max: 5.5, step: 0.5 }), member(1, { max: 1 })];
+
+	expect(distribute(capped, { mode: 'equal', total: 6 }, { index: 1, target: 5.25 })).toEqual([
+		0, 5, 1,
+	]);
+
+	const stepped = [
+		member(0.5, { max: 0.5, step: 0.5 }),
+		member(3, { max: 3 }),
+		member(0, { max: 4, step: 2 }),
+	];
+
+	expect(distribute(stepped, { mode: 'cascade', total: 3.5 }, { index: 1, target: 0 })).toEqual([
+		0.5, 1, 2,
+	]);
+});
+
 test.each(['equal', 'proportional'] as const)(
 	'%s hands a remainder of two steps to two members, one step each',
 	(mode) => {
@@ -465,6 +526,7 @@ const gridMember = fc
 	.record(
 		{
 			isFree: fc.constantFrom(true, true, true, false),
+			isStepClamped: fc.constantFrom(true, true, true, false),
 			min: fc.constantFrom(0, 1),
 			share: fc.double({ max: 1, min: 0, noNaN: true }),
 			span: fc.constantFrom(6, 10),
@@ -472,7 +534,8 @@ const gridMember = fc
 		},
 		{ noNullPrototype: true },
 	)
-	.map(({ isFree, min, share, span, step }): SplitMember => {
+	// A stepper may step past its bounds, as in the pinned sibling above
+	.map(({ isFree, isStepClamped, min, share, span, step }): SplitMember => {
 		const mapping = valueMapping({
 			isNotched: false,
 			isWrapping: false,
@@ -489,7 +552,9 @@ const gridMember = fc
 			min: low,
 			snap: mapping.snap,
 			stepFrom: (from, direction) =>
-				mapping.keyTarget(direction > 0 ? 'ArrowRight' : 'ArrowLeft', from) ?? from,
+				isStepClamped
+					? (mapping.keyTarget(direction > 0 ? 'ArrowRight' : 'ArrowLeft', from) ?? from)
+					: from + direction * step,
 			value: mapping.snap(min + share * span),
 		};
 	});

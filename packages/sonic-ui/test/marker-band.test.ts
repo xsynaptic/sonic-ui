@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 
-import { centersInReach, markerLanes } from '#lib/marker-band.ts';
+import { centersInReach, createMarkerBand, markerLanes } from '#lib/marker-band.ts';
 
 test('a marker closer than the minimum to the last in every lane opens a new one', () => {
 	expect(markerLanes([10, 12, 14], 5)).toEqual([0, 1, 2]);
@@ -81,4 +81,23 @@ test('of two markers in one column, the lane under the press comes first', () =>
 test('reach is measured across both axes at once', () => {
 	expect(centersInReach({ x: 53, y: 6 }, [{ x: 50, y: 2 }], 5)).toEqual([0]);
 	expect(centersInReach({ x: 54, y: 6 }, [{ x: 50, y: 2 }], 5)).toEqual([]);
+});
+
+test('only a dimmed marker carries the dimmed state', () => {
+	const band = document.createElement('div');
+
+	createMarkerBand(band).render(
+		[{ dimmed: true }, { dimmed: false }, {}],
+		[
+			[0.2, 0.2],
+			[0.5, 0.5],
+			[0.8, 0.8],
+		],
+	);
+
+	expect(
+		[...band.querySelectorAll<HTMLElement>(':scope > *')].map(
+			(part) => 'sonicDimmed' in part.dataset,
+		),
+	).toEqual([true, false, false]);
 });

@@ -153,6 +153,7 @@ test('bands that cannot be read, or with no colour set, draw as no bands', () =>
 	for (const framesPerSecond of [0, -10, NaN]) {
 		expect(bandTable({ bandCount: 2, framesPerSecond, levels })).toBeUndefined();
 	}
+	expect(bandTable({ bandCount: 1, framesPerSecond: 10, levels })).toBeDefined();
 
 	const table = bandTable({ bandCount: 2, framesPerSecond: 10, levels });
 

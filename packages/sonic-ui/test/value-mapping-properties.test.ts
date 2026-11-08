@@ -216,6 +216,82 @@ test.prop([anySpec, anyValue], runs)(
 	},
 );
 
+const taperedSpec = fc
+	.record(
+		{
+			midpoint: fc.constantFrom(0.1, 0.25, 0.7, 0.9),
+			min: fc.constantFrom(-60, -10, 0.5, 20),
+			range: fc.constantFrom(10, 66, 1000, 19_980),
+			step: fc.constantFrom(0, 0.25, 0.5, 1, 7.5),
+			taper: fc.constantFrom('linear', 'log'),
+		},
+		{ noNullPrototype: true },
+	)
+	.map(({ midpoint, min, range, step, taper }): ValueSpec => ({
+		isNotched: false,
+		isWrapping: false,
+		max: min + range,
+		midpoint: min + midpoint * range,
+		min,
+		step,
+		taper,
+	}));
+
+function taperStops(spec: ValueSpec): ReadonlyArray<number> {
+	const mapping = valueMapping(spec);
+
+	return Array.from({ length: 101 }, (_, hundredth) =>
+		mapping.snap(mapping.valueAt(hundredth / 100)),
+	);
+}
+
+test.prop([taperedSpec, anyValue], runs)(
+	'an arrow on a taper lands on the nearest stop a hundredth of the travel apart, its own way',
+	(spec, value) => {
+		const mapping = valueMapping(spec);
+		const from = mapping.snap(value);
+		const stops = taperStops(spec);
+		const above = stops.filter((stop) => stop > from);
+		const below = stops.filter((stop) => stop < from);
+
+		expect(mapping.keyTarget('ArrowUp', from)).toBe(above.length > 0 ? Math.min(...above) : from);
+		expect(mapping.keyTarget('ArrowDown', from)).toBe(below.length > 0 ? Math.max(...below) : from);
+	},
+);
+
+const hundredth = fc.integer({ max: 100, min: 0 });
+const direction = fc.constantFrom(
+	{ arrow: 'ArrowUp', arrowBack: 'ArrowDown', end: 1, page: 'PageUp', pageBack: 'PageDown' },
+	{ arrow: 'ArrowDown', arrowBack: 'ArrowUp', end: 0, page: 'PageDown', pageBack: 'PageUp' },
+);
+
+test.prop([taperedSpec, hundredth, direction], runs)(
+	'from a stop on a taper, an arrow and then its opposite come back',
+	(spec, along, { arrow, arrowBack, end }) => {
+		const mapping = valueMapping(spec);
+		const from = taperStops(spec)[along] ?? NaN;
+		fc.pre(from !== mapping.bounds[end]);
+
+		const moved = mapping.keyTarget(arrow, from) ?? NaN;
+
+		expect(mapping.keyTarget(arrowBack, moved)).toBe(from);
+	},
+);
+
+test.prop([taperedSpec, hundredth, direction], runs)(
+	'a page on a taper is ten arrows, and comes back short of the end',
+	(spec, along, { arrow, end, page, pageBack }) => {
+		const mapping = valueMapping(spec);
+		const from = taperStops(spec)[along] ?? NaN;
+		let arrowed = from;
+		for (let press = 0; press < 10; press++) arrowed = mapping.keyTarget(arrow, arrowed) ?? NaN;
+		const paged = mapping.keyTarget(page, from) ?? NaN;
+
+		expect(paged).toBe(arrowed);
+		if (paged !== mapping.bounds[end]) expect(mapping.keyTarget(pageBack, paged)).toBe(from);
+	},
+);
+
 test.prop(
 	[
 		clampedSpec.filter((spec) => spec.positions !== undefined),
