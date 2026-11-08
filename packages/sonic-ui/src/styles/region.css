@@ -16,7 +16,7 @@
 		--_sonic-region-colour: var(--_sonic-region-paint);
 		--_sonic-region-bracket-width: var(
 			--sonic-region-bracket-width,
-			max(1px, round(var(--_sonic-unit), var(--_sonic-snap)))
+			max(var(--_sonic-snap), round(var(--_sonic-unit), var(--_sonic-snap)))
 		);
 
 		position: absolute;

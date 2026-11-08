@@ -313,7 +313,10 @@
 			var(--_sonic-switch-metal) 45%,
 			var(--_sonic-switch-metal-shade) 88%
 		);
-		--_sonic-switch-outline: max(1px, round(0.4 * var(--_sonic-unit), var(--_sonic-snap)));
+		--_sonic-switch-outline: max(
+			var(--_sonic-snap),
+			round(0.4 * var(--_sonic-unit), var(--_sonic-snap))
+		);
 		--_sonic-switch-rim: var(
 			--sonic-cap-edge,
 			color-mix(

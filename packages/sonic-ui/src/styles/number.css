@@ -77,6 +77,69 @@
 		field-sizing: fixed;
 	}
 
+	:is(.sonic-number-decrement, .sonic-number-increment) {
+		display: none;
+	}
+
+	[arrows] > .sonic-number {
+		--_sonic-number-arrow-size: min(calc(var(--_sonic-number-size) * 0.75), 25%);
+
+		grid-template:
+			'decrement value increment' minmax(0, 1fr)
+			/ var(--_sonic-number-arrow-size) minmax(0, 1fr) var(--_sonic-number-arrow-size);
+
+		> :is(.sonic-number-value, .sonic-number-entry) {
+			grid-area: value;
+		}
+
+		> :is(.sonic-number-decrement, .sonic-number-increment) {
+			--_sonic-number-arrow-ink: color-mix(in oklab, currentcolor 55%, transparent);
+
+			display: grid;
+			place-items: center;
+			place-self: stretch;
+			cursor: pointer;
+			-webkit-touch-callout: none;
+
+			&::before {
+				inline-size: min(calc(var(--_sonic-number-size) * 0.36), 100%);
+				aspect-ratio: 1;
+				content: '';
+				background: var(--_sonic-number-arrow-ink);
+				clip-path: polygon(50% 20%, 90% 60%, 78% 72%, 50% 44%, 22% 72%, 10% 60%);
+				rotate: var(--_sonic-number-arrow-turn);
+			}
+
+			&[data-sonic-pressed] {
+				--_sonic-number-arrow-ink: var(--_sonic-lit);
+			}
+		}
+
+		> .sonic-number-decrement {
+			--_sonic-number-arrow-turn: -90deg;
+
+			grid-area: decrement;
+		}
+
+		> .sonic-number-increment {
+			--_sonic-number-arrow-turn: 90deg;
+
+			grid-area: increment;
+		}
+	}
+
+	@media (hover: hover) {
+		[arrows]:not(:disabled)
+			> .sonic-number
+			> :is(.sonic-number-decrement, .sonic-number-increment):hover {
+			--_sonic-number-arrow-ink: currentcolor;
+		}
+	}
+
+	:disabled > .sonic-number > :is(.sonic-number-decrement, .sonic-number-increment) {
+		cursor: default;
+	}
+
 	@media (forced-colors: active) {
 		.sonic-number-value {
 			color: CanvasText;
@@ -85,6 +148,22 @@
 
 		:disabled > .sonic-number > .sonic-number-value {
 			color: GrayText;
+		}
+
+		[arrows] > .sonic-number > :is(.sonic-number-decrement, .sonic-number-increment) {
+			--_sonic-number-arrow-ink: ButtonText;
+
+			&::before {
+				forced-color-adjust: none;
+			}
+
+			&[data-sonic-pressed] {
+				--_sonic-number-arrow-ink: Highlight;
+			}
+		}
+
+		[arrows]:disabled > .sonic-number > :is(.sonic-number-decrement, .sonic-number-increment) {
+			--_sonic-number-arrow-ink: GrayText;
 		}
 	}
 }

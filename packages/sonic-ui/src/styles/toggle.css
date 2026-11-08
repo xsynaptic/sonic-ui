@@ -1,5 +1,11 @@
 @layer sonic.material, sonic.control;
 
+@property --_sonic-toggle-led-ring-width {
+	syntax: '<length>';
+	inherits: false;
+	initial-value: 1px;
+}
+
 @property --_sonic-toggle-size {
 	syntax: '<length>';
 	inherits: true;
@@ -231,8 +237,12 @@
 				calc(var(--_sonic-toggle-size) * var(--_sonic-toggle-led-ratio))
 			);
 			--_sonic-lit: inherit;
+			--_sonic-toggle-led-ring-width: max(
+				var(--_sonic-snap),
+				round(0.1 * var(--_sonic-led-size), var(--_sonic-snap))
+			);
 
-			box-shadow: inset 0 0 0 max(1px, 0.1 * var(--_sonic-led-size)) var(--_sonic-toggle-led-ring);
+			box-shadow: inset 0 0 0 var(--_sonic-toggle-led-ring-width) var(--_sonic-toggle-led-ring);
 		}
 
 		& > * {

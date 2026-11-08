@@ -10,6 +10,7 @@ declare global {
 const renderNumber = template(
 	/* HTML */ `
 		<div class="sonic-number" role="spinbutton" tabindex="0">
+			<span aria-hidden="true" class="sonic-number-decrement"></span>
 			<span aria-hidden="true" class="sonic-number-value"></span>
 			<input
 				autocomplete="off"
@@ -19,12 +20,21 @@ const renderNumber = template(
 				spellcheck="false"
 				type="text"
 			/>
+			<span aria-hidden="true" class="sonic-number-increment"></span>
 		</div>
 	`,
 	HTMLDivElement,
 );
 
 export class SonicNumber extends SonicValueElement {
+	get arrows(): boolean {
+		return this.hasAttribute('arrows');
+	}
+
+	set arrows(isShown: boolean) {
+		this.reflect('arrows', isShown);
+	}
+
 	get press(): 'none' | 'step' {
 		return this.getAttribute('press') === 'step' ? 'step' : 'none';
 	}
@@ -37,10 +47,14 @@ export class SonicNumber extends SonicValueElement {
 
 	protected override readonly sheet = 'number.css';
 
+	readonly #decrement = requireChild(this.control, '.sonic-number-decrement', HTMLSpanElement);
+
 	readonly #digits = requireChild(this.control, '.sonic-number-value', HTMLSpanElement);
 
+	readonly #increment = requireChild(this.control, '.sonic-number-increment', HTMLSpanElement);
+
 	override connectedCallback(): void {
-		this.upgradeProperties('press');
+		this.upgradeProperties('arrows', 'press');
 		super.connectedCallback();
 	}
 
@@ -48,6 +62,8 @@ export class SonicNumber extends SonicValueElement {
 		this.keepControl(signal);
 		this.render();
 		this.bindGestures(signal, () => this.upwardAxis('--_sonic-number-travel'));
+		this.bindArrow(this.#decrement, 'ArrowDown', signal);
+		this.bindArrow(this.#increment, 'ArrowUp', signal);
 	}
 
 	protected override controlRole(): 'spinbutton' {

@@ -4,7 +4,7 @@ interface DragHandlers<Drag> {
 	// Capturing on press would swallow a click on a link inside the target; the caller captures once the press is a drag
 	isCaptureLate?: boolean;
 	lift?: (drag: Drag, event: PointerEvent) => void;
-	move: (drag: Drag, event: PointerEvent) => void;
+	move?: (drag: Drag, event: PointerEvent) => void;
 	release?: (drag: Drag) => void;
 	toggle?: (isDragging: boolean) => void;
 }
@@ -68,7 +68,7 @@ export function bindDrag<Drag>(
 		},
 		{ signal },
 	);
-	whileHeld('pointermove', handlers.move);
+	if (handlers.move) whileHeld('pointermove', handlers.move);
 	whileHeld('pointercancel', (drag) => {
 		handlers.cancel?.(drag);
 		end();

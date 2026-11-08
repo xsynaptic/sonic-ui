@@ -12,6 +12,12 @@
 	initial-value: 1px;
 }
 
+@property --_sonic-xy-puck-edge-width {
+	syntax: '<length>';
+	inherits: false;
+	initial-value: 1px;
+}
+
 @property --_sonic-xy-puck-ring-width {
 	syntax: '<length>';
 	inherits: true;
@@ -67,7 +73,7 @@
 	}
 
 	.sonic-xy-field {
-		--_sonic-xy-line: max(1px, round(var(--_sonic-unit), var(--_sonic-snap)));
+		--_sonic-xy-line: max(var(--_sonic-snap), round(var(--_sonic-unit), var(--_sonic-snap)));
 		--_sonic-xy-x-low: min(var(--_sonic-xy-x-origin, 0), var(--_sonic-xy-x, 0));
 		--_sonic-xy-x-high: max(var(--_sonic-xy-x-origin, 0), var(--_sonic-xy-x, 0));
 		--_sonic-xy-y-low: min(var(--_sonic-xy-y-origin, 0), var(--_sonic-xy-y, 0));
@@ -167,7 +173,13 @@
 			outline-offset: var(--_sonic-xy-puck-ring-width);
 			content: '';
 			background: var(--_sonic-xy-puck-fill);
-			border: max(1px, 0.08 * var(--_sonic-xy-puck)) solid var(--_sonic-xy-puck-edge);
+
+			--_sonic-xy-puck-edge-width: max(
+				var(--_sonic-snap),
+				round(0.08 * var(--_sonic-xy-puck), var(--_sonic-snap))
+			);
+
+			border: var(--_sonic-xy-puck-edge-width) solid var(--_sonic-xy-puck-edge);
 			border-radius: 50%;
 			transition:
 				background-color var(--_sonic-fade-duration) ease-out,

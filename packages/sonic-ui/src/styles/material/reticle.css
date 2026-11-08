@@ -1,3 +1,9 @@
+@property --_sonic-reticle-edge {
+	syntax: '<length>';
+	inherits: false;
+	initial-value: 1px;
+}
+
 @layer sonic.material {
 	.sonic-xy-reticle,
 	.sonic-envelope-reticle::before {
@@ -6,8 +12,13 @@
 		block-size: var(--_sonic-reticle-size);
 		pointer-events: none;
 		content: '';
-		border: max(1px, 0.06 * var(--_sonic-reticle-size)) solid
-			color-mix(in oklab, currentcolor 45%, transparent);
+
+		--_sonic-reticle-edge: max(
+			var(--_sonic-snap),
+			round(0.06 * var(--_sonic-reticle-size), var(--_sonic-snap))
+		);
+
+		border: var(--_sonic-reticle-edge) solid color-mix(in oklab, currentcolor 45%, transparent);
 		border-radius: 50%;
 		opacity: 0;
 		mask: conic-gradient(

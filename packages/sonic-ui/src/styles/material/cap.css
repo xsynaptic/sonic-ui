@@ -80,7 +80,10 @@
 				color-mix(in srgb, var(--_sonic-shade) calc(35% * var(--_sonic-relief)), transparent),
 			calc(0.5 * var(--_sonic-cast-x)) calc(0.5 * var(--_sonic-cast-y)) var(--_sonic-unit)
 				color-mix(in srgb, var(--_sonic-shine) calc(12% * var(--_sonic-relief)), transparent);
-		--_sonic-rim-width: max(1px, round(0.75 * var(--_sonic-unit), var(--_sonic-snap)));
+		--_sonic-rim-width: max(
+			var(--_sonic-snap),
+			round(0.75 * var(--_sonic-unit), var(--_sonic-snap))
+		);
 		--_sonic-rim: 0 0 0 var(--_sonic-rim-width)
 			var(
 				--sonic-cap-edge,

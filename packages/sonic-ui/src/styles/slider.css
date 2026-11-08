@@ -246,7 +246,7 @@
 			0;
 		background: repeating-linear-gradient(
 			var(--_sonic-slider-toward),
-			var(--_sonic-etch) 0 var(--_sonic-unit),
+			var(--_sonic-etch) 0 var(--_sonic-hairline),
 			transparent 0 var(--_sonic-slider-notch-pitch)
 		);
 		mask: linear-gradient(
@@ -282,7 +282,7 @@
 		}
 
 		& > .sonic-scale-tick {
-			inline-size: var(--_sonic-unit);
+			inline-size: var(--_sonic-hairline);
 			block-size: calc(var(--_sonic-slider-scale-band) * 0.4);
 		}
 	}
@@ -295,7 +295,7 @@
 
 		& > .sonic-scale-tick {
 			inline-size: calc(var(--_sonic-slider-scale-band) * 0.4);
-			block-size: var(--_sonic-unit);
+			block-size: var(--_sonic-hairline);
 		}
 	}
 
@@ -420,7 +420,7 @@
 		&::after {
 			inset: var(--_sonic-slider-tick-overhang) auto var(--_sonic-slider-tick-overhang)
 				var(--_sonic-slider-tick-start);
-			inline-size: var(--_sonic-unit);
+			inline-size: var(--_sonic-hairline);
 			background: var(--_sonic-slider-modulation-tick);
 		}
 	}
@@ -437,7 +437,7 @@
 		&::after {
 			inset: auto var(--_sonic-slider-tick-overhang) var(--_sonic-slider-tick-start);
 			inline-size: auto;
-			block-size: var(--_sonic-unit);
+			block-size: var(--_sonic-hairline);
 		}
 	}
 

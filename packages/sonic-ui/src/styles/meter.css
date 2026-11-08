@@ -137,14 +137,14 @@
 			radial-gradient(
 					circle var(--_sonic-meter-segment-radius) at left var(--_sonic-meter-segment-radius)
 						bottom var(--_sonic-meter-segment-radius),
-					#000 calc(100% - 0.5px),
+					#000 calc(100% - var(--_sonic-snap)),
 					transparent
 				)
 				0 100% / 100% var(--_sonic-meter-pitch) no-repeat repeat,
 			radial-gradient(
 					circle var(--_sonic-meter-segment-radius) at right var(--_sonic-meter-segment-radius)
 						bottom var(--_sonic-meter-segment-radius),
-					#000 calc(100% - 0.5px),
+					#000 calc(100% - var(--_sonic-snap)),
 					transparent
 				)
 				0 100% / 100% var(--_sonic-meter-pitch) no-repeat repeat,
@@ -152,14 +152,14 @@
 					circle var(--_sonic-meter-segment-radius) at left var(--_sonic-meter-segment-radius)
 						/* fallow-ignore-next-line code-duplication -- one gradient per segment corner is geometry, not copied logic */
 						bottom calc(var(--_sonic-meter-segment) - var(--_sonic-meter-segment-radius)),
-					#000 calc(100% - 0.5px),
+					#000 calc(100% - var(--_sonic-snap)),
 					transparent
 				)
 				0 100% / 100% var(--_sonic-meter-pitch) no-repeat repeat,
 			radial-gradient(
 					circle var(--_sonic-meter-segment-radius) at right var(--_sonic-meter-segment-radius)
 						bottom calc(var(--_sonic-meter-segment) - var(--_sonic-meter-segment-radius)),
-					#000 calc(100% - 0.5px),
+					#000 calc(100% - var(--_sonic-snap)),
 					transparent
 				)
 				0 100% / 100% var(--_sonic-meter-pitch) no-repeat repeat;
@@ -187,7 +187,7 @@
 		--_sonic-meter-clip-at: calc(var(--_sonic-meter-clip-segments, 0) * var(--_sonic-meter-pitch));
 		--_sonic-meter-segment-mask: radial-gradient(
 				circle var(--_sonic-meter-ladder-radius),
-				#000 calc(100% - 0.5px),
+				#000 calc(100% - var(--_sonic-snap)),
 				transparent
 			)
 			0 100% / 100% var(--_sonic-meter-pitch) no-repeat repeat;
@@ -214,7 +214,7 @@
 			radial-gradient(
 					circle var(--_sonic-meter-segment-radius) at left var(--_sonic-meter-segment-radius) top
 						var(--_sonic-meter-segment-radius),
-					#000 calc(100% - 0.5px),
+					#000 calc(100% - var(--_sonic-snap)),
 					transparent
 				)
 				0 0 / var(--_sonic-meter-pitch) 100% repeat no-repeat,
@@ -222,7 +222,7 @@
 					circle var(--_sonic-meter-segment-radius) at left var(--_sonic-meter-segment-radius)
 						/* fallow-ignore-next-line code-duplication -- one gradient per segment corner is geometry, not copied logic */
 						bottom var(--_sonic-meter-segment-radius),
-					#000 calc(100% - 0.5px),
+					#000 calc(100% - var(--_sonic-snap)),
 					transparent
 				)
 				0 0 / var(--_sonic-meter-pitch) 100% repeat no-repeat,
@@ -231,7 +231,7 @@
 						calc(var(--_sonic-meter-segment) - var(--_sonic-meter-segment-radius)) top
 						/* fallow-ignore-next-line code-duplication -- one gradient per segment corner is geometry, not copied logic */
 						var(--_sonic-meter-segment-radius),
-					#000 calc(100% - 0.5px),
+					#000 calc(100% - var(--_sonic-snap)),
 					transparent
 				)
 				0 0 / var(--_sonic-meter-pitch) 100% repeat no-repeat,
@@ -239,7 +239,7 @@
 					circle var(--_sonic-meter-segment-radius) at left
 						calc(var(--_sonic-meter-segment) - var(--_sonic-meter-segment-radius)) bottom
 						var(--_sonic-meter-segment-radius),
-					#000 calc(100% - 0.5px),
+					#000 calc(100% - var(--_sonic-snap)),
 					transparent
 				)
 				0 0 / var(--_sonic-meter-pitch) 100% repeat no-repeat;
@@ -254,7 +254,7 @@
 		> :is(.sonic-meter-segments, .sonic-meter-bar) {
 		--_sonic-meter-segment-mask: radial-gradient(
 				circle var(--_sonic-meter-ladder-radius),
-				#000 calc(100% - 0.5px),
+				#000 calc(100% - var(--_sonic-snap)),
 				transparent
 			)
 			0 0 / var(--_sonic-meter-pitch) 100% repeat no-repeat;

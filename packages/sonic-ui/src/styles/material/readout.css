@@ -32,7 +32,10 @@
 		--_sonic-glass-own: var(--sonic-readout-glass);
 		--_sonic-glass-edge-colour-own: var(--sonic-readout-edge);
 		--_sonic-glass-edge-width-own: var(--sonic-readout-edge-width);
-		--_sonic-readout-shine-width: max(1px, round(var(--_sonic-unit), var(--_sonic-snap)));
+		--_sonic-readout-shine-width: max(
+			var(--_sonic-snap),
+			round(var(--_sonic-unit), var(--_sonic-snap))
+		);
 
 		box-sizing: border-box;
 		display: none;

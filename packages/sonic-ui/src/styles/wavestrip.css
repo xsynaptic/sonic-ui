@@ -124,7 +124,7 @@
 		);
 		--_sonic-marker-edge: var(
 			--sonic-wavestrip-marker-edge-width,
-			max(1px, round(0.5 * var(--_sonic-unit), var(--_sonic-snap)))
+			max(var(--_sonic-snap), round(0.5 * var(--_sonic-unit), var(--_sonic-snap)))
 		);
 		--_sonic-marker-step: calc(var(--_sonic-marker-size) + var(--_sonic-marker-edge));
 		--_sonic-marker-default: var(--sonic-marker, var(--_sonic-ink));
@@ -211,7 +211,7 @@
 		box-sizing: border-box;
 		inline-size: calc((var(--_sonic-marker-to, 0) - var(--_sonic-marker-from, 0)) * 100%);
 		background: color-mix(in oklab, var(--_sonic-marker-colour) 16%, transparent);
-		border-inline: var(--sonic-wavestrip-region-edge-width, max(1px, var(--_sonic-unit))) solid
+		border-inline: var(--sonic-wavestrip-region-edge-width, var(--_sonic-hairline)) solid
 			color-mix(in oklab, var(--_sonic-marker-colour) 55%, transparent);
 	}
 

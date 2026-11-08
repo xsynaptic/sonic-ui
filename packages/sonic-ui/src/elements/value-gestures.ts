@@ -1,5 +1,6 @@
 import type { DragState } from '#lib/drag-step.ts';
 import type { PointerDrag } from '#lib/pointer-drag.ts';
+import type { RepeatPress } from '#lib/repeat-press.ts';
 import type { ValueMapping } from '#lib/value-mapping.ts';
 import type { ValueModel } from '#lib/value-model.ts';
 
@@ -12,6 +13,7 @@ import { isMenuPress, isResetPress } from '#lib/modifier-press.ts';
 import { bindDrag } from '#lib/pointer-drag.ts';
 import { readPxProperty } from '#lib/read-px-property.ts';
 import { requireChild } from '#lib/render.ts';
+import { bindRepeatPress } from '#lib/repeat-press.ts';
 import { resetKeys } from '#lib/value-mapping.ts';
 
 export interface ValueAxis {
@@ -44,6 +46,11 @@ interface GestureHost {
 	toggleState: (state: string, isOn: boolean) => void;
 }
 
+interface ArrowPart {
+	isAccelerating: () => boolean;
+	key: string;
+}
+
 interface KeyScrub {
 	fromValue: number;
 	key: string;
@@ -60,6 +67,10 @@ interface ValueDrag extends ValueAxis {
 const detentZonePx = 8;
 
 export class ValueGestures {
+	#arrowFrom: number | undefined;
+
+	readonly #arrows: Array<{ part: HTMLElement; press: RepeatPress }> = [];
+
 	readonly #claim = new ReadoutClaim(() => {
 		this.#showRevealed();
 		this.#host.scrubChanged();
@@ -109,6 +120,9 @@ export class ValueGestures {
 					if (drag.isKeptOnCancel !== true) host.input(drag.fromValue);
 				},
 				grab: (event) => {
+					if (this.#isOnArrow(event)) return;
+
+					this.#endArrows();
 					if (isMenuPress(event) || host.isDisabled() || entry.isOpen) return;
 
 					host.toggleState('springing', false);
@@ -183,10 +197,46 @@ export class ValueGestures {
 		);
 	}
 
+	bindArrow(part: HTMLElement, arrow: ArrowPart, signal: AbortSignal): void {
+		const { isAccelerating, key } = arrow;
+		const host = this.#host;
+
+		this.#arrows.push({
+			part,
+			press: bindRepeatPress(
+				part,
+				{
+					press: (event) => {
+						if (isMenuPress(event) || host.isDisabled() || this.isEditing() || this.isHeld()) {
+							return false;
+						}
+
+						host.toggleState('springing', false);
+						focusByPointer(this.#focus);
+						this.#arrowFrom = host.model.value;
+						part.toggleAttribute('data-sonic-pressed', true);
+
+						return true;
+					},
+					release: () => {
+						const from = this.#arrowFrom;
+
+						this.#arrowFrom = undefined;
+						part.toggleAttribute('data-sonic-pressed', false);
+						if (host.model.value !== from) host.dispatch('change');
+					},
+					step: (steps) => this.#stepArrow(key, isAccelerating() ? steps : 1),
+				},
+				signal,
+			),
+		});
+	}
+
 	end(): void {
 		this.#entry?.close(false);
 		this.#pointerDrag?.end();
 		this.#endKeyScrub();
+		this.#endArrows();
 	}
 
 	isEditing(): boolean {
@@ -194,7 +244,11 @@ export class ValueGestures {
 	}
 
 	isHeld(): boolean {
-		return this.#dragging() !== undefined || this.#keyScrub !== undefined;
+		return (
+			this.#dragging() !== undefined ||
+			this.#keyScrub !== undefined ||
+			this.#arrowFrom !== undefined
+		);
 	}
 
 	isRevealed(): boolean {
@@ -242,7 +296,7 @@ export class ValueGestures {
 		control.addEventListener(
 			'keydown',
 			(event) => {
-				if (host.isDisabled() || event.defaultPrevented || event.target !== this.#focus) return;
+				if (this.#ignoresKey(event)) return;
 
 				host.toggleState('springing', false);
 				if (event.key === 'Enter') {
@@ -338,6 +392,10 @@ export class ValueGestures {
 		else this.#crossCancelZone(drag, value);
 	}
 
+	#endArrows(): void {
+		for (const { press } of this.#arrows) press.end();
+	}
+
 	#endKeyScrub(): void {
 		const host = this.#host;
 		const scrub = this.#keyScrub;
@@ -346,6 +404,18 @@ export class ValueGestures {
 		this.#keyScrub = undefined;
 		host.scrubChanged();
 		if (host.model.value !== scrub.fromValue) host.dispatch('change');
+	}
+
+	#ignoresKey(event: KeyboardEvent): boolean {
+		if (this.#host.isDisabled() || event.defaultPrevented) return true;
+
+		return event.target !== this.#focus || this.#arrowFrom !== undefined;
+	}
+
+	#isOnArrow(event: PointerEvent): boolean {
+		const { target } = event;
+
+		return target instanceof Node && this.#arrows.some(({ part }) => part.contains(target));
 	}
 
 	#keyTarget(key: string): number | undefined {
@@ -471,6 +541,26 @@ export class ValueGestures {
 			...start,
 			detent: { value: detent, zone: zonePx / axis.travelPx },
 		});
+	}
+
+	#stepArrow(key: string, steps: number): boolean {
+		const host = this.#host;
+		const mapping = host.model.mapping();
+		const from = host.model.value;
+		const detent = host.detent();
+		const caught = detent === undefined ? undefined : mapping.snap(detent);
+		let next = from;
+
+		for (let step = 0; step < steps; step++) {
+			const target = mapping.keyTarget(key, next, host.keyStep());
+			if (target === undefined || target === next) break;
+
+			next = target;
+			if (next === caught) break;
+		}
+		if (next === from) return false;
+
+		return host.input(host.model.land(next, next > from ? 1 : -1));
 	}
 
 	#withinLimit(mapping: ValueMapping, state: DragState): DragState {

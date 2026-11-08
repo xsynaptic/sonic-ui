@@ -77,6 +77,38 @@ function countSteps(spec: ValueSpec, range: number): number {
 	return spec.isWrapping ? Math.max(1, Math.ceil(fit)) : Math.floor(fit) + 1;
 }
 
+function stopStepper(along: Taper, snap: (value: number) => number) {
+	let keyStops: ReadonlyArray<number> | undefined;
+
+	function stopsAlong(): ReadonlyArray<number> {
+		if (keyStops) return keyStops;
+
+		const stops: Array<number> = [];
+		for (let hundredth = 0; hundredth <= 100; hundredth++) {
+			const stop = snap(along.valueAt(hundredth / 100));
+			if (stop !== stops.at(-1)) stops.push(stop);
+		}
+		keyStops = stops;
+
+		return stops;
+	}
+
+	return (from: number, steps: number): number => {
+		const stops = stopsAlong();
+
+		if (steps < 0) {
+			const below = stops.findLastIndex((stop) => stop < from);
+
+			return stops[Math.max(0, below + steps + 1)] ?? from;
+		}
+
+		const above = stops.findIndex((stop) => stop > from);
+		const last = stops.length - 1;
+
+		return stops[above === -1 ? last : Math.min(last, above + steps - 1)] ?? from;
+	};
+}
+
 export function valueMapping(spec: ValueSpec): ValueMapping {
 	const { min, step } = spec;
 	const max = Math.max(min, spec.max);
@@ -103,6 +135,7 @@ export function valueMapping(spec: ValueSpec): ValueMapping {
 	}
 
 	const bounds = limits();
+	const stepAlong = curve && stopStepper(curve, snap);
 
 	function wrap(value: number, span: number): number {
 		const offset = trimFloat((((value - min) % span) + span) % span);
@@ -159,11 +192,9 @@ export function valueMapping(spec: ValueSpec): ValueMapping {
 
 			return positions[index] ?? from;
 		}
-		if (!curve) return from + steps * size;
+		if (!stepAlong) return from + steps * size;
 
-		const next = snap(curve.valueAt(curve.proportionOf(from) + steps / 100));
-
-		return next === from ? from + Math.sign(steps) * size : next;
+		return stepAlong(from, steps);
 	}
 
 	function stopAtDetent(from: number, next: number): number {

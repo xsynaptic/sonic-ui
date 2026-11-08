@@ -382,6 +382,14 @@ export abstract class SonicValueElement extends SonicFormElement {
 		this.#gestures?.abandon();
 	}
 
+	protected bindArrow(part: HTMLElement, key: 'ArrowDown' | 'ArrowUp', signal: AbortSignal): void {
+		this.#gestures?.bindArrow(
+			part,
+			{ isAccelerating: () => this.positions === undefined, key },
+			signal,
+		);
+	}
+
 	protected bindGestures(
 		signal: AbortSignal,
 		grab: (event: PointerEvent) => undefined | ValueAxis,

@@ -136,7 +136,7 @@
 		--_sonic-unit: calc(var(--_sonic-waveform-size) / 48);
 		--_sonic-waveform-line: var(
 			--sonic-waveform-playhead-width,
-			max(1px, round(var(--_sonic-unit), var(--_sonic-snap)))
+			max(var(--_sonic-snap), round(var(--_sonic-unit), var(--_sonic-snap)))
 		);
 		--_sonic-waveform-lit: var(--_sonic-lit);
 		--_sonic-waveform-wave: var(--_sonic-waveform-lit);
