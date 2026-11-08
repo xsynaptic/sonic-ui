@@ -29,6 +29,7 @@ const stages = ['attack', 'decay', 'sustain', 'release'];
 					<Play aria-hidden="true" />
 				</sonic-button>
 				<span class="sonic-led" id={`${id}-led`}></span>
+				<sonic-keyboard aria-label="Keyboard" id={`${id}-keyboard`} octaves="1"></sonic-keyboard>
 				<sonic-meter id={`${id}-meter`}></sonic-meter>
 				<sonic-meter id={`${id}-ladder`} segments="-24 -12 -6 -3 0"></sonic-meter>
 				<div class="sonic-screen" id={`${id}-screen`}>

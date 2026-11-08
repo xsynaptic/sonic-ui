@@ -159,6 +159,14 @@ const shares = [
 				))}
 			</Cell>
 		</Cell>
+		<Cell {...tile('keyboard')} span="wide">
+			<sonic-keyboard
+				aria-labelledby="tile-keyboard"
+				lit="64 67"
+				lit-ok="60"
+				octaves="1"
+			></sonic-keyboard>
+		</Cell>
 		<Cell {...tile('split')} span="wide">
 			<sonic-split aria-labelledby="tile-split" class="contents">
 				{shares.map((share) => (

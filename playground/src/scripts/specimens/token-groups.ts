@@ -289,6 +289,29 @@ export const tokenGroups: Array<TokenGroup> = [
 		],
 	},
 	{
+		from: '.sonic-keyboard',
+		name: 'Keyboard',
+		tokens: [
+			range('size', '--sonic-keyboard-size', [3, 12, 0.25, 'rem']),
+			colour('white', '--sonic-keyboard-white', {
+				from: ".sonic-keyboard-key[data-sonic-key='white']",
+				resolved: '--_sonic-keyboard-rest',
+			}),
+			colour('black', '--sonic-keyboard-black', {
+				from: ".sonic-keyboard-key[data-sonic-key='black']",
+				resolved: '--_sonic-keyboard-rest',
+			}),
+			range('white width', '--sonic-keyboard-white-width-ratio', [0.1, 0.3, 0.005]),
+			range('black length', '--sonic-keyboard-black-length-ratio', [0.4, 0.8, 0.01]),
+			range('black width', '--sonic-keyboard-black-width-ratio', [0.4, 0.8, 0.01]),
+			range('gap', '--sonic-keyboard-gap-ratio', [0, 0.04, 0.001]),
+			range('corner', '--sonic-keyboard-radius-ratio', [0, 0.1, 0.005]),
+			range('front', '--sonic-keyboard-front-ratio', [0, 0.15, 0.005]),
+			range('press', '--sonic-keyboard-press-ratio', [0, 1, 0.05]),
+			range('dot', '--sonic-keyboard-dot-ratio', [0.2, 0.8, 0.01]),
+		],
+	},
+	{
 		from: '.sonic-meter',
 		name: 'Meter',
 		tokens: [

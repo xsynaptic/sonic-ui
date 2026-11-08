@@ -1,0 +1,39 @@
+---
+import Cell from '#components/specimens/cell.astro';
+import Section from '#components/specimens/section.astro';
+import SpecimenGrid from '#components/specimens/specimen-grid.astro';
+---
+
+<Section title="Ranges">
+	<SpecimenGrid size="wide">
+		<Cell id="keyboard-chords" label="Chords" span="full">
+			<sonic-keyboard
+				aria-labelledby="keyboard-chords"
+				class="[--sonic-keyboard-size:10rem]"
+				lit="64 67 71"
+				lit-ok="60"
+			></sonic-keyboard>
+		</Cell>
+		<Cell id="keyboard-bass" label="Bass" span="wide">
+			<sonic-keyboard
+				aria-labelledby="keyboard-bass"
+				class="[--sonic-keyboard-size:8rem]"
+				octave="2"
+				octaves="1"
+			></sonic-keyboard>
+		</Cell>
+	</SpecimenGrid>
+</Section>
+<Section title="States">
+	<SpecimenGrid size="wide">
+		<Cell id="keyboard-disabled" label="Disabled" span="wide">
+			<sonic-keyboard
+				aria-labelledby="keyboard-disabled"
+				class="[--sonic-keyboard-size:8rem]"
+				disabled={true}
+				lit="62"
+				octaves="1"
+			></sonic-keyboard>
+		</Cell>
+	</SpecimenGrid>
+</Section>

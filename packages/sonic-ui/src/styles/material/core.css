@@ -127,6 +127,25 @@
 		--_sonic-reveal-delay: var(--sonic-reveal-delay, 250ms);
 	}
 
+	/* Logical insets would mirror under a right-to-left page while translates and pointer maths stay physical */
+	:is(
+		.sonic-dial,
+		.sonic-envelope,
+		.sonic-keyboard,
+		.sonic-meter,
+		.sonic-number,
+		.sonic-segmented,
+		.sonic-slider,
+		.sonic-spectrum,
+		.sonic-switch,
+		.sonic-toggle,
+		.sonic-waveform,
+		.sonic-wavestrip,
+		.sonic-xy
+	) {
+		direction: ltr;
+	}
+
 	@media (forced-colors: active) {
 		:is(
 			.sonic-dial,

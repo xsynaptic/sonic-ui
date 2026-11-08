@@ -54,6 +54,7 @@
 		"./button.css": "./dist/styles/button.css",
 		"./dial.css": "./dist/styles/dial.css",
 		"./envelope.css": "./dist/styles/envelope.css",
+		"./keyboard.css": "./dist/styles/keyboard.css",
 		"./led.css": "./dist/styles/led.css",
 		"./meter.css": "./dist/styles/meter.css",
 		"./number.css": "./dist/styles/number.css",

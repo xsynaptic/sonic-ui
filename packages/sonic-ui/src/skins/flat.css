@@ -5,6 +5,8 @@
 		--sonic-unlit: oklch(84% 0.006 255deg);
 		--sonic-cap: oklch(93% 0.004 255deg);
 		--sonic-cap-hover: oklch(97% 0.004 255deg);
+		--sonic-keyboard-white: oklch(99.5% 0.002 255deg);
+		--sonic-keyboard-black: oklch(32% 0.012 255deg);
 		--sonic-cap-edge: oklch(72% 0.01 255deg);
 		--sonic-well: var(--sonic-unlit);
 		--sonic-well-lit: var(--sonic-lit);

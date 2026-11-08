@@ -140,6 +140,8 @@ The words this library uses for its controls, their parts and their values. Wher
 
 **Glissando**: A drag along a keyboard that plays each key it crosses, letting go of the one before.
 
+**Held** (notes of a keyboard): The notes a page draws down on a keyboard without sounding them, such as a chord's other tones or notes arriving over MIDI. A key is drawn down while a finger or the page holds it.
+
 ### Waves
 
 **Peaks**: The amplitude summary, worked out ahead of time, that a wave control draws. Bands sit beside them and colour what they draw.

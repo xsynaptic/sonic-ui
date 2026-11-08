@@ -8,6 +8,7 @@ import ControlLayout from '#components/control-layout.astro';
 import ButtonSpecimens from '#components/specimens/button.astro';
 import DialSpecimens from '#components/specimens/dial.astro';
 import EnvelopeSpecimens from '#components/specimens/envelope.astro';
+import KeyboardSpecimens from '#components/specimens/keyboard.astro';
 import LedSpecimens from '#components/specimens/led.astro';
 import MeterSpecimens from '#components/specimens/meter.astro';
 import NumberSpecimens from '#components/specimens/number.astro';
@@ -31,6 +32,7 @@ export const getStaticPaths = (() => {
 		button: { hasRun: false, Specimens: ButtonSpecimens },
 		dial: { hasRun: true, Specimens: DialSpecimens },
 		envelope: { hasRun: false, Specimens: EnvelopeSpecimens },
+		keyboard: { hasRun: false, Specimens: KeyboardSpecimens },
 		led: { hasRun: false, Specimens: LedSpecimens },
 		meter: { hasRun: true, Specimens: MeterSpecimens },
 		number: { hasRun: false, Specimens: NumberSpecimens },

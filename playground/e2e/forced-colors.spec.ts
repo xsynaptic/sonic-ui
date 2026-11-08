@@ -36,6 +36,8 @@ const drawnParts = [
 	'#xy .sonic-xy-puck::before',
 	'#envelope .sonic-envelope-handle[data-sonic-stage="decay"]',
 	'#tempo .sonic-number-increment::before',
+	'#keyboard .sonic-keyboard-cap',
+	'#keyboard .sonic-keyboard-cap::before',
 ];
 
 async function paintOf(
@@ -65,6 +67,7 @@ const focusable = [
 	'.sonic-switch-position',
 	'.sonic-toggle-position',
 	'.sonic-xy-axis',
+	'.sonic-keyboard-key',
 ];
 
 test.skip(({ browserName }) => browserName === 'webkit', noForcedColours);

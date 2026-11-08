@@ -1,6 +1,7 @@
 export { SonicButton } from '#elements/button.ts';
 export { SonicDial } from '#elements/dial.ts';
 export { SonicEnvelope } from '#elements/envelope.ts';
+export { SonicKeyboard } from '#elements/keyboard.ts';
 export { SonicMeter } from '#elements/meter.ts';
 export { SonicNumber } from '#elements/number.ts';
 export { SonicRegion } from '#elements/region.ts';

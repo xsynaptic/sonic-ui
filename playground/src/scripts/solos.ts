@@ -8,6 +8,7 @@ export const sheetMaterial: Record<string, Array<string>> = {
 	button: ['core', 'cap', 'well', 'keycap'],
 	dial: ['core', 'cap', 'glass', 'readout', 'value', 'arc', 'scale'],
 	envelope: ['core', 'glass', 'readout', 'reticle'],
+	keyboard: ['core', 'cap'],
 	led: ['core', 'lens'],
 	meter: ['core', 'lens', 'groove'],
 	number: ['core', 'cap', 'value'],
@@ -43,6 +44,10 @@ export const solos: Record<string, Solo> = {
 	envelope: {
 		markup: '<sonic-envelope aria-label="Shape"></sonic-envelope>',
 		sheets: ['envelope'],
+	},
+	keyboard: {
+		markup: '<sonic-keyboard aria-label="Keyboard" lit="64 67" lit-ok="60"></sonic-keyboard>',
+		sheets: ['keyboard'],
 	},
 	led: { markup: '<span class="sonic-led" data-sonic-lit></span>', sheets: ['led'] },
 	meter: { markup: '<sonic-meter max="0" min="-60"></sonic-meter>', sheets: ['meter'] },

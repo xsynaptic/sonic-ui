@@ -5,6 +5,8 @@
 		--sonic-unlit: oklch(28.6% 0.0203 237deg);
 		--sonic-cap: oklch(32.4% 0.0229 237deg);
 		--sonic-cap-hover: oklch(37.2% 0.025 237deg);
+		--sonic-keyboard-white: oklch(91% 0.01 237deg);
+		--sonic-keyboard-black: oklch(21% 0.02 237deg);
 		--sonic-ink: color-mix(in oklab, var(--sonic-cap) 30%, #fff);
 		--sonic-waveform-edge-shade: 0.55;
 		--sonic-dial-ring-ratio: 0.05;

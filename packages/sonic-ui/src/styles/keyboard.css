@@ -1,0 +1,405 @@
+@layer sonic.material, sonic.control;
+
+@property --_sonic-keyboard-size {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 96px;
+}
+
+@property --_sonic-keyboard-sink {
+	syntax: '<number>';
+	inherits: true;
+	initial-value: 0;
+}
+
+@layer sonic.control {
+	:is(sonic-keyboard, .sonic-keyboard) {
+		--_sonic-keyboard-size: var(--sonic-keyboard-size, 6rem);
+		--_sonic-keyboard-white-width-ratio: var(--sonic-keyboard-white-width-ratio, 0.16);
+		--_sonic-keyboard-white-width: calc(
+			var(--_sonic-keyboard-size) * var(--_sonic-keyboard-white-width-ratio)
+		);
+	}
+
+	:has(> .sonic-keyboard):not([hidden]) {
+		display: contents;
+	}
+
+	sonic-keyboard:not(:defined, [hidden]) {
+		--_sonic-keyboard-octaves: 2;
+
+		display: block;
+		visibility: hidden;
+		flex-shrink: 0;
+		inline-size: calc(7 * var(--_sonic-keyboard-octaves) * var(--_sonic-keyboard-white-width));
+		block-size: var(--_sonic-keyboard-size);
+	}
+
+	sonic-keyboard[octaves='1'] {
+		--_sonic-keyboard-octaves: 1;
+	}
+
+	sonic-keyboard[octaves='3'] {
+		--_sonic-keyboard-octaves: 3;
+	}
+
+	sonic-keyboard[octaves='4'] {
+		--_sonic-keyboard-octaves: 4;
+	}
+
+	sonic-keyboard[octaves='5'] {
+		--_sonic-keyboard-octaves: 5;
+	}
+
+	sonic-keyboard[octaves='6'] {
+		--_sonic-keyboard-octaves: 6;
+	}
+
+	sonic-keyboard[octaves='7'] {
+		--_sonic-keyboard-octaves: 7;
+	}
+
+	sonic-keyboard[octaves='8'] {
+		--_sonic-keyboard-octaves: 8;
+	}
+
+	sonic-keyboard[octaves='9'] {
+		--_sonic-keyboard-octaves: 9;
+	}
+
+	sonic-keyboard[octaves='10'] {
+		--_sonic-keyboard-octaves: 10;
+	}
+
+	.sonic-keyboard {
+		--_sonic-keyboard-black-length-ratio: var(--sonic-keyboard-black-length-ratio, 0.63);
+		--_sonic-keyboard-black-width-ratio: var(--sonic-keyboard-black-width-ratio, 0.58);
+		--_sonic-keyboard-gap-ratio: var(--sonic-keyboard-gap-ratio, 0.01);
+		--_sonic-keyboard-radius-ratio: var(--sonic-keyboard-radius-ratio, 0.02);
+		--_sonic-keyboard-front-ratio: var(--sonic-keyboard-front-ratio, 0.07);
+		--_sonic-keyboard-press-ratio: var(--sonic-keyboard-press-ratio, 0.7);
+		--_sonic-keyboard-dot-ratio: var(--sonic-keyboard-dot-ratio, 0.45);
+		--_sonic-unit: calc(var(--_sonic-keyboard-size) / 96);
+		--_sonic-keyboard-black-length: calc(
+			var(--_sonic-keyboard-size) * var(--_sonic-keyboard-black-length-ratio)
+		);
+		--_sonic-keyboard-black-width: calc(
+			var(--_sonic-keyboard-white-width) * var(--_sonic-keyboard-black-width-ratio)
+		);
+		--_sonic-keyboard-gap: calc(var(--_sonic-keyboard-size) * var(--_sonic-keyboard-gap-ratio));
+		--_sonic-keyboard-corner: calc(
+			var(--_sonic-keyboard-size) * var(--_sonic-keyboard-radius-ratio)
+		);
+
+		position: relative;
+		display: flex;
+		flex-shrink: 0;
+		block-size: var(--_sonic-keyboard-size);
+		color: var(--_sonic-ink, currentcolor);
+		touch-action: none;
+		user-select: none;
+		-webkit-touch-callout: none;
+	}
+
+	.sonic-keyboard-octave {
+		position: relative;
+		display: grid;
+		grid-template-columns: repeat(7, var(--_sonic-keyboard-white-width));
+	}
+
+	.sonic-keyboard-key {
+		--_sonic-keyboard-length: var(--_sonic-keyboard-size);
+		--_sonic-keyboard-breadth: var(--_sonic-keyboard-white-width);
+		--_sonic-keyboard-front: calc(
+			var(--_sonic-keyboard-length) * var(--_sonic-keyboard-front-ratio) * var(--_sonic-relief)
+		);
+		--_sonic-keyboard-shift: 0px;
+		--_sonic-keyboard-narrow: 0px;
+		--_sonic-keyboard-rest: var(--sonic-keyboard-white, transparent);
+		--_sonic-keyboard-tint: color-mix(
+			in oklab,
+			var(--sonic-keyboard-white) calc(100% - 40% * (1 - var(--_sonic-relief))),
+			var(--_sonic-lit)
+		);
+		--_sonic-keyboard-down: var(--_sonic-keyboard-tint, currentcolor);
+		--_sonic-keyboard-blank-off: color-mix(in oklab, var(--sonic-keyboard-white) 0%, transparent);
+		--_sonic-keyboard-dot: transparent;
+		--_sonic-keyboard-dot-size: calc(
+			var(--_sonic-keyboard-white-width) * var(--_sonic-keyboard-dot-ratio)
+		);
+		--_sonic-cap: var(--_sonic-keyboard-rest);
+		--_sonic-keyboard-label: 60%;
+		--_sonic-keyboard-sink: 0;
+		--_sonic-keyboard-shade: color-mix(
+			in oklab,
+			var(--_sonic-shade) calc(12% * var(--_sonic-keyboard-sink) * var(--_sonic-relief)),
+			transparent
+		);
+		--_sonic-keyboard-front-tone: var(--_sonic-shade);
+		--_sonic-keyboard-front-mix: calc(
+			(14% + 10% * var(--_sonic-keyboard-sink)) * var(--_sonic-relief)
+		);
+		--_sonic-keyboard-time: calc(2 * var(--_sonic-press-duration));
+
+		position: relative;
+		block-size: var(--_sonic-keyboard-length);
+		padding: 0;
+		font: inherit;
+		color: inherit;
+		cursor: pointer;
+		background: none;
+		border: 0;
+		transition: --_sonic-keyboard-sink var(--_sonic-keyboard-time) var(--_sonic-ease);
+
+		&::after {
+			position: absolute;
+			inset: auto 0
+				calc(
+					var(--_sonic-keyboard-front) - var(--_sonic-keyboard-shift) + 0.15 *
+						var(--_sonic-keyboard-white-width)
+				);
+			z-index: 1;
+			font-size: calc(var(--_sonic-keyboard-white-width) * 0.36);
+			line-height: 1;
+			color: color-mix(
+				in oklab,
+				var(--sonic-keyboard-black, currentcolor) var(--_sonic-keyboard-label),
+				transparent
+			);
+			text-align: center;
+			pointer-events: none;
+			content: attr(data-sonic-label);
+			transition: inset var(--_sonic-keyboard-time) var(--_sonic-ease);
+		}
+	}
+
+	.sonic-keyboard-key[data-sonic-key='black'] {
+		--_sonic-keyboard-length: var(--_sonic-keyboard-black-length);
+		--_sonic-keyboard-breadth: var(--_sonic-keyboard-black-width);
+		--_sonic-keyboard-rest: var(--sonic-keyboard-black, currentcolor);
+		--_sonic-keyboard-tint: color-mix(
+			in oklab,
+			var(--sonic-keyboard-black) calc(100% - 55% * (1 - var(--_sonic-relief))),
+			var(--_sonic-lit)
+		);
+		--_sonic-keyboard-down: var(--_sonic-keyboard-tint, transparent);
+		--_sonic-keyboard-blank-off: color-mix(in oklab, var(--sonic-keyboard-black) 0%, transparent);
+		--_sonic-keyboard-dot-size: calc(
+			var(--_sonic-keyboard-black-width) * var(--_sonic-keyboard-dot-ratio) * 1.4
+		);
+		--_sonic-keyboard-front-tone: var(--_sonic-shine);
+		--_sonic-keyboard-front-mix: calc(
+			(12% - 6% * var(--_sonic-keyboard-sink)) * var(--_sonic-relief)
+		);
+		--_sonic-keyboard-cast: 1;
+		--_sonic-keyboard-reach: calc(6 * var(--_sonic-unit));
+
+		position: absolute;
+		inset-block-start: 0;
+		inset-inline-start: calc(
+			(var(--_sonic-keyboard-step) + 0.5) * 7 * var(--_sonic-keyboard-white-width) / 12 -
+				var(--_sonic-keyboard-black-width) / 2
+		);
+		z-index: 1;
+		inline-size: var(--_sonic-keyboard-black-width);
+
+		/* Clipped at the keyboard's top, so the cast never starts short of it */
+		&::before {
+			position: absolute;
+			inset: calc(-1 * var(--_sonic-keyboard-reach)) 0 0;
+			pointer-events: none;
+			content: '';
+			border-radius: 0 0 var(--_sonic-keyboard-corner) var(--_sonic-keyboard-corner);
+			box-shadow:
+				calc(0.4 * var(--_sonic-keyboard-cast) * var(--_sonic-cast-x))
+					calc(0.4 * var(--_sonic-keyboard-cast) * var(--_sonic-cast-y))
+					calc((0.4 + 0.6 * var(--_sonic-keyboard-cast)) * var(--_sonic-unit))
+					color-mix(in srgb, var(--_sonic-shade) calc(32% * var(--_sonic-relief)), transparent),
+				calc(1.6 * var(--_sonic-keyboard-cast) * var(--_sonic-cast-x))
+					calc(1.6 * var(--_sonic-keyboard-cast) * var(--_sonic-cast-y))
+					calc((1 + 2.5 * var(--_sonic-keyboard-cast)) * var(--_sonic-unit))
+					color-mix(in srgb, var(--_sonic-shade) calc(18% * var(--_sonic-relief)), transparent);
+			clip-path: inset(var(--_sonic-keyboard-reach) -100vmax -100vmax);
+			transition: box-shadow var(--_sonic-keyboard-time) var(--_sonic-ease);
+		}
+	}
+
+	.sonic-keyboard-key:nth-child(2) {
+		--_sonic-keyboard-step: 1;
+	}
+
+	.sonic-keyboard-key:nth-child(4) {
+		--_sonic-keyboard-step: 3;
+	}
+
+	.sonic-keyboard-key:nth-child(7) {
+		--_sonic-keyboard-step: 6;
+	}
+
+	.sonic-keyboard-key:nth-child(9) {
+		--_sonic-keyboard-step: 8;
+	}
+
+	.sonic-keyboard-key:nth-child(11) {
+		--_sonic-keyboard-step: 10;
+	}
+
+	.sonic-keyboard-key[data-sonic-pressed] {
+		--_sonic-cap: var(--_sonic-keyboard-down);
+		--_sonic-keyboard-shift: calc(
+			var(--_sonic-keyboard-front) * var(--_sonic-keyboard-press-ratio)
+		);
+		--_sonic-keyboard-narrow: calc(var(--_sonic-keyboard-breadth) * 0.05 * var(--_sonic-relief));
+		--_sonic-keyboard-sink: 1;
+		--_sonic-keyboard-cast: 0.4;
+		--_sonic-keyboard-time: var(--_sonic-press-duration);
+	}
+
+	.sonic-keyboard-key[data-sonic-lit] {
+		--_sonic-keyboard-dot: var(--_sonic-lit);
+	}
+
+	.sonic-keyboard-key[data-sonic-lit='ok'] {
+		--_sonic-keyboard-dot: var(--_sonic-lit-ok);
+	}
+
+	.sonic-keyboard:has(.sonic-keyboard-key:disabled) {
+		opacity: var(--sonic-disabled-opacity, 1);
+	}
+
+	.sonic-keyboard-key:disabled {
+		--_sonic-lit: var(--_sonic-lit-disabled);
+		--_sonic-lit-ok: var(--_sonic-lit-disabled);
+		--_sonic-keyboard-label: 25%;
+
+		color: var(--_sonic-ink-disabled);
+		cursor: default;
+	}
+
+	.sonic-keyboard-cap {
+		--_sonic-keyboard-edge: var(--sonic-cap-edge, var(--_sonic-keyboard-blank-off, currentcolor));
+
+		position: absolute;
+		inset: 0 calc(var(--_sonic-keyboard-gap) / 2);
+		display: block;
+		pointer-events: none;
+		background: linear-gradient(
+			color-mix(
+					in oklab,
+					var(--_sonic-cap) calc(100% - var(--_sonic-keyboard-front-mix)),
+					var(--_sonic-keyboard-front-tone)
+				)
+				calc(100% - var(--_sonic-keyboard-front)),
+			color-mix(
+				in oklab,
+				var(--_sonic-cap) calc(100% - 0.5 * var(--_sonic-keyboard-front-mix)),
+				var(--_sonic-keyboard-front-tone)
+			)
+		);
+		border-radius: 0 0 var(--_sonic-keyboard-corner) var(--_sonic-keyboard-corner);
+		box-shadow:
+			inset 0 0 0 var(--_sonic-hairline) var(--_sonic-keyboard-edge),
+			var(--_sonic-focus-shadow);
+
+		&::before {
+			position: absolute;
+			inset: 0 var(--_sonic-keyboard-narrow)
+				calc(var(--_sonic-keyboard-front) - var(--_sonic-keyboard-shift));
+			content: '';
+			background:
+				radial-gradient(
+					circle calc(var(--_sonic-keyboard-dot-size) / 2) at 50%
+						calc(100% - 2 * var(--_sonic-keyboard-dot-size)),
+					var(--_sonic-keyboard-dot) calc(100% - var(--_sonic-feather)),
+					transparent
+				),
+				radial-gradient(
+					circle var(--_sonic-keyboard-dot-size) at 50%
+						calc(100% - 2 * var(--_sonic-keyboard-dot-size)),
+					color-mix(
+						in oklab,
+						var(--_sonic-keyboard-dot) calc(35% * var(--_sonic-relief)),
+						transparent
+					),
+					transparent
+				),
+				linear-gradient(transparent 40%, var(--_sonic-keyboard-shade)), var(--_sonic-sheen),
+				var(--_sonic-face);
+			border-radius: 0 0 var(--_sonic-keyboard-corner) var(--_sonic-keyboard-corner);
+			box-shadow:
+				inset 0 0 0 var(--_sonic-hairline) var(--_sonic-keyboard-edge),
+				inset 0 calc(-1 * var(--_sonic-unit)) var(--_sonic-unit)
+					color-mix(in srgb, var(--_sonic-shine) calc(20% * var(--_sonic-relief)), transparent),
+				inset calc(2 * var(--_sonic-unit)) 0 calc(2 * var(--_sonic-unit))
+					calc(-1 * var(--_sonic-unit)) var(--_sonic-keyboard-shade),
+				inset calc(-2 * var(--_sonic-unit)) 0 calc(2 * var(--_sonic-unit))
+					calc(-1 * var(--_sonic-unit)) var(--_sonic-keyboard-shade);
+			transition: inset var(--_sonic-keyboard-time) var(--_sonic-ease);
+		}
+	}
+
+	.sonic-keyboard-key[data-sonic-key='black'] > .sonic-keyboard-cap {
+		inset: 0;
+	}
+
+	.sonic-keyboard-key:focus-visible {
+		outline: 2px solid transparent;
+		outline-offset: var(--sonic-focus-outline-offset, -2px);
+
+		&:not([data-sonic-pointer-focus]) {
+			--_sonic-focus-shadow: var(--_sonic-focus-glow);
+		}
+	}
+
+	@media not (forced-colors: active) {
+		.sonic-keyboard-key:focus-visible:not([data-sonic-pointer-focus]) > .sonic-keyboard-cap {
+			outline: var(--sonic-focus-outline, 2px solid transparent);
+			outline-offset: var(--sonic-focus-outline-offset, -2px);
+		}
+	}
+
+	@media (forced-colors: active) {
+		.sonic-keyboard {
+			--_sonic-relief: 0;
+		}
+
+		.sonic-keyboard-key {
+			--_sonic-keyboard-ink: ButtonText;
+			--_sonic-keyboard-rest: ButtonFace;
+			--_sonic-keyboard-down: Highlight;
+			--_sonic-lit-ok: Mark;
+			--_sonic-face: var(--_sonic-cap);
+
+			&::after {
+				color: var(--_sonic-keyboard-ink);
+			}
+		}
+
+		.sonic-keyboard-key[data-sonic-key='black'] {
+			--_sonic-keyboard-rest: var(--_sonic-keyboard-ink);
+		}
+
+		.sonic-keyboard-key[data-sonic-pressed] {
+			--_sonic-keyboard-ink: HighlightText;
+			--_sonic-lit: HighlightText;
+		}
+
+		.sonic-keyboard-key:disabled {
+			--_sonic-keyboard-ink: GrayText;
+		}
+
+		.sonic-keyboard-key:focus-visible {
+			outline-offset: 2px;
+
+			&[data-sonic-pointer-focus] {
+				outline-style: none;
+			}
+		}
+
+		.sonic-keyboard-cap {
+			--_sonic-keyboard-edge: var(--_sonic-keyboard-ink);
+
+			forced-color-adjust: none;
+		}
+	}
+}

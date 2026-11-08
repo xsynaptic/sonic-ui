@@ -67,6 +67,11 @@
 		white-space: nowrap;
 	}
 
+	/* The entry scrolls as it is typed into, so only the shown value marks its cut */
+	.sonic-number-value {
+		text-overflow: ellipsis;
+	}
+
 	.sonic-number[data-sonic-editing] > .sonic-number-value {
 		visibility: hidden;
 	}

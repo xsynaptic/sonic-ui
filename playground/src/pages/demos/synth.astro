@@ -1,0 +1,140 @@
+---
+import Layout from '#components/layout.astro';
+import PageHeader from '#components/page-header.astro';
+import { extensionOrder, extensions, triadOrder, triads } from '#scripts/synth/chords.ts';
+
+const caption = 'font-mono text-[0.625rem] tracking-[0.14em] text-text-muted uppercase';
+const panel =
+	'sonic-panel grid content-start justify-items-center gap-3 p-4 [--sonic-panel-radius:1.5rem]';
+const title = 'sonic-panel-title font-mono text-[0.625rem] font-bold tracking-widest uppercase';
+---
+
+<Layout
+	description="A small polyphonic synth on Web Audio, played from a sonic-ui keyboard that lights each chord."
+	title="Synth, sonic-ui"
+>
+	<PageHeader title="Synth">
+		<Fragment slot="lead">
+			A small polyphonic synth on Web Audio. Press a key, or focus the keyboard and hold Space, to
+			sound a chord built on that note; the chord tones light up and the screen names them.
+		</Fragment>
+	</PageHeader>
+	<div class="-mx-4 overflow-x-auto px-4 pb-4 sm:mx-0 sm:px-0" data-synth={true}>
+		<div class="inline-grid min-w-max gap-4 surface p-4">
+			<div class="flex flex-wrap items-stretch gap-4">
+				<div aria-labelledby="synth-chord-title" class={panel} role="group">
+					<span class={title} id="synth-chord-title">
+						Chord
+					</span>
+					<sonic-segmented
+						aria-labelledby="synth-triad"
+						class="font-mono"
+						data-synth-triad={true}
+						value="major"
+					>
+						{triadOrder.map((name) => (
+							<span data-sonic-value={name}>{triads[name].label}</span>
+						))}
+					</sonic-segmented>
+					<span class={caption} id="synth-triad">
+						Triad
+					</span>
+					<sonic-segmented
+						aria-labelledby="synth-extension"
+						class="font-mono"
+						data-synth-extension={true}
+						value="none"
+					>
+						{extensionOrder.map((name) => (
+							<span data-sonic-value={name}>{extensions[name].label}</span>
+						))}
+					</sonic-segmented>
+					<span class={caption} id="synth-extension">
+						Extension
+					</span>
+				</div>
+				<div aria-labelledby="synth-play-title" class={panel} role="group">
+					<span class={title} id="synth-play-title">
+						Play
+					</span>
+					<div class="flex items-start gap-5">
+						<div class="grid justify-items-center gap-2">
+							<sonic-button
+								aria-labelledby="synth-single"
+								class="font-mono text-[0.5rem]"
+								data-synth-single={true}
+								latching={true}
+							>
+								<span class="sonic-led"></span>
+								<span aria-hidden="true">ONE</span>
+							</sonic-button>
+							<span class={caption} id="synth-single">
+								Single note
+							</span>
+						</div>
+						<div class="grid justify-items-center gap-2">
+							<sonic-number
+								aria-labelledby="synth-octave"
+								data-synth-octave={true}
+								max="6"
+								min="0"
+								value="3"
+							></sonic-number>
+							<span class={caption} id="synth-octave">
+								Octave
+							</span>
+						</div>
+						<div class="grid justify-items-center gap-2">
+							<sonic-number
+								aria-labelledby="synth-octaves"
+								data-synth-octaves={true}
+								max="4"
+								min="1"
+								value="3"
+							></sonic-number>
+							<span class={caption} id="synth-octaves">
+								Octaves
+							</span>
+						</div>
+						<div class="grid justify-items-center gap-2">
+							<sonic-dial
+								aria-labelledby="synth-volume"
+								data-format="db"
+								data-synth-volume={true}
+								max="0"
+								min="-40"
+								readout={true}
+								value="-12"
+							></sonic-dial>
+							<span class={caption} id="synth-volume">
+								Volume
+							</span>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div
+				aria-label="Chord"
+				class="sonic-screen grid min-h-20 content-center gap-1 px-5 font-mono [--sonic-screen-size:5rem]"
+				role="group"
+			>
+				<p class="min-h-[1em] text-3xl leading-none" data-synth-name={true} role="status"></p>
+				<p class="text-sm opacity-70" data-synth-spelling={true}>
+					Press a key
+				</p>
+			</div>
+			<sonic-keyboard
+				aria-label="Keyboard"
+				class="[--sonic-keyboard-size:12rem]"
+				data-synth-keyboard={true}
+				octave="3"
+				octaves="3"
+			></sonic-keyboard>
+		</div>
+	</div>
+	<Fragment slot="scripts">
+		<script>
+			import '#scripts/synth/synth.ts';
+		</script>
+	</Fragment>
+</Layout>

@@ -1,6 +1,7 @@
 import '#define/button.ts';
 import '#define/dial.ts';
 import '#define/envelope.ts';
+import '#define/keyboard.ts';
 import '#define/meter.ts';
 import '#define/number.ts';
 import '#define/region.ts';
@@ -18,6 +19,7 @@ import '#define/xy.ts';
 export type { SonicButton } from '#define/button.ts';
 export type { SonicDial } from '#define/dial.ts';
 export type { SonicEnvelope } from '#define/envelope.ts';
+export type { SonicKeyboard } from '#define/keyboard.ts';
 export type { SonicMeter } from '#define/meter.ts';
 export type { SonicNumber } from '#define/number.ts';
 export type { SonicRegion } from '#define/region.ts';

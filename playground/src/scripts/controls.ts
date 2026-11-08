@@ -99,6 +99,13 @@ export const controls = [
 	},
 	{
 		category: 'control',
+		lead: 'Plays notes from piano keys, by pointer, touch or the computer keyboard, and lights the notes it is given.',
+		name: 'Keyboard',
+		slug: 'keyboard',
+		usage: [element('keyboard')],
+	},
+	{
+		category: 'control',
 		lead: 'Keeps a group of value controls adding up to the same total, so raising one lowers the rest.',
 		name: 'Split',
 		slug: 'split',

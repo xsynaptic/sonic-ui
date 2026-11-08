@@ -8,6 +8,7 @@
 	:is(
 		.sonic-dial,
 		.sonic-button,
+		.sonic-keyboard-key,
 		.sonic-switch,
 		.sonic-toggle,
 		.sonic-number,
@@ -220,6 +221,7 @@
 		:is(
 			.sonic-dial,
 			.sonic-button,
+			.sonic-keyboard-key,
 			.sonic-number,
 			.sonic-segmented-option,
 			.sonic-slider,
