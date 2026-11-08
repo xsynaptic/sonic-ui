@@ -227,6 +227,18 @@ test('the box ignores its keys while an arrow is held', () => {
 	expect(control.querySelector('input')?.hidden).toBe(true);
 });
 
+test('a host write during a hold is dropped, and the hold steps on from its own value', () => {
+	const { increment, number } = mountArrows('min="0" max="100" step="2" value="10"');
+
+	pointerAt(increment, 'pointerdown');
+	number.value = 60;
+	number.setAttribute('value', '70');
+	vi.advanceTimersByTime(400);
+	pointerAt(increment, 'pointerup');
+
+	expect(number.value).toBe(14);
+});
+
 test('a press on an arrow never starts a drag', () => {
 	const { control, increment, number } = mountArrows('min="0" max="300" step="0.5" value="100"');
 

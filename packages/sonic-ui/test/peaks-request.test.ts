@@ -1,4 +1,5 @@
-import { expect, test } from 'vitest';
+import { fc, test } from '@fast-check/vitest';
+import { expect } from 'vitest';
 
 import type { PeaksRequest } from '#lib/peaks-request.ts';
 
@@ -163,3 +164,157 @@ test('two promises returned together each repaint as they settle', async () => {
 		expect([asked.length, repaints()]).toEqual([index + 2, index + 1]);
 	}
 });
+
+type Response = 'again' | 'inside' | 'none' | 'one' | 'throw' | 'two';
+
+type Window = [number, number];
+
+type Step =
+	| { kind: 'ask'; response: Response; wanted: undefined | Window }
+	| { kind: 'changed' | 'reset' }
+	| { kind: 'settle'; pick: number };
+
+interface Expected {
+	asks: number;
+	lastAsked: undefined | Window;
+	repaints: number;
+}
+
+// Windows that print alike when joined without a separator: 0.1 to 23, 0.12 to 3
+const window = fc.tuple(fc.constantFrom(0.1, 0.12, 1.2), fc.constantFrom(2.3, 3, 23));
+const step = fc.oneof(
+	{
+		arbitrary: fc.record(
+			{
+				kind: fc.constant('ask' as const),
+				response: fc.constantFrom<Response>('again', 'inside', 'none', 'one', 'throw', 'two'),
+				wanted: fc.option(window, { freq: 8, nil: undefined }),
+			},
+			{ noNullPrototype: true },
+		),
+		weight: 6,
+	},
+	fc.record(
+		{ kind: fc.constantFrom('changed' as const, 'reset' as const) },
+		{ noNullPrototype: true },
+	),
+	{
+		arbitrary: fc.record(
+			{ kind: fc.constant('settle' as const), pick: fc.nat() },
+			{ noNullPrototype: true },
+		),
+		weight: 2,
+	},
+);
+
+function mountScenario(): {
+	ask: (response: Response, wanted: undefined | Window) => void;
+	asked: Array<Window>;
+	peaks: ReturnType<typeof createPeaksRequest>;
+	repaints: () => number;
+	settle: (pick: number) => Promise<boolean>;
+} {
+	const asked: Array<Window> = [];
+	const pending: Array<ReturnType<typeof deferred>> = [];
+	const returned: Array<Promise<void>> = [];
+	let response: Response = 'none';
+	let repaints = 0;
+
+	const peaks = createPeaksRequest(() => {
+		repaints += 1;
+	});
+	const fresh = (): Promise<void> => {
+		const next = deferred();
+
+		pending.push(next);
+		returned.push(next.promise);
+
+		return next.promise;
+	};
+	const replies: Record<Response, () => ReturnType<PeaksRequest>> = {
+		again: () => returned.at(-1),
+		inside: () => {
+			peaks.changed();
+
+			return [];
+		},
+		none: () => [],
+		one: fresh,
+		throw: () => {
+			throw new Error('The consumer threw');
+		},
+		two: () => [fresh(), fresh()],
+	};
+	const request: PeaksRequest = (from, to) => {
+		asked.push([from, to]);
+
+		return replies[response]();
+	};
+
+	return {
+		ask: (reply, wanted) => {
+			response = reply;
+			try {
+				peaks.ask(request, wanted);
+			} catch (error) {
+				if (reply !== 'throw') throw error;
+			}
+		},
+		asked,
+		peaks,
+		repaints: () => repaints,
+		settle: async (pick) => {
+			const settling = pending.splice(pick % Math.max(1, pending.length), 1)[0];
+			if (!settling) return false;
+
+			if (pick % 2 === 0) settling.resolve();
+			else settling.reject();
+			await nextTask();
+
+			return true;
+		},
+	};
+}
+
+function afterAsk(
+	expected: Expected,
+	{ response, wanted }: { response: Response; wanted: undefined | Window },
+): Expected {
+	const [from, to] = expected.lastAsked ?? [];
+	if (!wanted || (wanted[0] === from && wanted[1] === to)) return expected;
+
+	return {
+		asks: expected.asks + 1,
+		lastAsked: wanted,
+		repaints: expected.repaints + (response === 'inside' ? 1 : 0),
+	};
+}
+
+function afterWrite(expected: Expected): Expected {
+	return { ...expected, lastAsked: undefined, repaints: expected.repaints + 1 };
+}
+
+test.prop([fc.array(step, { maxLength: 30, minLength: 1 })], { numRuns: 300 })(
+	'a window is asked for again only after a write from outside the call, a reset or the settling of a promise not seen before',
+	async (steps: Array<Step>) => {
+		const scenario = mountScenario();
+		let expected: Expected = { asks: 0, lastAsked: undefined, repaints: 0 };
+
+		for (const next of steps) {
+			if (next.kind === 'ask') {
+				scenario.ask(next.response, next.wanted);
+				expected = afterAsk(expected, next);
+			} else if (next.kind === 'settle') {
+				if (await scenario.settle(next.pick)) expected = afterWrite(expected);
+			} else {
+				scenario.peaks[next.kind]();
+				expected = afterWrite(expected);
+			}
+
+			expect([scenario.asked.length, scenario.repaints()]).toEqual([
+				expected.asks,
+				expected.repaints,
+			]);
+		}
+	},
+);

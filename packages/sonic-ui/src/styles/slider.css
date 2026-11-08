@@ -282,8 +282,10 @@
 		}
 
 		& > .sonic-scale-tick {
+			inset-inline-start: calc(var(--_sonic-slider-scale-along) - var(--_sonic-hairline) / 2);
 			inline-size: var(--_sonic-hairline);
 			block-size: calc(var(--_sonic-slider-scale-band) * 0.4);
+			translate: none;
 		}
 	}
 
@@ -294,8 +296,10 @@
 		}
 
 		& > .sonic-scale-tick {
+			inset-block-end: calc(var(--_sonic-slider-scale-along) - var(--_sonic-hairline) / 2);
 			inline-size: calc(var(--_sonic-slider-scale-band) * 0.4);
 			block-size: var(--_sonic-hairline);
+			translate: none;
 		}
 	}
 
@@ -390,7 +394,7 @@
 		);
 		--_sonic-slider-tick-start: calc(
 			(var(--_sonic-slider-modulation-value, 0) - var(--_sonic-slider-modulation-from, 0)) *
-				var(--_sonic-slider-travel) - var(--_sonic-unit) / 2
+				var(--_sonic-slider-travel) - var(--_sonic-hairline) / 2
 		);
 		--_sonic-slider-tick-overhang: calc(
 			(var(--_sonic-slider-modulation-band) - var(--_sonic-slider-groove)) / 2

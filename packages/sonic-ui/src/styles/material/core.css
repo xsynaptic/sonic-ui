@@ -17,6 +17,7 @@
 		.sonic-envelope,
 		.sonic-envelope-readout,
 		.sonic-button,
+		.sonic-keyboard,
 		.sonic-led,
 		.sonic-switch,
 		.sonic-toggle,
@@ -57,13 +58,34 @@
 		--_sonic-cast-y: calc(cos(var(--_sonic-light-tilt)) * var(--_sonic-unit));
 		--_sonic-snap: 1px;
 		--_sonic-hairline: max(var(--_sonic-snap), round(var(--_sonic-unit), var(--_sonic-snap)));
+		--_sonic-feather: min(var(--_sonic-snap), 0.5px);
+
+		@media (resolution >= 1.25dppx) {
+			--_sonic-snap: calc(52px / 64);
+		}
+
+		@media (resolution >= 1.5dppx) {
+			--_sonic-snap: calc(43px / 64);
+		}
+
+		@media (resolution >= 1.75dppx) {
+			--_sonic-snap: calc(37px / 64);
+		}
 
 		@media (resolution >= 2dppx) {
 			--_sonic-snap: 0.5px;
 		}
 
+		@media (resolution >= 2.25dppx) {
+			--_sonic-snap: calc(29px / 64);
+		}
+
+		@media (resolution >= 2.5dppx) {
+			--_sonic-snap: calc(26px / 64);
+		}
+
 		@media (resolution >= 3dppx) {
-			--_sonic-snap: calc(1px / 3);
+			--_sonic-snap: calc(22px / 64);
 		}
 	}
 
@@ -71,6 +93,7 @@
 		.sonic-dial,
 		.sonic-envelope,
 		.sonic-button,
+		.sonic-keyboard,
 		.sonic-led,
 		.sonic-meter,
 		.sonic-number,
@@ -86,7 +109,7 @@
 		--_sonic-lit: var(--sonic-lit, oklch(76.9% 0.165 70deg));
 	}
 
-	:is(.sonic-led, .sonic-meter, .sonic-spectrum, .sonic-toggle) {
+	:is(.sonic-keyboard, .sonic-led, .sonic-meter, .sonic-spectrum, .sonic-toggle) {
 		--_sonic-lit-ok: var(--sonic-lit-ok, oklch(79% 0.2 150deg));
 		--_sonic-lit-warning: var(--sonic-lit-warning, oklch(70.5% 0.187 48deg));
 		--_sonic-lit-danger: var(--sonic-lit-danger, oklch(63.7% 0.208 25deg));
@@ -108,6 +131,7 @@
 		:is(
 			.sonic-dial,
 			.sonic-button,
+			.sonic-keyboard,
 			.sonic-led,
 			.sonic-meter,
 			.sonic-number,

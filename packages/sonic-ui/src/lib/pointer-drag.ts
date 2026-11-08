@@ -14,6 +14,10 @@ export interface PointerDrag<Drag> {
 	end: () => void;
 }
 
+export function isInside(box: DOMRect, x: number, y: number): boolean {
+	return x >= box.left && x < box.right && y >= box.top && y < box.bottom;
+}
+
 export function capturePointer(target: HTMLElement, pointerId: number): void {
 	try {
 		target.setPointerCapture(pointerId);

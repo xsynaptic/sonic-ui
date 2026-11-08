@@ -710,6 +710,8 @@ export abstract class SonicValueElement extends SonicFormElement {
 	}
 
 	#writeHeld(next: number): void {
+		if (this.#gestures?.scrubFrom() === undefined) return;
+
 		this.#heldAt = next;
 		this.scrubChanged();
 	}

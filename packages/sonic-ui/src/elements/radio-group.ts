@@ -4,7 +4,7 @@ import { SonicFormElement } from '#elements/form-element.ts';
 import { copyNode } from '#lib/copy-node.ts';
 import { bindKeyPress } from '#lib/key-press.ts';
 import { mirrorChildren } from '#lib/mirror-children.ts';
-import { bindDrag } from '#lib/pointer-drag.ts';
+import { bindDrag, isInside } from '#lib/pointer-drag.ts';
 import { keyTarget, stepFrom } from '#lib/positions.ts';
 import { placeChildren } from '#lib/render.ts';
 import { writeAttribute } from '#lib/write-attribute.ts';
@@ -12,10 +12,6 @@ import { writeAttribute } from '#lib/write-attribute.ts';
 interface Press {
 	boxes: Array<[number, DOMRect]>;
 	index: number | undefined;
-}
-
-function isInside(box: DOMRect, x: number, y: number): boolean {
-	return x >= box.left && x < box.right && y >= box.top && y < box.bottom;
 }
 
 export function isUnder(option: Element, x: number, y: number): boolean {

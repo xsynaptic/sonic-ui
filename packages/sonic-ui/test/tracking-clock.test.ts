@@ -1,4 +1,5 @@
-import { expect, test } from 'vitest';
+import { fc, test } from '@fast-check/vitest';
+import { expect } from 'vitest';
 
 import { createTrackingClock } from '#lib/tracking-clock.ts';
 
@@ -126,3 +127,148 @@ test('a frame timestamp that goes backwards counts as no time passed', () => {
 
 	expect(clock.read(900, playing(10))).toBe(10);
 });
+
+const playbackRate = fc.constantFrom(0.5, 1, 2, 3);
+
+// Holds only for a source under 250ms and the seek threshold behind, as per-frame `currentTime` and `timeupdate` are
+test.prop(
+	{
+		playbackRate,
+		steps: fc.array(
+			fc.record(
+				{
+					back: fc.double({ max: 0.04, min: 0, noNaN: true }),
+					frame: fc.integer({ max: 250, min: 0 }),
+				},
+				{ noNullPrototype: true },
+			),
+			{ maxLength: 120, minLength: 1 },
+		),
+		updateMs: fc.integer({ max: 250, min: 1 }),
+	},
+	{ numRuns: 2000 },
+)(
+	'while playing, a source that reports in coarse steps and jitters back never moves the position backwards',
+	({ playbackRate: rate, steps, updateMs }) => {
+		const clock = createTrackingClock();
+		const everyMs = Math.min(updateMs, 400 / rate);
+		let frameMs = 0;
+		let previous = -Infinity;
+
+		for (const { back, frame } of steps) {
+			frameMs += frame;
+			const reported = 10 + ((Math.floor(frameMs / everyMs) * everyMs) / 1000) * rate - back;
+			const position = clock.read(frameMs, playing(reported, rate));
+
+			expect(position).toBeGreaterThanOrEqual(previous);
+			previous = position;
+		}
+	},
+);
+
+interface Report {
+	drift: number;
+	frame: number;
+	isPlaying: boolean;
+	playbackRate: number;
+}
+
+interface Reading {
+	carried: number;
+	hadSource: boolean;
+	isPlaying: boolean;
+	lastSeconds: number | undefined;
+	position: number;
+	seconds: number;
+}
+
+const reports = fc.array(
+	fc.record(
+		{
+			drift: fc.oneof(
+				{ arbitrary: fc.double({ max: 0.6, min: -0.6, noNaN: true }), weight: 6 },
+				{ arbitrary: fc.constantFrom(-3, 2), weight: 1 },
+				{ arbitrary: fc.constantFrom(NaN, Infinity, -Infinity), weight: 2 },
+			),
+			frame: fc.integer({ max: 250, min: 0 }),
+			isPlaying: fc.oneof({ arbitrary: fc.constant(true), weight: 4 }, fc.constant(false)),
+			playbackRate,
+		},
+		{ noNullPrototype: true },
+	),
+	{ maxLength: 60, minLength: 1 },
+);
+
+function readAll(steps: Array<Report>): Array<Reading> {
+	const clock = createTrackingClock();
+	const readings: Array<Reading> = [];
+	let frameMs = 0;
+	let held: number | undefined;
+	let lastSeconds: number | undefined;
+	let wasPlaying = false;
+
+	for (const { drift, frame, isPlaying, playbackRate: rate } of steps) {
+		frameMs += frame;
+		const carried = (held ?? 0) + (wasPlaying ? (frame / 1000) * rate : 0);
+		const seconds = carried + drift;
+		const position = clock.read(frameMs, { isPlaying, playbackRate: rate, seconds });
+
+		readings.push({
+			carried,
+			hadSource: lastSeconds !== undefined,
+			isPlaying,
+			lastSeconds,
+			position,
+			seconds,
+		});
+		if (Number.isFinite(seconds)) lastSeconds = seconds;
+		if (lastSeconds !== undefined) held = position;
+		wasPlaying = isPlaying;
+	}
+
+	return readings;
+}
+
+test.prop([reports], { numRuns: 2000 })(
+	'the first source, a pause, a seek and a source stepping back each land exactly on the source',
+	(steps) => {
+		for (const { carried, hadSource, isPlaying, lastSeconds, position, seconds } of readAll(
+			steps,
+		)) {
+			if (!Number.isFinite(seconds)) continue;
+
+			const isSeek = Math.abs(seconds - carried) > 0.55;
+			const isStepBack = lastSeconds !== undefined && lastSeconds - seconds > 0.06;
+
+			if (!hadSource || !isPlaying || isSeek || isStepBack) expect(position).toBe(seconds);
+		}
+	},
+);
+
+test.prop([reports], { numRuns: 2000 })(
+	'short of a landing, the position eases from where frame time carried it toward the source, never past it',
+	(steps) => {
+		for (const { carried, hadSource, isPlaying, lastSeconds, position, seconds } of readAll(
+			steps,
+		)) {
+			const isNear = Math.abs(seconds - carried) < 0.45;
+			const isSteady = lastSeconds === undefined || lastSeconds - seconds < 0.04;
+			if (!hadSource || !isPlaying || !isNear || !isSteady) continue;
+
+			expect(position).toBeGreaterThanOrEqual(Math.min(carried, seconds));
+			expect(position).toBeLessThanOrEqual(Math.max(carried, seconds));
+		}
+	},
+);
+
+test.prop([reports], { numRuns: 2000 })(
+	'once a source has reported, one that is not a number is carried through by frame time and never leaves the position not a number',
+	(steps) => {
+		for (const { carried, hadSource, position, seconds } of readAll(steps)) {
+			if (!hadSource) continue;
+
+			expect(Number.isFinite(position)).toBe(true);
+			if (!Number.isFinite(seconds)) expect(position).toBe(carried);
+		}
+	},
+);
