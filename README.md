@@ -9,9 +9,9 @@
 
 <p align="center">
   <a href="https://xsynaptic.github.io/sonic-ui/">Live demo</a> ·
-  <a href="https://xsynaptic.github.io/sonic-ui/club-mixer/">Club mixer</a> ·
-  <a href="https://xsynaptic.github.io/sonic-ui/tape-echo/">Tape echo</a> ·
-  <a href="https://xsynaptic.github.io/sonic-ui/web-player/">Web player</a> ·
+  <a href="https://xsynaptic.github.io/sonic-ui/demos/club-mixer/">Club mixer</a> ·
+  <a href="https://xsynaptic.github.io/sonic-ui/demos/tape-echo/">Tape echo</a> ·
+  <a href="https://xsynaptic.github.io/sonic-ui/demos/web-player/">Web player</a> ·
   <a href="https://www.npmjs.com/package/@xsynaptic/sonic-ui">npm</a>
 </p>
 
@@ -21,7 +21,7 @@
 </p>
 
 <p align="center">
-  <a href="https://xsynaptic.github.io/sonic-ui/tape-echo/">
+  <a href="https://xsynaptic.github.io/sonic-ui/demos/tape-echo/">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset=".github/assets/hero-dark.png">
       <img alt="A two-head tape echo built from sonic-ui dials, buttons, number boxes, meters and a spectrum, in the amber skin" src=".github/assets/hero-light.png" width="795">

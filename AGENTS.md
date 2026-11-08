@@ -4,7 +4,7 @@
 
 ## Where to look
 
-- Vocabulary: `.claude/glossary.md` defines each control, part and value term and the words it replaces; read it before naming anything. Pick the most accurate name for a new thing. If the glossary already uses or avoids that word, ask which meaning should keep it rather than settling for a weaker name.
+- Vocabulary: `.claude/glossary.md` defines each control, part and value term and the words it replaces; read it before naming anything. Pick the most accurate name for a new thing, even when the glossary already has the word: give the new sense a qualified entry, as Key (of a keyboard) has, and ask when both senses could be meant in one place.
 - Reasons: `.claude/reference/controls.md` (gitignored, so it may be absent) records why each control behaves as it does. Read the control's section before changing a gesture, a default or an ARIA choice that looks arbitrary.
 - Plans: `.claude/tasks/` (gitignored); each carries a frontmatter `status`, and only `ready` is live work.
 
@@ -73,4 +73,4 @@ To check your own work, take one look at the running dev server in a single brow
 - happy-dom has no layout, computed styles, canvas, popover or `ElementInternals`. Test geometry as pure functions and mock `getBoundingClientRect` for pointer maths.
 - E2E covers only what needs a real engine: trusted input, computed CSS, focus, forced colours, forms.
 - The phone project runs only tests tagged `@mobile`. A new test that depends on touch, viewport width, 3dppx or a pointer that cannot hover must carry the tag; when unsure, tag it.
-- `pnpm stryker` audits test strength on demand; read the survivors, not the score.
+- `pnpm stryker-file <file>` audits a pure module's tests, property tests above all, when the module is written or reworked. Read the survivors, not the score, and confirm one with `pnpm stryker-confirm <file>:<line>-<line>` before writing a test for it.
