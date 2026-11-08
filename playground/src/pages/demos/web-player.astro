@@ -29,17 +29,17 @@ import PageHeader from '#components/page-header.astro';
 		<section
 			aria-label="Player"
 			class="sonic-panel @container relative [--sonic-marker-intro:oklch(72%_0.13_200deg)] [--sonic-dial-size:2rem] [--sonic-button-size:2rem]"
-			data-web-player
+			data-web-player={true}
 		>
-			<div class="relative border-b border-line p-2" data-panel>
+			<div class="relative border-b border-line p-2" data-panel={true}>
 				<sonic-waveform
 					aria-label="Waveform"
 					class="[--sonic-waveform-length:100%] [--sonic-waveform-size:7.5rem]"
-					data-detail
-					disabled
+					data-detail={true}
+					disabled={true}
 					key-step="1"
 					max="1"
-					readout
+					readout={true}
 					step="0"
 				></sonic-waveform>
 				<div class="absolute top-4 right-4 flex gap-1 [--sonic-button-size:1.5rem]">
@@ -55,76 +55,87 @@ import PageHeader from '#components/page-header.astro';
 				<sonic-slider
 					aria-label="Seek"
 					class="[--sonic-slider-cap-ratio:0] [--sonic-slider-groove-ratio:0.35] [--sonic-slider-length:100%] [--sonic-slider-size:1rem]"
-					data-seek
-					disabled
+					data-seek={true}
+					disabled={true}
 					key-step="5"
 					max="1"
-					readout
+					readout={true}
 					step="0"
 				></sonic-slider>
 			</div>
 			<div class="flex flex-wrap items-center gap-x-4 gap-y-3 px-4 py-3">
 				<div class="flex items-center gap-1">
-					<sonic-button aria-label="Previous" data-previous soft-disabled>
+					<sonic-button aria-label="Previous" data-previous={true} soft-disabled={true}>
 						<SkipBack aria-hidden="true" />
 					</sonic-button>
-					<sonic-button aria-label="Back 10 seconds" data-seek-by="-10" disabled>
+					<sonic-button aria-label="Back 10 seconds" data-seek-by="-10" disabled={true}>
 						<RotateCcw aria-hidden="true" />
 					</sonic-button>
 					<sonic-button
 						aria-label="Play"
 						class="[--sonic-button-face-radius-ratio:0.5] [--sonic-button-radius-ratio:0.5] [--sonic-button-size:2.5rem]"
-						data-play
-						latching
+						data-play={true}
+						latching={true}
 					>
 						<Play aria-hidden="true" data-sonic-when="released" />
 						<Pause aria-hidden="true" data-sonic-when="pressed" />
 					</sonic-button>
-					<sonic-button aria-label="Forward 10 seconds" data-seek-by="10" disabled>
+					<sonic-button aria-label="Forward 10 seconds" data-seek-by="10" disabled={true}>
 						<RotateCw aria-hidden="true" />
 					</sonic-button>
-					<sonic-button aria-label="Next" data-next soft-disabled>
+					<sonic-button aria-label="Next" data-next={true} soft-disabled={true}>
 						<SkipForward aria-hidden="true" />
 					</sonic-button>
 				</div>
 				<div class="flex min-w-40 flex-1 items-center gap-3">
 					<div class="grid min-w-0 flex-1 leading-tight">
 						<p class="min-w-0 text-sm text-text-strong">
-							<sonic-ticker cancellable data-title></sonic-ticker>
+							<sonic-ticker cancellable={true} data-title={true}></sonic-ticker>
 						</p>
 						<p class="min-w-0 text-xs text-text-muted">
-							<sonic-ticker cancellable data-artist></sonic-ticker>
+							<sonic-ticker cancellable={true} data-artist={true}></sonic-ticker>
 						</p>
 					</div>
 					<button
 						aria-label="Remaining time"
 						aria-pressed="false"
 						class="sonic-screen cursor-pointer select-none font-mono text-xs tabular-nums min-w-18 [--sonic-screen-size:1.5rem] [text-shadow:0_0_0.4em_currentColor] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text disabled:cursor-default disabled:opacity-60"
-						data-time
-						disabled
+						data-time={true}
+						disabled={true}
 						type="button"
 					>
 						--:--
 					</button>
 				</div>
-				<sonic-segmented aria-label="Playback rate" class="font-mono text-xs" data-rate value="1">
+				<sonic-segmented
+					aria-label="Playback rate"
+					class="font-mono text-xs"
+					data-rate={true}
+					value="1"
+				>
 					<span data-sonic-value="1">1×</span>
 					<span data-sonic-value="1.5">1.5×</span>
 					<span data-sonic-value="2">2×</span>
 				</sonic-segmented>
-				<sonic-button aria-label="Show waveform" data-panel-button disabled latching pressed>
+				<sonic-button
+					aria-label="Show waveform"
+					data-panel-button={true}
+					disabled={true}
+					latching={true}
+					pressed={true}
+				>
 					<AudioWaveform aria-hidden="true" />
 				</sonic-button>
 				<div class="flex items-center gap-2">
-					<sonic-button aria-label="Mute" data-mute latching>
+					<sonic-button aria-label="Mute" data-mute={true} latching={true}>
 						<Volume2 aria-hidden="true" data-sonic-when="released" />
 						<VolumeX aria-hidden="true" data-sonic-when="pressed" />
 					</sonic-button>
 					<sonic-dial
 						aria-label="Volume"
-						data-volume
+						data-volume={true}
 						max="1"
-						readout
+						readout={true}
 						step="0.01"
 						value="0.8"
 					></sonic-dial>
@@ -132,13 +143,13 @@ import PageHeader from '#components/page-header.astro';
 				<div class="basis-full">
 					<sonic-wavestrip
 						aria-label="Wavestrip"
-						cancellable
+						cancellable={true}
 						class="[--sonic-wavestrip-length:100%]"
-						data-wave
-						disabled
+						data-wave={true}
+						disabled={true}
 						key-step="5"
 						max="1"
-						readout
+						readout={true}
 						step="0"
 					></sonic-wavestrip>
 				</div>

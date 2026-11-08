@@ -15,17 +15,17 @@ const long = 'A long title that runs well past the end of the box it sits in';
 		</Cell>
 		<Cell id="ticker-long" label="Track title">
 			<div class="w-64 max-w-full text-sm text-text-strong">
-				<sonic-ticker data-ticker>{long}</sonic-ticker>
+				<sonic-ticker data-ticker={true}>{long}</sonic-ticker>
 			</div>
 		</Cell>
 		<Cell id="ticker-screen" label="Now playing">
 			<div class="sonic-screen w-64 max-w-full font-mono text-sm">
-				<sonic-ticker data-ticker>{long}</sonic-ticker>
+				<sonic-ticker data-ticker={true}>{long}</sonic-ticker>
 			</div>
 		</Cell>
 		<Cell id="ticker-link" label="Artist">
 			<div class="w-64 max-w-full text-sm text-text-strong">
-				<sonic-ticker data-ticker>
+				<sonic-ticker data-ticker={true}>
 					A long title that runs well past the end of the box, with{' '}
 					<a class="underline" href="#text">
 						a link
@@ -35,7 +35,7 @@ const long = 'A long title that runs well past the end of the box it sits in';
 		</Cell>
 		<Cell id="ticker-cancellable" label="Station">
 			<div class="w-64 max-w-full text-sm text-text-strong">
-				<sonic-ticker cancellable data-ticker>
+				<sonic-ticker cancellable={true} data-ticker={true}>
 					{long}
 				</sonic-ticker>
 			</div>

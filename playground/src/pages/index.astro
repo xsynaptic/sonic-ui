@@ -7,12 +7,16 @@ import Wordmark from '#components/wordmark.astro';
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const demos = [
 	{
-		href: `${base}/club-mixer/`,
+		href: `${base}/demos/club-mixer/`,
 		label: 'Club mixer',
 		lead: 'Four music channels, two mics, two filters',
 	},
-	{ href: `${base}/tape-echo/`, label: 'Tape echo', lead: 'A two-head echo on Web Audio' },
-	{ href: `${base}/web-player/`, label: 'Web player', lead: 'A docked bar on a simulated stream' },
+	{ href: `${base}/demos/tape-echo/`, label: 'Tape echo', lead: 'A two-head echo on Web Audio' },
+	{
+		href: `${base}/demos/web-player/`,
+		label: 'Web player',
+		lead: 'A docked bar on a simulated stream',
+	},
 	{ href: `${base}/tokens/`, label: 'Tokens', lead: 'See what each token does to a control' },
 ];
 ---

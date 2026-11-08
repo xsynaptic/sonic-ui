@@ -9,8 +9,8 @@ import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 <Section title="Rings">
 	<SpecimenGrid>
 		<Cell id="ring-loop" label="Loop">
-			<span class="sonic-ring [--sonic-ring-size:calc(2rem/0.75)]" data-ring-loop>
-				<sonic-button aria-labelledby="ring-loop" latching pressed>
+			<span class="sonic-ring [--sonic-ring-size:calc(2rem/0.75)]" data-ring-loop={true}>
+				<sonic-button aria-labelledby="ring-loop" latching={true} pressed={true}>
 					<Repeat aria-hidden="true" />
 				</sonic-button>
 			</span>
@@ -41,7 +41,7 @@ import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 				class="sonic-ring [--sonic-ring-size:calc(2rem/0.75)]"
 				style={{ '--sonic-ring-from': '0.25', '--sonic-ring-to': '0.6' }}
 			>
-				<sonic-button aria-labelledby="ring-from-to" latching>
+				<sonic-button aria-labelledby="ring-from-to" latching={true}>
 					<span class="sonic-led"></span>
 				</sonic-button>
 			</span>

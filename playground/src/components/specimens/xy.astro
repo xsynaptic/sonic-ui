@@ -7,11 +7,11 @@ import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 <Section title="Values">
 	<SpecimenGrid size="large">
 		<Cell id="xy-filter" isStacked={true} label="Filter">
-			<div class="contents" data-xy-scope>
+			<div class="contents" data-xy-scope={true}>
 				<sonic-xy
 					aria-labelledby="xy-filter"
 					data-xy-format="hertz db"
-					readout
+					readout={true}
 					x="1200"
 					x-label="Cutoff"
 					x-max="20000"
@@ -26,7 +26,7 @@ import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 				></sonic-xy>
 				<div
 					class="sonic-screen min-w-32 font-mono text-[0.625rem] [--sonic-screen-size:1.5rem]"
-					data-xy-screen
+					data-xy-screen={true}
 				></div>
 			</div>
 		</Cell>
@@ -47,7 +47,7 @@ import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 		</Cell>
 		<Cell id="xy-glass" label="Morph">
 			<div class="sonic-screen">
-				<sonic-xy aria-labelledby="xy-glass" readout x="30" y="60"></sonic-xy>
+				<sonic-xy aria-labelledby="xy-glass" readout={true} x="30" y="60"></sonic-xy>
 			</div>
 		</Cell>
 		<Cell id="xy-wide" label="Space">
@@ -63,7 +63,7 @@ import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 <Section title="States">
 	<SpecimenGrid size="large">
 		<Cell id="xy-disabled" label="Disabled">
-			<sonic-xy aria-labelledby="xy-disabled" disabled x="70" y="40"></sonic-xy>
+			<sonic-xy aria-labelledby="xy-disabled" disabled={true} x="70" y="40"></sonic-xy>
 		</Cell>
 	</SpecimenGrid>
 </Section>

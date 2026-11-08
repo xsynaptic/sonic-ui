@@ -81,7 +81,7 @@ const regionCells: Array<RegionCell> = [
 				<div class:list={[strip.hasGlass && 'sonic-screen']}>
 					<sonic-wavestrip
 						aria-labelledby={strip.id}
-						cancellable
+						cancellable={true}
 						class:list={['[--sonic-wavestrip-length:20rem]', strip.tokens]}
 						data-buffered="0 150 190 230"
 						data-format="clock"
@@ -90,7 +90,7 @@ const regionCells: Array<RegionCell> = [
 						data-peaks={strip.seed}
 						key-step="5"
 						max="300"
-						readout
+						readout={true}
 						value="120"
 					></sonic-wavestrip>
 				</div>
@@ -104,13 +104,13 @@ const regionCells: Array<RegionCell> = [
 			<Cell id={cell.id} label={cell.label}>
 				<sonic-wavestrip
 					aria-labelledby={cell.id}
-					cancellable
+					cancellable={true}
 					class:list={['[--sonic-wavestrip-length:20rem]', cell.tokens]}
 					data-format="clock"
 					data-peaks={cell.seed}
 					key-step="5"
 					max="300"
-					readout
+					readout={true}
 					value="30"
 				>
 					{cell.regions.map((region) => (
@@ -125,7 +125,7 @@ const regionCells: Array<RegionCell> = [
 			</Cell>
 		))}
 		<Cell id="region-window" isStacked={true} label="Window" span="full">
-			<div class="contents" data-bracket-specimen data-zoom-specimen>
+			<div class="contents" data-bracket-specimen={true} data-zoom-specimen={true}>
 				<sonic-waveform
 					aria-label="Detail"
 					class="[--sonic-waveform-length:min(48rem,80vw)]"
@@ -133,7 +133,7 @@ const regionCells: Array<RegionCell> = [
 					data-samples="8"
 					key-step="1"
 					max="300"
-					readout
+					readout={true}
 					step="0"
 					value="120"
 				></sonic-waveform>
@@ -147,13 +147,13 @@ const regionCells: Array<RegionCell> = [
 				</Cell>
 				<sonic-wavestrip
 					aria-label="Overview"
-					cancellable
+					cancellable={true}
 					class="[--sonic-wavestrip-length:min(48rem,80vw)]"
 					data-format="clock"
 					data-peaks="8"
 					key-step="5"
 					max="300"
-					readout
+					readout={true}
 					step="0"
 					value="120"
 				>
@@ -162,7 +162,7 @@ const regionCells: Array<RegionCell> = [
 			</div>
 		</Cell>
 		<Cell id="region-preview" isStacked={true} label="Preview">
-			<div class="contents" data-preview-specimen>
+			<div class="contents" data-preview-specimen={true}>
 				<sonic-wavestrip
 					aria-labelledby="region-preview"
 					class="[--sonic-wavestrip-length:20rem]"
@@ -170,7 +170,7 @@ const regionCells: Array<RegionCell> = [
 					data-peaks="32"
 					key-step="5"
 					max="300"
-					readout
+					readout={true}
 					value="60"
 				/>
 				<Cell id="region-preview-time" label="Preview time">
@@ -179,7 +179,7 @@ const regionCells: Array<RegionCell> = [
 						class="[--sonic-slider-length:16rem] [--sonic-slider-size:1rem]"
 						data-format="clock"
 						max="300"
-						readout
+						readout={true}
 						step="0"
 						value="200"
 					/>
@@ -205,7 +205,7 @@ const regionCells: Array<RegionCell> = [
 					disabled={strip.isDisabled}
 					key-step="5"
 					max="300"
-					readout
+					readout={true}
 					value="120"
 				></sonic-wavestrip>
 			</Cell>

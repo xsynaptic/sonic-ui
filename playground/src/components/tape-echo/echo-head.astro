@@ -23,17 +23,17 @@ const id = `echo-head-${String(head)}`;
 >
 	<sonic-dial
 		aria-labelledby={id}
-		data-echo-dial
+		data-echo-dial={true}
 		data-format="note"
-		notched
+		notched={true}
 		positions={divisions[division].join(' ')}
-		readout
+		readout={true}
 		value={ticks}
 	></sonic-dial>
 	<sonic-segmented
 		aria-label={`Echo ${String(head)} division`}
 		class="font-mono [--sonic-segmented-size:1.25rem]"
-		data-echo-division
+		data-echo-division={true}
 		value={division}
 	>
 		{divisionOrder.map((entry) => (

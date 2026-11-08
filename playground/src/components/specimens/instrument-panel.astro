@@ -11,7 +11,7 @@ const titleClass =
 	'sonic-panel-title font-mono text-[0.625rem] tracking-[0.16em] text-text-muted uppercase';
 ---
 
-<div class="flex flex-wrap gap-3 surface p-3" data-screen-scope>
+<div class="flex flex-wrap gap-3 surface p-3" data-screen-scope={true}>
 	<div class={groupClass}>
 		<p class={titleClass}>Filter</p>
 		<div class="flex flex-1 flex-wrap items-stretch gap-6">
@@ -28,7 +28,7 @@ const titleClass =
 					id="panel-cutoff-dial"
 					max="20000"
 					min="20"
-					readout
+					readout={true}
 					taper="log"
 					value="1200"
 				></sonic-dial>
@@ -39,7 +39,7 @@ const titleClass =
 					data-format="percent"
 					default="0"
 					id="panel-resonance-dial"
-					readout
+					readout={true}
 					value="35"
 				></sonic-dial>
 			</Cell>
@@ -51,7 +51,7 @@ const titleClass =
 					max="100"
 					min="-100"
 					origin="0"
-					readout
+					readout={true}
 					value="40"
 				></sonic-dial>
 			</Cell>
@@ -92,7 +92,7 @@ const titleClass =
 					id="panel-attack-dial"
 					max="2000"
 					midpoint="200"
-					readout
+					readout={true}
 					value="12"
 				></sonic-dial>
 			</Cell>
@@ -103,7 +103,7 @@ const titleClass =
 					id="panel-release-dial"
 					max="5000"
 					midpoint="500"
-					readout
+					readout={true}
 					value="420"
 				></sonic-dial>
 			</Cell>
@@ -120,7 +120,7 @@ const titleClass =
 					max="10"
 					midpoint="1"
 					min="0.05"
-					readout
+					readout={true}
 					step="0.01"
 					value="0.4"
 				></sonic-dial>
@@ -130,28 +130,28 @@ const titleClass =
 					aria-labelledby="panel-depth"
 					id="panel-depth-dial"
 					max="50"
-					readout
+					readout={true}
 					value="30"
 				></sonic-dial>
 			</Cell>
 		</div>
 	</div>
-	<div class={groupClass} data-strip>
+	<div class={groupClass} data-strip={true}>
 		<p class={titleClass}>Channel</p>
 		<div class="flex flex-1 flex-wrap items-stretch gap-6">
 			<Cell id="panel-pan" label="Pan">
 				<sonic-dial
 					aria-labelledby="panel-pan"
 					data-format="pan"
-					data-lfo
+					data-lfo={true}
 					data-lfo-depth="#panel-depth-dial"
 					data-lfo-rate="#panel-rate-dial"
-					data-strip-pan
+					data-strip-pan={true}
 					default="0"
 					max="50"
 					min="-50"
 					origin="0"
-					readout
+					readout={true}
 					value="0"
 				></sonic-dial>
 			</Cell>
@@ -162,13 +162,13 @@ const titleClass =
 				<sonic-slider
 					aria-labelledby="panel-level"
 					data-format="db"
-					data-strip-level
+					data-strip-level={true}
 					default="0"
 					max="6"
 					midpoint="-12"
 					min="-60"
 					orientation="vertical"
-					readout
+					readout={true}
 					step="0.5"
 					value="0"
 				></sonic-slider>
@@ -187,7 +187,7 @@ const titleClass =
 					<sonic-number
 						aria-labelledby="panel-tempo"
 						data-format="bpm"
-						data-tempo
+						data-tempo={true}
 						default="125"
 						max="300"
 						min="40"
@@ -197,8 +197,8 @@ const titleClass =
 				</div>
 			</Cell>
 			<Cell id="panel-loop" label="Loop">
-				<span class="sonic-ring [--sonic-ring-size:calc(2rem/0.75)]" data-ring-loop>
-					<sonic-button aria-labelledby="panel-loop" latching pressed>
+				<span class="sonic-ring [--sonic-ring-size:calc(2rem/0.75)]" data-ring-loop={true}>
+					<sonic-button aria-labelledby="panel-loop" latching={true} pressed={true}>
 						<span class="sonic-led"></span>
 						<Repeat aria-hidden="true" />
 					</sonic-button>
@@ -208,7 +208,7 @@ const titleClass =
 				<sonic-button
 					aria-labelledby="panel-stop"
 					class="[--sonic-button-face-radius-ratio:0.5] [--sonic-button-radius-ratio:0.5]"
-					data-stop
+					data-stop={true}
 				>
 					<Square aria-hidden="true" />
 				</sonic-button>
@@ -230,7 +230,7 @@ const titleClass =
 					data-markers="40 95 180"
 					data-peaks="6"
 					max="240"
-					readout
+					readout={true}
 					value="70"
 				></sonic-wavestrip>
 			</Cell>
@@ -241,13 +241,13 @@ const titleClass =
 					data-markers="40 95 180"
 					data-samples="6"
 					max="240"
-					readout
+					readout={true}
 					step="0"
 					value="70"
 				></sonic-waveform>
 			</Cell>
 			<Cell id="panel-screen" label="Screen">
-				<div class="sonic-screen min-w-30 font-mono text-xs" data-screen-follow>
+				<div class="sonic-screen min-w-30 font-mono text-xs" data-screen-follow={true}>
 					sonic-ui
 				</div>
 			</Cell>

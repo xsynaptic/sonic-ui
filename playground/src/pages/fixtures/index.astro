@@ -14,7 +14,7 @@ import '#styles/playground.css';
 				aria-labelledby="level-label"
 				default="20"
 				id="level"
-				readout
+				readout={true}
 				value="50"
 			></sonic-dial>
 			<span id="level-label">Level</span>
@@ -30,7 +30,14 @@ import '#styles/playground.css';
 			></sonic-dial>
 			<span id="cutoff-label">Cutoff</span>
 		</div>
-		<sonic-dial aria-label="Phase" endless id="phase" max="360" step="5" value="350"></sonic-dial>
+		<sonic-dial
+			aria-label="Phase"
+			endless={true}
+			id="phase"
+			max="360"
+			step="5"
+			value="350"
+		></sonic-dial>
 		<sonic-dial
 			aria-label="Low"
 			detent="0"
@@ -42,10 +49,10 @@ import '#styles/playground.css';
 		></sonic-dial>
 		<sonic-dial
 			aria-label="Locked"
-			disabled
+			disabled={true}
 			id="locked"
 			modulation="20"
-			notched
+			notched={true}
 			step="10"
 			value="30"
 		></sonic-dial>
@@ -55,7 +62,7 @@ import '#styles/playground.css';
 			data-format="echo-mode"
 			id="selector"
 			max="3"
-			notched
+			notched={true}
 			value="1"
 		>
 			{echoModes.labels.map((mode, index) => (
@@ -97,7 +104,7 @@ import '#styles/playground.css';
 			max="50"
 			min="-50"
 			origin="0"
-			spring
+			spring={true}
 			value="0"
 		></sonic-slider>
 		<sonic-slider
@@ -113,13 +120,14 @@ import '#styles/playground.css';
 				id="strip"
 				key-step="5"
 				max="300"
-				readout
+				readout={true}
 				step="0"
 			></sonic-slider>
 		</div>
 		<div class="grid justify-items-center gap-2">
 			<sonic-number
 				aria-labelledby="tempo-label"
+				arrows={true}
 				id="tempo"
 				max="300"
 				min="20"
@@ -128,28 +136,28 @@ import '#styles/playground.css';
 			></sonic-number>
 			<span id="tempo-label">Tempo</span>
 		</div>
-		<sonic-button aria-label="Mute" id="mute" latching>
+		<sonic-button aria-label="Mute" id="mute" latching={true}>
 			<Play aria-hidden="true" />
 		</sonic-button>
-		<sonic-button aria-label="Kick" id="kick" momentary></sonic-button>
-		<sonic-button aria-label="Play" busy id="loading">
+		<sonic-button aria-label="Kick" id="kick" momentary={true}></sonic-button>
+		<sonic-button aria-label="Play" busy={true} id="loading">
 			<Play aria-hidden="true" />
 		</sonic-button>
 		<sonic-button aria-label="Next" id="next">
 			<Play aria-hidden="true" />
 		</sonic-button>
-		<sonic-button aria-label="Power" id="power" latching>
+		<sonic-button aria-label="Power" id="power" latching={true}>
 			<span class="sonic-led"></span>
 		</sonic-button>
 		<span class="sonic-led" id="led"></span>
-		<span class="sonic-led" data-sonic-lit id="led-lit"></span>
+		<span class="sonic-led" data-sonic-lit="" id="led-lit"></span>
 		<span class="sonic-led" data-sonic-lit="ok" id="led-ok"></span>
 		<sonic-segmented aria-label="Mode" id="mode" value="lp">
 			<span data-sonic-value="lp">LP</span>
 			<span data-sonic-value="hp">HP</span>
 		</sonic-segmented>
 		<sonic-switch aria-label="Talk" id="talk" value="off">
-			<span data-sonic-momentary data-sonic-value="duck">
+			<span data-sonic-momentary={true} data-sonic-value="duck">
 				Duck
 			</span>
 			<span data-sonic-value="off">Off</span>
@@ -157,7 +165,7 @@ import '#styles/playground.css';
 		</sonic-switch>
 		<sonic-switch aria-label="Sync" id="sync"></sonic-switch>
 		<sonic-toggle aria-label="Route" id="route" value="off">
-			<span data-sonic-lit data-sonic-value="dry">
+			<span data-sonic-lit="" data-sonic-value="dry">
 				Dry
 			</span>
 			<span data-sonic-value="off">Thru</span>
@@ -185,13 +193,13 @@ import '#styles/playground.css';
 		<div class="w-72" id="wavestrip-box">
 			<sonic-wavestrip
 				aria-label="Position"
-				cancellable
+				cancellable={true}
 				class="[--sonic-wavestrip-length:100%]"
 				data-markers="60 62 150..180:loop 240~"
 				data-peaks="flat"
 				id="wavestrip"
 				max="300"
-				readout
+				readout={true}
 				step="0"
 				value="150"
 			></sonic-wavestrip>
@@ -204,7 +212,7 @@ import '#styles/playground.css';
 				data-samples="3"
 				id="waveform"
 				max="300"
-				readout
+				readout={true}
 				step="0"
 				value="150"
 			></sonic-waveform>
@@ -221,7 +229,7 @@ import '#styles/playground.css';
 				zoom="60"
 				zoom-max="160"
 				zoom-min="30"
-				zoomable
+				zoomable={true}
 			></sonic-waveform>
 		</div>
 		<div class="flex h-24 w-72" id="wavestrip-fill-box">
@@ -229,7 +237,7 @@ import '#styles/playground.css';
 				aria-label="Filled"
 				class="[--sonic-wavestrip-length:100%] [--sonic-wavestrip-marker-size:4px]"
 				data-markers="60 67.5"
-				fill
+				fill={true}
 				id="wavestrip-fill"
 				max="300"
 				value="150"
@@ -253,10 +261,10 @@ import '#styles/playground.css';
 				aria-label="Pinned"
 				class="[--sonic-readout-edge-width:2px] [--sonic-readout-edge:rgb(1_2_3)] [--sonic-wavestrip-length:100%] [--sonic-wavestrip-marker-edge-width:1px] [--sonic-wavestrip-marker-size:4px] [--sonic-wavestrip-region-edge-width:1px]"
 				data-markers="150..180"
-				fill
+				fill={true}
 				id="wavestrip-pinned"
 				max="300"
-				readout
+				readout={true}
 				value="150"
 			></sonic-wavestrip>
 		</div>
@@ -278,7 +286,7 @@ import '#styles/playground.css';
 				data-markers="100=Intro"
 				id="waveform-tokens"
 				max="300"
-				readout
+				readout={true}
 				step="0"
 				value="150"
 			></sonic-waveform>
@@ -289,8 +297,8 @@ import '#styles/playground.css';
 			id="seek"
 			key-step="5"
 			max="300"
-			readout
-			scrub
+			readout={true}
+			scrub={true}
 			step="0"
 			value="60"
 		></sonic-slider>
@@ -302,13 +310,13 @@ import '#styles/playground.css';
 				id="edge-strip"
 				max="110"
 				min="10"
-				scrub
+				scrub={true}
 				value="35"
 			></sonic-slider>
 		</div>
 		<sonic-button
 			aria-label="Delayed"
-			busy
+			busy={true}
 			class="[--sonic-button-busy-delay:400ms]"
 			id="loading-delayed"
 		>
@@ -317,7 +325,7 @@ import '#styles/playground.css';
 		<div class="flex h-32 w-72" id="spectrum-fill-box">
 			<sonic-spectrum
 				class="[--sonic-spectrum-length:100%]"
-				fill
+				fill={true}
 				id="spectrum-fill"
 			></sonic-spectrum>
 		</div>
@@ -341,10 +349,10 @@ import '#styles/playground.css';
 		>
 			<span class="sonic-led"></span>
 		</sonic-slider>
-		<sonic-button aria-label="Cue" armed id="armed" latching>
+		<sonic-button aria-label="Cue" armed={true} id="armed" latching={true}>
 			<Play aria-hidden="true" />
 		</sonic-button>
-		<sonic-button aria-label="Loop" armed id="armed-led" latching>
+		<sonic-button aria-label="Loop" armed={true} id="armed-led" latching={true}>
 			<span class="sonic-led"></span>
 		</sonic-button>
 		<span class="sonic-led" data-sonic-lit="idle" id="led-idle"></span>
@@ -375,7 +383,7 @@ import '#styles/playground.css';
 
 --sonic-ring-from: 0.25; --sonic-ring-to: 0.5"
 		>
-			<sonic-button aria-label="Loop position" latching>
+			<sonic-button aria-label="Loop position" latching={true}>
 				<Play aria-hidden="true" />
 			</sonic-button>
 		</span>
@@ -383,7 +391,7 @@ import '#styles/playground.css';
 		<sonic-xy
 			aria-label="Filter"
 			id="xy-log"
-			readout
+			readout={true}
 			x="1000"
 			x-label="Cutoff"
 			x-max="20000"
@@ -397,7 +405,7 @@ import '#styles/playground.css';
 			y-origin="0"
 			y-step="0.5"
 		></sonic-xy>
-		<sonic-xy aria-label="Locked XY pad" disabled id="xy-disabled" x="30" y="70"></sonic-xy>
+		<sonic-xy aria-label="Locked XY pad" disabled={true} id="xy-disabled" x="30" y="70"></sonic-xy>
 		<sonic-envelope
 			attack="env-attack"
 			decay="env-decay"
@@ -442,7 +450,7 @@ import '#styles/playground.css';
 			decay="env-decay"
 			decay-curve="env-decay-curve"
 			id="envelope-curves"
-			readout
+			readout={true}
 			release="env-release"
 			sustain="env-sustain"
 		></sonic-envelope>
@@ -469,7 +477,12 @@ import '#styles/playground.css';
 		</sonic-split>
 		<sonic-split aria-label="Locked split" class="grid gap-16" id="split-locked">
 			<sonic-slider aria-label="Locked A" id="locked-a" value="50"></sonic-slider>
-			<sonic-slider aria-label="Locked B" data-sonic-locked id="locked-b" value="30"></sonic-slider>
+			<sonic-slider
+				aria-label="Locked B"
+				data-sonic-locked={true}
+				id="locked-b"
+				value="30"
+			></sonic-slider>
 			<sonic-slider aria-label="Locked C" id="locked-c" value="20"></sonic-slider>
 		</sonic-split>
 		<div class="flex h-[150px] gap-2">
@@ -510,7 +523,7 @@ import '#styles/playground.css';
 			<span aria-label="Record" data-sonic-lit="danger" data-sonic-value="rec"></span>
 		</sonic-toggle>
 		<sonic-toggle aria-label="Cue" id="cue" value="idle">
-			<span data-sonic-lit data-sonic-momentary data-sonic-value="cue">
+			<span data-sonic-lit="" data-sonic-momentary={true} data-sonic-value="cue">
 				Cue
 			</span>
 			<span data-sonic-value="idle">Idle</span>
@@ -519,13 +532,13 @@ import '#styles/playground.css';
 		<sonic-toggle aria-label="Bus" id="bus" value="both">
 			<span data-sonic-value="left">Left</span>
 			<span data-sonic-value="both">Both</span>
-			<span data-sonic-disabled data-sonic-value="right">
+			<span data-sonic-disabled={true} data-sonic-value="right">
 				Right
 			</span>
 		</sonic-toggle>
 		<sonic-segmented aria-label="Band" id="band" value="low">
 			<span data-sonic-value="low">Low</span>
-			<span data-sonic-disabled data-sonic-value="mids">
+			<span data-sonic-disabled={true} data-sonic-value="mids">
 				Mids
 			</span>
 			<span data-sonic-value="high">High</span>
@@ -543,7 +556,7 @@ import '#styles/playground.css';
 				<sonic-wavestrip
 					aria-label="On glass"
 					data-peaks="flat"
-					fill
+					fill={true}
 					id="wavestrip-screen"
 					max="300"
 					value="150"
@@ -568,7 +581,12 @@ import '#styles/playground.css';
 			</sonic-button>
 		</div>
 		<div class="sonic-screen [--sonic-glass-depth:0]">
-			<sonic-dial aria-label="Dial on flat glass" id="glass-dial" readout value="50"></sonic-dial>
+			<sonic-dial
+				aria-label="Dial on flat glass"
+				id="glass-dial"
+				readout={true}
+				value="50"
+			></sonic-dial>
 		</div>
 	</main>
 	<script>

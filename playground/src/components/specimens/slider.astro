@@ -22,7 +22,7 @@ const faderMarks = [
 			<sonic-slider
 				aria-labelledby="slider-send"
 				data-format="percent"
-				readout
+				readout={true}
 				value="40"
 			></sonic-slider>
 		</Cell>
@@ -42,9 +42,9 @@ const faderMarks = [
 			<sonic-slider
 				aria-labelledby="slider-depth"
 				data-format="percent"
-				data-lfo
+				data-lfo={true}
 				modulation="35"
-				readout
+				readout={true}
 				value="40"
 			></sonic-slider>
 		</Cell>
@@ -56,8 +56,8 @@ const faderMarks = [
 				data-format="clock"
 				key-step="5"
 				max="300"
-				readout
-				scrub
+				readout={true}
+				scrub={true}
 				step="0"
 				value="120"
 			></sonic-slider>
@@ -76,7 +76,7 @@ const faderMarks = [
 				midpoint="-12"
 				min="-60"
 				orientation="vertical"
-				readout
+				readout={true}
 				step="0.5"
 				value="0"
 			>
@@ -89,9 +89,9 @@ const faderMarks = [
 			<sonic-slider
 				aria-labelledby="slider-steps"
 				max="10"
-				notched
+				notched={true}
 				orientation="vertical"
-				readout
+				readout={true}
 				value="7"
 			></sonic-slider>
 		</Cell>
@@ -103,8 +103,8 @@ const faderMarks = [
 				min="-100"
 				orientation="vertical"
 				origin="0"
-				readout
-				spring
+				readout={true}
+				spring={true}
 				value="0"
 			></sonic-slider>
 		</Cell>
@@ -118,7 +118,7 @@ const faderMarks = [
 				min="-8"
 				orientation="vertical"
 				origin="0"
-				readout
+				readout={true}
 				step="0.05"
 				value="1.5"
 			>
@@ -132,7 +132,7 @@ const faderMarks = [
 		<Cell id="slider-disabled" label="Disabled">
 			<sonic-slider
 				aria-labelledby="slider-disabled"
-				disabled
+				disabled={true}
 				orientation="vertical"
 				value="60"
 			></sonic-slider>

@@ -34,13 +34,13 @@ const pill =
 			</sonic-button>
 		</Cell>
 		<Cell id="button-shuffle" label="Shuffle and clear" span="wide">
-			<sonic-button latching pressed>
+			<sonic-button latching={true} pressed={true}>
 				<span>Shuffle</span>
 			</sonic-button>
 			<sonic-button>
 				<span>Clear</span>
 			</sonic-button>
-			<sonic-button class={pill} latching>
+			<sonic-button class={pill} latching={true}>
 				<span>Shuffle</span>
 			</sonic-button>
 			<sonic-button class={pill}>
@@ -52,10 +52,10 @@ const pill =
 <Section title="Lights">
 	<SpecimenGrid>
 		<Cell id="button-cue" label="Cue">
-			<sonic-button aria-labelledby="button-cue" momentary />
+			<sonic-button aria-labelledby="button-cue" momentary={true} />
 		</Cell>
 		<Cell id="button-record" label="Record">
-			<sonic-button aria-labelledby="button-record" armed latching>
+			<sonic-button aria-labelledby="button-record" armed={true} latching={true}>
 				<Circle aria-hidden="true" />
 			</sonic-button>
 		</Cell>
@@ -63,9 +63,9 @@ const pill =
 			{hotCues.map((colour, index) => (
 				<sonic-button
 					aria-label={`Hot cue ${String(index + 1)}`}
-					armed
+					armed={true}
 					class="font-mono"
-					latching
+					latching={true}
 					pressed={index === 1 || undefined}
 					style={{ '--sonic-lit': colour }}
 				>
@@ -78,17 +78,17 @@ const pill =
 <Section title="States">
 	<SpecimenGrid>
 		<Cell id="button-loading" label="Loading">
-			<sonic-button aria-labelledby="button-loading" busy>
+			<sonic-button aria-labelledby="button-loading" busy={true}>
 				<Play aria-hidden="true" />
 			</sonic-button>
 		</Cell>
 		<Cell id="button-next" label="Soft-disabled">
-			<sonic-button aria-labelledby="button-next" soft-disabled>
+			<sonic-button aria-labelledby="button-next" soft-disabled={true}>
 				<SkipForward aria-hidden="true" />
 			</sonic-button>
 		</Cell>
 		<Cell id="button-disabled" label="Disabled">
-			<sonic-button aria-labelledby="button-disabled" disabled>
+			<sonic-button aria-labelledby="button-disabled" disabled={true}>
 				<Play aria-hidden="true" />
 			</sonic-button>
 		</Cell>

@@ -22,14 +22,21 @@ import '#styles/playground.css';
 			<sonic-number id="tempo" max="300" name="tempo" step="0.5" value="120"></sonic-number>
 			<label class="grid justify-items-center gap-2">
 				<span>Mute</span>
-				<sonic-button id="mute" latching name="mute">
+				<sonic-button id="mute" latching={true} name="mute">
 					<span aria-hidden="true">M</span>
 				</sonic-button>
 			</label>
-			<sonic-button aria-label="Solo" id="solo" latching name="solo" pressed value="yes">
+			<sonic-button
+				aria-label="Solo"
+				id="solo"
+				latching={true}
+				name="solo"
+				pressed={true}
+				value="yes"
+			>
 				S
 			</sonic-button>
-			<sonic-button aria-label="Kick" id="kick" momentary name="kick"></sonic-button>
+			<sonic-button aria-label="Kick" id="kick" momentary={true} name="kick"></sonic-button>
 			<label for="mode">Mode</label>
 			<sonic-segmented id="mode" name="mode" value="lp">
 				<span data-sonic-value="lp">LP</span>
@@ -49,9 +56,9 @@ import '#styles/playground.css';
 				<span data-sonic-value="thru">Thru</span>
 				<span data-sonic-value="out">Out</span>
 			</sonic-toggle>
-			<sonic-dial aria-label="Held" disabled id="held" value="50"></sonic-dial>
+			<sonic-dial aria-label="Held" disabled={true} id="held" value="50"></sonic-dial>
 			<sonic-dial id="late" name="late" value="10"></sonic-dial>
-			<fieldset disabled id="rack">
+			<fieldset disabled={true} id="rack">
 				<legend>Rack</legend>
 				<sonic-dial aria-label="Drive" id="drive" name="drive" value="50"></sonic-dial>
 			</fieldset>

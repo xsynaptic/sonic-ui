@@ -95,11 +95,11 @@ const panels = rigs.map((rig) => build(rig));
 	<Section title={panel.title}>
 		<SpecimenGrid>
 			<Cell id={`${panel.id}-label`} label={panel.label} span="full">
-				<sonic-envelope {...panel.bindings} aria-labelledby={`${panel.id}-label`} readout />
+				<sonic-envelope {...panel.bindings} aria-labelledby={`${panel.id}-label`} readout={true} />
 			</Cell>
 			{panel.dials.map(({ attributes, label, Tag }) => (
 				<Cell id={`${attributes.id}-label`} label={label}>
-					<Tag {...attributes} readout />
+					<Tag {...attributes} readout={true} />
 				</Cell>
 			))}
 		</SpecimenGrid>

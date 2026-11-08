@@ -35,6 +35,7 @@ const drawnParts = [
 	'#xy .sonic-xy-field::after',
 	'#xy .sonic-xy-puck::before',
 	'#envelope .sonic-envelope-handle[data-sonic-stage="decay"]',
+	'#tempo .sonic-number-increment::before',
 ];
 
 async function paintOf(
@@ -191,8 +192,9 @@ test('drawn parts opt out of forced colours, and the indicator, the number box a
 		expect.soft(colour).toBe(await systemColour(page, 'ButtonText'));
 	});
 
-	await test.step('the number box inks its digits, grey when disabled', async () => {
-		const [canvasText, grayText] = [
+	await test.step('the number box inks its digits and arrows, grey when disabled', async () => {
+		const [buttonText, canvasText, grayText] = [
+			await systemColour(page, 'ButtonText'),
 			await systemColour(page, 'CanvasText'),
 			await systemColour(page, 'GrayText'),
 		];
@@ -200,13 +202,19 @@ test('drawn parts opt out of forced colours, and the indicator, the number box a
 			page
 				.locator('#tempo .sonic-number-value')
 				.evaluate((digits) => getComputedStyle(digits).color);
+		const readArrow = (): Promise<string> =>
+			page
+				.locator('#tempo .sonic-number-increment')
+				.evaluate((arrow) => getComputedStyle(arrow, '::before').backgroundColor);
 
 		expect.soft(await read()).toBe(canvasText);
+		expect.soft(await readArrow()).toBe(buttonText);
 
 		await page.locator('#tempo').evaluate((host) => {
 			host.setAttribute('disabled', '');
 		});
 		expect.soft(await read()).toBe(grayText);
+		expect.soft(await readArrow()).toBe(grayText);
 	});
 
 	await test.step('a live modulation paints its tick in CanvasText', async () => {

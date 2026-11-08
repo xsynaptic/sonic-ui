@@ -11,11 +11,15 @@ const { hasMeter, value } = Astro.props;
 
 <div class="mt-auto flex items-end gap-2 pt-2">
 	{hasMeter ? (
-		<sonic-meter ballistics="ppm-2" data-channel-meter segments={meterSegments}></sonic-meter>
+		<sonic-meter
+			ballistics="ppm-2"
+			data-channel-meter={true}
+			segments={meterSegments}
+		></sonic-meter>
 	) : undefined}
 	<sonic-slider
 		aria-label="Fader"
-		data-channel-fader
+		data-channel-fader={true}
 		data-format="db-kill"
 		default="0"
 		double-press="reset"
@@ -23,7 +27,7 @@ const { hasMeter, value } = Astro.props;
 		midpoint="-12"
 		min="-60"
 		orientation="vertical"
-		readout
+		readout={true}
 		step="0.5"
 		value={value}
 	></sonic-slider>

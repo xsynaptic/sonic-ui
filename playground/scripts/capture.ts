@@ -102,7 +102,7 @@ async function captureHeroes(browser: Browser): Promise<void> {
 	for (const scheme of schemes) {
 		const page = await open(browser, {
 			look: { scheme, skin: 'amber' },
-			path: '/tape-echo/',
+			path: '/demos/tape-echo/',
 			scale: 2,
 			viewport: desktop,
 		});

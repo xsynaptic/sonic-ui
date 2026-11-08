@@ -48,7 +48,7 @@ const titleClass =
 		<div aria-label="Master" class="flex flex-col items-center gap-3" role="group">
 			<div class="flex gap-1">
 				{sides.map(() => (
-					<sonic-meter data-master-meter segments={meterSegments}></sonic-meter>
+					<sonic-meter data-master-meter={true} segments={meterSegments}></sonic-meter>
 				))}
 			</div>
 			<span class={titleClass}>Master</span>
@@ -85,7 +85,7 @@ const titleClass =
 		<div aria-label="Monitor" class="flex flex-col items-center gap-3" role="group">
 			<span class={titleClass}>Monitor</span>
 			<div class="grid justify-items-center gap-1">
-				<span class="sonic-led [--sonic-led-size:0.875rem]" data-cue-active></span>
+				<span class="sonic-led [--sonic-led-size:0.875rem]" data-cue-active={true}></span>
 				<Label id="monitor-cue-active" text="Cue on" />
 			</div>
 			<div class="grid grid-cols-2 gap-x-2 gap-y-2.5">

@@ -48,7 +48,7 @@ const shares = [
 				class="[--sonic-dial-size:4rem] [--sonic-dial-scale-font-ratio:0.16]"
 				default="7"
 				max="10"
-				readout
+				readout={true}
 				step="0.5"
 				value="7"
 			>
@@ -67,7 +67,7 @@ const shares = [
 				midpoint="-12"
 				min="-60"
 				orientation="vertical"
-				readout
+				readout={true}
 				step="0.5"
 				value="0"
 			>
@@ -80,9 +80,9 @@ const shares = [
 			{hotCues.map((colour, index) => (
 				<sonic-button
 					aria-label={`Hot cue ${String(index + 1)}`}
-					armed
+					armed={true}
 					class="font-mono"
-					latching
+					latching={true}
 					pressed={index === 1 || undefined}
 					style={{ '--sonic-lit': colour }}
 				>
@@ -104,7 +104,7 @@ const shares = [
 		</Cell>
 		<Cell {...tile('toggle')}>
 			<sonic-toggle aria-labelledby="tile-toggle" class="font-mono uppercase" value="a">
-				<span data-sonic-lit data-sonic-value="a">
+				<span data-sonic-lit="" data-sonic-value="a">
 					A
 				</span>
 				<span data-sonic-value="off">Off</span>
@@ -133,7 +133,7 @@ const shares = [
 		</Cell>
 		<Cell {...tile('xy')} span="wide">
 			<div class="sonic-screen">
-				<sonic-xy aria-labelledby="tile-xy" readout x="30" y="60"></sonic-xy>
+				<sonic-xy aria-labelledby="tile-xy" readout={true} x="30" y="60"></sonic-xy>
 			</div>
 		</Cell>
 		<Cell {...tile('envelope')} isStacked={true} span="full">
@@ -141,7 +141,7 @@ const shares = [
 				aria-labelledby="tile-envelope"
 				attack="tile-envelope-attack"
 				decay="tile-envelope-decay"
-				readout
+				readout={true}
 				release="tile-envelope-release"
 				sustain="tile-envelope-sustain"
 			></sonic-envelope>
@@ -153,7 +153,7 @@ const shares = [
 						id={`tile-envelope-${stage.stage}`}
 						max={stage.format === 'percent' ? undefined : 2000}
 						midpoint={stage.format === 'percent' ? undefined : 200}
-						readout
+						readout={true}
 						value={stage.value}
 					></sonic-dial>
 				))}
@@ -166,7 +166,7 @@ const shares = [
 						aria-label={`Share ${share.label}`}
 						class="[--sonic-slider-length:7rem]"
 						orientation="vertical"
-						readout
+						readout={true}
 						value={share.value}
 					></sonic-slider>
 				))}
@@ -180,8 +180,8 @@ const shares = [
 			<sonic-button
 				aria-labelledby="tile-led"
 				class="font-mono [--sonic-button-font-ratio:0.25]"
-				data-two-colour
-				latching
+				data-two-colour={true}
+				latching={true}
 			>
 				<span class="sonic-led" data-sonic-lit="ok"></span>
 				<span aria-hidden="true">PH</span>
@@ -206,7 +206,7 @@ const shares = [
 	<SpecimenGrid size="wide">
 		<Cell {...tile('ticker')}>
 			<div class="sonic-screen w-64 max-w-full font-mono text-sm">
-				<sonic-ticker data-ticker>
+				<sonic-ticker data-ticker={true}>
 					A long title that runs well past the end of the box it sits in
 				</sonic-ticker>
 			</div>
@@ -214,15 +214,15 @@ const shares = [
 		<Cell {...tile('wavestrip')}>
 			<sonic-wavestrip
 				aria-labelledby="tile-wavestrip"
-				cancellable
+				cancellable={true}
 				class="[--sonic-marker-hot:oklch(78%_0.15_85deg)] [--sonic-wavestrip-length:20rem] [--sonic-wavestrip-marker-ratio:0.28]"
 				data-format="clock"
-				data-marker-shapes
+				data-marker-shapes={true}
 				data-markers="30:hot=A 60..95:intro 96:hot=B 150:hot=C 156:hot=D 215:hot=E 260:hot=F~"
 				data-peaks="14"
 				key-step="5"
 				max="300"
-				readout
+				readout={true}
 				value="120"
 			></sonic-wavestrip>
 		</Cell>
@@ -237,7 +237,7 @@ const shares = [
 				key-step="1"
 				max="300"
 				playing={true}
-				readout
+				readout={true}
 				step="0"
 				style={{
 					'--sonic-waveform-band-1': 'oklch(75% 0.19 25deg)',
@@ -265,7 +265,7 @@ const shares = [
 				</h3>
 				<div class="flex items-center justify-center gap-4">
 					<sonic-dial aria-label="Filter level" value="60"></sonic-dial>
-					<sonic-button aria-label="Filter on" latching>
+					<sonic-button aria-label="Filter on" latching={true}>
 						<span class="sonic-led"></span>
 					</sonic-button>
 				</div>
@@ -280,8 +280,8 @@ const shares = [
 <Section title={categories[2].label}>
 	<SpecimenGrid>
 		<Cell {...tile('ring')}>
-			<span class="sonic-ring [--sonic-ring-size:calc(2rem/0.75)]" data-ring-loop>
-				<sonic-button aria-labelledby="tile-ring" latching pressed>
+			<span class="sonic-ring [--sonic-ring-size:calc(2rem/0.75)]" data-ring-loop={true}>
+				<sonic-button aria-labelledby="tile-ring" latching={true} pressed={true}>
 					<Repeat aria-hidden="true" />
 				</sonic-button>
 			</span>

@@ -13,7 +13,7 @@ const grounds = [
 	<main>
 		<h1 class="sr-only">Wordmark</h1>
 		{grounds.map((ground) => (
-			<div class="p-16" data-ground style={ground.style}>
+			<div class="p-16" data-ground={true} style={ground.style}>
 				<div class="inline-flex p-[0.12em] text-[6rem] leading-none" data-wordmark={ground.name}>
 					<Wordmark />
 				</div>

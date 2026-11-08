@@ -3,12 +3,12 @@ import InstrumentPanel from '#components/specimens/instrument-panel.astro';
 import TokenList from '#components/specimens/token-list.astro';
 ---
 
-<div class="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]" data-tokens>
-	<div data-tokens-panel>
+<div class="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]" data-tokens={true}>
+	<div data-tokens-panel={true}>
 		<InstrumentPanel />
 	</div>
 	<TokenList />
-	<span aria-hidden="true" class="hidden" data-tokens-probe></span>
+	<span aria-hidden="true" class="hidden" data-tokens-probe={true}></span>
 </div>
 
 <script>

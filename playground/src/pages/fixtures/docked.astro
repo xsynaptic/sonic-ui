@@ -17,12 +17,12 @@ import '#styles/playground.css';
 		<div class="h-[300vh]"></div>
 		<div class="sticky bottom-40">
 			<div class="relative flex items-start bg-surface/70 p-2 backdrop-blur-sm">
-				<sonic-dial aria-label="Level" id="sticky" readout value="50"></sonic-dial>
+				<sonic-dial aria-label="Level" id="sticky" readout={true} value="50"></sonic-dial>
 			</div>
 		</div>
 	</main>
 	<footer class="fixed inset-x-0 bottom-0 flex items-start bg-surface/70 px-16 pt-2 pb-20 backdrop-blur-sm">
-		<sonic-dial aria-label="Volume" id="docked" readout value="50"></sonic-dial>
+		<sonic-dial aria-label="Volume" id="docked" readout={true} value="50"></sonic-dial>
 	</footer>
 	<script>
 		import '@xsynaptic/sonic-ui/define/dial';

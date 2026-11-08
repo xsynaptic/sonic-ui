@@ -5,6 +5,7 @@ import Sun from '@lucide/astro/icons/sun';
 
 import Document from '#components/document.astro';
 import Wordmark from '#components/wordmark.astro';
+import { controls } from '#scripts/controls.ts';
 import '#styles/playground.css';
 
 interface Props {
@@ -15,10 +16,12 @@ interface Props {
 const { description, title } = Astro.props;
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const controlPaths = new Set(controls.map((control) => `${base}/${control.slug}/`));
 const pages = [
-	{ href: `${base}/club-mixer/`, label: 'Club mixer' },
-	{ href: `${base}/tape-echo/`, label: 'Tape echo' },
-	{ href: `${base}/web-player/`, label: 'Web player' },
+	{ href: `${base}/demos/club-mixer/`, label: 'Club mixer' },
+	{ href: `${base}/demos/tape-echo/`, label: 'Tape echo' },
+	{ href: `${base}/demos/web-player/`, label: 'Web player' },
+	{ href: `${base}/${controls[0]?.slug ?? ''}/`, label: 'Controls', paths: controlPaths },
 	{ href: `${base}/tokens/`, label: 'Tokens' },
 ];
 const skins = ['default', 'flat', 'amber', 'slate', 'lime', 'ivory'];
@@ -59,7 +62,11 @@ const linkClass =
 				{pages.map((page) => (
 					<li>
 						<a
-							aria-current={Astro.url.pathname === page.href ? 'page' : undefined}
+							aria-current={
+								Astro.url.pathname === page.href || page.paths?.has(Astro.url.pathname) === true
+									? 'page'
+									: undefined
+							}
 							class:list={[
 								linkClass,
 								'aria-[current=page]:text-text-strong aria-[current=page]:underline',
@@ -78,12 +85,12 @@ const linkClass =
 			</ul>
 			<div class="ms-auto flex flex-wrap items-center gap-x-3 gap-y-2 font-mono [--sonic-button-size:1.75rem] [--sonic-segmented-size:1.75rem]">
 				<slot name="controls" />
-				<sonic-segmented aria-label="Skin" data-skin-choice value="default">
+				<sonic-segmented aria-label="Skin" data-skin-choice={true} value="default">
 					{skins.map((skin) => (
 						<span data-sonic-value={skin}>{skin}</span>
 					))}
 				</sonic-segmented>
-				<sonic-segmented aria-label="Colour scheme" data-scheme-choice value="system">
+				<sonic-segmented aria-label="Colour scheme" data-scheme-choice={true} value="system">
 					{schemes.map(({ Icon, label, value }) => (
 						<Icon aria-label={label} data-sonic-value={value} role="img" />
 					))}

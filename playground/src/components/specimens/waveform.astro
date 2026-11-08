@@ -121,7 +121,7 @@ const groups: Array<{ hasZoom?: boolean; title: string; waves: Array<Wave> }> = 
 							key-step="1"
 							max="300"
 							playing={wave.isPlaying}
-							readout
+							readout={true}
 							step="0"
 							style={wave.style ?? (wave.bands === undefined ? undefined : ramp(wave.bands))}
 							value="150"
@@ -132,7 +132,7 @@ const groups: Array<{ hasZoom?: boolean; title: string; waves: Array<Wave> }> = 
 			))}
 			{group.hasZoom ? (
 				<Cell id="waveform-zoom" isStacked={true} label="Detail">
-					<div class="contents" data-zoom-specimen>
+					<div class="contents" data-zoom-specimen={true}>
 						<sonic-waveform
 							aria-labelledby="waveform-zoom"
 							class="[--sonic-waveform-length:20rem]"
@@ -142,7 +142,7 @@ const groups: Array<{ hasZoom?: boolean; title: string; waves: Array<Wave> }> = 
 							key-step="1"
 							max="300"
 							playing={true}
-							readout
+							readout={true}
 							step="0"
 							value="150"
 						></sonic-waveform>

@@ -12,7 +12,7 @@ test.use({
 });
 
 test.beforeEach(async ({ page }) => {
-	await page.goto('/tape-echo/');
+	await page.goto('/demos/tape-echo/');
 });
 
 test('the microphone feeds the echo once Mic is chosen and Play is pressed', async ({

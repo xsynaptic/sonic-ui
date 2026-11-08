@@ -19,12 +19,12 @@ const modes = [
 
 <Section title="Shares">
 	<SpecimenGrid>
-		<div class="contents" data-split-demo>
+		<div class="contents" data-split-demo={true}>
 			<Cell id="split-mode" label="Mode" span="full">
 				<sonic-segmented
 					aria-labelledby="split-mode"
 					class="font-mono"
-					data-split-mode
+					data-split-mode={true}
 					value="proportional"
 				>
 					{modes.map(([value, label]) => (
@@ -44,11 +44,15 @@ const modes = [
 						<span
 							aria-hidden="true"
 							class="sonic-screen min-w-10 font-mono text-xs tabular-nums [--sonic-screen-size:1.25rem]"
-							data-split-readout
+							data-split-readout={true}
 						>
 							{slider.value}
 						</span>
-						<sonic-button aria-label={`Lock ${slider.label}`} data-split-lock latching>
+						<sonic-button
+							aria-label={`Lock ${slider.label}`}
+							data-split-lock={true}
+							latching={true}
+						>
 							<Lock aria-hidden="true" />
 						</sonic-button>
 					</Cell>
@@ -61,10 +65,10 @@ const modes = [
 	<SpecimenGrid>
 		<sonic-split aria-label="Mixed members" class="contents" total="150">
 			<Cell id="split-dial" label="Low">
-				<sonic-dial aria-labelledby="split-dial" readout value="60"></sonic-dial>
+				<sonic-dial aria-labelledby="split-dial" readout={true} value="60"></sonic-dial>
 			</Cell>
 			<Cell id="split-slider" label="Mid" span="wide">
-				<sonic-slider aria-labelledby="split-slider" readout value="50"></sonic-slider>
+				<sonic-slider aria-labelledby="split-slider" readout={true} value="50"></sonic-slider>
 			</Cell>
 			<Cell id="split-number" label="High">
 				<div class="sonic-screen w-fit [font-family:var(--sonic-glass-font,var(--font-mono))] [--sonic-screen-inset-ratio:0] [--sonic-screen-size:1.75rem]">

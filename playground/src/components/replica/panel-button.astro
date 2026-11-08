@@ -47,7 +47,7 @@ const mode = isMomentary ? { momentary: '' } : { latching: '' };
 	{hasTwoColourLed ? (
 		<sonic-button
 			aria-labelledby={labelledby}
-			data-two-colour
+			data-two-colour={true}
 			pressed={isPressed ? '' : undefined}
 			{...mode}
 			{...data}
