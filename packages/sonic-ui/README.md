@@ -43,10 +43,10 @@ import '@xsynaptic/sonic-ui/define';
 - The split is the one host with a box: `<sonic-split>` is inline until given a display, and laying it out is yours.
 - Register the classes under their stock tag names (`sonic-dial`, `sonic-split`). The sheets and the split key on them, so a split under another tag finds no members.
 - Name every control with `aria-label` or `aria-labelledby` on the host, or with a `<label>` for a form-associated one.
-- Every control that holds a value the user sets is form-associated, as a native input is, and that is deliberate: given a `name` it submits, a form reset returns it to its attributes, a disabled `<fieldset>` disables it, and a `<label>` names it. With no `name` it submits nothing. A value control submits its number and a segmented control its value; a latching button, and a switch or toggle with two positions, submit their `value` only while on, as a checkbox does; an XY pad and a region submit two fields (`name.x` and `name.y`, `name.start` and `name.end`). A momentary button, the displays, the envelope and the split submit nothing.
+- Every control that holds a value the user sets is form-associated, as a native input is, and that is deliberate: given a `name` it submits, a form reset returns it to its attributes, a disabled `<fieldset>` disables it, and a `<label>` names it. With no `name` it submits nothing. A value control submits its number and a segmented control its value; a latching button, and a switch or toggle with two positions, submit their `value` only while on, as a checkbox does; an XY pad and a region submit two fields (`name.x` and `name.y`, `name.start` and `name.end`). A momentary button and the keyboard are form-associated only so a disabled `<fieldset>` and a `<label>` reach them, and submit nothing; neither do the displays, the envelope or the split.
 - A boolean attribute is on when present, whatever its value, so `pressed="false"` latches a button. From a framework pass `undefined`, never `false`.
 - A control uses only the children it documents and adds one child of its own. Children it draws are copied, so a copy has none of your listeners; keep them static. Under a hydrating framework, register the definitions once hydration is done (in React, from an effect).
-- Events bubble and carry no detail: read the property when one fires. A control knows nothing about playback, so wire its events to your own state and write the property back.
+- Events bubble. One that reports a value carries no detail: read the property when one fires. One that reports what no property holds, as a note going down does, carries it in `detail` and is composed, so it is heard outside a shadow root. A control knows nothing about playback, so wire its events to your own state and write the property back.
 - A value control fires `input` as its value moves and `change` once when a gesture ends. A drag owns the value: a write to `value` during one is dropped.
 - `formatValue` and `parseValue` are properties holding functions. Once `parseValue` is set it has to read what `formatValue` writes, or typed entry opens on text it cannot take.
 - To show a control without taking input, set `inert` on the host. It leaves the tab order and the accessibility tree and ignores presses, and it keeps its colours and keeps drawing; `disabled` dims it and is announced as disabled.
@@ -77,6 +77,7 @@ A skin is one rule that sets tokens on a class; copy `dist/skins/flat.css` to st
 | `button.css`    | core, cap, well, keycap                         |
 | `dial.css`      | core, cap, glass, readout, value, arc, scale    |
 | `envelope.css`  | core, glass, readout, reticle                   |
+| `keyboard.css`  | core, cap                                       |
 | `led.css`       | core, lens                                      |
 | `meter.css`     | core, lens, groove                              |
 | `number.css`    | core, cap, value                                |
