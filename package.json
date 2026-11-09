@@ -28,7 +28,6 @@
 		"capture": "pnpm build && pnpm -F @playground/sonic-ui capture",
 		"changeset": "changeset",
 		"check": "lefthook run check",
-		"check-pkg": "pnpm --filter './packages/*' --no-bail exec publint",
 		"fix": "lefthook run fix",
 		"release": "node scripts/release.ts"
 	},

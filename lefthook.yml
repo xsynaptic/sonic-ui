@@ -1,7 +1,7 @@
-# Print complete output on failure
+# A passing job prints only its summary line; a failing one prints its whole output
 output:
+  - summary
   - failure
-  - execution_out
 
 # Check-only; a hook that re-stages files sweeps in a concurrent session's edits
 pre-commit:
@@ -10,11 +10,13 @@ pre-commit:
       run: pnpm exec prettier --check --ignore-unknown {staged_files}
 
 pre-push:
+  piped: true
   jobs:
     - name: gate
       run: pnpm check
+    # The gate has already built the library
     - name: e2e
-      run: pnpm test-e2e
+      run: pnpm -F @playground/sonic-ui test-e2e
 
 check:
   piped: true

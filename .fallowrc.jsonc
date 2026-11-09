@@ -24,6 +24,10 @@
 		"css-token-drift": "error",
 		"css-duplicate-block": "error",
 		"css-broken-reference": "error",
+		// Light DOM chains of host attribute, control and part start at its threshold
+		"css-selector-complexity": "off",
+		// Blind to script reads of the `@property` values AGENTS.md requires, and to Tailwind's layers
+		"css-dead-surface": "off",
 		"stale-suppressions": "error",
 		"require-suppression-reason": "error",
 	},
