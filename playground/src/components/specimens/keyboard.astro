@@ -8,10 +8,10 @@ import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 	<SpecimenGrid size="wide">
 		<Cell id="keyboard-chords" label="Chords" span="full">
 			<sonic-keyboard
+				accented="60"
 				aria-labelledby="keyboard-chords"
 				class="[--sonic-keyboard-size:10rem]"
-				lit="64 67 71"
-				lit-ok="60"
+				highlighted="64 67 71"
 			></sonic-keyboard>
 		</Cell>
 		<Cell id="keyboard-bass" label="Bass" span="wide">
@@ -31,7 +31,7 @@ import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 				aria-labelledby="keyboard-disabled"
 				class="[--sonic-keyboard-size:8rem]"
 				disabled={true}
-				lit="62"
+				highlighted="62"
 				octaves="1"
 			></sonic-keyboard>
 		</Cell>

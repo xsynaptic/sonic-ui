@@ -255,16 +255,12 @@
 		--_sonic-keyboard-time: var(--_sonic-press-duration);
 	}
 
-	.sonic-keyboard-key[data-sonic-lit] {
+	.sonic-keyboard-key[data-sonic-highlighted] {
 		--_sonic-keyboard-dot: var(--_sonic-lit);
 	}
 
-	.sonic-keyboard-key[data-sonic-lit='ok'] {
+	.sonic-keyboard-key[data-sonic-accented] {
 		--_sonic-keyboard-dot: var(--_sonic-lit-ok);
-	}
-
-	.sonic-keyboard:has(.sonic-keyboard-key:disabled) {
-		opacity: var(--sonic-disabled-opacity, 1);
 	}
 
 	.sonic-keyboard-key:disabled {
@@ -352,6 +348,10 @@
 	}
 
 	@media not (forced-colors: active) {
+		.sonic-keyboard:has(.sonic-keyboard-key:disabled) {
+			opacity: var(--sonic-disabled-opacity, 0.5);
+		}
+
 		.sonic-keyboard-key:focus-visible:not([data-sonic-pointer-focus]) > .sonic-keyboard-cap {
 			outline: var(--sonic-focus-outline, 2px solid transparent);
 			outline-offset: var(--sonic-focus-outline-offset, -2px);

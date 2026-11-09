@@ -58,8 +58,6 @@ const blackSteps = new Set([1, 3, 6, 8, 10]);
 
 const holdKeys = new Set([' ', 'Enter']);
 
-const litMarks = { lit: '', ok: 'ok' } as const;
-
 const lowestOctave = -1;
 
 const highestOctave = 8;
@@ -67,8 +65,6 @@ const highestOctave = 8;
 const tapLength = 250;
 
 type Holder = 'key' | 'tap' | number;
-
-type KeyLight = keyof typeof litMarks | undefined;
 
 type NoteEvent = 'sonic-noteoff' | 'sonic-noteon';
 
@@ -78,10 +74,10 @@ interface Press {
 }
 
 interface Shown {
+	accented: Set<number>;
 	down: Set<number>;
+	highlighted: Set<number>;
 	isDisabled: boolean;
-	lit: Set<number>;
-	litOk: Set<number>;
 	stop: number;
 }
 
@@ -102,9 +98,9 @@ function parseNotes(text: null | string): Array<number> {
 		.filter((note) => Number.isSafeInteger(note));
 }
 
-function lightOf(note: number, shown: Shown): KeyLight {
-	if (shown.litOk.has(note)) return 'ok';
-	if (shown.lit.has(note)) return 'lit';
+function markOf(note: number, shown: Shown): 'accented' | 'highlighted' | undefined {
+	if (shown.accented.has(note)) return 'accented';
+	if (shown.highlighted.has(note)) return 'highlighted';
 
 	return undefined;
 }
@@ -112,12 +108,20 @@ function lightOf(note: number, shown: Shown): KeyLight {
 export class SonicKeyboard extends SonicFormElement {
 	static override readonly observedAttributes = [
 		...SonicFormElement.observedAttributes,
+		'accented',
 		'held',
-		'lit',
-		'lit-ok',
+		'highlighted',
 		'octave',
 		'octaves',
 	];
+
+	get accented(): Array<number> {
+		return parseNotes(this.getAttribute('accented'));
+	}
+
+	set accented(notes: Iterable<number> | undefined) {
+		this.reflect('accented', notes === undefined ? undefined : [...notes].join(' '));
+	}
 
 	get formatNote(): ((note: number) => string) | undefined {
 		return this.#formatNote;
@@ -128,11 +132,14 @@ export class SonicKeyboard extends SonicFormElement {
 		this.render();
 	}
 
-	get formatSpokenNote(): ((note: number, light: KeyLight) => string) | undefined {
+	get formatSpokenNote():
+		((note: number, mark: 'accented' | 'highlighted' | undefined) => string) | undefined {
 		return this.#formatSpokenNote;
 	}
 
-	set formatSpokenNote(format: ((note: number, light: KeyLight) => string) | undefined) {
+	set formatSpokenNote(
+		format: ((note: number, mark: 'accented' | 'highlighted' | undefined) => string) | undefined,
+	) {
 		this.#formatSpokenNote = format;
 		this.render();
 	}
@@ -145,20 +152,12 @@ export class SonicKeyboard extends SonicFormElement {
 		this.reflect('held', notes === undefined ? undefined : [...notes].join(' '));
 	}
 
-	get lit(): Array<number> {
-		return parseNotes(this.getAttribute('lit'));
+	get highlighted(): Array<number> {
+		return parseNotes(this.getAttribute('highlighted'));
 	}
 
-	set lit(notes: Iterable<number> | undefined) {
-		this.reflect('lit', notes === undefined ? undefined : [...notes].join(' '));
-	}
-
-	get litOk(): Array<number> {
-		return parseNotes(this.getAttribute('lit-ok'));
-	}
-
-	set litOk(notes: Iterable<number> | undefined) {
-		this.reflect('lit-ok', notes === undefined ? undefined : [...notes].join(' '));
+	set highlighted(notes: Iterable<number> | undefined) {
+		this.reflect('highlighted', notes === undefined ? undefined : [...notes].join(' '));
 	}
 
 	get octave(): number {
@@ -185,13 +184,16 @@ export class SonicKeyboard extends SonicFormElement {
 
 	#formatNote: ((note: number) => string) | undefined;
 
-	#formatSpokenNote: ((note: number, light: KeyLight) => string) | undefined;
+	#formatSpokenNote:
+		((note: number, mark: 'accented' | 'highlighted' | undefined) => string) | undefined;
 
 	readonly #holders = new Map<number, Set<Holder>>();
 
 	#keyHeld: number | undefined;
 
 	#keyHold: Hold | undefined;
+
+	#origin: DOMRect | undefined;
 
 	readonly #outbox: Array<{ note: number; type: NoteEvent }> = [];
 
@@ -218,11 +220,11 @@ export class SonicKeyboard extends SonicFormElement {
 		const group = this.control;
 
 		this.upgradeProperties(
+			'accented',
 			'formatNote',
 			'formatSpokenNote',
 			'held',
-			'lit',
-			'litOk',
+			'highlighted',
 			'octave',
 			'octaves',
 		);
@@ -250,10 +252,10 @@ export class SonicKeyboard extends SonicFormElement {
 
 		const isRedrawn = this.#drawKeys();
 		const shown = {
+			accented: new Set(this.accented),
 			down: new Set([...this.held, ...this.#holders.keys()]),
+			highlighted: new Set(this.highlighted),
 			isDisabled: this.isDisabled(),
-			lit: new Set(this.lit),
-			litOk: new Set(this.litOk),
 			stop: this.#stopNote(),
 		};
 
@@ -340,7 +342,7 @@ export class SonicKeyboard extends SonicFormElement {
 				const press = this.#presses.get(event.pointerId);
 				if (!press) return;
 
-				const origin = group.getBoundingClientRect();
+				const origin = this.#originOf(group);
 				const note = press.boxes.find(([, box]) =>
 					isInside(box, event.clientX - origin.x, event.clientY - origin.y),
 				)?.[0];
@@ -471,6 +473,19 @@ export class SonicKeyboard extends SonicFormElement {
 		next.focus();
 	}
 
+	#originOf(group: HTMLElement): DOMRect {
+		if (this.#origin) return this.#origin;
+
+		const origin = group.getBoundingClientRect();
+
+		this.#origin = origin;
+		requestAnimationFrame(() => {
+			this.#origin = undefined;
+		});
+
+		return origin;
+	}
+
 	#range(): { octave: number; octaves: number } {
 		const octaves = clamp(
 			Math.round(this.numberAttribute('octaves', 2)),
@@ -505,14 +520,15 @@ export class SonicKeyboard extends SonicFormElement {
 
 	#renderKey(key: HTMLButtonElement, shown: Shown): void {
 		const note = Number(key.dataset.sonicNote);
-		const light = lightOf(note, shown);
+		const mark = markOf(note, shown);
 		const name = (this.#formatNote ?? scientificNote)(note);
 
-		writeAttribute(key, 'aria-label', this.#formatSpokenNote?.(note, light) ?? name);
+		writeAttribute(key, 'aria-label', this.#formatSpokenNote?.(note, mark) ?? name);
 		writeAttribute(key, 'data-sonic-label', note % 12 === 0 ? name : undefined);
-		writeAttribute(key, 'data-sonic-lit', light === undefined ? undefined : litMarks[light]);
 		writeAttribute(key, 'disabled', shown.isDisabled ? '' : undefined);
 		writeAttribute(key, 'tabindex', note === shown.stop ? '0' : '-1');
+		key.toggleAttribute('data-sonic-accented', mark === 'accented');
+		key.toggleAttribute('data-sonic-highlighted', mark !== undefined);
 		key.toggleAttribute('data-sonic-pressed', shown.down.has(note));
 	}
 

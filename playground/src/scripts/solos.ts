@@ -46,7 +46,8 @@ export const solos: Record<string, Solo> = {
 		sheets: ['envelope'],
 	},
 	keyboard: {
-		markup: '<sonic-keyboard aria-label="Keyboard" lit="64 67" lit-ok="60"></sonic-keyboard>',
+		markup:
+			'<sonic-keyboard aria-label="Keyboard" highlighted="64 67" accented="60"></sonic-keyboard>',
 		sheets: ['keyboard'],
 	},
 	led: { markup: '<span class="sonic-led" data-sonic-lit></span>', sheets: ['led'] },

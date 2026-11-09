@@ -22,7 +22,7 @@
 		--_sonic-cap-hover: var(--sonic-cap-hover, transparent);
 		--_sonic-focus: var(--sonic-focus, oklch(90% 0.23 128deg));
 		--_sonic-focus-strength: var(--sonic-focus-glow, 1);
-		--_sonic-disabled-opacity: var(--sonic-disabled-opacity, 1);
+		--_sonic-disabled-opacity: var(--sonic-disabled-opacity, 0.5);
 		--_sonic-gloss: var(--sonic-gloss, 1);
 		--_sonic-ink: var(--sonic-ink, currentcolor);
 		--_sonic-etch: color-mix(in oklab, var(--_sonic-ink) 30%, transparent);

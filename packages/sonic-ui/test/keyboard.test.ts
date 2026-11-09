@@ -85,6 +85,20 @@ test('a glissando lets go of each key before it plays the next', () => {
 	expect(notes).toEqual(['on 36', 'off 36', 'on 38', 'off 38', 'on 40', 'off 40']);
 });
 
+test('a scroll mid-press moves the glissando with the keys from the next frame', () => {
+	vi.useFakeTimers({ toFake: ['requestAnimationFrame'] });
+
+	const { control, key, notes } = laidOut('octave="2"');
+
+	pointerAt(key(36), 'pointerdown', { clientX: 5, clientY: 90 });
+	pointerAt(control, 'pointermove', { clientX: 6, clientY: 90 });
+	control.getBoundingClientRect = () => new DOMRect(0, -100, 140, 100);
+	vi.advanceTimersToNextFrame();
+	pointerAt(control, 'pointermove', { clientX: 15, clientY: -10 });
+
+	expect(notes).toEqual(['on 36', 'off 36', 'on 38']);
+});
+
 test('a black key wins over the white key under it', () => {
 	const { control, key, notes } = laidOut('octave="3"');
 
@@ -320,13 +334,17 @@ test('a keydown another handler took is left alone', () => {
 	expect(notes).toEqual([]);
 });
 
-test('a lit note shows a dot, ok wins over lit, and a note outside the keys marks nothing', () => {
-	const { control, key, keyboard } = laidOut('octave="4" octaves="1" lit="60, 64  67,x 76"');
+test('an accented note is highlighted too, and a note outside the keys marks nothing', () => {
+	const { control, key, keyboard } = laidOut('octave="4" octaves="1" highlighted="64  67,x 76"');
 
-	keyboard.litOk = new Set([60]);
+	keyboard.accented = new Set([60]);
 
-	expect([...control.querySelectorAll('[data-sonic-lit=""]')]).toEqual([key(64), key(67)]);
-	expect([...control.querySelectorAll('[data-sonic-lit="ok"]')]).toEqual([key(60)]);
+	expect([...control.querySelectorAll('[data-sonic-highlighted]')]).toEqual([
+		key(60),
+		key(64),
+		key(67),
+	]);
+	expect([...control.querySelectorAll('[data-sonic-accented]')]).toEqual([key(60)]);
 });
 
 test('a formatNote set after connect renames every key and the C labels', () => {
@@ -346,15 +364,15 @@ test('a formatNote set after connect renames every key and the C labels', () => 
 	expect(key(25).dataset.sonicLabel).toBeUndefined();
 });
 
-test('a spoken name hears whether a key is lit, and leaves the printed label alone', () => {
-	const { key, keyboard } = laidOut('octave="4" octaves="1" lit="64" lit-ok="60"');
+test('a spoken name hears how a key is marked, and leaves the printed label alone', () => {
+	const { key, keyboard } = laidOut('octave="4" octaves="1" highlighted="60 64" accented="60"');
 
-	keyboard.formatSpokenNote = (note, light) => `${String(note)} ${light ?? 'dark'}`;
+	keyboard.formatSpokenNote = (note, mark) => `${String(note)} ${mark ?? 'plain'}`;
 
 	expect([60, 62, 64].map((note) => key(note).getAttribute('aria-label'))).toEqual([
-		'60 ok',
-		'62 dark',
-		'64 lit',
+		'60 accented',
+		'62 plain',
+		'64 highlighted',
 	]);
 	expect(key(60).dataset.sonicLabel).toBe('C4');
 });

@@ -75,8 +75,8 @@ function bindSynth(root: HTMLElement): void {
 		const roots = [...held.keys()];
 
 		controls.keyboard.held = [...held.values()].flat();
-		controls.keyboard.litOk = roots;
-		controls.keyboard.lit = [...held.values()].flatMap((notes) => notes.slice(1));
+		controls.keyboard.accented = roots;
+		controls.keyboard.highlighted = [...held.values()].flatMap((notes) => notes.slice(1));
 	}
 
 	controls.keyboard.addEventListener('sonic-noteon', (event) => {

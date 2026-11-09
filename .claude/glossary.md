@@ -72,7 +72,7 @@ The words this library uses for its controls, their parts and their values. Wher
 
 **Ring**: A lit arc. Around a dial it shows the value; around a button it shows progress.
 
-**Dot**: A small light that marks a place: the short lit arc on an endless dial's ring that marks its value, or the mark on a lit key. _Avoid_: Segment (that is a meter's), LED (a dot is not one)
+**Dot**: A small light that marks a place: the short lit arc on an endless dial's ring that marks its value, or the mark on a highlighted key. _Avoid_: Segment (that is a meter's), LED (a dot is not one)
 
 **Scale** (printed): The ticks and labels printed beside a dial or slider. _Avoid_: Legend (that is on a cap)
 
@@ -141,6 +141,10 @@ The words this library uses for its controls, their parts and their values. Wher
 **Glissando**: A drag along a keyboard that plays each key it crosses, letting go of the one before.
 
 **Held** (notes of a keyboard): The notes a page draws down on a keyboard without sounding them, such as a chord's other tones or notes arriving over MIDI. A key is drawn down while a finger or the page holds it.
+
+**Highlighted** (key): A key the page marks with a dot, such as a chord's tones or a scale's notes. Held and highlighted are independent: a scale can be shown on keys that stay up. _Avoid_: Lit (that is a light reporting a state), active (that reads as sounding)
+
+**Accented** (key): A highlighted key marked more strongly, in a second colour, such as a chord's root or a scale's tonic. An accented key is always highlighted.
 
 ### Waves
 
@@ -264,7 +268,7 @@ The words this library uses for its controls, their parts and their values. Wher
 
 **State**: A public attribute a control writes on its drawn part, `data-sonic-<state>`, that a skin may select on, such as dragging or pressed. An attribute the consumer writes, such as `data-sonic-locked`, is not a state.
 
-**Lit**: Showing a light that is on, in one of the lit colours, as an LED, a ring, a meter's bar or a key's dot can.
+**Lit**: Showing a light that is on, in one of the lit colours, as an LED, a ring or a meter's bar can.
 
 **Lit colour**: The colour a lamp shows, named for what it reports: lit, ok, warning or danger. Lit is the skin's own colour; idle is lit at a lower level. _Avoid_: A colour's own name (green, red); hot and clip on a lamp (those are a meter's zones)
 
