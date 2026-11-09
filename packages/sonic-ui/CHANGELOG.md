@@ -1,5 +1,35 @@
 # @xsynaptic/sonic-ui
 
+## 0.29.0
+
+### Minor Changes
+
+- Keyboard: `<sonic-keyboard>` (`./define/keyboard`, `keyboard.css` on `material/core.css` and `material/cap.css`) draws whole octaves from `octave` (default 4) for `octaves` (default 2).
+
+  - Pointer, touch, or held Space or Enter fires `sonic-noteon` and `sonic-noteoff` with the MIDI note in `detail.note`; both bubble and are composed. A click with no pointer or key behind it plays a short note. A removed keyboard fires its offs on itself.
+  - `held` draws notes down silently; `highlighted` and `accented` mark keys with a dot, and an accented key is highlighted too. All three take lists of MIDI notes.
+  - `formatNote` names the keys; `formatSpokenNote(note, mark)` overrides the spoken name only.
+  - Hooks: `.sonic-keyboard`, `.sonic-keyboard-octave`, `.sonic-keyboard-key`, `.sonic-keyboard-cap`, with `data-sonic-note`, `data-sonic-key`, `data-sonic-pressed`, `data-sonic-highlighted`, `data-sonic-accented` and `data-sonic-label` on each key.
+  - Tokens: `--sonic-keyboard-size`, `-white`, `-black`, and the ratios `white-width`, `black-length`, `black-width`, `gap`, `radius`, `front`, `press` and `dot`.
+
+- Number box: `arrows` draws `.sonic-number-decrement` and `.sonic-number-increment` at the ends of the box. A press steps as the arrow keys do; held, an arrow repeats and speeds up (never over `positions`), stops at a bound, reports `input` per step and one `change` on release, and carries `data-sonic-pressed`. The arrows take room from the digits, so a box with units may want a wider `--sonic-number-aspect-ratio`.
+
+### Patch Changes
+
+- Drawn lines floor at one device pixel and land on whole device pixels, at each Windows scale (1.25 to 2.5dppx) as well as 1, 2 and 3dppx, so scale ticks, notches and the slider's modulation tick no longer smear, vary in width or drop out on a small control. A slider's scale tick sits on a whole pixel instead of straddling two. Lines that floored at `1px` now floor at one device pixel, so on a small control they draw thinner above 1dppx.
+- `--sonic-disabled-opacity` defaults to 0.5, so disabled controls dim under every skin.
+- An endless dial snaps a dragged or written value to the nearest step again: with a whole-number step such as 2 or 90, or a step such as 0.2, a value past the step's places could land on the farther step (`0.7` on `0` to `10` in steps of 2 went to `2`), and near the seam of a step that does not divide the range, the last step could win over `min` round the turn. A scale mark or modulation reach between steps is placed where it is, not rounded to the step.
+
+  Envelope: a source attribute such as `release` written while the envelope is moved by a persisting router (removed and put back in one task) now binds once it is back, and no longer warns that the source is missing.
+
+  A lit legend on a toggle or segmented control keeps its hue in Chromium 158, which drops it converting an oklab colour to oklch.
+
+- The drawn controls set `direction: ltr`, so a right-to-left page no longer half-mirrors them (a toggle's cap resting over the wrong position, slider ticks parting from their labels), and the README's "no control mirrors" holds.
+
+  Number box: a value too wide for the box ends in an ellipsis instead of being cut mid-glyph.
+
+- On a log or `midpoint` taper, the arrow keys step between fixed stops a hundredth of the travel apart, so Right then Left comes back where it started; a page key is ten arrow presses.
+
 ## 0.28.2
 
 ### Patch Changes
