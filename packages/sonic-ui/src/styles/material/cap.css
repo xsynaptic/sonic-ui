@@ -108,6 +108,11 @@
 		--_sonic-ink: currentcolor;
 	}
 
+	/* A region sits inside its strip, so it would inherit the strip's editing glow */
+	.sonic-region {
+		--_sonic-focus-shadow: 0 0 transparent;
+	}
+
 	/* A plain box has no corner of its own, so its focus outline and glow take this one */
 	:is(
 		.sonic-number,
@@ -170,6 +175,7 @@
 		.sonic-button,
 		.sonic-number,
 		.sonic-segmented-option,
+		.sonic-region,
 		.sonic-slider,
 		.sonic-waveform,
 		.sonic-wavestrip-canvas,
@@ -186,6 +192,7 @@
 
 	:is(
 			.sonic-number,
+			.sonic-region,
 			.sonic-slider,
 			.sonic-waveform,
 			.sonic-wavestrip-canvas,
@@ -260,6 +267,7 @@
 			.sonic-dial,
 			.sonic-button,
 			.sonic-number,
+			.sonic-region,
 			.sonic-segmented-option,
 			.sonic-slider,
 			.sonic-waveform,

@@ -370,3 +370,24 @@ test('putting the strip straight back mid-drag lets go of the region with its ch
 	expect([region.start, region.dragging]).toEqual([110, false]);
 	expect(events).toEqual(['input sonic-region', 'change sonic-region']);
 });
+
+test("a region's key hides the strip's hover, so its preview draws, until the pointer next moves", () => {
+	const { control, region, wavestrip } = mountStrip();
+	const [part] = parts(control);
+	if (!part) throw new Error('The region was not drawn');
+
+	const hovered: Array<number | undefined> = [];
+
+	document.body.addEventListener('sonic-hover', () => {
+		hovered.push(wavestrip.hoverValue);
+	});
+
+	pointerAt(control, 'pointermove', { clientX: 150, clientY: 24, pointerType: 'mouse' });
+	key(part, 'keydown', { key: 'ArrowRight' });
+	key(part, 'keyup', { key: 'ArrowRight' });
+	expect(region.start).toBe(100.5);
+	expect(hovered).toEqual([180, undefined]);
+
+	pointerAt(control, 'pointermove', { clientX: 160, clientY: 24, pointerType: 'mouse' });
+	expect(wavestrip.hoverValue).toBe(190);
+});

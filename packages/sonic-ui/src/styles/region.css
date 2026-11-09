@@ -26,16 +26,7 @@
 		min-inline-size: calc(2 * var(--_sonic-region-bracket-width));
 		pointer-events: none;
 		border-radius: var(--sonic-region-bracket-radius, calc(2 * var(--_sonic-unit)));
-
-		&:focus-visible {
-			outline: 2px solid transparent;
-			outline-offset: var(--sonic-focus-outline-offset, -2px);
-
-			&:not([data-sonic-pointer-focus]) {
-				outline: var(--sonic-focus-outline, 2px solid transparent);
-				box-shadow: var(--_sonic-focus-glow);
-			}
-		}
+		box-shadow: var(--_sonic-focus-shadow);
 	}
 
 	:is(.sonic-region[aria-disabled='true'], [dimmed] > .sonic-wavestrip .sonic-region) {
@@ -72,14 +63,6 @@
 	@media (forced-colors: active) {
 		.sonic-region {
 			--_sonic-region-colour: CanvasText;
-
-			&:focus-visible {
-				outline-offset: 2px;
-
-				&[data-sonic-pointer-focus] {
-					outline-style: none;
-				}
-			}
 		}
 
 		:is(.sonic-region[aria-disabled='true'], [dimmed] > .sonic-wavestrip .sonic-region) {

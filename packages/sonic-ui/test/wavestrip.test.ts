@@ -518,6 +518,23 @@ test('Escape dismisses a hovered readout without focus, until the pointer leaves
 	expect(readoutText(control)).toBe('120 s');
 });
 
+test('Escape on the strip itself still holds the hover off through a pointer move', () => {
+	installCanvasFakes();
+
+	const { canvas, control, wavestrip } = mountWavestrip('min="30" max="330" step="0" value="30"');
+
+	midPointerAt(control, 'pointermove', { clientX: 75, pointerType: 'mouse' });
+	canvas.dispatchEvent(
+		new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'Escape' }),
+	);
+	midPointerAt(control, 'pointermove', { clientX: 90, pointerType: 'mouse' });
+	expect(wavestrip.hoverValue).toBeUndefined();
+
+	midPointerAt(control, 'pointerleave', { pointerType: 'mouse' });
+	midPointerAt(control, 'pointermove', { clientX: 90, pointerType: 'mouse' });
+	expect(wavestrip.hoverValue).toBe(120);
+});
+
 test('with no readout, the hovered value is public and reports each change once', () => {
 	installCanvasFakes();
 
@@ -614,11 +631,11 @@ function readoutAt(control: HTMLElement): string {
 	return control.style.getPropertyValue('--_sonic-wavestrip-readout-at');
 }
 
-test('a key reveal takes the readout from a hover, which returns under a still pointer when it lapses', () => {
+test('a key reveal takes the readout from a hover, which stays away under a still pointer until it moves', () => {
 	installCanvasFakes();
 	vi.useFakeTimers();
 
-	const { canvas, control } = mountWavestrip(
+	const { canvas, control, wavestrip } = mountWavestrip(
 		'readout min="30" max="330" step="0" key-step="30" value="30"',
 	);
 
@@ -631,7 +648,8 @@ test('a key reveal takes the readout from a hover, which returns under a still p
 
 	vi.runAllTimers();
 	vi.useRealTimers();
-	expect(readoutAt(control)).toBe('0.25');
+	expect(wavestrip.hoverValue).toBeUndefined();
+	expect(readoutAt(control)).toBe('0.1');
 
 	midPointerAt(control, 'pointermove', { clientX: 150, pointerType: 'mouse' });
 	expect(readoutAt(control)).toBe('0.5');

@@ -93,6 +93,35 @@ test(
 	},
 );
 
+test(
+	'a zero-length region takes a press across its drawn bracket and drags',
+	{ tag: '@mobile' },
+	async ({ page }) => {
+		const { box, canvas, part, region } = await openStrip(page);
+
+		await region.evaluate((element) => {
+			Object.assign(element, { end: 150, start: 150 });
+		});
+
+		const drawn = await boxOf(part);
+		const { width } = await boxOf(box);
+		const press = { x: drawn.x + drawn.width * 0.75, y: drawn.y + drawn.height / 2 };
+
+		expect(drawn.width).toBeGreaterThan(1);
+
+		await page.mouse.move(press.x, press.y);
+		await page.mouse.down();
+		await page.mouse.move(press.x + 48, press.y, { steps: 4 });
+		await page.mouse.up();
+
+		const [start = NaN, end = NaN] = await readSpan(region);
+
+		expect(start).toBeCloseTo(150 + (48 * 300) / width, 1);
+		expect(end).toBe(start);
+		expect(await valueNow(canvas)).toBe(30);
+	},
+);
+
 test('Tab goes from the strip to its region, an arrow moves the region alone, and each glows over its own box', async ({
 	page,
 }) => {
@@ -111,6 +140,16 @@ test('Tab goes from the strip to its region, an arrow moves the region alone, an
 	expect(await readSpan(region)).toEqual([123, 183]);
 	expect(await valueNow(canvas)).toBe(30);
 	await expect(part).toHaveAttribute('aria-valuenow', '123');
+});
+
+test('typed entry on the strip glows the strip and not its region', async ({ page }) => {
+	const { box, canvas, part } = await openStrip(page);
+	await canvas.focus();
+	await page.keyboard.press('Enter');
+
+	await expect(box).toHaveAttribute('data-sonic-editing', '');
+	expect(await isGlowing(canvas)).toBe(true);
+	expect(await isGlowing(part)).toBe(false);
 });
 
 test('a preview paints the bars between the playhead and itself in the scrub colour', async ({

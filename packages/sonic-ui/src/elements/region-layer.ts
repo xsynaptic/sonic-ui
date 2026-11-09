@@ -8,6 +8,7 @@ import { focusByPointer } from '#lib/focus-by-pointer.ts';
 import { onLetGo } from '#lib/let-go.ts';
 import { writeKind } from '#lib/marker-band.ts';
 import { capturePointer } from '#lib/pointer-drag.ts';
+import { readPxProperty } from '#lib/read-px-property.ts';
 import {
 	moveRegionTo,
 	regionAt,
@@ -149,16 +150,23 @@ export class RegionLayer {
 	}
 
 	take(event: PointerEvent): boolean {
+		const [first] = this.#drawn;
+		if (!first) return false;
+
 		const host = this.#host;
 		const { startPx, travelPx } = host.axis();
 		const mapping = host.mapping();
+		// A short region is drawn at least its two bracket sides wide, and takes a press across them
+		const leastPx =
+			2 * readPxProperty(getComputedStyle(first.part), '--_sonic-region-bracket-width', 0);
 		const index = regionAt(
 			this.#drawn.map((entry) => {
 				if (!this.#isEnabled(entry)) return;
 
 				const { end, start } = entry.link.span();
+				const fromPx = mapping.proportionOf(start) * travelPx;
 
-				return [mapping.proportionOf(start) * travelPx, mapping.proportionOf(end) * travelPx];
+				return [fromPx, Math.max(mapping.proportionOf(end) * travelPx, fromPx + leastPx)];
 			}),
 			event.clientX - startPx,
 		);

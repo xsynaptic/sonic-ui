@@ -21,6 +21,7 @@ export function bindHoverPreview(
 ): HoverPreview {
 	let hover: number | undefined;
 	let isDismissed = false;
+	let isKeyed = false;
 	let under: number | undefined;
 	let escapeWatch: AbortController | undefined;
 
@@ -57,7 +58,7 @@ export function bindHoverPreview(
 	const hoverAt = (value: number | undefined): void => {
 		under = value;
 		if (value === undefined) isDismissed = false;
-		if (!isDismissed && !options.isTaken()) hold(value);
+		if (!isDismissed && !isKeyed && !options.isTaken()) hold(value);
 		options.show();
 		watchEscape(value !== undefined);
 	};
@@ -65,10 +66,25 @@ export function bindHoverPreview(
 	const at = (event: PointerEvent): void => {
 		if (event.pointerType === 'touch' || event.buttons !== 0 || !options.canShow()) return;
 
+		isKeyed = false;
 		hoverAt(options.valueAt(event));
 	};
 
 	target.addEventListener('pointermove', at, { signal });
+	// A key hides the hover as typing hides a native tooltip; Escape keeps its own stricter rule
+	target.addEventListener(
+		'keydown',
+		(event) => {
+			if (event.key === 'Escape') return;
+
+			isKeyed = true;
+			if (hover === undefined) return;
+
+			hold(undefined);
+			options.dismiss();
+		},
+		{ signal },
+	);
 	for (const type of ['pointerdown', 'pointerleave']) {
 		target.addEventListener(
 			type,
