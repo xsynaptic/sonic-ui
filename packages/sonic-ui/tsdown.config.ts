@@ -8,6 +8,7 @@ const shared = {
 	format: 'esm',
 	minify: false,
 	platform: 'browser',
+	report: false,
 	unbundle: true,
 } satisfies UserConfig;
 

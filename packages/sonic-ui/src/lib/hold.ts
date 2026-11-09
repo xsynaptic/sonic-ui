@@ -1,3 +1,5 @@
+import { onLetGo } from '#lib/let-go.ts';
+
 export interface Hold {
 	hold(by: number | string): boolean;
 	release(): void;
@@ -62,6 +64,9 @@ export function bindHold(target: HTMLElement, options: HoldOptions, signal: Abor
 		},
 		{ once: true },
 	);
+	onLetGo(signal, () => {
+		hold.release();
+	});
 
 	return hold;
 }

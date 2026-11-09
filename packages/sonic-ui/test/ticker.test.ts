@@ -100,7 +100,7 @@ test('content that fits is not overflowing and is given no leg', async () => {
 	const { control } = await mountTicker('Short', 300, 180);
 
 	expect(control.matches('[data-sonic-overflowing]')).toBe(false);
-	expect(Object.hasOwn(control.dataset, 'sonicClipped')).toBe(false);
+	expect(control.dataset.sonicClipped).toBeUndefined();
 	expect(legs).toEqual([]);
 });
 
@@ -168,7 +168,7 @@ test('new content of the same width starts over, and content that now fits ends 
 	await nextTask();
 
 	expect(control.matches('[data-sonic-overflowing]')).toBe(false);
-	expect(Object.hasOwn(control.dataset, 'sonicClipped')).toBe(false);
+	expect(control.dataset.sonicClipped).toBeUndefined();
 	expect(legs).toHaveLength(before + 1);
 });
 
@@ -436,4 +436,21 @@ test('focus leaving the tape scrolls the box back, and focus moving within it do
 
 	first.dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: document.body }));
 	expect(control.scrollLeft).toBe(0);
+});
+
+test('putting the ticker straight back mid-drag lets go into a leg, and a later move drags nothing', async () => {
+	const { legs } = fakeLegs();
+	const { control, ticker } = await mountTicker('A long title', 300, 355);
+
+	pointerAt(control, 'pointerdown', { clientX: 200 });
+	pointerAt(control, 'pointermove', { clientX: 170 });
+
+	const legsHeld = legs.length;
+
+	document.body.append(ticker);
+	await Promise.resolve();
+	pointerAt(control, 'pointermove', { clientX: 150 });
+
+	expect(control.matches('[data-sonic-dragging]')).toBe(false);
+	expect(legs).toHaveLength(legsHeld + 1);
 });

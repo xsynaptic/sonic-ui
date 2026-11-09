@@ -382,7 +382,7 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 	#outside(): ((event: PointerEvent) => boolean) | undefined {
 		if (!this.cancellable) return undefined;
 
-		return outsideCancelZone(this.control, '--_sonic-cancel-zone');
+		return outsideCancelZone(this.control, '--_sonic-wavestrip-cancel-zone');
 	}
 
 	#placeReadout(): void {

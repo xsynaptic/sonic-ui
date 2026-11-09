@@ -357,3 +357,16 @@ test('a strip’s value write leaves a region’s part alone, and a new formatte
 		part.style.getPropertyValue('--_sonic-region-to'),
 	]).toEqual(['200', '0.5']);
 });
+
+test('putting the strip straight back mid-drag lets go of the region with its change, and a later move moves nothing', async () => {
+	const { control, events, region, wavestrip } = mountStrip();
+
+	pointerAt(control, 'pointerdown', { clientX: 80, clientY: 24 });
+	pointerAt(control, 'pointermove', { clientX: 90.2, clientY: 24 });
+	document.body.append(wavestrip);
+	await Promise.resolve();
+	pointerAt(control, 'pointermove', { clientX: 110.2, clientY: 24 });
+
+	expect([region.start, region.dragging]).toEqual([110, false]);
+	expect(events).toEqual(['input sonic-region', 'change sonic-region']);
+});

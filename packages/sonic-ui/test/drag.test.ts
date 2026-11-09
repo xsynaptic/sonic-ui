@@ -177,17 +177,6 @@ test('a disconnect mid-drag ends the drag, and the next connection starts clean'
 	expect(dial.value).toBe(10);
 });
 
-test('a move that keeps the element connected keeps the drag', async () => {
-	const { control, dial } = mountDial('value="50"');
-
-	mouseAt(control, 'pointerdown', 100);
-	document.body.append(document.createElement('div'), dial);
-	await Promise.resolve();
-	mouseAt(control, 'pointermove', 84);
-
-	expect(dial.value).toBe(60);
-});
-
 test('a second pointer leaves the drag alone, and the drag still ends with change', () => {
 	const { control, dial } = mountDial('value="50"');
 	const events = recordEvents(document.body);
@@ -217,4 +206,21 @@ test('a press from the pointer already held ends its drag with a change before t
 	mouseAt(control, 'pointerup', 68);
 	expect(dial.value).toBe(70);
 	expect(events).toEqual(['input', 'change', 'input', 'change']);
+});
+
+test('putting the dial straight back mid-drag ends the drag with its change, and the next press drags', async () => {
+	const { control, dial } = mountDial('value="50"');
+	const events = recordEvents(document.body);
+
+	mouseAt(control, 'pointerdown', 100);
+	mouseAt(control, 'pointermove', 84);
+	document.body.append(dial);
+	await Promise.resolve();
+	mouseAt(control, 'pointermove', 76);
+	expect(dial.value).toBe(60);
+	expect(events).toEqual(['input', 'change']);
+
+	mouseAt(control, 'pointerdown', 100);
+	mouseAt(control, 'pointermove', 84);
+	expect(dial.value).toBe(70);
 });

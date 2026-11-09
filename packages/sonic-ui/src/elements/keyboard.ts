@@ -3,6 +3,7 @@ import type { Hold } from '#lib/hold.ts';
 import { SonicFormElement } from '#elements/form-element.ts';
 import { focusByPointer } from '#lib/focus-by-pointer.ts';
 import { bindHold } from '#lib/hold.ts';
+import { onLetGo } from '#lib/let-go.ts';
 import { clamp } from '#lib/math.ts';
 import { capturePointer, isInside } from '#lib/pointer-drag.ts';
 import { template } from '#lib/render.ts';
@@ -209,13 +210,6 @@ export class SonicKeyboard extends SonicFormElement {
 		this.render();
 	}
 
-	override disconnectedCallback(): void {
-		super.disconnectedCallback();
-		queueMicrotask(() => {
-			this.#releaseAll();
-		});
-	}
-
 	protected connect(signal: AbortSignal): void {
 		const group = this.control;
 
@@ -241,6 +235,9 @@ export class SonicKeyboard extends SonicFormElement {
 			},
 			{ once: true },
 		);
+		onLetGo(signal, () => {
+			this.#releaseAll();
+		});
 	}
 
 	protected override focusTarget(): HTMLElement | undefined {

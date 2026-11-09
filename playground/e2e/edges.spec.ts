@@ -87,9 +87,11 @@ test(
 		);
 
 		const ratio = await page.evaluate(() => devicePixelRatio);
+		// The sheet's snap is a device pixel rounded up to a 64th, the unit layout runs in
+		const snap = Math.ceil(64 / ratio) / 64;
 
 		const [, lane = ''] = await laneTops(host, 'initial');
 
-		expect(Number(lane.replace('px', ''))).toBeCloseTo(4 + Math.round(1.5 * ratio) / ratio, 3);
+		expect(Number(lane.replace('px', ''))).toBeCloseTo(4 + Math.round(1.5 / snap) * snap, 3);
 	},
 );

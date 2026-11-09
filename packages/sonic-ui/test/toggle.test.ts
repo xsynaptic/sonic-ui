@@ -532,3 +532,17 @@ test('a two-position toggle with one position disabled ignores a press on either
 
 	expect(changes).toEqual([]);
 });
+
+test('putting the toggle straight back mid-drag settles the cap, and a later move crosses nothing', async () => {
+	const { control, group, positions } = await mountToggle('value="off"');
+	const changes = recordChanges(control);
+
+	pointerAt(positionAt(positions, 1), 'pointerdown', 150);
+	pointerAt(group, 'pointermove', 161);
+	control.parentElement?.append(control);
+	await Promise.resolve();
+	pointerAt(group, 'pointermove', 170);
+
+	expect(changes).toEqual([]);
+	expect(capAt(group)).toBe(1);
+});

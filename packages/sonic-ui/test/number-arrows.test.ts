@@ -111,7 +111,7 @@ test.each([
 
 	expect(number.value).toBe(12);
 	expect(events.filter((type) => type === 'change')).toEqual(['change']);
-	expect(Object.hasOwn(increment.dataset, 'sonicPressed')).toBe(false);
+	expect(increment.dataset.sonicPressed).toBeUndefined();
 });
 
 test('removing the number box ends a hold once the removal holds', async () => {
@@ -258,4 +258,17 @@ test('an arrow on a disabled box does nothing', () => {
 
 	expect(number.value).toBe(10);
 	expect(events).toEqual([]);
+});
+
+test('putting the number box straight back ends a hold with one change', async () => {
+	const { increment, number } = mountArrows('min="0" max="100" value="10"');
+	const events = recordEvents(document.body);
+
+	pointerAt(increment, 'pointerdown');
+	document.body.append(number);
+	await Promise.resolve();
+	vi.advanceTimersByTime(2000);
+
+	expect(number.value).toBe(11);
+	expect(events).toEqual(['input', 'change']);
 });

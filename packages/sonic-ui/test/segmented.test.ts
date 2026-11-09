@@ -409,3 +409,20 @@ test('a press on a disabled option, or one released over it, latches nothing', a
 
 	expect(changes).toEqual([]);
 });
+
+test('putting the control straight back mid-press lets go, so a later lift latches nothing', async () => {
+	const { group, options, segmented } = await mountSegmented('value="lp"');
+	const changes = recordChanges(segmented);
+	const pressed = (): Array<boolean> =>
+		options.map((option) => option.dataset.sonicActive !== undefined);
+
+	pointerAt(options[1] ?? group, 'pointerdown');
+	expect(pressed()).toEqual([false, true, false]);
+
+	document.body.append(segmented);
+	await Promise.resolve();
+	pointerAt(group, 'pointerup');
+
+	expect(pressed()).toEqual([false, false, false]);
+	expect(changes).toEqual([]);
+});

@@ -404,3 +404,17 @@ test.each([
 
 	expect(xy.y).toBe(170);
 });
+
+test('putting the pad straight back mid-drag ends the drag with its change, and a later move moves nothing', async () => {
+	const { parent, puck, xy } = mountXy(offset);
+	const events = recordEvents(parent);
+
+	pointerAt(puck, 'pointerdown', { clientX: 60, clientY: 80 });
+	pointerAt(puck, 'pointermove', { clientX: 80, clientY: 80 });
+	parent.append(xy);
+	await Promise.resolve();
+	pointerAt(puck, 'pointermove', { clientX: 100, clientY: 60 });
+
+	expect(xy.x).toBe(10);
+	expect(events).toEqual(['input', 'change']);
+});

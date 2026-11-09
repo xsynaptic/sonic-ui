@@ -1,6 +1,7 @@
 import type { BoxProbe } from '#lib/check-styles.ts';
 
 import { checkStyles } from '#lib/check-styles.ts';
+import { letGo } from '#lib/let-go.ts';
 import { toNumber } from '#lib/math.ts';
 import { appendOnce, checkChildren } from '#lib/owned-control.ts';
 import { writeAttribute } from '#lib/write-attribute.ts';
@@ -97,7 +98,13 @@ export abstract class SonicElement extends HTMLElement {
 		if (!connection) return;
 
 		queueMicrotask(() => {
-			if (this.isConnected || this.#connection !== connection) return;
+			if (this.#connection !== connection) return;
+
+			// Pointer capture and focus went with the removal, so nothing else ends a held gesture
+			if (this.isConnected) {
+				letGo(connection.signal);
+				return;
+			}
 
 			connection.abort();
 			this.#connection = undefined;

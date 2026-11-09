@@ -5,6 +5,7 @@ import type { ValueMapping } from '#lib/value-mapping.ts';
 import { linkRegion, ownRegions, SonicRegion } from '#elements/region.ts';
 import { dragThresholdPx } from '#lib/drag-step.ts';
 import { focusByPointer } from '#lib/focus-by-pointer.ts';
+import { onLetGo } from '#lib/let-go.ts';
 import { writeKind } from '#lib/marker-band.ts';
 import { capturePointer } from '#lib/pointer-drag.ts';
 import {
@@ -114,6 +115,10 @@ export class RegionLayer {
 			},
 			{ once: true },
 		);
+		onLetGo(signal, () => {
+			this.#release();
+			this.#endKeyScrub();
+		});
 	}
 
 	abandon(): void {

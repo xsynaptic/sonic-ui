@@ -516,3 +516,27 @@ test('legend shows the child named for it, and leaves pressed and released child
 	host.legend = undefined;
 	expect(hidden()).toEqual(['low', 'full']);
 });
+
+test.each([
+	[
+		'a pointer',
+		(button: HTMLButtonElement) => {
+			pointerOn(button, 'pointerdown');
+		},
+	],
+	[
+		'a key',
+		(button: HTMLButtonElement) => {
+			keyOn(button, 'keydown', { key: ' ' });
+		},
+	],
+])('putting a momentary button straight back while %s holds it lets go', async (_case, hold) => {
+	const { button, host } = mountButton('momentary');
+	const trace = holdTrace(host);
+
+	hold(button);
+	document.body.append(host);
+	await Promise.resolve();
+
+	expect(trace).toEqual([true, false]);
+});

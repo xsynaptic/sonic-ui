@@ -514,3 +514,14 @@ test.each(['data-sonic-disabled', 'data-sonic-disabled data-sonic-momentary'])(
 		expect(changes).toEqual([]);
 	},
 );
+
+test('putting the switch straight back mid-hold springs it back and reports it', async () => {
+	const { control, positions } = await mountSwitch('value="off"');
+	const changes = recordChanges(control);
+
+	pointer(positionAt(positions, 0), 'pointerdown');
+	control.parentElement?.append(control);
+	await Promise.resolve();
+
+	expect(changes).toEqual(['duck', 'off']);
+});

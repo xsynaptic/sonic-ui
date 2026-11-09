@@ -185,29 +185,22 @@
 	}
 
 	.sonic-button:not(
-			[aria-pressed='true'],
-			[aria-expanded='true'],
-			:disabled,
-			[aria-disabled='true'],
-			:where([momentary]) > [data-sonic-pressed],
-			:where([armed]) > *,
-			:where([busy]) > :not(:has(.sonic-led))
-		):is(:focus-visible, :active, [data-sonic-active]) {
-		color: var(--_sonic-ink-lift);
-	}
-
-	@media (hover: hover) {
-		/* fallow-ignore-next-line code-duplication -- `:hover` and `:focus-visible` split by `(hover: hover)` */
-		.sonic-button:not(
-				[aria-pressed='true'],
-				[aria-expanded='true'],
-				:disabled,
-				[aria-disabled='true'],
-				:where([momentary]) > [data-sonic-pressed],
-				:where([armed]) > *,
-				:where([busy]) > :not(:has(.sonic-led))
-			):hover {
+		[aria-pressed='true'],
+		[aria-expanded='true'],
+		:disabled,
+		[aria-disabled='true'],
+		:where([momentary]) > [data-sonic-pressed],
+		:where([armed]) > *,
+		:where([busy]) > :not(:has(.sonic-led))
+	) {
+		&:is(:focus-visible, :active, [data-sonic-active]) {
 			color: var(--_sonic-ink-lift);
+		}
+
+		@media (hover: hover) {
+			&:hover {
+				color: var(--_sonic-ink-lift);
+			}
 		}
 	}
 

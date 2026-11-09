@@ -1,3 +1,5 @@
+import { onLetGo } from '#lib/let-go.ts';
+
 interface DragHandlers<Drag> {
 	cancel?: (drag: Drag) => void;
 	grab: (event: PointerEvent) => Drag | undefined;
@@ -91,6 +93,7 @@ export function bindDrag<Drag>(
 		handlers.lift?.(drag, event);
 	});
 	signal.addEventListener('abort', end, { once: true });
+	onLetGo(signal, end);
 
 	return { current: () => held?.drag, end };
 }
