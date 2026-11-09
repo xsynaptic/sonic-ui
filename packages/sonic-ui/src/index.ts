@@ -12,6 +12,8 @@ export { SonicSplit } from '#elements/split.ts';
 export { SonicSwitch } from '#elements/switch.ts';
 export { SonicTicker } from '#elements/ticker.ts';
 export { SonicToggle } from '#elements/toggle.ts';
+export type { ValueReason } from '#elements/value-event.ts';
+export { SonicValueEvent } from '#elements/value-event.ts';
 export type { WaveMarker } from '#elements/wave-element.ts';
 export type { LabelRender, PeaksRequest } from '#elements/waveform.ts';
 export { SonicWaveform } from '#elements/waveform.ts';

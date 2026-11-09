@@ -1,11 +1,12 @@
+import type { MeterTaper } from '#lib/meter-taper.ts';
 import type { Decibels } from '#lib/units.ts';
 
 import { SonicElement } from '#elements/sonic-element.ts';
 import { ballisticsRates, fall, rise, stepNeedle } from '#lib/ballistics.ts';
 import { toNumber } from '#lib/math.ts';
+import { meterScale, meterTapers } from '#lib/meter-taper.ts';
 import { parseNumberList } from '#lib/number-list.ts';
 import { template } from '#lib/render.ts';
-import { linearTaper } from '#lib/taper.ts';
 
 declare global {
 	interface HTMLElementTagNameMap {
@@ -25,6 +26,8 @@ const renderMeter = template(
 );
 
 const holdMs = 1500;
+
+const zoneAttributes = new Set(['max', 'min', 'taper']);
 
 const ballisticsModes = ['peak', 'ppm-1', 'ppm-2', 'vu'] as const;
 
@@ -57,6 +60,7 @@ export class SonicMeter extends SonicElement {
 		'min',
 		'origin',
 		'segments',
+		'taper',
 		'value',
 	];
 
@@ -141,6 +145,17 @@ export class SonicMeter extends SonicElement {
 		this.reflect('segments', thresholds?.join(' '));
 	}
 
+	/** `iec` spreads decibels by IEC 60268-18's deflection, giving the top 20 dB about half the bar */
+	get taper(): MeterTaper {
+		const name = this.getAttribute('taper');
+
+		return meterTapers.find((taper) => taper === name) ?? 'linear';
+	}
+
+	set taper(taper: MeterTaper | undefined) {
+		this.reflect('taper', taper);
+	}
+
 	/** A reading in the meter's own units, drawn as given with no ballistics; takes over from `level` while set */
 	get value(): number | undefined {
 		return this.optionalNumberAttribute('value');
@@ -187,6 +202,7 @@ export class SonicMeter extends SonicElement {
 		else if (name === 'value') this.#readValue(now);
 		this.#segments = this.segments;
 		if (name === 'segments') this.#renderSegments();
+		else if (zoneAttributes.has(name)) this.#renderZones();
 		this.#render(now);
 		this.#schedule(now);
 	}
@@ -205,11 +221,13 @@ export class SonicMeter extends SonicElement {
 			'orientation',
 			'origin',
 			'segments',
+			'taper',
 			'value',
 			'level',
 		);
 		this.keepControl(signal);
 		this.#renderSegments();
+		this.#renderZones();
 		this.#render(now);
 		this.#schedule(now);
 		signal.addEventListener(
@@ -243,7 +261,7 @@ export class SonicMeter extends SonicElement {
 			return segments.filter((threshold) => threshold <= level).length / segments.length;
 		}
 
-		return linearTaper(this.min, this.max).proportionOf(level);
+		return meterScale(this.taper, this.min, this.max).proportionOf(level);
 	}
 
 	#readValue(now: number): void {
@@ -265,8 +283,6 @@ export class SonicMeter extends SonicElement {
 
 		const origin = this.origin === undefined ? 0 : this.#proportionOf(this.origin);
 
-		meter.style.setProperty('--_sonic-meter-min', String(this.min));
-		meter.style.setProperty('--_sonic-meter-max', String(this.max));
 		meter.style.setProperty('--_sonic-meter-origin', String(origin));
 
 		if (this.disabled) {
@@ -313,6 +329,21 @@ export class SonicMeter extends SonicElement {
 		style.setProperty('--_sonic-meter-bar', String(bar));
 		style.setProperty('--_sonic-meter-peak-hold', '0');
 		style.setProperty('--_sonic-meter-clipped', '0');
+	}
+
+	// A `calc()` over the zone tokens rather than a share, so a skin's token stays live
+	#renderZones(): void {
+		if (!this.isBound()) return;
+
+		const { style } = this.control;
+		const scale = meterScale(this.taper, this.min, this.max);
+
+		for (const zone of ['hot', 'clip']) {
+			style.setProperty(
+				`--_sonic-meter-${zone}-share`,
+				scale.proportionCss(`var(--_sonic-meter-${zone}-from)`),
+			);
+		}
 	}
 
 	#risen(timeConstantMs: number, elapsedMs: number): number {

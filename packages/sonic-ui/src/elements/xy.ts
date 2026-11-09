@@ -1,4 +1,5 @@
 import type { FieldGesture, FieldHold, FieldInput } from '#elements/field-gesture.ts';
+import type { ValueReason } from '#elements/value-event.ts';
 import type { BoxProbe } from '#lib/check-styles.ts';
 import type { FieldAxis } from '#lib/field.ts';
 import type { ValueSpec } from '#lib/value-mapping.ts';
@@ -7,6 +8,7 @@ import type { ValueModel } from '#lib/value-model.ts';
 import { bindFieldGesture } from '#elements/field-gesture.ts';
 import { SonicFormElement } from '#elements/form-element.ts';
 import { Readout } from '#elements/readout.ts';
+import { SonicValueEvent } from '#elements/value-event.ts';
 import { pointerPosition } from '#lib/field.ts';
 import { focusByPointer } from '#lib/focus-by-pointer.ts';
 import { clampProportion, toNumber } from '#lib/math.ts';
@@ -434,19 +436,21 @@ export class SonicXy extends SonicFormElement {
 					return this.#grab(event);
 				},
 				input: (_hold, next) => {
-					this.#input(next);
+					this.#input(next, 'drag');
 				},
 				release: (_hold, moved) => {
-					if (moved.length > 0) this.dispatchEvent(new Event('change', { bubbles: true }));
+					if (moved.length > 0) this.dispatchEvent(new SonicValueEvent('change', 'drag'));
 				},
 				renderReadout: () => {
 					this.#renderReadout();
 				},
 				reset: () => {
-					if (this.isDisabled()) return;
+					if (this.isDisabled()) return true;
 
 					focusByPointer(this.focusTarget());
 					this.#reset();
+
+					return true;
 				},
 				resetsOnDoublePress: () => this.doublePress === 'reset',
 				toggle: (state, isOn) => {
@@ -457,8 +461,8 @@ export class SonicXy extends SonicFormElement {
 		);
 	}
 
-	#commit(next: FieldInput): void {
-		if (this.#input(next)) this.dispatchEvent(new Event('change', { bubbles: true }));
+	#commit(next: FieldInput, reason: ValueReason): void {
+		if (this.#input(next, reason)) this.dispatchEvent(new SonicValueEvent('change', reason));
 	}
 
 	#grab(event: PointerEvent): FieldHold {
@@ -478,7 +482,7 @@ export class SonicXy extends SonicFormElement {
 		const isOnPuck = event.target instanceof Node && this.#puck.contains(event.target);
 
 		if (!isOnPuck) {
-			this.#input({ x: x.mapping().valueAt(pressed.x), y: y.mapping().valueAt(pressed.y) });
+			this.#input({ x: x.mapping().valueAt(pressed.x), y: y.mapping().valueAt(pressed.y) }, 'drag');
 		}
 
 		const hold = (axis: FieldAxis) => ({
@@ -495,7 +499,7 @@ export class SonicXy extends SonicFormElement {
 		return this.xDefault !== undefined || this.yDefault !== undefined;
 	}
 
-	#input(next: FieldInput): boolean {
+	#input(next: FieldInput, reason: ValueReason): boolean {
 		let hasMoved = false;
 
 		for (const axis of axes) {
@@ -504,7 +508,7 @@ export class SonicXy extends SonicFormElement {
 		if (!hasMoved) return false;
 
 		this.render();
-		this.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+		this.dispatchEvent(new SonicValueEvent('input', reason));
 
 		return true;
 	}
@@ -518,8 +522,8 @@ export class SonicXy extends SonicFormElement {
 		this.#parts[axis].focus();
 		if (!hasMoved) return;
 
-		this.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
-		this.dispatchEvent(new Event('change', { bubbles: true }));
+		this.dispatchEvent(new SonicValueEvent('input', 'key'));
+		this.dispatchEvent(new SonicValueEvent('change', 'key'));
 	}
 
 	#renderAria(): void {
@@ -565,7 +569,7 @@ export class SonicXy extends SonicFormElement {
 	}
 
 	#reset(): void {
-		this.#commit({ x: this.xDefault, y: this.yDefault });
+		this.#commit({ x: this.xDefault, y: this.yDefault }, 'reset');
 	}
 
 	#respec(...forgotten: Array<string>): void {

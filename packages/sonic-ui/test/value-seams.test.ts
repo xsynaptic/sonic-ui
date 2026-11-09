@@ -103,10 +103,10 @@ test("a link's input reports input and never change, and nothing when the value 
 	const events = recordEvents(document.body);
 	const link = linkValue(seam);
 
-	expect(link.input(41)).toBe(false);
+	expect(link.input(41, 'drag')).toBe(false);
 	expect(events).toEqual([]);
 
-	expect(link.input(33)).toBe(true);
+	expect(link.input(33, 'drag')).toBe(true);
 	expect(seam.value).toBe(35);
 	expect(events).toEqual(['input']);
 });
@@ -118,11 +118,11 @@ test("a link's input leaves the value alone while the seam's own drag holds it",
 	pointerAt(seam.drawn(), 'pointerdown', { clientX: 100 });
 	pointerAt(seam.drawn(), 'pointermove', { clientX: 150 });
 
-	expect(link.input(10)).toBe(false);
+	expect(link.input(10, 'drag')).toBe(false);
 	expect(seam.value).toBe(65);
 
 	pointerAt(seam.drawn(), 'pointerup', { clientX: 150 });
-	expect(link.input(10)).toBe(true);
+	expect(link.input(10, 'drag')).toBe(true);
 });
 
 test('a limit stops a drag and the keys inside it, and leaves the bounds and property writes alone', () => {

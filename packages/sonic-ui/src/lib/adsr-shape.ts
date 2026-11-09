@@ -1,4 +1,4 @@
-import { envelopeCurve } from '#lib/envelope-curve.ts';
+import { envelopeCurve, envelopePosition } from '#lib/envelope-curve.ts';
 import { roundTo } from '#lib/math.ts';
 
 export const adsrStages = ['delay', 'attack', 'hold', 'decay', 'sustain', 'release'] as const;
@@ -38,12 +38,26 @@ function along(from: AdsrPoint, to: AdsrPoint, at: { curve: number; position: nu
 	};
 }
 
+// Even in level as well as in time, so the steep end of a tight curve is not drawn as a corner
+function curvePositions(curve: number): Array<number> {
+	const positions = new Set<number>();
+
+	for (let index = 1; index < curveSamples; index += 1) {
+		const share = index / curveSamples;
+
+		positions.add(share);
+		positions.add(envelopePosition(share, curve));
+	}
+
+	return [...positions]
+		.filter((position) => position > 0 && position < 1)
+		.toSorted((first, second) => first - second);
+}
+
 function curved(from: AdsrPoint, to: AdsrPoint, curve: number): Array<AdsrPoint> {
 	if (envelopeCurve(0.5, curve) === 0.5) return [];
 
-	return Array.from({ length: curveSamples - 1 }, (_, index) =>
-		along(from, to, { curve, position: (index + 1) / curveSamples }),
-	);
+	return curvePositions(curve).map((position) => along(from, to, { curve, position }));
 }
 
 function leg(

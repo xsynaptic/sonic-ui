@@ -323,6 +323,64 @@ test("the attack's curve handle turns its curve dial and no time dial, upward fo
 	expect(rig.events).toEqual(['input curve', 'change curve']);
 });
 
+function mountCurved(curveDial: string): Rig & { curveDial: SonicDial; curveHandle: HTMLElement } {
+	const rig = mount(
+		`<div id="dials">${dialMarkup}${curveDial}</div><sonic-envelope ${bound} decay-curve="curve"></sonic-envelope>`,
+	);
+
+	return {
+		...rig,
+		curveDial: requireChild(document.body, '#curve', SonicDial),
+		curveHandle: requireChild(
+			rig.envelope,
+			'.sonic-envelope-curve[data-sonic-stage="decay"]',
+			HTMLDivElement,
+		),
+	};
+}
+
+test('a double press on a curve handle returns its curve dial to its default, though the lift lands on the envelope', () => {
+	const rig = mountCurved(
+		'<sonic-dial id="curve" min="-8" max="8" step="0.5" value="3" default="-1.5"></sonic-dial>',
+	);
+	const captured = requireChild(rig.envelope, '.sonic-envelope', HTMLElement);
+
+	for (let press = 0; press < 2; press += 1) {
+		pointerAt(rig.curveHandle, 'pointerdown', { clientX: 100, clientY: 100 });
+		pointerAt(captured, 'pointerup', { clientX: 100, clientY: 100 });
+	}
+
+	expect(rig.curveDial.value).toBe(-1.5);
+	expect([rig.dials.decay.value, rig.dials.sustain.value]).toEqual([350, -30]);
+	expect(rig.events).toEqual(['input curve', 'change curve']);
+});
+
+test('a Ctrl-click resets a curve handle but still drags a stage handle, and a double press there resets nothing', () => {
+	const rig = mountCurved(
+		'<sonic-dial id="curve" min="-8" max="8" step="0.5" value="3" default="0"></sonic-dial>',
+	);
+
+	rig.dials.decay.default = 600;
+	rig.dials.sustain.default = 0;
+	pointerAt(rig.curveHandle, 'pointerdown', { clientX: 100, clientY: 100, ctrlKey: true });
+	expect(rig.curveDial.value).toBe(0);
+
+	const decay = rig.handle('decay');
+
+	pointerAt(decay, 'pointerdown', { clientX: 100, clientY: 100, ctrlKey: true });
+	pointerAt(decay, 'pointermove', { clientX: 120, clientY: 100 });
+	pointerAt(decay, 'pointerup', { clientX: 120, clientY: 100 });
+	expect(rig.dials.decay.value).not.toBe(350);
+
+	const moved = [rig.dials.decay.value, rig.dials.sustain.value];
+
+	for (let press = 0; press < 2; press += 1) {
+		pointerAt(decay, 'pointerdown', { clientX: 120, clientY: 100 });
+		pointerAt(decay, 'pointerup', { clientX: 120, clientY: 100 });
+	}
+	expect([rig.dials.decay.value, rig.dials.sustain.value]).toEqual(moved);
+});
+
 test("the readout carries the held part's dials, x then y, in each dial's own format", () => {
 	const { dials, envelope, handle } = mount(
 		`<div id="dials">${dialMarkup}<sonic-dial id="curve" min="-8" max="8" step="0.25" value="2"></sonic-dial></div>

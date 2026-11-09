@@ -287,7 +287,7 @@ export class SonicEnvelope extends SonicElement {
 					for (const { axis, binding } of drives) {
 						const value = next[axis];
 
-						if (value !== undefined) binding.link.input(value);
+						if (value !== undefined) binding.link.input(value, 'drag');
 					}
 					this.#isDriving = false;
 					this.#draw();
@@ -296,12 +296,14 @@ export class SonicEnvelope extends SonicElement {
 					for (const { axis, binding } of drives) {
 						if (!moved.includes(axis)) continue;
 
-						binding.link.change();
+						binding.link.change('drag');
 					}
 				},
 				renderReadout: () => {
 					this.#renderReadout();
 				},
+				reset: (pressed) => this.#resetCurve(pressed),
+				resetsOnDoublePress: () => true,
 				toggle: (state, isOn) => {
 					this.toggleState(state, isOn);
 				},
@@ -383,7 +385,7 @@ export class SonicEnvelope extends SonicElement {
 	}
 
 	#grab(event: PointerEvent): HandleHold | undefined {
-		const pressed = this.#pressed(event);
+		const pressed = this.#pressed(event.target);
 		if (!pressed || pressed.drives.length === 0) return undefined;
 
 		this.#held = pressed.part;
@@ -400,10 +402,10 @@ export class SonicEnvelope extends SonicElement {
 		return { ...pressed, axes };
 	}
 
-	#pressed(event: PointerEvent): Omit<HandleHold, 'axes'> | undefined {
+	#pressed(target: EventTarget | null): Omit<HandleHold, 'axes'> | undefined {
 		const part =
-			event.target instanceof Element
-				? event.target.closest<HTMLElement>('.sonic-envelope-handle, .sonic-envelope-curve')
+			target instanceof Element
+				? target.closest<HTMLElement>('.sonic-envelope-handle, .sonic-envelope-curve')
 				: undefined;
 		const stage = part?.dataset.sonicStage;
 		if (!part || stage === undefined || this.isDisabled()) return undefined;
@@ -457,6 +459,16 @@ export class SonicEnvelope extends SonicElement {
 			isOpen: this.#gesture?.isRevealed() === true && this.readout,
 			text: drag.drives.map(({ binding }) => binding.element.valueText).join(', '),
 		});
+	}
+
+	// A stage handle drives up to two dials, so only a curve handle resets
+	#resetCurve(target: EventTarget | null): boolean {
+		const pressed = this.#pressed(target);
+		if (!pressed?.part.classList.contains('sonic-envelope-curve')) return false;
+
+		for (const { binding } of pressed.drives) binding.link.reset();
+
+		return true;
 	}
 
 	#resolve(name: string): SonicValueElement | undefined {

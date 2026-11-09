@@ -1,3 +1,4 @@
+import type { ValueReason } from '#elements/value-event.ts';
 import type { DragState } from '#lib/drag-step.ts';
 import type { PointerDrag } from '#lib/pointer-drag.ts';
 import type { RepeatPress } from '#lib/repeat-press.ts';
@@ -25,15 +26,16 @@ export interface ValueAxis {
 }
 
 interface GestureHost {
+	change: (reason: ValueReason) => void;
 	default: () => number | undefined;
 	detent: () => number | undefined;
-	dispatch: (type: 'change' | 'sonic-reveal') => void;
+	dispatch: (type: 'sonic-reveal') => void;
 	doublePress: () => 'entry' | 'none' | 'reset';
 	entryId: string;
 	entryText: () => string;
 	forwardNaming: (target: Element, isNamed: boolean) => void;
 	hasEntry: () => boolean;
-	input: (next: number) => boolean;
+	input: (next: number, reason: ValueReason) => boolean;
 	isDisabled: () => boolean;
 	keyStep: () => number | undefined;
 	model: ValueModel;
@@ -54,6 +56,7 @@ interface ArrowPart {
 interface KeyScrub {
 	fromValue: number;
 	key: string;
+	reason: ValueReason;
 }
 
 interface ValueDrag extends ValueAxis {
@@ -103,7 +106,7 @@ export class ValueGestures {
 		const drag = this.#dragging();
 		if (!drag) return;
 
-		this.#host.input(drag.fromValue);
+		this.#host.input(drag.fromValue, 'drag');
 		this.#entry?.forgetPress();
 		this.#pointerDrag?.end();
 	}
@@ -117,7 +120,7 @@ export class ValueGestures {
 			control,
 			{
 				cancel: (drag) => {
-					if (drag.isKeptOnCancel !== true) host.input(drag.fromValue);
+					if (drag.isKeptOnCancel !== true) host.input(drag.fromValue, 'drag');
 				},
 				grab: (event) => {
 					if (this.#isOnArrow(event)) return;
@@ -223,7 +226,7 @@ export class ValueGestures {
 
 						this.#arrowFrom = undefined;
 						part.toggleAttribute('data-sonic-pressed', false);
-						if (host.model.value !== from) host.dispatch('change');
+						if (host.model.value !== from) host.change('arrow');
 					},
 					step: (steps) => this.#stepArrow(key, isAccelerating() ? steps : 1),
 				},
@@ -259,6 +262,10 @@ export class ValueGestures {
 		return this.#pointerType;
 	}
 
+	reset(): void {
+		this.#reset();
+	}
+
 	scrubFrom(): number | undefined {
 		return this.#dragging()?.fromValue ?? this.#keyScrub?.fromValue;
 	}
@@ -273,7 +280,7 @@ export class ValueGestures {
 
 		const entry = new ValueEntry(input, {
 			commit: (text) => {
-				this.#commit(host.parse(text));
+				this.#commit(host.parse(text), 'entry');
 			},
 			text: host.entryText,
 			toggle: (isOpen) => {
@@ -313,7 +320,7 @@ export class ValueGestures {
 				event.preventDefault();
 				this.#claim.reveal('keys');
 				this.#showRevealed();
-				this.#keyTo(event, next);
+				this.#keyTo(event, next, resetKeys.has(event.key) ? 'reset' : 'key');
 				host.scrubChanged();
 			},
 			{ signal },
@@ -343,11 +350,11 @@ export class ValueGestures {
 		);
 	}
 
-	#commit(next: number, direction: -1 | 0 | 1 = 0): void {
+	#commit(next: number, reason: ValueReason, direction: -1 | 0 | 1 = 0): void {
 		const host = this.#host;
 		const landed = Number.isFinite(next) ? host.model.land(next, direction) : next;
 
-		if (host.input(landed)) host.dispatch('change');
+		if (host.input(landed, reason)) host.change(reason);
 	}
 
 	#concealKeyReveal(): void {
@@ -364,7 +371,7 @@ export class ValueGestures {
 		drag.isOutside = isOutside;
 		host.toggleState('cancelling', isOutside);
 		if (isOutside) this.#renderDragReveal(drag);
-		host.input(isOutside ? drag.fromValue : value);
+		host.input(isOutside ? drag.fromValue : value, 'drag');
 		if (!isOutside) this.#renderDragReveal(drag);
 	}
 
@@ -388,7 +395,7 @@ export class ValueGestures {
 
 		if (!wasEngaged) this.#reveal(drag);
 
-		if (isOutside === drag.isOutside) host.input(isOutside ? drag.fromValue : value);
+		if (isOutside === drag.isOutside) host.input(isOutside ? drag.fromValue : value, 'drag');
 		else this.#crossCancelZone(drag, value);
 	}
 
@@ -403,7 +410,7 @@ export class ValueGestures {
 
 		this.#keyScrub = undefined;
 		host.scrubChanged();
-		if (host.model.value !== scrub.fromValue) host.dispatch('change');
+		if (host.model.value !== scrub.fromValue) host.change(scrub.reason);
 	}
 
 	#ignoresKey(event: KeyboardEvent): boolean {
@@ -426,16 +433,16 @@ export class ValueGestures {
 		return host.model.mapping().keyTarget(key, host.model.value, host.keyStep());
 	}
 
-	#keyTo(event: KeyboardEvent, next: number): void {
+	#keyTo(event: KeyboardEvent, next: number, reason: ValueReason): void {
 		const host = this.#host;
 
 		if (event.repeat && host.scrubsKeyRepeat()) {
-			this.#scrubKey(event.key, next);
+			this.#scrubKey({ fromValue: host.model.value, key: event.key, reason }, next);
 			return;
 		}
 
 		this.#endKeyScrub();
-		this.#commit(next, next > host.model.value ? 1 : -1);
+		this.#commit(next, reason, next > host.model.value ? 1 : -1);
 	}
 
 	#lift(drag: ValueDrag, event: PointerEvent, entry: ValueEntry): void {
@@ -444,7 +451,7 @@ export class ValueGestures {
 
 		if (tap !== undefined) {
 			entry.forgetPress();
-			this.#commit(tap);
+			this.#commit(tap, 'tap');
 			return;
 		}
 		if (!entry.press(event) || host.springTarget() !== undefined) return;
@@ -463,7 +470,7 @@ export class ValueGestures {
 		host.toggleState('cancelling', false);
 		host.scrubChanged();
 		this.#showRevealed();
-		if (host.model.value !== drag.fromValue) host.dispatch('change');
+		if (host.model.value !== drag.fromValue) host.change('drag');
 		this.#springBack();
 		this.#pointerType = undefined;
 	}
@@ -478,7 +485,7 @@ export class ValueGestures {
 	}
 
 	#reset(): void {
-		this.#commit(this.#host.default() ?? NaN);
+		this.#commit(this.#host.default() ?? NaN, 'reset');
 	}
 
 	#reveal(drag: ValueDrag): void {
@@ -488,14 +495,12 @@ export class ValueGestures {
 		this.#renderDragReveal(drag);
 	}
 
-	#scrubKey(key: string, next: number): void {
-		const host = this.#host;
-
-		if (this.#keyScrub?.key !== key) {
+	#scrubKey(scrub: KeyScrub, next: number): void {
+		if (this.#keyScrub?.key !== scrub.key) {
 			this.#endKeyScrub();
-			this.#keyScrub = { fromValue: host.model.value, key };
+			this.#keyScrub = scrub;
 		}
-		host.input(next);
+		this.#host.input(next, scrub.reason);
 	}
 
 	#showRevealed(): void {
@@ -514,7 +519,7 @@ export class ValueGestures {
 
 		// Set before the commit so a `change` listener reading styles sees the glide
 		if (host.model.mapping().snap(target) !== host.model.value) host.toggleState('springing', true);
-		this.#commit(target);
+		this.#commit(target, 'spring');
 	}
 
 	#startDrag(axis: ValueAxis, event: PointerEvent): DragState {
@@ -560,7 +565,7 @@ export class ValueGestures {
 		}
 		if (next === from) return false;
 
-		return host.input(host.model.land(next, next > from ? 1 : -1));
+		return host.input(host.model.land(next, next > from ? 1 : -1), 'arrow');
 	}
 
 	#withinLimit(mapping: ValueMapping, state: DragState): DragState {

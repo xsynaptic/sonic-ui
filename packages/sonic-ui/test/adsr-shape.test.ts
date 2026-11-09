@@ -1,6 +1,8 @@
-import { expect, test } from 'vitest';
+import { fc, test } from '@fast-check/vitest';
+import { expect } from 'vitest';
 
 import { adsrPath, adsrShape } from '#lib/adsr-shape.ts';
+import { envelopeCurve } from '#lib/envelope-curve.ts';
 
 test('three bound times and the sustain run share the width in quarters', () => {
 	const { handles, share } = adsrShape({
@@ -60,17 +62,33 @@ test('the path starts with a move, draws upward from the floor at 1, and the fil
 	expect(fill).toBe(`${stroke}Z`);
 });
 
-test('a curved leg is sampled at 23 even steps between its ends', () => {
-	const { handles, points } = adsrShape({ attack: 1, decay: 1, sustain: 0.5 }, { decay: 4 });
-	const [start = NaN, end = NaN] = handles.map(({ x }) => x);
-	const samples = points.filter(({ x }) => x > start && x < end);
+const runs = { numRuns: 500 };
 
-	expect(points).toHaveLength(7 + 23);
-	expect(samples).toHaveLength(23);
-	for (const [index, { x }] of samples.entries()) {
-		expect(x).toBeCloseTo(start + ((index + 1) * (end - start)) / 24, 9);
-	}
-});
+test.prop([fc.double({ max: 20, min: -20, noNaN: true })], runs)(
+	'a curved decay of %d is drawn within 0.4% of its height of the true curve, never doubling back',
+	(curve) => {
+		const { handles, points } = adsrShape({ attack: 1, decay: 1, sustain: 0 }, { decay: curve });
+		const [start = NaN, end = NaN] = handles.map(({ x }) => x);
+		const drawn = points.filter(({ x }) => x >= start && x <= end).slice(1);
+		let worst = 0;
+
+		for (const [index, to] of drawn.entries()) {
+			const from = drawn[index - 1];
+			if (!from) continue;
+
+			expect(to.x).toBeGreaterThanOrEqual(from.x);
+			for (let step = 1; step < 8; step += 1) {
+				const share = step / 8;
+				const position = (from.x + (to.x - from.x) * share - start) / (end - start);
+				const truth = 1 - envelopeCurve(position, curve);
+
+				worst = Math.max(worst, Math.abs(from.y + (to.y - from.y) * share - truth));
+			}
+		}
+
+		expect(worst).toBeLessThan(0.004);
+	},
+);
 
 test('with no release bound the line still drops to the floor, so the fill closes along it', () => {
 	const { stroke } = adsrPath(adsrShape({ attack: 1, sustain: 0.5 }));

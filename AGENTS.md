@@ -40,6 +40,7 @@ Tokens, hook classes, attributes, events and state names are the API. Renaming o
 - Two material sheets never set the same private property on the same class. When one needs a say in another's, it sets a property of its own that the other reads (see `--_sonic-glass-own`).
 - A control's material sheets are listed in `sheetMaterial` (`playground/src/scripts/solos.ts`) and in the README table; `solo.spec.ts` fails if the list is short or the two differ.
 - `sideEffects` lists `./src/define*`; without it the built `define` entries come out empty.
+- `unbundle: true` in `tsdown.config.ts` emits each module once. The module-level `link` in `value-element.ts` and `region.ts`, and every `instanceof SonicValueElement`, break if two entries each carry a copy.
 - Development-only code sits behind `__DEV__`, never `process.env.NODE_ENV`.
 
 ## The gate

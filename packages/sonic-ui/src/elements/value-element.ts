@@ -1,3 +1,4 @@
+import type { ValueReason } from '#elements/value-event.ts';
 import type { ValueAxis } from '#elements/value-gestures.ts';
 import type { HoverPreview } from '#lib/hover-preview.ts';
 import type { ScrubState } from '#lib/scrub.ts';
@@ -6,6 +7,7 @@ import type { ValueModel } from '#lib/value-model.ts';
 
 import { SonicFormElement } from '#elements/form-element.ts';
 import { isUnanchored, Readout } from '#elements/readout.ts';
+import { SonicValueEvent, valueEvent } from '#elements/value-event.ts';
 import { ValueGestures } from '#elements/value-gestures.ts';
 import { bindHoverPreview } from '#lib/hover-preview.ts';
 import { toNumber, trimFloat } from '#lib/math.ts';
@@ -54,11 +56,12 @@ const roleAttributes = [
 ];
 
 export interface ValueLink {
-	change: () => void;
-	input: (next: number, isMover?: boolean) => boolean;
+	change: (reason: undefined | ValueReason) => void;
+	input: (next: number, reason: undefined | ValueReason, isMover?: boolean) => boolean;
 	isDisabled: () => boolean;
 	isHeld: () => boolean;
 	model: ValueModel;
+	reset: () => void;
 }
 
 // Filled from inside the class, so it reaches protected members and nothing lands on the element's public type
@@ -88,13 +91,17 @@ export abstract class SonicValueElement extends SonicFormElement {
 
 	static {
 		link = (element) => ({
-			change: () => {
-				element.dispatchEvent(new Event('change', { bubbles: true }));
+			change: (reason) => {
+				element.dispatchEvent(valueEvent('change', reason));
 			},
-			input: (next, isMover = false) => (isMover || !element.#isHeld()) && element.input(next),
+			input: (next, reason, isMover = false) =>
+				(isMover || !element.#isHeld()) && element.input(next, reason),
 			isDisabled: () => element.isDisabled(),
 			isHeld: () => element.#isHeld(),
 			model: element.#model,
+			reset: () => {
+				if (!element.#isHeld()) element.#gestures?.reset();
+			},
 		});
 	}
 
@@ -400,6 +407,9 @@ export abstract class SonicValueElement extends SonicFormElement {
 		if (bubble) this.#readout = { anchor: control, bubble: new Readout(bubble) };
 		this.#gestures = new ValueGestures(
 			{
+				change: (reason) => {
+					this.dispatchEvent(new SonicValueEvent('change', reason));
+				},
 				default: () => this.default,
 				detent: () => this.detent,
 				dispatch: (type) => {
@@ -412,7 +422,7 @@ export abstract class SonicValueElement extends SonicFormElement {
 					this.forwardNaming(target, isNamed);
 				},
 				hasEntry: () => !isUnanchored && this.entry !== 'none',
-				input: (next) => this.input(next),
+				input: (next, reason) => this.input(next, reason),
 				isDisabled: () => this.isDisabled(),
 				keyStep: () => this.keyStep,
 				model: this.#model,
@@ -486,13 +496,13 @@ export abstract class SonicValueElement extends SonicFormElement {
 		return this.control;
 	}
 
-	protected input(next: number): boolean {
+	protected input(next: number, reason: undefined | ValueReason): boolean {
 		const previous = this.#model.value;
 
 		if (this.#model.input(next)) this.render();
 		if (this.#model.value === previous) return false;
 
-		this.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+		this.dispatchEvent(valueEvent('input', reason));
 
 		return true;
 	}

@@ -76,6 +76,52 @@ test(
 	},
 );
 
+function isWarm([red, green, blue]: [number, number, number]): boolean {
+	return red > 150 && red - Math.max(green, blue) > 50;
+}
+
+// -20 dB sits at 48.7% of an IEC bar from -60 to 0, and the -12 dB hot zone at 69.2%, against 66.7% and 80% linearly
+test(
+	'an IEC taper lights less of the bar for the same level and starts its hot zone lower to match',
+	{ tag: '@mobile' },
+	async ({ page }) => {
+		const meter = page.locator('#meter');
+		const warmRuns = async (): Promise<Array<[number, number]>> => {
+			const line = await paintedLine(meter.locator('.sonic-meter'), 'y');
+
+			return paintedRuns(line, isWarm)
+				.map(([from, to]): [number, number] => [line.lengthPx - to, line.lengthPx - from])
+				.toReversed();
+		};
+
+		await meter.evaluate((element) => {
+			element.setAttribute('taper', 'iec');
+		});
+		await setLevel(page, meter, -20);
+
+		const lit = await litRuns(meter, 'y');
+
+		expectEdge(lit.at(-1)?.[1], 56);
+
+		await page.addStyleTag({
+			content: 'sonic-meter { --sonic-lit-warning: #f00; --sonic-lit-danger: #f00; }',
+		});
+		await setLevel(page, meter, -1);
+
+		const iecWarm = await warmRuns();
+
+		expectEdge(iecWarm.at(0)?.[0], 85);
+
+		await meter.evaluate((element) => {
+			element.removeAttribute('taper');
+		});
+
+		const linearWarm = await warmRuns();
+
+		expectEdge(linearWarm.at(0)?.[0], 97);
+	},
+);
+
 test(
 	'reaching 0 dBFS lights the clip lens, which goes out once its hold is over',
 	{ tag: '@mobile' },

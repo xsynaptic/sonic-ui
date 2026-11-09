@@ -35,7 +35,7 @@ interface FieldGestureOptions<Hold extends FieldHold> extends RevealOptions {
 	grab: (event: PointerEvent) => Hold | undefined;
 	input: (hold: Hold, next: FieldInput) => void;
 	release: (hold: Hold, moved: Array<FieldAxis>) => void;
-	reset?: () => void;
+	reset?: (pressed: EventTarget | null) => boolean;
 	resetsOnDoublePress?: () => boolean;
 }
 
@@ -51,6 +51,8 @@ export interface FieldGesture<Hold> {
 interface Held<Hold> {
 	from: FieldInput;
 	hold: Hold;
+	// The lift lands on the target once it captures the pointer, so the press's own target is kept
+	pressed: EventTarget | null;
 	state: FieldDragState;
 }
 
@@ -99,11 +101,9 @@ export function bindFieldGesture<Hold extends FieldHold>(
 
 	const grab = (event: PointerEvent): Hold | undefined => {
 		if (isMenuPress(event)) return undefined;
-		if (!reset || !isResetPress(event)) return options.grab(event);
+		if (reset && isResetPress(event) && reset(event.target)) return undefined;
 
-		reset();
-
-		return undefined;
+		return options.grab(event);
 	};
 
 	const drag = bindDrag<Held<Hold>>(
@@ -129,6 +129,7 @@ export function bindFieldGesture<Hold extends FieldHold>(
 				return {
 					from: { x: x?.from ?? x?.model.value, y: y?.from ?? y?.model.value },
 					hold,
+					pressed: event.target,
 					state: startFieldDrag({
 						position: flip(pointerPosition(event), hold),
 						thresholdPx: dragThresholdPx(event.pointerType),
@@ -137,8 +138,9 @@ export function bindFieldGesture<Hold extends FieldHold>(
 					}),
 				};
 			},
-			lift: (_held, event) => {
-				if (doublePress?.press(event) === true && resetsOnDoublePress?.() === true) reset?.();
+			lift: ({ pressed }, event) => {
+				if (doublePress?.press(event) === true && resetsOnDoublePress?.() === true)
+					reset?.(pressed);
 			},
 			move: (held, event) => {
 				const { axes } = held.hold;

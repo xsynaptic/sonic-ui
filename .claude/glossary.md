@@ -198,7 +198,7 @@ The words this library uses for its controls, their parts and their values. Wher
 
 **Value model**: What a value control holds behind its drawing: the value, the value last asked for, its mapping and any limit put on it. _Avoid_: State (that is a skin's)
 
-**Taper**: The shape of a mapping, linear or logarithmic.
+**Taper**: The shape of a mapping: linear or logarithmic on a value control, linear or IEC 60268-18's deflection on a meter.
 
 **Midpoint**: The value that sits halfway along the travel. Setting it bends the taper to fit. _Avoid_: Skew
 
@@ -231,6 +231,8 @@ The words this library uses for its controls, their parts and their values. Wher
 **Endless**: Turning with no end stops, so the value wraps from maximum round to minimum.
 
 **Spring**: Going back to the origin when let go.
+
+**Reason** (of an event): What moved a value, carried on a value control's `input` and `change`: a drag, a tap (a press that sets the value with no drag, as the number box's step press), an arrow, a key, an entry, a reset or a spring.
 
 **Fine**: A drag at a slower pace, taken while Shift is held, on a value control or a region.
 

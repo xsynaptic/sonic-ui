@@ -7,6 +7,7 @@ import type { TimeRegions } from '#lib/time-regions.ts';
 import type { Seconds } from '#lib/units.ts';
 
 import { RegionLayer } from '#elements/region-layer.ts';
+import { SonicValueEvent } from '#elements/value-event.ts';
 import { SonicWaveElement } from '#elements/wave-element.ts';
 import { outsideCancelZone } from '#lib/cancel-zone.ts';
 import { createMarkerBand } from '#lib/marker-band.ts';
@@ -227,8 +228,8 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 				mapping: () => this.mapping(),
 				outside: () => this.#outside(),
 				seek: (event) => {
-					if (this.input(this.valueFromPoint(event.clientX, event.clientY))) {
-						this.dispatchEvent(new Event('change', { bubbles: true }));
+					if (this.input(this.valueFromPoint(event.clientX, event.clientY), 'tap')) {
+						this.dispatchEvent(new SonicValueEvent('change', 'tap'));
 					}
 				},
 				speak: ({ end, start }) =>
@@ -362,7 +363,7 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 			travelPx: axis.travelPx,
 		};
 
-		this.input(marker ?? this.valueFromPoint(event.clientX, event.clientY));
+		this.input(marker ?? this.valueFromPoint(event.clientX, event.clientY), 'drag');
 
 		return outside ? { ...grabbed, outside } : grabbed;
 	}

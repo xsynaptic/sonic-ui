@@ -1,9 +1,11 @@
 import type { ValueLink } from '#elements/value-element.ts';
+import type { ValueReason } from '#elements/value-event.ts';
 import type { SplitMember, SplitMode } from '#lib/distribute.ts';
 import type { ValueMapping } from '#lib/value-mapping.ts';
 
 import { SonicElement } from '#elements/sonic-element.ts';
 import { linkValue, SonicValueElement } from '#elements/value-element.ts';
+import { reasonOf } from '#elements/value-event.ts';
 import { distribute, splitLimits } from '#lib/distribute.ts';
 
 declare const __DEV__: boolean;
@@ -101,6 +103,8 @@ export class SonicSplit extends SonicElement {
 
 	#members: Array<Member> = [];
 
+	#moverReason: undefined | ValueReason;
+
 	#snapshot: Snapshot | undefined;
 
 	#total = 0;
@@ -133,6 +137,13 @@ export class SonicSplit extends SonicElement {
 			childList: true,
 			subtree: true,
 		});
+		this.addEventListener(
+			'input',
+			(event) => {
+				if (!this.#isWriting) this.#moverReason = reasonOf(event);
+			},
+			{ signal },
+		);
 		this.addEventListener(
 			'change',
 			(event) => {
@@ -175,6 +186,7 @@ export class SonicSplit extends SonicElement {
 		for (const mover of this.#members) {
 			if (mover.link.model.value !== mover.seen) this.#move(mover);
 		}
+		this.#moverReason = undefined;
 	}
 
 	#find(): Array<SonicValueElement> {
@@ -270,7 +282,7 @@ export class SonicSplit extends SonicElement {
 				{ mode: this.mode, total: this.#total },
 				{ index, target: mover.link.model.value },
 			),
-			mover,
+			{ mover, reason: this.#moverReason },
 		);
 		this.#limit();
 	}
@@ -292,7 +304,7 @@ export class SonicSplit extends SonicElement {
 		queueMicrotask(() => {
 			this.#isWriting = true;
 			try {
-				for (const { link } of changed) link.change();
+				for (const { link } of changed) link.change(reasonOf(event));
 			} finally {
 				this.#isWriting = false;
 			}
@@ -346,7 +358,7 @@ export class SonicSplit extends SonicElement {
 		);
 	}
 
-	#write(values: Array<number>, mover?: Member): void {
+	#write(values: Array<number>, moved?: { mover: Member; reason: undefined | ValueReason }): void {
 		this.#isWriting = true;
 		try {
 			for (const [index, member] of this.#members.entries()) {
@@ -354,7 +366,7 @@ export class SonicSplit extends SonicElement {
 				if (value === undefined || value === member.link.model.value) continue;
 
 				member.link.model.setLimit(undefined);
-				member.link.input(value, member === mover);
+				member.link.input(value, moved?.reason, member === moved?.mover);
 			}
 		} finally {
 			this.#isWriting = false;

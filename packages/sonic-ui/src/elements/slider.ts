@@ -185,7 +185,10 @@ export class SonicSlider extends SonicValueElement {
 
 			if (this.groovePress === 'none') return;
 
-			this.input(this.mapping().valueAt((axis.position(event) - axis.startPx) / axis.travelPx));
+			this.input(
+				this.mapping().valueAt((axis.position(event) - axis.startPx) / axis.travelPx),
+				'drag',
+			);
 
 			return axis;
 		});

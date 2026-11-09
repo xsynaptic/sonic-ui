@@ -6,3 +6,10 @@ export function envelopeCurve(position: number, curve: number): number {
 
 	return Math.expm1(curve * position) / Math.expm1(curve);
 }
+
+/** The inverse of `envelopeCurve` */
+export function envelopePosition(level: number, curve: number): number {
+	if (Math.abs(curve) < flatCurve) return level;
+
+	return Math.log1p(level * Math.expm1(curve)) / curve;
+}

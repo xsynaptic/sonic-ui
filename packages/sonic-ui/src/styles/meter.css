@@ -101,25 +101,12 @@
 				var(--_sonic-meter-gap),
 			var(--_sonic-meter-pitch)
 		);
-		--_sonic-meter-span: calc(var(--_sonic-meter-max, 0) - var(--_sonic-meter-min, -60));
 		--_sonic-meter-hot-at: round(
-			clamp(
-					0,
-					(var(--_sonic-meter-hot-from) - var(--_sonic-meter-min, -60)) / var(--_sonic-meter-span),
-					1
-				) *
-				var(--_sonic-meter-segments),
+			var(--_sonic-meter-hot-share, 0) * var(--_sonic-meter-segments),
 			var(--_sonic-meter-pitch)
 		);
 		--_sonic-meter-clip-at: round(
-			clamp(
-					0,
-					/* fallow-ignore-next-line code-duplication -- each zone snaps its own threshold */
-						(var(--_sonic-meter-clip-from) - var(--_sonic-meter-min, -60)) /
-						var(--_sonic-meter-span),
-					1
-				) *
-				var(--_sonic-meter-segments),
+			var(--_sonic-meter-clip-share, 0) * var(--_sonic-meter-segments),
 			var(--_sonic-meter-pitch)
 		);
 		--_sonic-meter-segment-mask:

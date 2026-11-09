@@ -1,5 +1,17 @@
 # @xsynaptic/sonic-ui
 
+## 0.29.1
+
+### Patch Changes
+
+- - A value control's and the XY pad's `input` and `change` are an exported `SonicValueEvent`, whose `reason` says what moved the value: `drag`, `tap`, `arrow`, `key`, `entry`, `reset` or `spring`.
+  - `<sonic-meter taper="iec">` spreads decibels by IEC 60268-18's deflection, and its zones follow.
+  - A double press or a reset press on an envelope's curve handle resets its curve dial.
+  - Envelope curves are drawn closer to their true shape.
+- A control removed and put back in one task (a persisting router without `moveBefore`) lets go of a held gesture a microtask later: a drag, an arrow or momentary hold, a region drag or key scrub, or a pressed option ends as it would on a lost capture, with its `change`. Until now the gesture stayed held until the next press, and a later pointer move could still drive it.
+- - A key on a slider or wave strip hides its hover readout until the pointer next moves, as typing hides a tooltip; the hover no longer returns under a still pointer when a key reveal lapses. A region's key on the strip now shows the strip's `preview` under a resting mouse.
+  - A zero-length `<sonic-region>` takes a press across the bracket it draws, which is two line widths wide; before, only one sub-pixel point picked it up.
+
 ## 0.29.0
 
 ### Minor Changes
