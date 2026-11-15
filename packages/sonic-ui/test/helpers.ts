@@ -49,6 +49,27 @@ export function pointerAt(target: EventTarget, type: string, init: PointerEventI
 	target.dispatchEvent(new PointerEvent(type, { bubbles: true, button: 0, pointerId: 1, ...init }));
 }
 
+export function touchAt(
+	control: HTMLElement,
+	type: string,
+	[pointerId, clientX]: [number, number],
+): void {
+	pointerAt(control, type, { clientX, pointerId, pointerType: 'touch' });
+}
+
+// happy-dom's WheelEvent is a UIEvent and drops the modifier keys from its init
+export function wheelAt(control: HTMLElement, init: WheelEventInit): WheelEvent {
+	const event = new WheelEvent('wheel', { bubbles: true, cancelable: true, ...init });
+
+	Object.defineProperties(event, {
+		ctrlKey: { value: init.ctrlKey === true },
+		metaKey: { value: init.metaKey === true },
+	});
+	control.dispatchEvent(event);
+
+	return event;
+}
+
 export function pressKey(target: HTMLElement, key: string): KeyboardEvent {
 	const event = new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key });
 

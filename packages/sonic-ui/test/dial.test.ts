@@ -139,10 +139,6 @@ function press(control: HTMLElement, init: PointerEventInit = {}): void {
 	control.dispatchEvent(new PointerEvent('pointerup', options));
 }
 
-function typeKey(entry: HTMLInputElement, key: string): void {
-	entry.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key }));
-}
-
 test.each(['aria-describedby', 'aria-label', 'aria-labelledby'])(
 	'%s is forwarded from the host as it is added, changed and removed',
 	(name) => {
@@ -308,7 +304,7 @@ test('an entry opening with text parseValue cannot read warns, and formatEntry q
 	press(control);
 	expect(warn.mock.calls[0]?.[0]).toContain('"120.0 BPM"');
 
-	typeKey(entry, 'Escape');
+	pressKey(entry, 'Escape');
 	dial.formatEntry = (value) => value.toFixed(1);
 	press(control);
 	press(control);
@@ -328,7 +324,7 @@ test('formatEntry sets the text the entry opens with, leaving the value text its
 	expect(entry.value).toBe('120.0');
 
 	entry.value = '98.5';
-	typeKey(entry, 'Enter');
+	pressKey(entry, 'Enter');
 
 	expect(dial.value).toBe(98.5);
 	expect(dial.valueText).toBe('98.5 BPM');
@@ -347,7 +343,7 @@ test('without parseValue, the entry holds the plain number, so committing it unc
 	expect(entry.value).toBe('5000');
 	expect(control.getAttribute('aria-valuetext')).toBeNull();
 
-	typeKey(entry, 'Enter');
+	pressKey(entry, 'Enter');
 
 	expect(dial.value).toBe(5000);
 	expect(events).toEqual([]);
@@ -408,7 +404,7 @@ test('a dial with no formatter set shows and types the raw number, and speaks no
 	expect(entry.value).toBe('83.47');
 
 	entry.value = '1:23';
-	typeKey(entry, 'Enter');
+	pressKey(entry, 'Enter');
 	expect(dial.value).toBe(1);
 });
 
@@ -422,7 +418,7 @@ test('Enter commits the typed value through parseValue and hands focus back', ()
 	press(control);
 	entry.value = '66';
 	entry.dispatchEvent(new Event('input', { bubbles: true }));
-	typeKey(entry, 'Enter');
+	pressKey(entry, 'Enter');
 
 	expect(dial.value).toBe(0.66);
 	expect(events).toEqual(['input', 'change']);
@@ -444,7 +440,7 @@ test.each([
 	press(control);
 	press(control);
 	entry.value = typed;
-	typeKey(entry, key);
+	pressKey(entry, key);
 
 	expect(dial.value).toBe(50);
 	expect(events).toEqual([]);

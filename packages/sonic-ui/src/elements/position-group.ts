@@ -152,10 +152,6 @@ export abstract class SonicPositionGroupElement extends SonicRadioGroupElement {
 		return isMomentaryAt(this.positions(), index);
 	}
 
-	protected override isWrapping(): boolean {
-		return false;
-	}
-
 	// On is up, as on hardware
 	protected onIndex(): number {
 		return this.orientation === 'vertical' ? 0 : 1;

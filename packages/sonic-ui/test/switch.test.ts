@@ -57,7 +57,28 @@ function throwOf(group: HTMLElement): string {
 	return group.style.getPropertyValue('--_sonic-switch-at');
 }
 
-test('the arrows stop at the ends rather than wrapping', async () => {
+test('the arrows wrap between latching ends, both ways', async () => {
+	const { control, positions } = await mountSwitch(
+		'value="auto"',
+		/* HTML */ `
+			<span data-sonic-value="off">Off</span>
+			<span data-sonic-value="on">On</span>
+			<span data-sonic-value="auto">Auto</span>
+		`,
+	);
+	const changes = recordChanges(control);
+
+	positionAt(positions, 2).focus();
+	pressKey(positionAt(positions, 2), 'ArrowDown');
+	expect(control.value).toBe('off');
+	expect(document.activeElement).toBe(positions[0]);
+
+	pressKey(positionAt(positions, 0), 'ArrowUp');
+	expect(control.value).toBe('auto');
+	expect(changes).toEqual(['off', 'auto']);
+});
+
+test('a wrap never lands on a momentary end, so the arrow stops', async () => {
 	const { control, positions } = await mountSwitch('value="on"');
 	const changes = recordChanges(control);
 	const last = positionAt(positions, 2);

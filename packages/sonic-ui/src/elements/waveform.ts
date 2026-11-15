@@ -507,7 +507,7 @@ export class SonicWaveform extends SonicWaveElement<Colour, never, Numeric> {
 		return true;
 	}
 
-	// Before the first frame, the window a centerd playhead would draw
+	// Before the first frame, the window a centered playhead would draw
 	#drawnWindow(widthPx: number): { startSeconds: Seconds; zoom: PixelsPerSecond } {
 		const zoom = this.#drawn?.zoom ?? this.zoom;
 

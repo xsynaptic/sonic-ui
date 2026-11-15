@@ -32,7 +32,6 @@ type Host = SonicSegmented | SonicSwitch | SonicToggle;
 type Tag = 'sonic-segmented' | 'sonic-switch' | 'sonic-toggle';
 
 interface Case {
-	isWrapping: boolean;
 	options: fc.Arbitrary<Array<Option>>;
 	tag: Tag;
 }
@@ -40,7 +39,6 @@ interface Case {
 interface Mirror {
 	attributes: HTMLElement;
 	checked: boolean | undefined;
-	isWrapping: boolean;
 	options: ReadonlyArray<Option>;
 	value: string;
 }
@@ -66,9 +64,9 @@ const positionOptions = fc.oneof(
 );
 
 const cases: ReadonlyArray<Case> = [
-	{ isWrapping: true, options: optionsOf({ maxLength: 4, minLength: 2 }), tag: 'sonic-segmented' },
-	{ isWrapping: false, options: positionOptions, tag: 'sonic-toggle' },
-	{ isWrapping: false, options: positionOptions, tag: 'sonic-switch' },
+	{ options: optionsOf({ maxLength: 4, minLength: 2 }), tag: 'sonic-segmented' },
+	{ options: positionOptions, tag: 'sonic-toggle' },
+	{ options: positionOptions, tag: 'sonic-switch' },
 ];
 
 function stepsFor(tag: Tag): fc.Arbitrary<Array<Step<Write>>> {
@@ -131,7 +129,7 @@ function stepped(mirror: Mirror, from: number, direction: number): number {
 
 	for (let distance = 1; distance < count; distance += 1) {
 		const index = from + direction * distance;
-		const at = mirror.isWrapping ? (index + count) % count : index;
+		const at = (index + count) % count;
 
 		if (enabled.includes(at)) return at;
 	}
@@ -239,7 +237,7 @@ function checkDrawn(host: Host, mirror: Mirror, tag: Tag): void {
 	);
 }
 
-for (const { isWrapping, options, tag } of cases) {
+for (const { options, tag } of cases) {
 	test.prop([options, stepsFor(tag)], { numRuns: 800 })(
 		`${tag}: the chosen position is the last one written, keyed or clicked, whatever the order, and a connected control draws it`,
 		async (optionList, steps) => {
@@ -249,7 +247,6 @@ for (const { isWrapping, options, tag } of cases) {
 			const mirror: Mirror = {
 				attributes: document.createElement('div'),
 				checked: undefined,
-				isWrapping,
 				options: optionList,
 				value: '',
 			};

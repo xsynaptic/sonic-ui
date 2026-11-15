@@ -27,10 +27,6 @@ function doublePress(control: HTMLElement): void {
 	}
 }
 
-function typeKey(entry: HTMLInputElement, key: string): void {
-	entry.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key }));
-}
-
 test('it is a spinbutton with the stepped value and no orientation', () => {
 	const { control } = mountNumber('min="-20" max="80" step="2.5" value="31"');
 
@@ -83,7 +79,7 @@ test('a double press types in place, and Enter commits', () => {
 
 	entry.value = '98';
 	entry.dispatchEvent(new Event('input', { bubbles: true }));
-	typeKey(entry, 'Enter');
+	pressKey(entry, 'Enter');
 
 	expect(number.value).toBe(98);
 	expect(digits.textContent).toBe('98');
@@ -100,7 +96,7 @@ test('Escape closes the entry and keeps the value', () => {
 
 	pressKey(control, 'Enter');
 	entry.value = '75';
-	typeKey(entry, 'Escape');
+	pressKey(entry, 'Escape');
 
 	expect(number.value).toBe(40);
 	expect(events).toEqual([]);
@@ -183,7 +179,7 @@ test('Enter that confirms a composition leaves the entry open, and the next Ente
 	expect(entry.hidden).toBe(false);
 	expect(number.value).toBe(40);
 
-	typeKey(entry, 'Enter');
+	pressKey(entry, 'Enter');
 	expect(number.value).toBe(75);
 });
 

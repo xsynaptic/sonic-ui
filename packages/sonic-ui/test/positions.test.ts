@@ -33,6 +33,12 @@ test('a step toward a disabled end finds nothing when clamping and wraps past it
 	expect(stepFrom(positionsOf('x - x'), 1, { isWrapping: true, step: 1 })).toBe(1);
 });
 
+test('a wrap stops short of a momentary end, which its neighbour still steps onto', () => {
+	expect(stepFrom(positionsOf('m - -'), 2, { isWrapping: true, step: 1 })).toBe(2);
+	expect(stepFrom(positionsOf('- - m'), 0, { isWrapping: true, step: -1 })).toBe(0);
+	expect(stepFrom(positionsOf('m - -'), 1, { isWrapping: true, step: -1 })).toBe(0);
+});
+
 test('a step from no position starts at the near end, and a row with nothing enabled gives none', () => {
 	expect(stepFrom(positionsOf('- - -'), -1, { isWrapping: false, step: 1 })).toBe(0);
 	expect(stepFrom(positionsOf('x - -'), -1, { isWrapping: false, step: -1 })).toBeUndefined();

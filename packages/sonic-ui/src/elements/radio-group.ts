@@ -96,7 +96,7 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 				const next =
 					index === -1
 						? undefined
-						: keyTarget(this.positions(), index, { isWrapping: this.isWrapping(), key: event.key });
+						: keyTarget(this.positions(), index, { isWrapping: true, key: event.key });
 				if (next === undefined) return;
 
 				event.preventDefault();
@@ -122,10 +122,6 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 
 	protected isOptionDisabled(index: number): boolean {
 		return this.positions()[index]?.isDisabled !== false;
-	}
-
-	protected isWrapping(): boolean {
-		return true;
 	}
 
 	protected optionOf(target: EventTarget | null): HTMLButtonElement | undefined {
@@ -205,7 +201,7 @@ export abstract class SonicRadioGroupElement extends SonicFormElement {
 	}
 
 	protected stepFrom(from: number, step: number): number | undefined {
-		return stepFrom(this.positions(), from, { isWrapping: this.isWrapping(), step });
+		return stepFrom(this.positions(), from, { isWrapping: false, step });
 	}
 
 	#bindPress(group: HTMLElement, signal: AbortSignal): void {

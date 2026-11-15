@@ -227,7 +227,7 @@ test('a click with no pointer chooses its position, and the click a pointer send
 	expect(changes).toEqual(['b', 'a']);
 });
 
-test('the arrows stop at the ends rather than wrapping', async () => {
+test('the arrows wrap between the ends, both ways', async () => {
 	const { control, positions } = await mountToggle('value="b"');
 	const changes = recordChanges(control);
 	const last = positionAt(positions, 2);
@@ -236,11 +236,12 @@ test('the arrows stop at the ends rather than wrapping', async () => {
 	const event = pressKey(last, 'ArrowRight');
 
 	expect(event.defaultPrevented).toBe(true);
-	expect(changes).toEqual([]);
+	expect(changes).toEqual(['a']);
+	expect(document.activeElement).toBe(positions[0]);
 
-	pressKey(last, 'ArrowLeft');
-	expect(changes).toEqual(['off']);
-	expect(document.activeElement).toBe(positions[1]);
+	pressKey(positionAt(positions, 0), 'ArrowLeft');
+	expect(changes).toEqual(['a', 'b']);
+	expect(document.activeElement).toBe(last);
 });
 
 test('a disabled toggle ignores a press and a drag', async () => {

@@ -9,7 +9,7 @@ import {
 	FakeResizeObserver,
 	installCanvasFakes,
 } from './canvas-fakes.ts';
-import { mountControl, pointerAt, pressKey, recordEvents } from './helpers.ts';
+import { mountControl, pointerAt, pressKey, recordEvents, touchAt, wheelAt } from './helpers.ts';
 
 afterEach(() => {
 	document.body.replaceChildren();
@@ -182,7 +182,7 @@ test('Enter opens the typed entry and moves focus to it', () => {
 	expect(document.activeElement).toBe(entry);
 });
 
-test('with reduced-motion="scroll" the playhead stays centerd under reduced motion', () => {
+test('with reduced-motion="scroll" the playhead stays centered under reduced motion', () => {
 	const { flushFrames } = installCanvasFakes({ isReducedMotion: true });
 	const { control, waveform } = mountWaveform(
 		'max="300" reduced-motion="scroll" step="0" value="13.9"',
@@ -296,23 +296,6 @@ function zoomEvents(waveform: SonicWaveform): Array<number> {
 	});
 
 	return zooms;
-}
-
-// happy-dom's WheelEvent is a UIEvent and drops the modifier keys from its init
-function wheelAt(control: HTMLElement, init: WheelEventInit): WheelEvent {
-	const event = new WheelEvent('wheel', { bubbles: true, cancelable: true, ...init });
-
-	Object.defineProperties(event, {
-		ctrlKey: { value: init.ctrlKey === true },
-		metaKey: { value: init.metaKey === true },
-	});
-	control.dispatchEvent(event);
-
-	return event;
-}
-
-function touchAt(control: HTMLElement, type: string, [pointerId, clientX]: [number, number]): void {
-	pointerAt(control, type, { clientX, pointerId, pointerType: 'touch' });
 }
 
 test('a ctrl wheel zooms, is cancelled and fires sonic-zoom; a write to zoom fires nothing', () => {

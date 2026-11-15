@@ -1,5 +1,11 @@
 # @xsynaptic/sonic-ui
 
+## 0.29.2
+
+### Patch Changes
+
+- The arrows on a switch or toggle with labelled positions wrap from one end to the other, as in a radio group, except onto a momentary end; presses and drags still stop at the ends.
+
 ## 0.29.1
 
 ### Patch Changes

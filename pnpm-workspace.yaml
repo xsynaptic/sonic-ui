@@ -18,6 +18,12 @@ minimumReleaseAgeExclude:
 overrides:
   fallow-type-aware: '-'
 
+packageExtensions:
+  # Its 1.x emnapi core crashes on the 2.x beta runtime pnpm otherwise hands it
+  '@astrojs/astro2tsx':
+    dependencies:
+      '@emnapi/runtime': 1.11.3
+
 peerDependencyRules:
   allowedVersions:
     # eslint-plugin-jsx-a11y caps its eslint peer at ^9 but uses no APIs removed in ESLint 10

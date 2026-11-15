@@ -8,7 +8,7 @@ import {
 	zoomKeyFactor,
 } from '#lib/zoom-gesture.ts';
 
-import { pointerAt, pressKey } from './helpers.ts';
+import { pointerAt, pressKey, touchAt, wheelAt } from './helpers.ts';
 
 afterEach(() => {
 	document.body.replaceChildren();
@@ -67,23 +67,6 @@ function mountZoom(isZoomable = true): {
 	bindZoomKeys(control, target, controller.signal);
 
 	return { claims: () => claims, control, controller, gesture, state, zooms };
-}
-
-// happy-dom's WheelEvent is a UIEvent and drops the modifier keys from its init
-function wheelAt(control: HTMLElement, init: WheelEventInit): WheelEvent {
-	const event = new WheelEvent('wheel', { bubbles: true, cancelable: true, ...init });
-
-	Object.defineProperties(event, {
-		ctrlKey: { value: init.ctrlKey === true },
-		metaKey: { value: init.metaKey === true },
-	});
-	control.dispatchEvent(event);
-
-	return event;
-}
-
-function touchAt(control: HTMLElement, type: string, [pointerId, clientX]: [number, number]): void {
-	pointerAt(control, type, { clientX, pointerId, pointerType: 'touch' });
 }
 
 function gestureAt(control: HTMLElement, type: string, scale: number): Event {

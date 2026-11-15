@@ -26,7 +26,7 @@ test('at DPR 1.5 the pitch rounds in device pixels', () => {
 	expect(bars.at(-1)).toMatchObject({ width: 3, x: 295 });
 });
 
-test('a bar is at least a pixel tall, at most the box, and centerd in whole pixels', () => {
+test('a bar is at least a pixel tall, at most the box, and centered in whole pixels', () => {
 	const bars = stripBars([0, 0.5, 2], { dpr: 1, height: 47, width: 9 }, grid);
 
 	expect(bars).toEqual([
@@ -107,7 +107,7 @@ test('a played or scrub proportion that is not a number counts as the start', ()
 	]);
 });
 
-test('the empty groove spans the width, centerd in whole pixels, and a ratio of 0 draws none', () => {
+test('the empty groove spans the width, centered in whole pixels, and a ratio of 0 draws none', () => {
 	const size = { dpr: 2, height: 97, width: 604 };
 	const groove = (grooveRatio: number, grooveSize = 0): ReturnType<typeof stripGroove> =>
 		stripGroove(size, { grooveRatio, grooveSize });

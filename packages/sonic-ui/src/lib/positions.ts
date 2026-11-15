@@ -37,8 +37,9 @@ export function stepFrom(
 
 	for (const _ of positions) {
 		const next = index + step;
+		const wrapped = (next + count) % count;
 
-		index = isWrapping ? (next + count) % count : clamp(next, 0, count - 1);
+		index = isWrapping && !isMomentaryAt(positions, wrapped) ? wrapped : clamp(next, 0, count - 1);
 		if (positions[index]?.isDisabled === false) return index;
 	}
 
