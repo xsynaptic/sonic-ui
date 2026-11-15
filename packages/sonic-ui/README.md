@@ -36,6 +36,7 @@ import '@xsynaptic/sonic-ui/define';
 - A skin sheet does nothing until its class, `sonic-skin-<name>`, is on an ancestor. The skins are `slate`, `amber`, `ivory`, `lime` and `flat`. With no skin a control is bare, drawn in the text colour around it.
 - `./define` registers every control and `./define/<control>` registers one. `.` exports the classes and registers nothing.
 - Under a bundler that sets the `development` condition, as Vite's dev server does, the controls warn in the console about a missing sheet, a reset, a box property on a host and a child they do not use. Read the console before debugging.
+- jsdom is unsupported: it has no `slot.assign()` (checked on 31.0.1), so most controls throw as they connect. Test in happy-dom or a real browser.
 
 ## Contracts
 
