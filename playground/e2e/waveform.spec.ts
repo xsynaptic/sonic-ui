@@ -54,8 +54,21 @@ test("the wave's center paints the lit colour", { tag: '@mobile' }, async ({ pag
 	expectPixel(await pixelAt(canvas, await middleOf(canvas)), await paintedColour(canvas, lit));
 });
 
-// Full-scale peaks, so every row but the margins is wave; band 1 to 148.5 seconds, nothing to 149.5, band 2 after
-async function tintWaveform(waveform: Locator): Promise<void> {
+// Full-scale peaks fill every row but the margins, and half-scale RMS draws a body across about the middle half
+async function fillWaveform(waveform: Locator, rmsSeconds = 0): Promise<void> {
+	await waveform.evaluate((host: HTMLElementTagNameMap['sonic-waveform'], pairs) => {
+		host.style.setProperty('--sonic-waveform-edge-shade', 'initial');
+		host.peaks = {
+			pairsPerSecond: 10,
+			...(pairs > 0 ? { rms: new Int8Array(pairs).fill(64) } : {}),
+			samples: Int8Array.from({ length: 6000 }, (_sample, index) => (index % 2 ? 127 : -128)),
+		};
+	}, rmsSeconds * 10);
+}
+
+// Band 1 to 148.5 seconds, nothing to 149.5, band 2 after
+async function tintWaveform(waveform: Locator, rmsSeconds = 0): Promise<void> {
+	await fillWaveform(waveform, rmsSeconds);
 	await waveform.evaluate((host: HTMLElementTagNameMap['sonic-waveform']) => {
 		const levels = new Uint8Array(3000 * 2);
 
@@ -65,14 +78,12 @@ async function tintWaveform(waveform: Locator): Promise<void> {
 		}
 		host.style.setProperty('--sonic-waveform-band-1', 'rgb(255 0 0)');
 		host.style.setProperty('--sonic-waveform-band-2', 'oklch(0.6 0.2 260)');
-		host.style.setProperty('--sonic-waveform-edge-shade', 'initial');
-		host.peaks = {
-			pairsPerSecond: 10,
-			samples: Int8Array.from({ length: 6000 }, (_sample, index) => (index % 2 ? 127 : -128)),
-		};
 		host.bands = { bandCount: 2, framesPerSecond: 10, levels, minDecibels: -48 };
 	});
 }
+
+const bodyRow = 0.5;
+const peaksRow = 0.15;
 
 // The fixture draws 70 px a second around 150 seconds
 function columnAt(canvas: Locator, seconds: number): Promise<number> {
@@ -123,7 +134,7 @@ test(
 			const [low, bare, high] = await canvasPixels(canvas, columns);
 
 			expectPixel(low, await layered(canvas, [['rgb(255 0 0)', 1]]));
-			expectPixel(bare, await layered(canvas, [['--_sonic-waveform-wave', 1]]));
+			expectPixel(bare, await layered(canvas, [['--_sonic-waveform-base', 1]]));
 			// Hue only: the strongest channel of the token's colour goes to full
 			expect(high?.[2]).toBe(255);
 			expect(high?.[0]).toBeLessThan(high?.[1] ?? 0);
@@ -132,7 +143,7 @@ test(
 );
 
 test(
-	'a dimmed waveform lays its bands over the dimmed wave at three quarters, times the opacity token',
+	'a dimmed waveform drops its tint, and a band amount the consumer sets still holds there',
 	{ tag: '@mobile' },
 	async ({ page }) => {
 		const { canvas, waveform } = await openWaveform(page);
@@ -144,22 +155,229 @@ test(
 
 		await waveform.evaluate((host) => {
 			host.setAttribute('dimmed', '');
-			host.style.setProperty('--sonic-waveform-band-opacity', '0.8');
 		});
 		await expect(async () => {
-			const wave = await layered(canvas, [['--_sonic-waveform-wave', 1]]);
+			const wave = await layered(canvas, [['--_sonic-waveform-base', 1]]);
 
 			expect(wave).not.toEqual(lit);
+			expectPixel(await pixelAt(canvas, column), wave);
+		}).toPass();
+		await waveform.evaluate((host) => {
+			host.style.setProperty('--sonic-waveform-band-amount', '0.8');
+		});
+		await expect(async () => {
 			expectPixel(
 				await pixelAt(canvas, column),
 				await layered(canvas, [
-					['--_sonic-waveform-wave', 1],
-					['rgb(255 0 0)', 0.6],
+					['--_sonic-waveform-base', 1],
+					['rgb(255 0 0)', 0.8],
 				]),
 			);
 		}).toPass();
 	},
 );
+
+test(
+	'with RMS the body paints the base colour and the zone out to the peaks the peaks colour, until the RMS ends',
+	{ tag: '@mobile' },
+	async ({ page }) => {
+		const { canvas, waveform } = await openWaveform(page);
+
+		await fillWaveform(waveform, 149);
+
+		const withRms = await columnAt(canvas, 148.2);
+		const pastRms = await columnAt(canvas, 150);
+
+		await expect(async () => {
+			const [base, peaks] = await Promise.all([
+				layered(canvas, [['--_sonic-waveform-base', 1]]),
+				layered(canvas, [['--_sonic-waveform-peaks', 1]]),
+			]);
+			const [body] = await canvasPixels(canvas, [withRms], bodyRow);
+			const [around, bare] = await canvasPixels(canvas, [withRms, pastRms], peaksRow);
+
+			expect(peaks).not.toEqual(base);
+			expectPixel(body, base);
+			expectPixel(around, peaks);
+			expectPixel(bare, base);
+		}).toPass();
+	},
+);
+
+test(
+	'the peaks zone takes its own band amount and band colour, and an amount of 0 leaves it solid',
+	{ tag: '@mobile' },
+	async ({ page }) => {
+		const { canvas, waveform } = await openWaveform(page);
+
+		await tintWaveform(waveform, 300);
+
+		const column = await columnAt(canvas, 148.2);
+		const zones = (): Promise<Array<Pixel>> =>
+			Promise.all(
+				[bodyRow, peaksRow].map(async (row) => {
+					const [pixel] = await canvasPixels(canvas, [column], row);
+
+					return pixel ?? [0, 0, 0, 0];
+				}),
+			);
+		const red = await layered(canvas, [['rgb(255 0 0)', 1]]);
+
+		await expect(async () => {
+			const [body, around] = await zones();
+
+			expectPixel(body, red);
+			expectPixel(
+				around,
+				await layered(canvas, [
+					['--_sonic-waveform-peaks', 1],
+					['rgb(255 0 0)', 0.5],
+				]),
+			);
+		}).toPass();
+		await waveform.evaluate((host: HTMLElementTagNameMap['sonic-waveform']) => {
+			host.style.setProperty('--sonic-waveform-peaks-band-1', 'rgb(0 0 255)');
+			host.style.setProperty('--sonic-waveform-peaks-band-amount', '1');
+			host.repaint();
+		});
+		await expect(async () => {
+			const [body, around] = await zones();
+
+			expectPixel(body, red);
+			expectPixel(around, await layered(canvas, [['rgb(0 0 255)', 1]]));
+		}).toPass();
+		await waveform.evaluate((host) => {
+			host.style.setProperty('--sonic-waveform-peaks-band-amount', '0');
+		});
+		await expect(async () => {
+			const [body, around] = await zones();
+
+			expectPixel(body, red);
+			expectPixel(around, await layered(canvas, [['--_sonic-waveform-peaks', 1]]));
+		}).toPass();
+	},
+);
+
+test.describe('a state with RMS', () => {
+	for (const [state, selector] of [
+		['dimmed', '[dimmed]'],
+		['disabled', ':disabled'],
+	] as const) {
+		test(
+			`${state} draws flat, holds a consumer's tokens, and a token written for ${state} wins there`,
+			{ tag: '@mobile' },
+			async ({ page }) => {
+				const { canvas, waveform } = await openWaveform(page);
+
+				await tintWaveform(waveform, 300);
+
+				const column = await columnAt(canvas, 148.2);
+				const zones = async (): Promise<Array<Pixel | undefined>> => [
+					...(await canvasPixels(canvas, [column], bodyRow)),
+					...(await canvasPixels(canvas, [column], peaksRow)),
+				];
+
+				await waveform.evaluate((host, attribute) => {
+					host.setAttribute(attribute, '');
+				}, state);
+				const untinted = await columnAt(canvas, 149);
+
+				await expect(async () => {
+					const [body, around] = await zones();
+					const [flat] = await canvasPixels(canvas, [untinted], bodyRow);
+
+					expect(flat?.[3]).toBe(255);
+					expectPixel(body, flat ?? [0, 0, 0, 0]);
+					expectPixel(around, flat ?? [0, 0, 0, 0]);
+				}).toPass();
+				await page.addStyleTag({
+					content: [
+						'#waveform { --sonic-waveform-base: rgb(255 255 0); --sonic-waveform-peaks: rgb(0 0 255); --sonic-waveform-peaks-band-amount: 0.5 }',
+						`#waveform${selector} { --sonic-waveform-peaks: rgb(0 128 0) }`,
+					].join('\n'),
+				});
+				await expect(async () => {
+					const [body, around] = await zones();
+
+					expectPixel(body, await layered(canvas, [['rgb(255 255 0)', 1]]));
+					expectPixel(
+						around,
+						await layered(canvas, [
+							['rgb(0 128 0)', 1],
+							['rgb(255 0 0)', 0.5],
+						]),
+					);
+				}).toPass();
+			},
+		);
+	}
+});
+
+test(
+	'a tint both zones share at one amount covers the body and the peaks zone alike',
+	{ tag: '@mobile' },
+	async ({ page }) => {
+		const { canvas, waveform } = await openWaveform(page);
+
+		await tintWaveform(waveform, 300);
+		await waveform.evaluate((host) => {
+			host.style.setProperty('--sonic-waveform-peaks-band-amount', '1');
+		});
+
+		const column = await columnAt(canvas, 148.2);
+		const red = await layered(canvas, [['rgb(255 0 0)', 1]]);
+
+		await expect(async () => {
+			const [body] = await canvasPixels(canvas, [column], bodyRow);
+			const [around] = await canvasPixels(canvas, [column], peaksRow);
+
+			expectPixel(body, red);
+			expectPixel(around, red);
+		}).toPass();
+	},
+);
+
+// The wave's top edge falls a quarter of the way into a pixel row, leaving that pixel three quarters covered
+test('where the body reaches the peaks, or there is no RMS, the wave edge is the base colour with no rim', async ({
+	page,
+}) => {
+	const { canvas, waveform } = await openWaveform(page);
+	const edgeRow = 0.2;
+
+	await waveform.evaluate((host: HTMLElementTagNameMap['sonic-waveform'], rowFraction) => {
+		const canvasElement = host.querySelector('canvas');
+		if (!canvasElement) throw new Error('No canvas');
+
+		const center = canvasElement.height / 2;
+		const edge = Math.floor(canvasElement.height * rowFraction) + 0.25;
+		const amplitude = (center - edge) / (0.94 * center);
+
+		host.style.setProperty('--sonic-waveform-edge-shade', 'initial');
+		host.peaks = {
+			pairsPerSecond: 10,
+			rms: new Float32Array(1490).fill(amplitude),
+			samples: Float32Array.from({ length: 6000 }, (_sample, index) =>
+				index % 2 ? amplitude : -amplitude,
+			),
+		};
+	}, edgeRow);
+
+	const columns = [await columnAt(canvas, 148.2), await columnAt(canvas, 150)];
+
+	await expect(async () => {
+		const base = await layered(canvas, [['--_sonic-waveform-base', 1]]);
+
+		const edges = await canvasPixels(canvas, columns, edgeRow);
+
+		for (const pixel of edges) {
+			expect(pixel[3]).toBeGreaterThan(0);
+			expect(pixel[3]).toBeLessThan(255);
+			for (const channel of [0, 1, 2]) {
+				expect(Math.abs((pixel[channel] ?? 0) - (base[channel] ?? 0))).toBeLessThanOrEqual(3);
+			}
+		}
+	}).toPass();
+});
 
 test(
 	'normalize 0 keeps a band at its own colour, and the token repaints with no repaint()',

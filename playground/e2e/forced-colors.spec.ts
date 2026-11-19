@@ -446,7 +446,7 @@ test('a held or disabled point keeps a Canvas core under its ring, as does a hel
 	}
 });
 
-test('a wavestrip plays in opaque Highlight, and a waveform and a spectrum paint in opaque CanvasText', async ({
+test('a wavestrip plays in opaque Highlight, and a waveform, its RMS body too, and a spectrum paint in opaque CanvasText', async ({
 	page,
 }) => {
 	const [highlight, canvasText] = [
@@ -469,6 +469,11 @@ test('a wavestrip plays in opaque Highlight, and a waveform and a spectrum paint
 	await page.locator('#waveform').evaluate((host: HTMLElementTagNameMap['sonic-waveform']) => {
 		host.style.setProperty('--sonic-waveform-band-1', 'rgb(255 0 0)');
 		host.style.setProperty('--sonic-waveform-edge-shade', '0.8');
+		host.peaks = {
+			pairsPerSecond: 10,
+			rms: new Int8Array(3000).fill(64),
+			samples: Int8Array.from({ length: 6000 }, (_sample, index) => (index % 2 ? 127 : -128)),
+		};
 		host.bands = { bandCount: 1, framesPerSecond: 10, levels: new Uint8Array(3000).fill(255) };
 	});
 
@@ -476,7 +481,16 @@ test('a wavestrip plays in opaque Highlight, and a waveform and a spectrum paint
 	const middle = await middleOf(waveform);
 
 	await expect(async () => {
-		expectPixel(await pixelAt(waveform, middle), wave);
+		const [body, peaks] = await Promise.all(
+			[0.5, 0.15].map(async (row) => {
+				const [pixel] = await canvasPixels(waveform, [middle], row);
+
+				return pixel;
+			}),
+		);
+
+		expectPixel(body, wave);
+		expectPixel(peaks, wave);
 	}).toPass();
 
 	await spectrum.scrollIntoViewIfNeeded();

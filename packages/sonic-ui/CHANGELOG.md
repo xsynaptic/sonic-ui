@@ -1,5 +1,13 @@
 # @xsynaptic/sonic-ui
 
+## 0.30.0
+
+### Minor Changes
+
+- Waveform: send RMS with the peaks (`WaveformPeaks.rms`, linear, one value per pair) and the waveform draws it as a body inside them. `--sonic-waveform-base` colours the body and `--sonic-waveform-peaks` the area around it; both should be opaque. Each band tint token has a `peaks-` twin for that area which falls back to it, except `--sonic-waveform-peaks-band-amount`, which defaults to 0.5. Like a band colour, `--sonic-waveform-peaks-band-N` needs `repaint()` after a change.
+
+  Breaking: `--sonic-waveform-band-opacity` is renamed `--sonic-waveform-band-amount`. Dimmed and disabled waveforms no longer scale the tint; they default both band amounts to 0, and a token you set applies in every state.
+
 ## 0.29.2
 
 ### Patch Changes

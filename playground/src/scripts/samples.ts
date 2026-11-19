@@ -4,7 +4,7 @@ import { frameLoop } from '#scripts/frame-loop.ts';
 import { readRegions } from '#scripts/read-regions.ts';
 import { emptyLevels, fillLevels, framesPerSecond, minDecibels } from '#scripts/seeded-bands.ts';
 import { seededPeaks } from '#scripts/seeded-peaks.ts';
-import { emptySamples, fillSamples, pairsPerSecond } from '#scripts/seeded-samples.ts';
+import { emptyRms, emptySamples, fillSamples, pairsPerSecond } from '#scripts/seeded-samples.ts';
 
 const run = document.querySelector<SonicButton>('[data-run]');
 
@@ -44,15 +44,19 @@ function tint(waveform: SonicWaveform, bandCount: number): void {
 
 for (const waveform of document.querySelectorAll<SonicWaveform>('sonic-waveform[data-samples]')) {
 	const samples = emptySamples(waveform.max);
+	const rms = waveform.dataset.rms === undefined ? undefined : emptyRms(waveform.max);
 	const peaks = seededPeaks(Number(waveform.dataset.samples));
 	const pending = readRegions(waveform.dataset.pending);
 	let from = 0;
 
 	for (const [start, end] of [...pending, [waveform.max, waveform.max] as const]) {
-		fillSamples(samples, peaks, [from, Math.floor(start * pairsPerSecond)]);
+		fillSamples(rms ? { rms, samples } : { samples }, peaks, [
+			from,
+			Math.floor(start * pairsPerSecond),
+		]);
 		from = Math.ceil(end * pairsPerSecond);
 	}
-	waveform.peaks = { pairsPerSecond, samples };
+	waveform.peaks = rms ? { pairsPerSecond, rms, samples } : { pairsPerSecond, samples };
 	waveform.pending = pending;
 	if (waveform.dataset.bands !== undefined) tint(waveform, Number(waveform.dataset.bands));
 	if (waveform.playing) play(waveform);

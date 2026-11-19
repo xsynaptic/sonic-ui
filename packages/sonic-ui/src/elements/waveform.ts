@@ -6,7 +6,7 @@ import type { Point } from '#lib/marker-band.ts';
 import type { PeaksRequest } from '#lib/peaks-request.ts';
 import type { TimeRegions } from '#lib/time-regions.ts';
 import type { Milliseconds, PixelsPerSecond, Seconds } from '#lib/units.ts';
-import type { BandChannels, WaveformBands } from '#lib/waveform-bands.ts';
+import type { WaveformBands } from '#lib/waveform-bands.ts';
 import type { WaveformPeaks } from '#lib/waveform-buckets.ts';
 import type { WaveformTint } from '#lib/waveform-scene.ts';
 import type { ZoomGesture } from '#lib/zoom-gesture.ts';
@@ -265,7 +265,7 @@ export class SonicWaveform extends SonicWaveElement<Colour, never, Numeric> {
 
 	protected readonly sizeProperty = '--_sonic-waveform-size';
 
-	#bandColours: Array<BandChannels | undefined> = [];
+	#bandColours: Pick<WaveformTint, 'base' | 'peaks'> | undefined;
 
 	#bands: undefined | WaveformBands;
 
@@ -564,19 +564,24 @@ export class SonicWaveform extends SonicWaveElement<Colour, never, Numeric> {
 	#readBandColours(
 		strip: CanvasRenderingContext2D,
 		bandCount: number,
-	): Array<BandChannels | undefined> {
-		const probes = Array.from({ length: bandCount }, (_probe, band) => {
+	): Pick<WaveformTint, 'base' | 'peaks'> {
+		const bands = Array.from({ length: bandCount }, (_band, index) => String(index + 1));
+		const probes = [
+			...bands.map((band) => `var(--sonic-waveform-band-${band}, transparent)`),
+			...bands.map(
+				(band) =>
+					`var(--sonic-waveform-peaks-band-${band}, var(--sonic-waveform-band-${band}, transparent))`,
+			),
+		].map((colour) => {
 			const probe = document.createElement('div');
 
-			probe.style.setProperty(
-				'color',
-				`var(--sonic-waveform-band-${String(band + 1)}, transparent)`,
-			);
+			probe.style.setProperty('color', colour);
 
 			return probe;
 		});
+		const read = this.#readProbes(probes).map((colour) => bandChannels(strip, colour));
 
-		return this.#readProbes(probes).map((colour) => bandChannels(strip, colour));
+		return { base: read.slice(0, bandCount), peaks: read.slice(bandCount) };
 	}
 
 	#readKindColours(): Map<string, string> {
@@ -621,12 +626,12 @@ export class SonicWaveform extends SonicWaveElement<Colour, never, Numeric> {
 
 		this.#strip = strip;
 
-		if (isRebuilt || this.#bandColours.length !== table.bandCount) {
+		if (isRebuilt || this.#bandColours?.base.length !== table.bandCount) {
 			strip.canvas.height = 1;
 			this.#bandColours = this.#readBandColours(strip, table.bandCount);
 		}
 
-		return { colours: this.#bandColours, strip, table };
+		return { ...this.#bandColours, strip, table };
 	}
 
 	#zoomTo(target: number): void {

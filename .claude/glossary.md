@@ -150,6 +150,14 @@ The words this library uses for its controls, their parts and their values. Wher
 
 **Peaks**: The amplitude summary, worked out ahead of time, that a wave control draws. Bands sit beside them and colour what they draw.
 
+**RMS**: The root-mean-square level of each pair of peaks, worked out ahead of time with them. A waveform draws it as the body. _Avoid_: Loudness (a weighted measure such as LUFS)
+
+**Body** (of a waveform): The shape a waveform draws from its RMS, inside the peaks.
+
+**Base** (zone of a waveform): The body, or the whole wave where there is no RMS. The other zone is the peaks zone.
+
+**Peaks** (zone of a waveform): The area between the body and the edge of the peaks, in a colour of its own. Say peaks zone wherever the data could be meant.
+
 **Band**: One of the frequency ranges levels are split into: a wave's, with a level per band per frame, or a spectrum's, drawn as a bar each. _Avoid_: Bin (that is one frequency of a spectrum), zone (that is a stretch of a level display)
 
 **Normalize**: To scale a band mix so that its strongest channel is at full, as peak normalising does a signal. _Avoid_: Lift (in grading that raises the shadows)

@@ -3,10 +3,18 @@ export interface WaveformPeaks {
 	channels?: number;
 	fullScale?: number;
 	pairsPerSecond: number;
+	/** One linear RMS value per pair, mono, on the same scale as `samples` */
+	rms?: Float32Array | Int8Array | Int16Array;
 	samples: Float32Array | Int8Array | Int16Array;
 }
 
+interface WaveformBody {
+	high: number;
+	low: number;
+}
+
 interface WaveformBucket {
+	body: undefined | WaveformBody;
 	fromPair: number;
 	high: number;
 	low: number;
@@ -27,16 +35,19 @@ function fullScaleOf({ fullScale, samples }: WaveformPeaks): number {
 	return samples instanceof Int16Array ? 32_768 : 1;
 }
 
+function pairsIn(peaks: WaveformPeaks): number {
+	return Math.floor(peaks.samples.length / (Math.max(1, peaks.channels ?? 1) * 2));
+}
+
 function foldPairs(peaks: WaveformPeaks, fromPair: number, toPair: number): [number, number] {
 	const { samples } = peaks;
 	const channels = Math.max(1, peaks.channels ?? 1);
 	const stride = channels * 2;
-	const pairsTotal = Math.floor(samples.length / stride);
 	const fullScale = fullScaleOf(peaks);
 	let low = 0;
 	let high = 0;
 
-	for (let pair = Math.max(0, fromPair); pair < Math.min(pairsTotal, toPair); pair += 1) {
+	for (let pair = Math.max(0, fromPair); pair < Math.min(pairsIn(peaks), toPair); pair += 1) {
 		for (let channel = 0; channel < channels; channel += 1) {
 			const at = pair * stride + channel * 2;
 
@@ -46,6 +57,19 @@ function foldPairs(peaks: WaveformPeaks, fromPair: number, toPair: number): [num
 	}
 
 	return [low / fullScale, high / fullScale];
+}
+
+function foldRms(peaks: WaveformPeaks, fromPair: number, toPair: number): number | undefined {
+	const { rms } = peaks;
+	const from = Math.max(0, fromPair);
+	const to = Math.min(pairsIn(peaks), toPair);
+	if (!rms || to <= from || to > rms.length) return undefined;
+
+	let power = 0;
+
+	for (let pair = from; pair < to; pair += 1) power += (rms[pair] ?? 0) ** 2;
+
+	return Math.sqrt(power / (to - from)) / fullScaleOf(peaks);
 }
 
 // Keyed to absolute pairs; keyed to the window, the same samples re-bucket every frame and judder
@@ -64,8 +88,12 @@ export function waveformBuckets(peaks: WaveformPeaks, view: BucketView): Array<W
 		const fromPair = (first + index) * pairs;
 		const toPair = fromPair + pairs;
 		const [low, high] = foldPairs(peaks, fromPair, toPair);
+		const rms = foldRms(peaks, fromPair, toPair);
+		// RMS and peaks are rounded separately, so RMS can land a step past a peak
+		const body =
+			rms === undefined ? undefined : { high: Math.min(high, rms), low: Math.max(low, -rms) };
 
-		buckets.push({ fromPair, high, low, toPair, x: (fromPair - openingPair) * pxPerPair });
+		buckets.push({ body, fromPair, high, low, toPair, x: (fromPair - openingPair) * pxPerPair });
 	}
 
 	return buckets;

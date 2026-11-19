@@ -33,7 +33,7 @@ interface BandView {
 	width: number;
 }
 
-interface BandStrip {
+export interface BandStrip {
 	count: number;
 	groupWidth: number;
 	pixels: Uint8ClampedArray<ArrayBuffer>;

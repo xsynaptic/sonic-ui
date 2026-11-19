@@ -110,9 +110,10 @@ export function installCanvasFakes({ isReducedMotion = false } = {}): {
 	vi.stubGlobal(
 		'Path2D',
 		class {
-			roundRect(): void {
-				// Bar geometry is tested through `stripBars`
-			}
+			closePath = ignore;
+			lineTo = ignore;
+			moveTo = ignore;
+			roundRect = ignore;
 		},
 	);
 	vi.stubGlobal('matchMedia', (media: string) => {

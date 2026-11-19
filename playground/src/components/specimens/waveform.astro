@@ -5,6 +5,7 @@ import ZoomOut from '@lucide/astro/icons/zoom-out';
 import Cell from '#components/specimens/cell.astro';
 import Section from '#components/specimens/section.astro';
 import SpecimenGrid from '#components/specimens/specimen-grid.astro';
+import { tonalBands } from '#scripts/specimens/tonal-bands.ts';
 
 interface Wave {
 	bands?: number;
@@ -18,6 +19,7 @@ interface Wave {
 	label: string;
 	markers?: string;
 	pending?: string;
+	rms?: boolean;
 	seed: number;
 	sizeClass?: string;
 	style?: string;
@@ -31,15 +33,6 @@ function ramp(bandCount: number): string {
 		return `--sonic-waveform-band-${String(band + 1)}: oklch(0.75 0.19 ${String(hue)})`;
 	}).join('; ');
 }
-
-const tonal = [
-	'--sonic-waveform-band-1: oklch(0.36 0.03 255)',
-	'--sonic-waveform-band-2: oklch(0.64 0.015 255)',
-	'--sonic-waveform-band-3: oklch(0.96 0 0)',
-	'--sonic-waveform-band-normalize: 0',
-	'--sonic-waveform-band-contrast: 2',
-	'--sonic-waveform-band-tilt: 6',
-].join('; ');
 
 const groups: Array<{ hasZoom?: boolean; title: string; waves: Array<Wave> }> = [
 	{
@@ -69,7 +62,23 @@ const groups: Array<{ hasZoom?: boolean; title: string; waves: Array<Wave> }> = 
 				isPlaying: true,
 				label: 'Tonal',
 				seed: 28,
-				style: tonal,
+				style: tonalBands,
+			},
+		],
+	},
+	{
+		title: 'RMS',
+		waves: [
+			{ id: 'waveform-rms', isPlaying: true, label: 'Master', rms: true, seed: 31 },
+			{
+				bands: 3,
+				hasGlass: true,
+				id: 'waveform-rms-tonal',
+				isPlaying: true,
+				label: 'Tonal master',
+				rms: true,
+				seed: 33,
+				style: tonalBands,
 			},
 		],
 	},
@@ -94,8 +103,15 @@ const groups: Array<{ hasZoom?: boolean; title: string; waves: Array<Wave> }> = 
 		title: 'States',
 		waves: [
 			{ id: 'waveform-pending', label: 'Pending', pending: '151 162', seed: 9 },
-			{ bands: 3, id: 'waveform-dimmed', isDimmed: true, label: 'Dimmed', seed: 24 },
-			{ bands: 3, id: 'waveform-disabled', isDisabled: true, label: 'Disabled', seed: 25 },
+			{ bands: 3, id: 'waveform-dimmed', isDimmed: true, label: 'Dimmed', rms: true, seed: 24 },
+			{
+				bands: 3,
+				id: 'waveform-disabled',
+				isDisabled: true,
+				label: 'Disabled',
+				rms: true,
+				seed: 25,
+			},
 		],
 	},
 ];
@@ -114,6 +130,7 @@ const groups: Array<{ hasZoom?: boolean; title: string; waves: Array<Wave> }> = 
 							data-format="clock-tenths"
 							data-markers={wave.markers ?? '146=Intro 151.5=Second_track 158=Outro~'}
 							data-pending={wave.pending}
+							data-rms={wave.rms}
 							data-samples={wave.seed}
 							dimmed={wave.isDimmed}
 							disabled={wave.isDisabled}

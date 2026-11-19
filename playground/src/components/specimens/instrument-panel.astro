@@ -5,6 +5,7 @@ import Square from '@lucide/astro/icons/square';
 import Cell from '#components/specimens/cell.astro';
 import FilterModes from '#components/specimens/filter-modes.astro';
 import MuteButton from '#components/specimens/mute-button.astro';
+import { tonalBands } from '#scripts/specimens/tonal-bands.ts';
 
 const groupClass = 'sonic-panel flex flex-col gap-4 p-4';
 const titleClass =
@@ -238,11 +239,14 @@ const titleClass =
 				<sonic-waveform
 					aria-labelledby="panel-detail"
 					class="[--sonic-waveform-length:12rem] [--sonic-waveform-size:4rem]"
+					data-bands="3"
 					data-markers="40 95 180"
+					data-rms={true}
 					data-samples="6"
 					max="240"
 					readout={true}
 					step="0"
+					style={tonalBands}
 					value="70"
 				></sonic-waveform>
 			</Cell>

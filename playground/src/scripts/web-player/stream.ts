@@ -198,7 +198,7 @@ function hasLandedSamples(player: Player, elapsedSeconds: number): boolean {
 		player.chunks.set(chunk, left);
 		if (left > 0) continue;
 
-		fillSamples(player.samples, trackOf(player).peaks, [
+		fillSamples({ samples: player.samples }, trackOf(player).peaks, [
 			Math.floor(chunk * chunkSeconds * pairsPerSecond),
 			Math.ceil((chunk + 1) * chunkSeconds * pairsPerSecond),
 		]);

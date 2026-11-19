@@ -1,4 +1,5 @@
-import { expect, test } from 'vitest';
+import { fc, test } from '@fast-check/vitest';
+import { assert, expect } from 'vitest';
 
 import type { WaveformPeaks } from '#lib/waveform-buckets.ts';
 
@@ -152,3 +153,143 @@ test('at one and a half pairs a pixel every bucket holds two whole pairs, a pixe
 	}
 	expect(buckets.find(({ fromPair }) => fromPair === 100)?.x).toBeCloseTo(0, 9);
 });
+
+function loud(pairs: number, channels = 1): Int8Array {
+	return Int8Array.from({ length: pairs * channels * 2 }, (_sample, index) =>
+		index % 2 === 0 ? -128 : 127,
+	);
+}
+
+function bodies(
+	peaks: Omit<WaveformPeaks, 'pairsPerSecond'>,
+	pairsPerPixel: number,
+	pairs: number,
+): Array<unknown> {
+	const buckets = waveformBuckets(
+		{ ...peaks, pairsPerSecond },
+		{
+			pixelsPerSecond: pairsPerSecond / pairsPerPixel,
+			startSeconds: 0,
+			width: pairs / pairsPerPixel,
+		},
+	);
+
+	return Array.from(
+		{ length: pairs / pairsPerPixel },
+		(_bucket, index) => buckets.find(({ fromPair }) => fromPair === index * pairsPerPixel)?.body,
+	);
+}
+
+test('a bucket of several pairs folds their power, not their level', () => {
+	const peaks = { fullScale: 128, rms: new Int8Array([0, 0, 0, 64, 0, 64]), samples: loud(6) };
+
+	expect(bodies(peaks, 4, 4)).toEqual([{ high: 0.25, low: -0.25 }]);
+	expect(bodies(peaks, 2, 6)[2]).toEqual({ high: 0.25 * Math.SQRT2, low: -0.25 * Math.SQRT2 });
+});
+
+test.each<[string, Pick<WaveformPeaks, 'fullScale' | 'rms' | 'samples'>]>([
+	['8-bit', { rms: new Int8Array([64]), samples: loud(1) }],
+	['16-bit', { rms: new Int16Array([16_384]), samples: new Int16Array([-32_768, 32_767]) }],
+	['float', { rms: new Float32Array([0.5]), samples: new Float32Array([-1, 1]) }],
+	[
+		'float with a full scale',
+		{ fullScale: 2, rms: new Float32Array([1]), samples: new Float32Array([-2, 2]) },
+	],
+	[
+		'8-bit with a full scale',
+		{ fullScale: 64, rms: new Int8Array([32]), samples: new Int8Array([-64, 64]) },
+	],
+])('%s RMS reads on the scale of its samples', (_name, peaks) => {
+	expect(bodies(peaks, 1, 1)).toEqual([{ high: 0.5, low: -0.5 }]);
+});
+
+test('with two channels the RMS stays one value a pair', () => {
+	const peaks = { channels: 2, rms: new Int8Array([64, 32, 16]), samples: loud(3, 2) };
+
+	expect(bodies(peaks, 1, 3)).toEqual([
+		{ high: 0.5, low: -0.5 },
+		{ high: 0.25, low: -0.25 },
+		{ high: 0.125, low: -0.125 },
+	]);
+});
+
+test('silence has a body of nothing, while pairs past a short RMS, or no RMS, have no body', () => {
+	const short = { rms: new Int8Array([0, 64, 64]), samples: loud(6) };
+
+	expect(bodies(short, 1, 6)).toEqual([
+		{ high: 0, low: -0 },
+		{ high: 0.5, low: -0.5 },
+		{ high: 0.5, low: -0.5 },
+		undefined,
+		undefined,
+		undefined,
+	]);
+	const [opening, ...rest] = bodies(short, 2, 6) as Array<undefined | { high: number }>;
+
+	expect(opening?.high).toBeCloseTo(0.5 / Math.SQRT2, 12);
+	expect(rest).toEqual([undefined, undefined]);
+	expect(bodies({ samples: loud(2) }, 1, 2)).toEqual([undefined, undefined]);
+});
+
+test('a bucket across the end of two-channel peaks folds the RMS of the pairs that exist', () => {
+	const peaks = { channels: 2, rms: new Int8Array([0, 0, 64]), samples: loud(3, 2) };
+
+	expect(bodies(peaks, 2, 4)[1]).toEqual({ high: 0.5, low: -0.5 });
+});
+
+test('an RMS above its peaks is held to them on each side', () => {
+	const peaks = { rms: new Int8Array([64]), samples: new Int8Array([-16, 32]) };
+
+	expect(bodies(peaks, 1, 1)).toEqual([{ high: 0.25, low: -0.125 }]);
+});
+
+const pairCount = 24;
+
+test.prop([
+	fc.record({
+		channels: fc.constantFrom(1, 2),
+		extremes: fc.array(fc.integer({ max: 127, min: -128 }), {
+			maxLength: pairCount * 4,
+			minLength: pairCount * 4,
+		}),
+		levels: fc.array(fc.integer({ max: 127, min: 0 }), {
+			maxLength: pairCount,
+			minLength: pairCount,
+		}),
+		pairsPerPixel: fc.constantFrom(1, 3, 4),
+	}),
+])(
+	'a body sits inside its peaks, and within the RMS of its own pairs',
+	({ channels, extremes, levels, pairsPerPixel }) => {
+		const samples = Int8Array.from(extremes.slice(0, pairCount * channels * 2));
+		const peaks = {
+			channels,
+			fullScale: 128,
+			pairsPerSecond,
+			rms: Int8Array.from(levels),
+			samples,
+		};
+		const buckets = waveformBuckets(peaks, {
+			pixelsPerSecond: pairsPerSecond / pairsPerPixel,
+			startSeconds: 0,
+			width: pairCount / pairsPerPixel,
+		});
+
+		for (const { body, fromPair, high, low, toPair } of buckets) {
+			if (fromPair < 0 || toPair > pairCount) {
+				expect(body).toBeUndefined();
+				continue;
+			}
+
+			const own = levels.slice(fromPair, toPair);
+			const [quietest, loudest] = [Math.min(...own) / 128, Math.max(...own) / 128];
+
+			assert(body);
+			expect(body.low).toBeGreaterThanOrEqual(low);
+			expect(body.high).toBeLessThanOrEqual(high);
+			expect(body.high).toBeLessThanOrEqual(loudest + 1e-12);
+			expect(body.high).toBeGreaterThanOrEqual(Math.min(high, quietest) - 1e-12);
+			expect(body.low).toBeLessThanOrEqual(-Math.min(-low, quietest) + 1e-12);
+		}
+	},
+);
