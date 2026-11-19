@@ -1,4 +1,4 @@
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, assert, expect, test, vi } from 'vitest';
 
 import type { SonicWaveform } from '#elements/waveform.ts';
 
@@ -25,7 +25,7 @@ function mountWaveform(attributes: string): { control: HTMLElement; waveform: So
 
 function boxCanvas(control: HTMLElement): void {
 	const canvas = control.querySelector('canvas');
-	if (!canvas) throw new Error('The waveform has no canvas');
+	assert(canvas, 'The waveform has no canvas');
 
 	vi.spyOn(canvas, 'getBoundingClientRect').mockReturnValue(new DOMRect(40, 0, 490, 96));
 }
@@ -86,7 +86,7 @@ test('a frame where nothing moved writes nothing to the ghost', () => {
 	const { flushFrames } = installCanvasFakes();
 	const { control } = mountWaveform('max="300" playing step="0" value="100"');
 	const ghost = control.querySelector<HTMLElement>('.sonic-waveform-ghost');
-	if (!ghost) throw new Error('The waveform has no ghost');
+	assert(ghost, 'The waveform has no ghost');
 
 	const observer = new MutationObserver(() => {
 		// Read through `takeRecords`
@@ -231,7 +231,7 @@ test('a waveform that opens out of view reports the marker it starts on', () => 
 
 function countPaints(waveform: SonicWaveform): () => number {
 	const context = waveform.querySelector('canvas')?.getContext('2d');
-	if (!context) throw new Error('The waveform has no canvas context');
+	assert(context, 'The waveform has no canvas context');
 
 	const cleared = vi.spyOn(context, 'clearRect');
 
@@ -393,10 +393,11 @@ test('with no formatter set, a waveform shows, types and speaks a clock', () => 
 
 	const { control, waveform } = mountWaveform('max="300" step="0" value="83.47"');
 	const entry = control.querySelector('input');
+	assert(entry, 'The waveform has no entry');
 
 	pressKey(control, 'Enter');
-	if (entry) entry.value = '2:05';
-	if (entry) pressKey(entry, 'Enter');
+	entry.value = '2:05';
+	pressKey(entry, 'Enter');
 
 	expect(waveform.value).toBe(125);
 	expect(waveform.valueText).toBe('2:05');
@@ -554,7 +555,7 @@ test('a marker past max is painted and found at the bound', () => {
 	const { flushFrames } = installCanvasFakes();
 	const { control, waveform } = mountWaveform('max="102" step="0" value="100"');
 	const context = waveform.querySelector('canvas')?.getContext('2d');
-	if (!context) throw new Error('The waveform has no canvas context');
+	assert(context, 'The waveform has no canvas context');
 
 	const filled = vi.spyOn(context, 'fillRect');
 

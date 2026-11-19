@@ -4,7 +4,7 @@ import type { Root } from 'react-dom/client';
 import { act, createElement, Suspense, use } from 'react';
 import { hydrateRoot } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
-import { afterEach, expect, test } from 'vitest';
+import { afterEach, assert, expect, test } from 'vitest';
 
 import { nextTask, recordEvents } from './helpers.ts';
 
@@ -60,7 +60,7 @@ function serverRender(node: ReactNode): HTMLElement {
 	document.body.innerHTML = `<div id="root">${renderToString(node)}</div>`;
 
 	const container = document.querySelector<HTMLElement>('#root');
-	if (!container) throw new Error('The container is missing');
+	assert(container, 'The container is missing');
 
 	return container;
 }

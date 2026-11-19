@@ -1,4 +1,4 @@
-import { expect, test, vi } from 'vitest';
+import { assert, expect, test, vi } from 'vitest';
 
 import type { SonicToggle } from '#elements/toggle.ts';
 
@@ -29,7 +29,7 @@ async function mountToggle(
 
 	const control = document.querySelector('sonic-toggle');
 	const group = control?.querySelector<HTMLElement>('.sonic-toggle');
-	if (!control || !group) throw new Error('The toggle did not render');
+	assert(control && group, 'The toggle did not render');
 
 	const positions = [...group.querySelectorAll('button')];
 	const length = 32 + stepPx * (Math.max(positions.length, 2) - 1);
@@ -52,7 +52,7 @@ async function mountToggle(
 
 function requirePart(group: HTMLElement, selector: string): Element {
 	const part = group.querySelector(selector);
-	if (!part) throw new Error(`The toggle has no ${selector}`);
+	assert(part, `The toggle has no ${selector}`);
 
 	return part;
 }
@@ -88,7 +88,7 @@ function pointerAt(target: Element, type: string, at: [number, number] | number)
 
 function positionAt(positions: Array<HTMLButtonElement>, index: number): HTMLButtonElement {
 	const position = positions[index];
-	if (!position) throw new Error(`No position ${String(index)}`);
+	assert(position, `No position ${String(index)}`);
 
 	return position;
 }

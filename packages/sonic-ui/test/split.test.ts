@@ -1,4 +1,4 @@
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, assert, expect, test, vi } from 'vitest';
 
 import type { SonicSlider } from '#elements/slider.ts';
 import type { SonicSplit } from '#elements/split.ts';
@@ -23,7 +23,7 @@ async function mountSplit(
 	await nextTask();
 
 	const split = document.querySelector('sonic-split');
-	if (!split) throw new Error('The split did not render');
+	assert(split, 'The split did not render');
 
 	const members = [
 		...split.querySelectorAll<SonicValueElement>('sonic-dial, sonic-number, sonic-slider'),
@@ -47,7 +47,7 @@ function valuesOf(members: Array<SonicValueElement>): Array<number> {
 function capOf(slider: SonicValueElement): HTMLElement {
 	const control = slider.querySelector<HTMLElement>('.sonic-slider');
 	const cap = slider.querySelector<HTMLElement>('.sonic-slider-cap');
-	if (!control || !cap) throw new Error('The slider did not render');
+	assert(control && cap, 'The slider did not render');
 
 	vi.spyOn(control, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 220, 40));
 	vi.spyOn(cap, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 20, 40));
@@ -87,7 +87,7 @@ test('a drag on one member moves the others by their share, and each fires on th
 	const { members, split } = await mountSplit('', sliders(50, 30, 20));
 	const events = recordTargets(split, members);
 	const [first] = members;
-	if (!first) throw new Error('No member');
+	assert(first, 'No member');
 
 	await drag(first, [70]);
 
@@ -99,7 +99,7 @@ test('a drag out and back before release restores the siblings and fires no chan
 	const { members, split } = await mountSplit('', sliders(50, 30, 20));
 	const events = recordTargets(split, members);
 	const [first] = members;
-	if (!first) throw new Error('No member');
+	assert(first, 'No member');
 
 	await drag(first, [100, 50]);
 
@@ -113,7 +113,7 @@ test('a locked member holds its value, stops the mover, and cannot be dragged it
 		sliders(50, '<sonic-slider data-sonic-locked value="30"></sonic-slider>', 20),
 	);
 	const [first, second] = members;
-	if (!first || !second) throw new Error('No member');
+	assert(first && second, 'No member');
 
 	await drag(first, [100]);
 	expect(valuesOf(members)).toEqual([70, 30, 0]);
@@ -128,7 +128,7 @@ test('a disabled member is locked as a marked one is', async () => {
 		sliders(50, '<sonic-slider disabled value="30"></sonic-slider>', 20),
 	);
 	const [first] = members;
-	if (!first) throw new Error('No member');
+	assert(first, 'No member');
 
 	await drag(first, [100]);
 
@@ -138,7 +138,7 @@ test('a disabled member is locked as a marked one is', async () => {
 test('a disabled split holds every member against a gesture, still takes a written value, and frees them when enabled', async () => {
 	const { members, split } = await mountSplit('disabled', sliders(50, 30, 20));
 	const [first, second] = members;
-	if (!first || !second) throw new Error('No member');
+	assert(first && second, 'No member');
 
 	const events = recordTargets(split, members);
 
@@ -167,7 +167,7 @@ test('a drag past what the siblings can give turns back at once, as it does from
 		sliders(50, '<sonic-slider data-sonic-locked value="30"></sonic-slider>', 20),
 	);
 	const [first] = members;
-	if (!first) throw new Error('No member');
+	assert(first, 'No member');
 
 	await drag(first, [100, 90]);
 
@@ -189,7 +189,7 @@ test.each([
 			),
 		);
 		const [first] = members;
-		if (!first) throw new Error('No member');
+		assert(first, 'No member');
 
 		await drag(first, [to]);
 
@@ -203,7 +203,7 @@ test('a script write on a locked member lands, the others make room, and it stay
 		sliders(50, '<sonic-slider data-sonic-locked value="30"></sonic-slider>', 20),
 	);
 	const [first, second] = members;
-	if (!first || !second) throw new Error('No member');
+	assert(first && second, 'No member');
 
 	second.value = 40;
 	await nextTask();
@@ -225,7 +225,7 @@ test('a member unlocked again moves on the next drag', async () => {
 		sliders(50, '<sonic-slider data-sonic-locked value="30"></sonic-slider>', 20),
 	);
 	const [, second] = members;
-	if (!second) throw new Error('No member');
+	assert(second, 'No member');
 
 	delete second.dataset.sonicLocked;
 	await nextTask();
@@ -241,7 +241,7 @@ test('a dial, a slider and a number box hold the total together', async () => {
 	);
 	const [dial] = members;
 	const control = dial?.querySelector<HTMLElement>('.sonic-dial');
-	if (!control) throw new Error('No dial');
+	assert(control, 'No dial');
 
 	pressKey(control, 'PageUp');
 
@@ -260,7 +260,7 @@ test('a member added later keeps its value and the others make room', async () =
 test('mode set after upgrade chooses which sibling gives', async () => {
 	const { members, split } = await mountSplit('', sliders(50, 30, 20));
 	const [first] = members;
-	if (!first) throw new Error('No member');
+	assert(first, 'No member');
 
 	split.mode = 'cascade';
 	await drag(first, [70]);
@@ -272,7 +272,7 @@ test('a property write moves the siblings and fires no change', async () => {
 	const { members, split } = await mountSplit('', sliders(50, 30, 20));
 	const events = recordTargets(split, members);
 	const [first] = members;
-	if (!first) throw new Error('No member');
+	assert(first, 'No member');
 
 	first.value = 80;
 	await Promise.resolve();
@@ -294,7 +294,7 @@ test('a total spreads at bind, and with none the members stay put', async () => 
 test('a total set after bind spreads the members to it, and a drag then holds it', async () => {
 	const { members, split } = await mountSplit('', sliders(50, 30, 20));
 	const [first] = members;
-	if (!first) throw new Error('No member');
+	assert(first, 'No member');
 
 	split.total = 50;
 	expect(valuesOf(members)).toEqual([25, 15, 10]);
@@ -309,7 +309,7 @@ test('a split taken off the page lifts every limit', async () => {
 		sliders(50, '<sonic-slider data-sonic-locked value="30"></sonic-slider>', 20),
 	);
 	const [first] = members;
-	if (!first) throw new Error('No member');
+	assert(first, 'No member');
 
 	split.remove();
 	document.body.append(...members);
@@ -325,7 +325,7 @@ test('a nested split keeps its own members', async () => {
 		`${sliders(50, 50)}<sonic-split>${sliders(30, 70)}</sonic-split>`,
 	);
 	const [outerFirst, , innerFirst] = [...split.querySelectorAll<SonicSlider>('sonic-slider')];
-	if (!outerFirst || !innerFirst) throw new Error('No member');
+	assert(outerFirst && innerFirst, 'No member');
 
 	await drag(outerFirst, [60]);
 	await drag(innerFirst, [40]);
@@ -339,7 +339,7 @@ test('a fine mover among coarse siblings is held to what they can absorb, mid-dr
 	const coarse = '<sonic-slider step="5" value="25"></sonic-slider>';
 	const { members } = await mountSplit('', sliders(50, coarse, coarse));
 	const [first] = members;
-	if (!first) throw new Error('No member');
+	assert(first, 'No member');
 
 	const cap = capOf(first);
 
@@ -372,7 +372,7 @@ test('a write the siblings cannot absorb on their own steps is turned back, and 
 		),
 	);
 	const [first] = members;
-	if (!first) throw new Error('No member');
+	assert(first, 'No member');
 
 	first.value = 0;
 	await nextTask();
@@ -383,7 +383,7 @@ test('an arrow on a fine mover among coarse siblings steps to the next value the
 	const coarse = '<sonic-slider step="5" value="25"></sonic-slider>';
 	const { members, split } = await mountSplit('', sliders(50, coarse, coarse));
 	const control = members[0]?.querySelector<HTMLElement>('.sonic-slider');
-	if (!control) throw new Error('No slider');
+	assert(control, 'No slider');
 
 	const events = recordTargets(split, members);
 
@@ -402,7 +402,7 @@ test('a typed value that lands back where the mover was fires nothing', async ()
 	const { members, split } = await mountSplit('', sliders(50, coarse, coarse));
 	const control = members[0]?.querySelector<HTMLElement>('.sonic-slider');
 	const entry = control?.querySelector('input');
-	if (!control || !entry) throw new Error('No slider');
+	assert(control && entry, 'No slider');
 
 	const events = recordTargets(split, members);
 

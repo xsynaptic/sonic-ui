@@ -1,4 +1,4 @@
-import { expect, test } from 'vitest';
+import { assert, expect, test } from 'vitest';
 
 import type { SonicNumber } from '#elements/number.ts';
 
@@ -15,7 +15,7 @@ function mountNumber(attributes: string): { control: HTMLElement; number: SonicN
 function partsOf(control: HTMLElement): { digits: HTMLElement; entry: HTMLInputElement } {
 	const digits = control.querySelector<HTMLElement>('.sonic-number-value');
 	const entry = control.querySelector('input');
-	if (!digits || !entry) throw new Error('The number box is missing a part');
+	assert(digits && entry, 'The number box is missing a part');
 
 	return { digits, entry };
 }

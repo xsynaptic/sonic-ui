@@ -1,4 +1,4 @@
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, assert, expect, test, vi } from 'vitest';
 
 import type { SonicRegion } from '#elements/region.ts';
 import type { SonicWavestrip } from '#elements/wavestrip.ts';
@@ -44,7 +44,7 @@ function mountStrip(attributes = '', regionAttributes = ''): Mounted {
 	);
 	const region = wavestrip.querySelector('sonic-region');
 	const canvas = control.querySelector('canvas');
-	if (!region || !canvas) throw new Error('The strip did not draw');
+	assert(region && canvas, 'The strip did not draw');
 
 	const box = new DOMRect(0, 0, 300, 48);
 
@@ -179,7 +179,7 @@ test.each([
 test('keys on a focused region step it by the strip’s step and stop where its length still fits', () => {
 	const { control, events, region, wavestrip } = mountStrip();
 	const [part] = parts(control);
-	if (!part) throw new Error('The region was not drawn');
+	assert(part, 'The region was not drawn');
 
 	key(part, 'keydown', { key: 'ArrowRight' });
 	expect([region.start, region.end, wavestrip.value]).toEqual([100.5, 130.5, 50]);
@@ -198,7 +198,7 @@ test('keys on a focused region step it by the strip’s step and stop where its 
 test('a repeating key scrubs a region, holds writes, and changes once on keyup', () => {
 	const { control, events, region } = mountStrip();
 	const [part] = parts(control);
-	if (!part) throw new Error('The region was not drawn');
+	assert(part, 'The region was not drawn');
 
 	key(part, 'keydown', { key: 'ArrowRight' });
 	events.length = 0;
@@ -323,7 +323,7 @@ test('a region moved to another strip is dropped by the first and takes the seco
 	await nextTask();
 
 	const [part] = parts(other);
-	if (!part) throw new Error('The second strip did not draw the region');
+	assert(part, 'The second strip did not draw the region');
 
 	expect(parts(control)).toHaveLength(0);
 	expect([part.getAttribute('aria-label'), part.getAttribute('aria-valuemax')]).toEqual([
@@ -341,7 +341,7 @@ test('a region moved to another strip is dropped by the first and takes the seco
 test('a strip’s value write leaves a region’s part alone, and a new formatter or bound redraws it', () => {
 	const { control, wavestrip } = mountStrip();
 	const [part] = parts(control);
-	if (!part) throw new Error('The region was not drawn');
+	assert(part, 'The region was not drawn');
 
 	const read = vi.spyOn(part, 'getAttribute');
 
@@ -374,7 +374,7 @@ test('putting the strip straight back mid-drag lets go of the region with its ch
 test("a region's key hides the strip's hover, so its preview draws, until the pointer next moves", () => {
 	const { control, region, wavestrip } = mountStrip();
 	const [part] = parts(control);
-	if (!part) throw new Error('The region was not drawn');
+	assert(part, 'The region was not drawn');
 
 	const hovered: Array<number | undefined> = [];
 

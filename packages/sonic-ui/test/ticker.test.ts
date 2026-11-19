@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, expect, test, vi } from 'vitest';
+import { afterEach, assert, beforeEach, expect, test, vi } from 'vitest';
 
 import type { SonicTicker } from '#elements/ticker.ts';
 
@@ -38,7 +38,7 @@ async function mountTicker(
 	const ticker = document.querySelector('sonic-ticker');
 	const control = ticker?.querySelector<HTMLElement>('.sonic-ticker');
 	const drawn = control?.querySelector<HTMLElement>('.sonic-ticker-tape');
-	if (!ticker || !control || !drawn) throw new Error('The ticker did not render');
+	assert(ticker && control && drawn, 'The ticker did not render');
 
 	return { control, tape: drawn, ticker };
 }
@@ -412,7 +412,7 @@ test('paused is a state on the control, from the attribute or the property', () 
 
 	const ticker = document.querySelector('sonic-ticker');
 	const control = ticker?.querySelector<HTMLElement>('.sonic-ticker');
-	if (!ticker || !control) throw new Error('The ticker did not render');
+	assert(ticker && control, 'The ticker did not render');
 
 	expect(control.matches('[data-sonic-paused]')).toBe(true);
 
@@ -428,7 +428,7 @@ test('focus leaving the tape scrolls the box back, and focus moving within it do
 		600,
 	);
 	const [first, second] = tape.querySelectorAll('a');
-	if (!first || !second) throw new Error('The links were not copied');
+	assert(first && second, 'The links were not copied');
 
 	control.scrollLeft = 240;
 	second.dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: first }));

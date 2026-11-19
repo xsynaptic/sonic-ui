@@ -1,4 +1,4 @@
-import { expect, test } from 'vitest';
+import { assert, expect, test } from 'vitest';
 
 import type { SonicSegmented } from '#elements/segmented.ts';
 
@@ -22,7 +22,7 @@ async function mountSegmented(attributes: string): Promise<{
 
 	const segmented = document.querySelector('sonic-segmented');
 	const group = segmented?.querySelector<HTMLElement>('.sonic-segmented');
-	if (!segmented || !group) throw new Error('The segmented control did not render');
+	assert(segmented && group, 'The segmented control did not render');
 
 	return { group, options: [...group.querySelectorAll('button')], segmented };
 }
@@ -154,7 +154,7 @@ test.each([
 	const { options, segmented } = await mountSegmented(`value="${from}"`);
 	const changes = recordChanges(segmented);
 	const current = options.find((option) => option.getAttribute('aria-checked') === 'true');
-	if (!current) throw new Error('Nothing is latched');
+	assert(current, 'Nothing is latched');
 
 	expect(pressKey(current, key).defaultPrevented).toBe(true);
 	expect(segmented.value).toBe(expected);
@@ -165,7 +165,7 @@ test.each([
 test('a key the control does not use keeps its default', async () => {
 	const { options } = await mountSegmented('value="lp"');
 	const [first] = options;
-	if (!first) throw new Error('No options');
+	assert(first, 'No options');
 
 	expect(pressKey(first, 'Tab').defaultPrevented).toBe(false);
 });
@@ -174,7 +174,7 @@ test('a key already taken by a capture listener on the host leaves the value alo
 	const { options, segmented } = await mountSegmented('value="lp"');
 	const changes = recordChanges(segmented);
 	const [first] = options;
-	if (!first) throw new Error('No options');
+	assert(first, 'No options');
 
 	segmented.addEventListener(
 		'keydown',
@@ -232,9 +232,10 @@ test('writing the current value leaves the control untouched', async () => {
 test('focus follows its option when the options are reordered', async () => {
 	const { segmented } = await mountSegmented('value="lp"');
 	const [lp] = segmented.querySelectorAll(':scope > [data-sonic-value]');
+	assert(lp, 'No LP option');
 
 	segmented.querySelector<HTMLButtonElement>('[aria-checked="true"]')?.focus();
-	if (lp) segmented.append(lp);
+	segmented.append(lp);
 	await nextTask();
 
 	const focused = document.activeElement;
@@ -376,7 +377,7 @@ test('marking a child later disables its option alone, and the arrows wrap past 
 	const { options, segmented } = await mountWithout('hp', 'value="bp"');
 	const changes = recordChanges(segmented);
 	const middle = options[1];
-	if (!middle) throw new Error('No middle option');
+	assert(middle, 'No middle option');
 
 	expect(options.map((option) => option.disabled)).toEqual([false, false, true]);
 

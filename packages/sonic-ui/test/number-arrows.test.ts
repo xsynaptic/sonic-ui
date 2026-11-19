@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, expect, test, vi } from 'vitest';
+import { afterEach, assert, beforeEach, expect, test, vi } from 'vitest';
 
 import type { SonicNumber } from '#elements/number.ts';
 
@@ -23,7 +23,7 @@ function mountArrows(attributes: string): {
 	const { control, host } = mountControl('sonic-number', `arrows ${attributes}`);
 	const decrement = control.querySelector<HTMLElement>('.sonic-number-decrement');
 	const increment = control.querySelector<HTMLElement>('.sonic-number-increment');
-	if (!decrement || !increment) throw new Error('The number box has no arrows');
+	assert(decrement && increment, 'The number box has no arrows');
 
 	return { control, decrement, increment, number: host };
 }

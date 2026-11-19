@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from 'vitest';
+import { assert, describe, expect, test, vi } from 'vitest';
 
 import type { SonicDial } from '#elements/dial.ts';
 
@@ -127,7 +127,7 @@ test('moving the origin re-renders without touching the value', () => {
 
 function entryOf(control: HTMLElement): HTMLInputElement {
 	const entry = control.querySelector('input');
-	if (!entry) throw new Error('The dial has no entry');
+	assert(entry, 'The dial has no entry');
 
 	return entry;
 }
@@ -216,7 +216,7 @@ test('properties set before the tag upgrades still take effect', async () => {
 	document.body.innerHTML = '<sonic-late></sonic-late>';
 
 	const late = document.querySelector<SonicDial>('sonic-late');
-	if (!late) throw new Error('The element was not parsed');
+	assert(late, 'The element was not parsed');
 
 	late.value = 40;
 	late.formatValue = (value) => `${String(value)} Hz`;
@@ -673,7 +673,7 @@ test('a range set before the tag upgrades lands before the value it bounds', asy
 	document.body.innerHTML = '<sonic-late-range></sonic-late-range>';
 
 	const late = document.querySelector<SonicDial>('sonic-late-range');
-	if (!late) throw new Error('The element was not parsed');
+	assert(late, 'The element was not parsed');
 
 	late.value = 150;
 	late.max = 200;

@@ -1,5 +1,5 @@
 import { fc, test } from '@fast-check/vitest';
-import { afterEach, expect } from 'vitest';
+import { afterEach, assert, expect } from 'vitest';
 
 import type { SonicValueElement } from '#elements/value-element.ts';
 import type { SplitMode } from '#lib/distribute.ts';
@@ -120,7 +120,7 @@ test.prop([fc.array(slot, { maxLength: 4, minLength: 2 }), fc.array(action, { ma
 
 		const members = [...document.querySelectorAll<SonicValueElement>('sonic-slider')];
 		const split = document.querySelector('sonic-split');
-		if (!split) throw new Error('The split did not render');
+		assert(split, 'The split did not render');
 
 		const total = sumOf(members);
 

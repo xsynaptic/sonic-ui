@@ -1,4 +1,4 @@
-import { expect, test } from 'vitest';
+import { assert, expect, test } from 'vitest';
 
 import '#define/dial.ts';
 import '#define/slider.ts';
@@ -10,7 +10,7 @@ async function mount(markup: string): Promise<HTMLElement> {
 	await nextTask();
 
 	const host = document.body.firstElementChild;
-	if (!(host instanceof HTMLElement)) throw new TypeError('Nothing rendered');
+	assert.instanceOf(host, HTMLElement, 'Nothing rendered');
 
 	return host;
 }

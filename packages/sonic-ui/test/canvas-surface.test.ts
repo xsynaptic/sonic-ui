@@ -1,4 +1,4 @@
-import { expect, test, vi } from 'vitest';
+import { assert, expect, test, vi } from 'vitest';
 
 import type { SurfaceFrame } from '#lib/canvas-surface.ts';
 
@@ -35,7 +35,7 @@ function mountSurface(): {
 	});
 	const resize = FakeResizeObserver.instances.at(-1);
 	const view = FakeIntersectionObserver.instances.at(-1);
-	if (!resize || !view) throw new Error('The surface observed nothing');
+	assert(resize && view, 'The surface observed nothing');
 
 	return { canvas, controller, frames, paints: () => frames.length, resize, surface, view };
 }
@@ -131,7 +131,7 @@ test('a reduced-motion change reads the styles again and paints the new flag', (
 	const { flushFrames, queries } = installCanvasFakes();
 	const { frames, resize } = mountSurface();
 	const motion = queries.find(({ media }) => media.includes('reduced-motion'));
-	if (!motion) throw new Error('The surface watched no reduced-motion query');
+	assert(motion, 'The surface watched no reduced-motion query');
 
 	resize.report([100, 20], [100, 20]);
 	flushFrames();

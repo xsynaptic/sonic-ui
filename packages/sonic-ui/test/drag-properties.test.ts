@@ -75,7 +75,7 @@ test.prop(
 		}
 
 		const isInside = mapping.isWrapping || (lowest >= 0 && highest <= 1);
-		if (!isInside) return;
+		fc.pre(isInside);
 
 		const back = mapping.snap(mapping.valueAt(state.rawProportion));
 

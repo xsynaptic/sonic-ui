@@ -1,4 +1,4 @@
-import { expect, test } from 'vitest';
+import { assert, expect, test } from 'vitest';
 
 import { linkValue, SonicValueElement } from '#elements/value-element.ts';
 
@@ -44,7 +44,7 @@ function mountSeam(attributes: string): SeamControl {
 	document.body.innerHTML = `<seam-control ${attributes}></seam-control>`;
 
 	const seam = document.querySelector('seam-control');
-	if (!(seam instanceof SeamControl)) throw new TypeError('The control did not render');
+	assert.instanceOf(seam, SeamControl, 'The control did not render');
 
 	return seam;
 }

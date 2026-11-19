@@ -1,4 +1,4 @@
-import { expect, test } from 'vitest';
+import { assert, expect, test } from 'vitest';
 
 import type { BandChannels, BandMix, WaveformBands } from '#lib/waveform-bands.ts';
 
@@ -22,7 +22,7 @@ function stripOf(
 ): NonNullable<ReturnType<typeof bandStrip>> {
 	const table = bandTable(bands);
 	const strip = table && bandStrip(table, colours, view);
-	if (!strip) throw new Error('The bands drew no strip');
+	assert(strip, 'The bands drew no strip');
 
 	return strip;
 }

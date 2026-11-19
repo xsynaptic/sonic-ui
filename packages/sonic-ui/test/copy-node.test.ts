@@ -1,4 +1,4 @@
-import { expect, test } from 'vitest';
+import { assert, expect, test } from 'vitest';
 
 import { copyNode } from '#lib/copy-node.ts';
 
@@ -8,7 +8,7 @@ function parse(markup: string): Element {
 	host.innerHTML = markup;
 
 	const parsed = host.firstElementChild;
-	if (!parsed) throw new Error('Nothing parsed');
+	assert(parsed, 'Nothing parsed');
 
 	return parsed;
 }
@@ -38,7 +38,7 @@ const icon = /* HTML */ `
 
 test('every reference inside a copy resolves inside that copy', () => {
 	const copy = copyNode(parse(icon));
-	if (!(copy instanceof Element)) throw new TypeError('The copy is not an element');
+	assert.instanceOf(copy, Element, 'The copy is not an element');
 
 	const references = [
 		copy.getAttribute('aria-labelledby'),
@@ -59,7 +59,7 @@ test('every reference inside a copy resolves inside that copy', () => {
 
 test('a reference to something outside the copy is left alone', () => {
 	const copy = copyNode(parse(icon));
-	if (!(copy instanceof Element)) throw new TypeError('The copy is not an element');
+	assert.instanceOf(copy, Element, 'The copy is not an element');
 
 	expect(copy.querySelector('rect')?.getAttribute('style')).toBe('stroke: url(#sprite)');
 	expect(copy.querySelectorAll('use')[1]?.getAttribute('href')).toBe('#sprite');
@@ -84,7 +84,7 @@ test('a style block inside a copy follows the prefixed ids, in url() and in sele
 			'<span><style>.pb{fill:url(#gb)}#gb i,#fade{color:#fade;stroke:url(#sprite)}</style><b id="gb"><i></i></b><b id="fade" class="pb"></b></span>',
 		),
 	);
-	if (!(copy instanceof Element)) throw new TypeError('The copy is not an element');
+	assert.instanceOf(copy, Element, 'The copy is not an element');
 
 	expect(copy.querySelector('style')?.textContent).toBe(
 		'.pb{fill:url(#sonic-copy-gb)}#sonic-copy-gb i,#sonic-copy-fade{color:#fade;stroke:url(#sprite)}',
@@ -93,7 +93,7 @@ test('a style block inside a copy follows the prefixed ids, in url() and in sele
 
 function copyOf(markup: string): Element {
 	const copy = copyNode(parse(markup));
-	if (!(copy instanceof Element)) throw new TypeError('The copy is not an element');
+	assert.instanceOf(copy, Element, 'The copy is not an element');
 
 	return copy;
 }

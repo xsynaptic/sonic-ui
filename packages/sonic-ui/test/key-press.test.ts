@@ -1,4 +1,4 @@
-import { afterEach, expect, test } from 'vitest';
+import { afterEach, assert, expect, test } from 'vitest';
 
 import { bindKeyPress } from '#lib/key-press.ts';
 
@@ -16,7 +16,7 @@ function mount(): [HTMLButtonElement, HTMLButtonElement, HTMLButtonElement] {
 
 	const root = document.querySelector('div');
 	const [first, second, disabled] = document.querySelectorAll('button');
-	if (!root || !first || !second || !disabled) throw new Error('No buttons');
+	assert(root && first && second && disabled, 'No buttons');
 
 	bindKeyPress(root, binding.controller.signal);
 	first.focus();

@@ -1,4 +1,4 @@
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, assert, expect, test, vi } from 'vitest';
 
 import type { SonicSpectrum } from '#elements/spectrum.ts';
 
@@ -27,7 +27,7 @@ function frameOf(levels: Record<number, number>, length = binCount): Float32Arra
 
 function countDraws(): () => number {
 	const context = document.createElement('canvas').getContext('2d');
-	if (!context) throw new Error('The fakes gave no context');
+	assert(context, 'The fakes gave no context');
 
 	const clears = vi.spyOn(context, 'clearRect');
 
@@ -159,7 +159,7 @@ test('the bars stay in their columns as they fall once the analyser is unset', (
 	const { flushFrames } = installCanvasFakes();
 	const { spectrum } = mountSpectrum();
 	const context = document.createElement('canvas').getContext('2d');
-	if (!context) throw new Error('The fakes gave no context');
+	assert(context, 'The fakes gave no context');
 
 	const lines = vi.spyOn(context, 'lineTo');
 	const spikeColumn = (): number | undefined => {
@@ -190,7 +190,7 @@ test('with peak-hold a spike leaves one pixel at its level while its bar falls, 
 	const { flushFrames } = installCanvasFakes();
 	const { spectrum } = mountSpectrum('grid="none" min="-60" sample-rate="44100"');
 	const context = document.createElement('canvas').getContext('2d');
-	if (!context) throw new Error('The fakes gave no context');
+	assert(context, 'The fakes gave no context');
 
 	const marks = vi.spyOn(context, 'rect');
 	const fall = (): Array<Array<number>> => {

@@ -1,4 +1,4 @@
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, assert, expect, test, vi } from 'vitest';
 
 import type { SonicValueElement } from '#elements/value-element.ts';
 
@@ -146,7 +146,7 @@ test("the members a split moves report their mover's reason, and a script's writ
 	await nextTask();
 
 	const [low] = [...document.querySelectorAll<SonicValueElement>('sonic-dial')];
-	if (!low) throw new Error('The split has no members');
+	assert(low, 'The split has no members');
 
 	const reasons = recordReasons(document.body);
 

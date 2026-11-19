@@ -3,7 +3,7 @@ import type { Root } from 'react-dom/client';
 
 import { act, createElement } from 'react';
 import { createRoot } from 'react-dom/client';
-import { afterEach, expect, test } from 'vitest';
+import { afterEach, assert, expect, test } from 'vitest';
 
 import '#define/dial.ts';
 import '#define/meter.ts';
@@ -30,7 +30,7 @@ async function render(node: ReactNode): Promise<void> {
 		document.body.innerHTML = '<div id="root"></div>';
 
 		const container = document.querySelector('#root');
-		if (!container) throw new Error('The container is missing');
+		assert(container, 'The container is missing');
 
 		root = createRoot(container);
 	}
@@ -42,7 +42,7 @@ async function render(node: ReactNode): Promise<void> {
 
 function read(selector: string, property: string): unknown {
 	const host = document.querySelector(selector);
-	if (!host) throw new Error(`No ${selector}`);
+	assert(host, `No ${selector}`);
 
 	return Reflect.get(host, property);
 }
@@ -84,7 +84,7 @@ test('a blank or unreadable string leaves the value where it was', async () => {
 	await render(createElement('sonic-dial', { min: '10', value: '42' }));
 
 	const dial = document.querySelector('sonic-dial');
-	if (!dial) throw new Error('No dial');
+	assert(dial, 'No dial');
 
 	Reflect.set(dial, 'value', '');
 	Reflect.set(dial, 'value', ' ');
@@ -97,7 +97,7 @@ test('a value set before its bounds is snapped again as they change', async () =
 	await render(createElement('sonic-dial', {}));
 
 	const dial = document.querySelector('sonic-dial');
-	if (!dial) throw new Error('No dial');
+	assert(dial, 'No dial');
 
 	dial.value = 152;
 	expect(dial.value).toBe(100);
@@ -117,7 +117,7 @@ test('a value moved by a key stays where it landed when the step changes', async
 
 	const dial = document.querySelector('sonic-dial');
 	const control = dial?.querySelector<HTMLElement>('.sonic-dial');
-	if (!dial || !control) throw new Error('No dial');
+	assert(dial && control, 'No dial');
 
 	pressKey(control, 'ArrowUp');
 	expect(dial.value).toBe(45);

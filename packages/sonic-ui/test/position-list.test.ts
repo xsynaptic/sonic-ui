@@ -1,4 +1,4 @@
-import { expect, test } from 'vitest';
+import { assert, expect, test } from 'vitest';
 
 import type { SonicNumber } from '#elements/number.ts';
 
@@ -32,7 +32,7 @@ test('a number box steps through its positions and a typed value snaps to the ne
 	const number = document.querySelector<SonicNumber>('sonic-number');
 	const control = number?.querySelector<HTMLElement>('.sonic-number');
 	const entry = control?.querySelector('input');
-	if (!number || !control || !entry) throw new Error('The number box did not render');
+	assert(number && control && entry, 'The number box did not render');
 
 	number.formatValue = (value) => (value < 1 ? `1/${String(1 / value)}` : String(value));
 	pressKey(control, 'ArrowDown');

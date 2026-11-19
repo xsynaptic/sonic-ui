@@ -1,4 +1,4 @@
-import { afterEach, expect, test } from 'vitest';
+import { afterEach, assert, expect, test } from 'vitest';
 
 import { focusByPointer } from '#lib/focus-by-pointer.ts';
 
@@ -10,7 +10,7 @@ function pressed(): HTMLElement {
 	document.body.innerHTML = '<div tabindex="0"></div><button type="button"></button>';
 
 	const target = document.querySelector('div');
-	if (!target) throw new Error('No target');
+	assert(target, 'No target');
 
 	focusByPointer(target);
 

@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 
 import { act, createElement } from 'react';
 import { createRoot } from 'react-dom/client';
-import { afterEach, beforeEach, expect, test } from 'vitest';
+import { afterEach, assert, beforeEach, expect, test } from 'vitest';
 
 import '#define/button.ts';
 import '#define/segmented.ts';
@@ -18,7 +18,7 @@ beforeEach(() => {
 	document.body.innerHTML = '<div id="root"></div>';
 
 	const container = document.querySelector('#root');
-	if (!container) throw new Error('The container is missing');
+	assert(container, 'The container is missing');
 
 	root = createRoot(container);
 });

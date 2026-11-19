@@ -1,4 +1,4 @@
-import { expect, test } from 'vitest';
+import { assert, expect, test } from 'vitest';
 
 import type { SonicButton } from '#elements/button.ts';
 
@@ -12,8 +12,7 @@ function mountButton(attributes: string): { button: HTMLButtonElement; host: Son
 		attributes,
 		'<svg data-icon="parsed"></svg>',
 	);
-	if (!(control instanceof HTMLButtonElement))
-		throw new TypeError('The control has no native button');
+	assert.instanceOf(control, HTMLButtonElement, 'The control has no native button');
 
 	return { button: control, host };
 }
@@ -188,8 +187,7 @@ test('two momentary buttons hold at once, and focus moving to the second keeps t
 	const [first, second] = document.querySelectorAll('sonic-button');
 	const firstButton = first?.querySelector('button');
 	const secondButton = second?.querySelector('button');
-	if (!first || !second || !firstButton || !secondButton)
-		throw new Error('The buttons did not render');
+	assert(first && second && firstButton && secondButton, 'The buttons did not render');
 
 	firstButton.focus();
 	pointerOn(firstButton, 'pointerdown', 1);
@@ -364,7 +362,7 @@ test('a default set before the tag upgrades lands before the live state', async 
 	document.body.innerHTML = '<sonic-late-button latching></sonic-late-button>';
 
 	const late = document.querySelector<SonicButton>('sonic-late-button');
-	if (!late) throw new Error('The element was not parsed');
+	assert(late, 'The element was not parsed');
 
 	late.defaultPressed = true;
 	late.pressed = false;
@@ -451,7 +449,7 @@ test('a Meta keyup leaves a momentary button held by a pointer alone', () => {
 test('a cloned button discards the native button it was cloned with', async () => {
 	const { host } = mountControl('sonic-button', '', '<span id="label">Play</span>');
 	const clone = host.cloneNode(true);
-	if (!(clone instanceof HTMLElement)) throw new TypeError('The clone is not an element');
+	assert.instanceOf(clone, HTMLElement, 'The clone is not an element');
 
 	document.body.append(clone);
 	await nextTask();

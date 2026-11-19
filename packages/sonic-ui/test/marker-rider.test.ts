@@ -1,4 +1,4 @@
-import { expect, test, vi } from 'vitest';
+import { assert, expect, test, vi } from 'vitest';
 
 import type { RiderLabel, RiderView } from '#lib/marker-rider.ts';
 
@@ -145,7 +145,7 @@ function mountRider(): {
 	]);
 
 	const [parked, arriving] = control.querySelectorAll<HTMLElement>('.sonic-test-label');
-	if (!parked || !arriving) throw new Error('The control holds no label slots');
+	assert(parked && arriving, 'The control holds no label slots');
 
 	return { arriving, control, parked, rider };
 }

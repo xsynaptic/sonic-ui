@@ -1,4 +1,4 @@
-import { expect, test, vi } from 'vitest';
+import { assert, expect, test, vi } from 'vitest';
 
 import type { SonicSlider } from '#elements/slider.ts';
 
@@ -14,7 +14,7 @@ function mountSlider(attributes: string): { control: HTMLElement; slider: SonicS
 
 function capOf(control: HTMLElement): HTMLElement {
 	const cap = control.querySelector<HTMLElement>('.sonic-slider-cap');
-	if (!cap) throw new Error('The slider has no cap');
+	assert(cap, 'The slider has no cap');
 
 	return cap;
 }
@@ -77,7 +77,7 @@ test('changing the modulation re-renders without touching the value', () => {
 test('closing the entry restores the orientation with the slider role', () => {
 	const { control } = mountSlider('orientation="vertical" value="40"');
 	const entry = control.querySelector('input');
-	if (!entry) throw new Error('The slider has no entry');
+	assert(entry, 'The slider has no entry');
 
 	for (let presses = 0; presses < 2; presses += 1) {
 		const options = { bubbles: true, button: 0, clientX: 5, clientY: 5, pointerId: 1 };

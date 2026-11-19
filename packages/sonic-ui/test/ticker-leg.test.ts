@@ -1,4 +1,4 @@
-import { expect, test } from 'vitest';
+import { assert, expect, test } from 'vitest';
 
 import {
 	clippedEnds,
@@ -60,7 +60,7 @@ test.each([
 
 test('a leg stands still through its hold and stops at its end', () => {
 	const back = tickerLeg(travel, { from: 120, heading: 1 });
-	if (!back) throw new Error('No leg');
+	assert(back, 'No leg');
 
 	expect(legPosition(back, 900)).toBe(120);
 	expect(legPosition(back, 1500 + 625)).toBe(90);
@@ -69,7 +69,7 @@ test('a leg stands still through its hold and stops at its end', () => {
 
 test('a leg picked up in its hold keeps what is left of the hold, and one travelling has none', () => {
 	const out = tickerLeg(travel, { from: 0, heading: 1 });
-	if (!out) throw new Error('No leg');
+	assert(out, 'No leg');
 
 	expect(legDeparture(out, 600)).toEqual({ from: 0, heading: 1, hold: 900 });
 	expect(legDeparture(out, 1500 + 1250)).toEqual({ from: 60, heading: 1, hold: 0 });
@@ -92,7 +92,7 @@ test('a fade is a third of the content past its end, up to the full fade', () =>
 
 test('over a leg the fade behind grows as the tape leaves, and the one ahead narrows to nothing as it lands', () => {
 	const out = tickerLeg(travel, { from: 0, heading: 1 });
-	if (!out) throw new Error('No leg');
+	assert(out, 'No leg');
 
 	expect(legFades(out, 120, 12)).toEqual({
 		end: { delay: 1500 + 1750, duration: 750, widths: [12, 0] },
@@ -102,7 +102,7 @@ test('over a leg the fade behind grows as the tape leaves, and the one ahead nar
 
 test('a leg picked up within reach of an end starts that fade part of the way', () => {
 	const back = tickerLeg(travel, { from: 24, heading: -1, hold: 0 });
-	if (!back) throw new Error('No leg');
+	assert(back, 'No leg');
 
 	expect(legFades(back, 120, 12)).toMatchObject({
 		end: { duration: 0, widths: [12, 12] },
@@ -112,7 +112,7 @@ test('a leg picked up within reach of an end starts that fade part of the way', 
 
 test('a distance shorter than the reach of both fades never shows either in full', () => {
 	const out = tickerLeg({ ...travel, distance: 24 }, { from: 0, heading: 1 });
-	if (!out) throw new Error('No leg');
+	assert(out, 'No leg');
 
 	expect(legFades(out, 24, 12)).toEqual({
 		end: { delay: 1500, duration: 500, widths: [8, 0] },
@@ -122,7 +122,7 @@ test('a distance shorter than the reach of both fades never shows either in full
 
 test('a leg picked up midway times its fades by the distance it has left', () => {
 	const midway = tickerLeg({ distance: 120, hold: 0, rate: 50 }, { from: 40, heading: 1 });
-	if (!midway) throw new Error('No leg');
+	assert(midway, 'No leg');
 
 	expect(legFades(midway, 120, 12)).toEqual({
 		end: { delay: 880, duration: 720, widths: [12, 0] },

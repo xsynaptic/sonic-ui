@@ -1,5 +1,5 @@
 import { fc, test } from '@fast-check/vitest';
-import { expect } from 'vitest';
+import { assert, expect } from 'vitest';
 
 import type { SplitMember, SplitMode } from '#lib/distribute.ts';
 
@@ -450,7 +450,7 @@ function expectNearShares(
 ): void {
 	for (const [at, value] of rest.entries()) {
 		const sibling = siblings[at];
-		if (!sibling) throw new Error('No sibling');
+		assert(sibling, 'No sibling');
 
 		expect(value, near.label).toBeGreaterThanOrEqual(sibling.min);
 		expect(value, near.label).toBeLessThanOrEqual(sibling.max);
@@ -464,7 +464,7 @@ test('on one step grid the total holds, bounds hold, and every sibling lands wit
 	for (let run = 0; run < 500; run += 1) {
 		const { mode, snapshot, step, target } = drawCase(random);
 		const [mover, ...siblings] = snapshot;
-		if (!mover) throw new Error('No mover');
+		assert(mover, 'No mover');
 
 		const total = sum(snapshot.map(({ value }) => value));
 		const [moved = NaN, ...rest] = distribute(snapshot, { mode, total }, { index: 0, target });
@@ -574,7 +574,7 @@ test.prop(
 		const index = seed % drawn.length;
 		const snapshot = drawn.map((entry, at) => (at === index ? { ...entry, isFree: true } : entry));
 		const mover = snapshot[index];
-		if (!mover) throw new Error('No mover');
+		assert(mover, 'No mover');
 
 		const total = sum(snapshot.map(({ value }) => value));
 		const target = mover.snap(mover.min + share * (mover.max - mover.min));
@@ -625,7 +625,7 @@ test.prop(
 			}),
 		);
 		const mover = snapshot[index];
-		if (!mover) throw new Error('No mover');
+		assert(mover, 'No mover');
 
 		const total = sum(snapshot.map(({ value }) => value));
 		const target = mover.min + (aim % ((mover.max - mover.min) / step + 1)) * step;

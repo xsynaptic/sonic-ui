@@ -1,4 +1,4 @@
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, assert, expect, test, vi } from 'vitest';
 
 import type { SonicKeyboard } from '#elements/keyboard.ts';
 
@@ -66,7 +66,7 @@ function laidOut(attributes: string): {
 		const found = control.querySelector<HTMLButtonElement>(
 			`[data-sonic-note="${CSS.escape(String(note))}"]`,
 		);
-		if (!found) throw new Error(`No key for ${String(note)}`);
+		assert(found, `No key for ${String(note)}`);
 
 		return found;
 	};

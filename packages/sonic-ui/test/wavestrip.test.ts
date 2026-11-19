@@ -1,4 +1,4 @@
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, assert, expect, test, vi } from 'vitest';
 
 import type { SonicWavestrip } from '#elements/wavestrip.ts';
 
@@ -19,7 +19,7 @@ function mountWavestrip(attributes: string): {
 } {
 	const { control, host: wavestrip } = mountControl('sonic-wavestrip', attributes);
 	const canvas = control.querySelector('canvas');
-	if (!canvas) throw new Error('The wavestrip has no canvas');
+	assert(canvas, 'The wavestrip has no canvas');
 
 	const box = new DOMRect(0, 0, 300, 48);
 
@@ -660,7 +660,7 @@ test('typed entry drops a hover, and a pointer moving while it is open brings no
 
 	const { canvas, control } = mountWavestrip('readout min="30" max="330" step="0" value="60"');
 	const entry = control.querySelector('input');
-	if (!entry) throw new Error('The wavestrip has no entry');
+	assert(entry, 'The wavestrip has no entry');
 
 	midPointerAt(control, 'pointermove', { clientX: 75, pointerType: 'mouse' });
 	canvas.dispatchEvent(
@@ -947,7 +947,7 @@ test('clientXOf places a value along the canvas, clamped to the bounds', () => {
 
 	const { control, wavestrip } = mountWavestrip('min="30" max="330" step="0" value="30"');
 	const canvas = control.querySelector('canvas');
-	if (!canvas) throw new Error('The wavestrip has no canvas');
+	assert(canvas, 'The wavestrip has no canvas');
 
 	vi.spyOn(canvas, 'getBoundingClientRect').mockReturnValue(new DOMRect(40, 0, 200, 48));
 
@@ -960,7 +960,7 @@ test('valueFromPoint undoes clientXOf without snapping to the step, and clamps a
 
 	const { control, wavestrip } = mountWavestrip('min="30" max="330" step="7" value="30"');
 	const canvas = control.querySelector('canvas');
-	if (!canvas) throw new Error('The wavestrip has no canvas');
+	assert(canvas, 'The wavestrip has no canvas');
 
 	vi.spyOn(canvas, 'getBoundingClientRect').mockReturnValue(new DOMRect(40, 0, 200, 48));
 
@@ -976,7 +976,7 @@ test('a preview paints as a scrub from the played edge, repaints only when it mo
 	const { flushFrames } = installCanvasFakes();
 	const { canvas, control, wavestrip } = mountWavestrip('min="30" max="330" step="0" value="50"');
 	const context = canvas.getContext('2d');
-	if (!context) throw new Error('The wavestrip has no canvas context');
+	assert(context, 'The wavestrip has no canvas context');
 
 	const clipped = vi.spyOn(context, 'rect');
 	const spans = (): Array<[number, number]> => {
@@ -1016,7 +1016,7 @@ test('a preview paints as a scrub from the played edge, repaints only when it mo
 
 function openEntry(control: HTMLElement): HTMLInputElement {
 	const entry = control.querySelector('input');
-	if (!entry) throw new Error('The wavestrip has no entry');
+	assert(entry, 'The wavestrip has no entry');
 
 	control
 		.querySelector('canvas')
