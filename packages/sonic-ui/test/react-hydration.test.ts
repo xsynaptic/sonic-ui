@@ -4,7 +4,7 @@ import type { Root } from 'react-dom/client';
 import { act, createElement, Suspense, use } from 'react';
 import { hydrateRoot } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
-import { afterEach, assert, expect, test } from 'vitest';
+import { afterEach, assert, describe, expect, test } from 'vitest';
 
 import { nextTask, recordEvents } from './helpers.ts';
 
@@ -95,81 +95,83 @@ function drawn(container: Element): Array<number> {
 	);
 }
 
-// Registration is once per file, so this case runs before the two that need it done
-// happy-dom fires no `attributeChangedCallback` on upgrade; the playground's `late.spec.ts` asserts the dial's value
-test('controls registered after hydration hydrate clean, work, and follow a later render', async () => {
-	const container = serverRender(controls());
-	const recovered = await hydrate(container, controls());
-	const hosts = [...container.querySelectorAll('sonic-button, sonic-dial, sonic-meter')];
+// Registration is once per file, so the first case runs before the two that need it done
+describe('React hydration', { shuffle: false }, () => {
+	// happy-dom fires no `attributeChangedCallback` on upgrade; the playground's `late.spec.ts` asserts the dial's value
+	test('controls registered after hydration hydrate clean, work, and follow a later render', async () => {
+		const container = serverRender(controls());
+		const recovered = await hydrate(container, controls());
+		const hosts = [...container.querySelectorAll('sonic-button, sonic-dial, sonic-meter')];
 
-	await register();
+		await register();
 
-	expect(recovered).toEqual([]);
-	expect(drawn(container)).toEqual([1, 1, 2, 1]);
-	expect(container.querySelector('.sonic-button-cap')?.textContent).toBe('Play');
+		expect(recovered).toEqual([]);
+		expect(drawn(container)).toEqual([1, 1, 2, 1]);
+		expect(container.querySelector('.sonic-button-cap')?.textContent).toBe('Play');
 
-	const events = recordEvents(container);
+		const events = recordEvents(container);
 
-	container.querySelector<HTMLElement>('.sonic-button')?.click();
-	expect(events).toEqual(['change']);
+		container.querySelector<HTMLElement>('.sonic-button')?.click();
+		expect(events).toEqual(['change']);
 
-	await act(async () => {
-		root?.render(controls('Pause'));
-		await nextTask();
-	});
-
-	expect(recovered).toEqual([]);
-	expect(drawn(container)).toEqual([1, 1, 2, 1]);
-	expect(container.querySelector('.sonic-button-cap')?.textContent).toBe('Pause');
-	expect([...container.querySelectorAll('sonic-button, sonic-dial, sonic-meter')]).toEqual(hosts);
-});
-
-test('controls registered before hydration mismatch, and React renders the root again on the client', async () => {
-	await register();
-
-	const container = serverRender(controls());
-	const served = container.querySelector('sonic-meter');
-
-	await nextTask();
-	expect(drawn(container)).toEqual([1, 1, 2, 1]);
-
-	const recovered = await hydrate(container, controls());
-
-	expect(recovered).toHaveLength(1);
-	expect(recovered[0]).toContain('Hydration failed');
-	expect(drawn(container)).toEqual([1, 1, 2, 1]);
-	expect(container.querySelector('sonic-meter')).not.toBe(served);
-});
-
-test('a boundary hydrating after registration recovers with one error and a new host', async () => {
-	const boundaryData = new EventTarget();
-
-	await register();
-
-	const container = serverRender(boundary());
-	const served = container.querySelector('sonic-meter');
-
-	gate = new Promise<void>((resolve) => {
-		boundaryData.addEventListener('load', () => {
-			resolve();
+		await act(async () => {
+			root?.render(controls('Pause'));
+			await nextTask();
 		});
+
+		expect(recovered).toEqual([]);
+		expect(drawn(container)).toEqual([1, 1, 2, 1]);
+		expect(container.querySelector('.sonic-button-cap')?.textContent).toBe('Pause');
+		expect([...container.querySelectorAll('sonic-button, sonic-dial, sonic-meter')]).toEqual(hosts);
 	});
 
-	const recovered = await hydrate(container, boundary());
+	test('controls registered before hydration mismatch, and React renders the root again on the client', async () => {
+		await register();
 
-	expect(recovered).toEqual([]);
-	expect(container.querySelector('sonic-meter')).toBe(served);
-	expect(container.querySelectorAll('.sonic-meter')).toHaveLength(1);
+		const container = serverRender(controls());
+		const served = container.querySelector('sonic-meter');
 
-	await act(async () => {
-		gate = undefined;
-		boundaryData.dispatchEvent(new Event('load'));
 		await nextTask();
+		expect(drawn(container)).toEqual([1, 1, 2, 1]);
+
+		const recovered = await hydrate(container, controls());
+
+		expect(recovered).toHaveLength(1);
+		expect(recovered[0]).toContain('Hydration failed');
+		expect(drawn(container)).toEqual([1, 1, 2, 1]);
+		expect(container.querySelector('sonic-meter')).not.toBe(served);
 	});
 
-	expect(recovered).toHaveLength(1);
-	expect(recovered[0]).toContain('Hydration failed');
-	expect(container.querySelector('sonic-meter')).not.toBe(served);
-	expect(container.querySelectorAll('.sonic-meter')).toHaveLength(1);
-	expect(container.querySelector('p')).toBeNull();
+	test('a boundary hydrating after registration recovers with one error and a new host', async () => {
+		const boundaryData = new EventTarget();
+
+		await register();
+
+		const container = serverRender(boundary());
+		const served = container.querySelector('sonic-meter');
+
+		gate = new Promise<void>((resolve) => {
+			boundaryData.addEventListener('load', () => {
+				resolve();
+			});
+		});
+
+		const recovered = await hydrate(container, boundary());
+
+		expect(recovered).toEqual([]);
+		expect(container.querySelector('sonic-meter')).toBe(served);
+		expect(container.querySelectorAll('.sonic-meter')).toHaveLength(1);
+
+		await act(async () => {
+			gate = undefined;
+			boundaryData.dispatchEvent(new Event('load'));
+			await nextTask();
+		});
+
+		expect(recovered).toHaveLength(1);
+		expect(recovered[0]).toContain('Hydration failed');
+		expect(container.querySelector('sonic-meter')).not.toBe(served);
+		expect(container.querySelectorAll('.sonic-meter')).toHaveLength(1);
+		expect(container.querySelector('p')).toBeNull();
+	});
 });

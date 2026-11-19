@@ -417,6 +417,7 @@ test('a drag across halfway holds a momentary position, and back across or letti
 
 	pointerAt(positionAt(positions, 1), 'pointerdown', 140);
 	pointerAt(group, 'pointermove', 127);
+	pointerAt(group, 'pointermove', 120);
 	expect(changes).toEqual(['duck']);
 
 	pointerAt(group, 'pointermove', 140);
@@ -520,19 +521,22 @@ test('a drag passes a disabled middle position without reporting it', async () =
 	expect(changes).toEqual(['b']);
 });
 
-test('a two-position toggle with one position disabled ignores a press on either', async () => {
-	const children = /* HTML */ `
-		<span data-sonic-value="pre">Pre</span>
-		<span data-sonic-disabled data-sonic-value="post">Post</span>
-	`;
-	const { control, group, positions } = await mountToggle('value="pre"', children);
-	const changes = recordChanges(control);
+test.each(['', 'data-sonic-momentary'])(
+	'a two-position toggle with one position disabled ignores a press on either, with %j',
+	async (kind) => {
+		const children = /* HTML */ `
+			<span data-sonic-value="pre">Pre</span>
+			<span data-sonic-disabled ${kind} data-sonic-value="post">Post</span>
+		`;
+		const { control, group, positions } = await mountToggle('value="pre"', children);
+		const changes = recordChanges(control);
 
-	pressOn(group, positionAt(positions, 0), 110);
-	pressOn(group, positionAt(positions, 1), 140);
+		pressOn(group, positionAt(positions, 0), 110);
+		pressOn(group, positionAt(positions, 1), 140);
 
-	expect(changes).toEqual([]);
-});
+		expect(changes).toEqual([]);
+	},
+);
 
 test('putting the toggle straight back mid-drag settles the cap, and a later move crosses nothing', async () => {
 	const { control, group, positions } = await mountToggle('value="off"');

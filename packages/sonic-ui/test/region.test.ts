@@ -141,6 +141,8 @@ test('a held region ignores a write, and a write after the release lands', () =>
 	pointerAt(control, 'pointerdown', { clientX: 80, clientY: 24 });
 	region.start = 40;
 	region.setAttribute('end', '70');
+	expect([region.start, region.end]).toEqual([100, 130]);
+
 	pointerAt(control, 'pointermove', { clientX: 90, clientY: 24 });
 	expect([region.start, region.end]).toEqual([110, 140]);
 

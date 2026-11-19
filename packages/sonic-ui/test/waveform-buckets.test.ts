@@ -97,18 +97,21 @@ test('a bucket past the first folds only its own pairs, across both channels', (
 	expect(bucket).toMatchObject({ high: 0.5, low: -0.125, toPair: 4 });
 });
 
-test('the buckets cover the window from before its start to just past its end', () => {
-	const width = 120;
-	const buckets = waveformBuckets(silence(4000), {
-		pixelsPerSecond: pairsPerSecond * 0.4,
-		startSeconds: 0,
-		width,
-	});
+test.each([0, 2.9])(
+	'from %d pairs in, the buckets cover the window from before its start to within a bucket past its end',
+	(openingPair) => {
+		const width = 120;
+		const buckets = waveformBuckets(silence(4000), {
+			pixelsPerSecond: pairsPerSecond * 0.4,
+			startSeconds: openingPair / pairsPerSecond,
+			width,
+		});
 
-	expect(buckets[0]?.x).toBeLessThanOrEqual(0);
-	expect(buckets.at(-1)?.x).toBeGreaterThanOrEqual(width);
-	expect(buckets.at(-1)?.x).toBeLessThan(width + 3 * 1.2);
-});
+		expect(buckets[0]?.x).toBeLessThanOrEqual(0);
+		expect(buckets.at(-1)?.x).toBeGreaterThanOrEqual(width);
+		expect(buckets.at(-1)?.x).toBeLessThanOrEqual(width + 1.2 + 1e-9);
+	},
+);
 
 function bucketAt(
 	samples: Int8Array,

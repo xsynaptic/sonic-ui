@@ -18,6 +18,9 @@ afterEach(() => {
 function mountMeter(attributes = ''): { control: HTMLElement; meter: SonicMeter } {
 	const { control, host } = mountControl('sonic-meter', attributes);
 
+	// The first mount in a file queues the development style check, which a timer count would see as the loop
+	vi.advanceTimersToNextFrame();
+
 	return { control, meter: host };
 }
 

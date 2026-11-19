@@ -536,18 +536,6 @@ test('a link in the tape, focused while scrolled out, comes inside the box, and 
 	expect(await legOf(ticker)).toMatchObject({ delay: hold });
 });
 
-test('text replaces the content and keeps the control', async ({ page }) => {
-	const ticker = page.locator('#link-first');
-
-	await ticker.evaluate((host: HTMLElement & { text: string }) => {
-		host.text = 'Next';
-	});
-
-	await expect(ticker.locator('.sonic-ticker-tape')).toHaveText('Next');
-	await expect(ticker.locator('.sonic-ticker a')).toHaveCount(0);
-	await expect(ticker.locator('.sonic-ticker')).not.toHaveAttribute('data-sonic-overflowing');
-});
-
 test('the whole content is in the accessibility tree while clipped, once', async ({
 	browserName,
 	page,

@@ -427,5 +427,10 @@ test('a total the members cannot reach saturates and warns once', async () => {
 	split.mode = 'cascade';
 	split.mode = 'equal';
 
-	expect(warn).toHaveBeenCalledTimes(1);
+	// The development style check warns once per module, in whichever test first mounts a slider
+	const reachWarnings = warn.mock.calls.filter(([message]) =>
+		String(message).startsWith('<sonic-split>'),
+	);
+
+	expect(reachWarnings).toHaveLength(1);
 });

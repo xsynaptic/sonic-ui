@@ -9,6 +9,7 @@ temp/
 # Agent working documents stay local
 .claude/reference
 .claude/tasks*
+.claude/test-audit
 .claude/settings*.json
 .claude/worktrees/
 playground/src/pages/lab/

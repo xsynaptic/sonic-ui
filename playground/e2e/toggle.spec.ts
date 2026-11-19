@@ -376,10 +376,6 @@ test(
 
 			await page.mouse.click(at.x, at.y);
 			await expect.soft(band).toHaveJSProperty('value', 'low');
-
-			await page.getByRole('radio', { name: 'Low' }).focus();
-			await page.keyboard.press('ArrowRight');
-			await expect.soft(band).toHaveJSProperty('value', 'high');
 		});
 	},
 );

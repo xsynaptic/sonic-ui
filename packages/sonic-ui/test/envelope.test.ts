@@ -370,15 +370,13 @@ test('a Ctrl-click resets a curve handle but still drags a stage handle, and a d
 	pointerAt(decay, 'pointerdown', { clientX: 100, clientY: 100, ctrlKey: true });
 	pointerAt(decay, 'pointermove', { clientX: 120, clientY: 100 });
 	pointerAt(decay, 'pointerup', { clientX: 120, clientY: 100 });
-	expect(rig.dials.decay.value).not.toBe(350);
-
-	const moved = [rig.dials.decay.value, rig.dials.sustain.value];
+	expect([rig.dials.decay.value, rig.dials.sustain.value]).toEqual([590, -30]);
 
 	for (let press = 0; press < 2; press += 1) {
 		pointerAt(decay, 'pointerdown', { clientX: 120, clientY: 100 });
 		pointerAt(decay, 'pointerup', { clientX: 120, clientY: 100 });
 	}
-	expect([rig.dials.decay.value, rig.dials.sustain.value]).toEqual(moved);
+	expect([rig.dials.decay.value, rig.dials.sustain.value]).toEqual([590, -30]);
 });
 
 test("the readout carries the held part's dials, x then y, in each dial's own format", () => {

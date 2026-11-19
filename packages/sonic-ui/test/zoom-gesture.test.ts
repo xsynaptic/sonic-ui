@@ -105,6 +105,8 @@ test('the wheel is heard only while zooming is on, as of the last sync, and neve
 
 	state.isDisabled = false;
 	controller.abort();
+	expect(isWheelTaken()).toBe(false);
+
 	gesture.sync();
 	expect(isWheelTaken()).toBe(false);
 	expect(zooms).toHaveLength(1);
@@ -116,11 +118,13 @@ test('a Safari gesture scales the zoom it started at, is cancelled, and gives wa
 	gestureAt(control, 'gesturestart', 1);
 	expect(gestureAt(control, 'gesturechange', 1.5).defaultPrevented).toBe(true);
 	gestureAt(control, 'gesturechange', 2);
-	expect(zooms).toEqual([90, 120]);
+	gestureAt(control, 'gesturestart', 1);
+	gestureAt(control, 'gesturechange', 0.5);
+	expect(zooms).toEqual([90, 120, 60]);
 
 	touchAt(control, 'pointerdown', [1, 100]);
 	expect(gestureAt(control, 'gesturechange', 3).defaultPrevented).toBe(false);
-	expect(zooms).toHaveLength(2);
+	expect(zooms).toHaveLength(3);
 });
 
 test('+, - and = step by a wheel notch; a modifier, another target or zooming off leaves the key alone', () => {
@@ -171,7 +175,7 @@ test('a second finger claims the gesture once, and the pinch follows either fing
 	expect(zooms).toEqual([90, 45]);
 });
 
-test('a third finger joins no pinch: it claims nothing and its moves zoom nothing', () => {
+test('a third finger joins no pinch: it claims nothing, its moves zoom nothing and its lift ends nothing', () => {
 	const { claims, control, gesture, zooms } = mountZoom();
 
 	touchAt(control, 'pointerdown', [1, 200]);
@@ -181,6 +185,7 @@ test('a third finger joins no pinch: it claims nothing and its moves zoom nothin
 	expect([claims(), gesture.isPinching()]).toEqual([1, true]);
 	expect(zooms).toEqual([]);
 
+	touchAt(control, 'pointerup', [3, 900]);
 	touchAt(control, 'pointermove', [2, 350]);
 	expect(zooms).toEqual([90]);
 });
