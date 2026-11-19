@@ -1,8 +1,3 @@
-# A passing job prints only its summary line; a failing one prints its whole output
-output:
-  - summary
-  - failure
-
 # Check-only; a hook that re-stages files sweeps in a concurrent session's edits
 pre-commit:
   jobs:
@@ -36,20 +31,24 @@ check:
             run: eslint --max-warnings 0 --cache --cache-location node_modules/.cache/eslint/
           - name: css
             run: stylelint "{packages/sonic-ui/src,playground/src}/**/*.{css,astro}" --cache --cache-location node_modules/.cache/stylelint/
+          # Uncached on purpose; a stale knip cache once reported a live devDependency as unused
           - name: unused
             run: knip
           - name: dupes
             run: fallow dupes --quiet
+          # Health prints its report even at zero findings, so output shows only on failure
           - name: complexity
             run: out=$(fallow health --complexity --quiet 2>&1) || { printf '%s\n' "$out"; exit 1; }
           # `fallow health --css` never exits non-zero; audit gates the css-* rules, scoped to changed files
           - name: styling
             run: fallow audit --gate all --quiet
-          - name: architecture
-            run: fallow dead-code --boundary-violations --circular-deps --stale-suppressions --quiet
+          # Unfiltered, so it covers cycles, boundaries and suppressions; knip owns the unused-code rules
+          - name: policy
+            run: fallow dead-code --quiet
           - name: test
             run: vitest run --passWithNoTests
 
+# The autofixers gate what they fix, so the verify group skips format, lint and css
 fix:
   piped: true
   jobs:
@@ -63,6 +62,25 @@ fix:
           - name: format
             run: prettier --write . --cache --list-different
           - name: lint
-            run: eslint --fix --cache --cache-location node_modules/.cache/eslint/
-    - name: report
-      run: pnpm check
+            run: eslint --fix --max-warnings 0 --cache --cache-location node_modules/.cache/eslint/
+    - name: build
+      run: pnpm build
+    # `fallow fix` stays unwired; it strips unused exports and would unexport work in progress
+    - name: verify
+      group:
+        parallel: true
+        jobs:
+          - name: types
+            run: pnpm check-types
+          - name: unused
+            run: knip
+          - name: dupes
+            run: fallow dupes --quiet
+          - name: complexity
+            run: out=$(fallow health --complexity --quiet 2>&1) || { printf '%s\n' "$out"; exit 1; }
+          - name: styling
+            run: fallow audit --gate all --quiet
+          - name: policy
+            run: fallow dead-code --quiet
+          - name: test
+            run: vitest run --passWithNoTests

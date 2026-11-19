@@ -45,7 +45,7 @@ Tokens, hook classes, attributes, events and state names are the API. Renaming o
 
 ## The gate
 
-Run `pnpm fix` after a chunk of work; it autofixes, then runs `pnpm check`. `check` is green on main, so anything it reports is yours.
+Run `pnpm fix` after a chunk of work; it autofixes, then runs the rest of `pnpm check`. `check` is green on main, so anything it reports is yours.
 
 Run `pnpm test-e2e` after changing a gesture, a control's naming, or its drawn parts; reach for `pnpm test-e2e-full` when a change is engine-specific.
 
