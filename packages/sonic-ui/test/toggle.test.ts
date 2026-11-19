@@ -498,6 +498,22 @@ test('a drag stops at a disabled end position', async () => {
 	expect(changes).toEqual(['a']);
 });
 
+test('a drag begun on a cap that rests on a disabled position still moves it', async () => {
+	const children = /* HTML */ `
+		<span data-sonic-value="a">A</span>
+		<span data-sonic-disabled data-sonic-value="off">Off</span>
+		<span data-sonic-value="b">B</span>
+	`;
+	const { control, group, positions } = await mountToggle('value="off"', children);
+	const changes = recordChanges(control);
+
+	pointerAt(positionAt(positions, 1), 'pointerdown', 140);
+	pointerAt(group, 'pointermove', 164);
+	pointerAt(group, 'pointerup', 164);
+
+	expect(changes).toEqual(['b']);
+});
+
 test('a drag passes a disabled middle position without reporting it', async () => {
 	const children = /* HTML */ `
 		<span data-sonic-value="a">A</span>

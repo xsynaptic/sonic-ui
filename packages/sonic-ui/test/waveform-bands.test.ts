@@ -144,7 +144,7 @@ test('part-loaded levels tint what has landed, and a group over the end reads th
 	expect([...strip.pixels]).toEqual([255, 0, 0, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255]);
 });
 
-test('bands that cannot be read, or with no colour set, draw as no bands', () => {
+test('bands that cannot be read, with no colour set, or drawn at no rate, draw as no bands', () => {
 	const levels = new Uint8Array([255, 255, 255, 255]);
 
 	for (const bandCount of [0, 1.5, -2, NaN]) {
@@ -161,6 +161,16 @@ test('bands that cannot be read, or with no colour set, draw as no bands', () =>
 		table &&
 			bandStrip(table, [undefined, undefined], { pixelsPerSecond: 10, startSeconds: 0, width: 2 }),
 	).toBeUndefined();
+	expect(
+		table && bandStrip(table, [red, blue], { pixelsPerSecond: 0, startSeconds: 0, width: 2 }),
+	).toBeUndefined();
+});
+
+test('groups of several frames cover the window and one group past each end, and no more', () => {
+	const bands = { bandCount: 1, framesPerSecond: 10, levels: new Uint8Array(1000).fill(255) };
+	const strip = stripOf(bands, [red], { pixelsPerSecond: 2.5, startSeconds: 10, width: 20 });
+
+	expect([strip.count, strip.groupWidth, strip.x]).toEqual([22, 1, -1]);
 });
 
 test('normalize 0 is the weighted average of the palette, and amounts between sit between', () => {

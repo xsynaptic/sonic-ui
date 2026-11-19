@@ -272,6 +272,23 @@ test('bands written inside requestPeaks ask once, and a write from outside asks 
 	expect(asks).toBe(2);
 });
 
+test('bands written with a new band count read the new band’s colour', () => {
+	const { flushFrames } = installCanvasFakes();
+	const { waveform } = mountWaveform('max="300" step="0" value="100"');
+	const read = vi.spyOn(globalThis, 'getComputedStyle');
+	const probed = (): Array<string> =>
+		read.mock.calls.map(([element]) =>
+			element instanceof HTMLElement ? element.style.getPropertyValue('color') : '',
+		);
+
+	waveform.bands = { bandCount: 2, framesPerSecond: 10, levels: new Uint8Array(6000) };
+	for (let frame = 0; frame < 4; frame += 1) flushFrames();
+	waveform.bands = { bandCount: 3, framesPerSecond: 10, levels: new Uint8Array(9000) };
+	for (let frame = 0; frame < 4; frame += 1) flushFrames();
+
+	expect(probed()).toContain('var(--sonic-waveform-band-3, transparent)');
+});
+
 test('an unchanged pending list written from outside paints nothing', () => {
 	const { flushFrames } = installCanvasFakes();
 	const { waveform } = mountWaveform('max="300" step="0" value="100"');

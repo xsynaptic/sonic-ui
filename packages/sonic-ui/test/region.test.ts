@@ -7,7 +7,7 @@ import '#define/region.ts';
 import '#define/wavestrip.ts';
 
 import { FakeResizeObserver, installCanvasFakes } from './canvas-fakes.ts';
-import { mountControl, nextTask, pointerAt } from './helpers.ts';
+import { mountControl, nextTask, pointerAt, pressKey } from './helpers.ts';
 
 afterEach(() => {
 	document.body.replaceChildren();
@@ -392,4 +392,124 @@ test("a region's key hides the strip's hover, so its preview draws, until the po
 
 	pointerAt(control, 'pointermove', { clientX: 160, clientY: 24, pointerType: 'mouse' });
 	expect(wavestrip.hoverValue).toBe(190);
+});
+
+test('a key the region has no move for passes through and moves nothing', () => {
+	const { control, events, region } = mountStrip();
+	const [part] = parts(control);
+	assert(part, 'The region was not drawn');
+
+	expect(pressKey(part, 'Tab').defaultPrevented).toBe(false);
+	expect([region.start, region.end]).toEqual([100, 130]);
+	expect(events).toEqual([]);
+});
+
+test('a region key already taken by a listener on the strip is left to it', () => {
+	const { control, events, region, wavestrip } = mountStrip();
+	const [part] = parts(control);
+	assert(part, 'The region was not drawn');
+
+	wavestrip.addEventListener(
+		'keydown',
+		(event) => {
+			event.preventDefault();
+		},
+		{ capture: true },
+	);
+	key(part, 'keydown', { key: 'ArrowRight' });
+
+	expect(region.start).toBe(100);
+	expect(events).toEqual([]);
+});
+
+test('a key on a region while it is dragged leaves the drag in charge', () => {
+	const { control, events, region } = mountStrip();
+	const [part] = parts(control);
+	assert(part, 'The region was not drawn');
+
+	pointerAt(control, 'pointerdown', { clientX: 80, clientY: 24 });
+	pointerAt(control, 'pointermove', { clientX: 90, clientY: 24 });
+	key(part, 'keydown', { key: 'ArrowRight' });
+
+	expect(region.start).toBe(110);
+	expect(events).toEqual(['input sonic-region']);
+});
+
+test('a key that moves nothing reports nothing', () => {
+	const { control, events } = mountStrip();
+	const [part] = parts(control);
+	assert(part, 'The region was not drawn');
+
+	key(part, 'keydown', { key: 'Home' });
+	events.length = 0;
+	key(part, 'keydown', { key: 'Home' });
+
+	expect(events).toEqual([]);
+});
+
+test('another pointer moving leaves a held region where its own pointer put it', () => {
+	const { control, region } = mountStrip();
+
+	pointerAt(control, 'pointerdown', { clientX: 80, clientY: 24 });
+	pointerAt(control, 'pointermove', { clientX: 90, clientY: 24 });
+	pointerAt(control, 'pointermove', { clientX: 120, clientY: 24, pointerId: 2 });
+
+	expect([region.start, region.dragging]).toEqual([110, true]);
+});
+
+test('switching keys in the middle of a key scrub changes once for each key', () => {
+	const { control, events } = mountStrip();
+	const [part] = parts(control);
+	assert(part, 'The region was not drawn');
+
+	key(part, 'keydown', { key: 'ArrowRight', repeat: true });
+	key(part, 'keydown', { key: 'ArrowLeft', repeat: true });
+	key(part, 'keyup', { key: 'ArrowLeft' });
+
+	expect(events).toEqual([
+		'input sonic-region',
+		'change sonic-region',
+		'input sonic-region',
+		'change sonic-region',
+	]);
+});
+
+test('a form reset during a drag is dropped', () => {
+	const { control, region } = mountStrip();
+
+	pointerAt(control, 'pointerdown', { clientX: 80, clientY: 24 });
+	pointerAt(control, 'pointermove', { clientX: 90, clientY: 24 });
+	region.formResetCallback();
+
+	expect([region.start, region.end]).toEqual([110, 140]);
+});
+
+test('a restored state with both ends moves the region, and one without them is dropped', () => {
+	const { region } = mountStrip();
+
+	region.formStateRestoreCallback('sonic-region:115');
+	expect([region.start, region.end]).toEqual([100, 130]);
+
+	region.formStateRestoreCallback('sonic-region:110,150');
+	expect([region.start, region.end]).toEqual([110, 150]);
+});
+
+test('a region with no end attribute is a point that its start carries', () => {
+	const { region } = mountStrip();
+
+	region.removeAttribute('end');
+	region.start = 120;
+
+	expect([region.start, region.end]).toEqual([120, 120]);
+});
+
+test('a press let go inside a region on the value the strip already holds reports nothing', () => {
+	const { control, events, wavestrip } = mountStrip();
+
+	wavestrip.value = 110;
+	pointerAt(control, 'pointerdown', { clientX: 80, clientY: 24 });
+	pointerAt(control, 'pointerup', { clientX: 80, clientY: 24 });
+
+	expect(wavestrip.value).toBe(110);
+	expect(events).toEqual([]);
 });

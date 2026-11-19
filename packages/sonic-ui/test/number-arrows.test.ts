@@ -239,6 +239,31 @@ test('a host write during a hold is dropped, and the hold steps on from its own 
 	expect(number.value).toBe(14);
 });
 
+test('an arrow pressed against its bound reports nothing', () => {
+	const { increment, number } = mountArrows('min="0" max="100" value="100"');
+	const events = recordEvents(document.body);
+
+	pointerAt(increment, 'pointerdown');
+	pointerAt(increment, 'pointerup');
+
+	expect(number.value).toBe(100);
+	expect(events).toEqual([]);
+});
+
+test('an arrow pressed during a drag on the digits leaves the drag in charge', () => {
+	const { control, increment, number } = mountArrows('min="0" max="100" value="10"');
+
+	pointerAt(control, 'pointerdown', { clientY: 100 });
+	pointerAt(control, 'pointermove', { clientY: 60 });
+	const dragged = number.value;
+
+	pointerAt(increment, 'pointerdown', { pointerId: 2 });
+	pointerAt(increment, 'pointerup', { pointerId: 2 });
+
+	expect(number.value).toBe(dragged);
+	expect(Object.hasOwn(increment.dataset, 'sonicPressed')).toBe(false);
+});
+
 test('a press on an arrow never starts a drag', () => {
 	const { control, increment, number } = mountArrows('min="0" max="300" step="0.5" value="100"');
 

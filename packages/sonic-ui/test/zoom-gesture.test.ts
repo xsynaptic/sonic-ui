@@ -89,7 +89,7 @@ test('a wheel zooms only with Ctrl or Meta held, and a plain one is left to the 
 	expect(zooms[1]).toBeCloseTo(60, 9);
 });
 
-test('the wheel is heard only while zooming is on, as of the last sync, and never once disabled', () => {
+test('the wheel is heard only while zooming is on, as of the last sync, and never once disabled; after an abort no key or Safari gesture is either', () => {
 	const { control, controller, gesture, state, zooms } = mountZoom(false);
 	const isWheelTaken = (): boolean =>
 		wheelAt(control, { ctrlKey: true, deltaY: -10 }).defaultPrevented;
@@ -109,6 +109,8 @@ test('the wheel is heard only while zooming is on, as of the last sync, and neve
 
 	gesture.sync();
 	expect(isWheelTaken()).toBe(false);
+	expect(gestureAt(control, 'gesturechange', 2).defaultPrevented).toBe(false);
+	expect(pressKey(control, '+').defaultPrevented).toBe(false);
 	expect(zooms).toHaveLength(1);
 });
 
@@ -125,6 +127,16 @@ test('a Safari gesture scales the zoom it started at, is cancelled, and gives wa
 	touchAt(control, 'pointerdown', [1, 100]);
 	expect(gestureAt(control, 'gesturechange', 3).defaultPrevented).toBe(false);
 	expect(zooms).toHaveLength(3);
+});
+
+test('a mouse moving over the control leaves a Safari gesture free to zoom', () => {
+	const { control, zooms } = mountZoom();
+
+	pointerAt(control, 'pointermove', { clientX: 100, pointerType: 'mouse' });
+	gestureAt(control, 'gesturestart', 1);
+	gestureAt(control, 'gesturechange', 1.5);
+
+	expect(zooms).toEqual([90]);
 });
 
 test('+, - and = step by a wheel notch; a modifier, another target or zooming off leaves the key alone', () => {
@@ -229,4 +241,23 @@ test('a mouse, a disabled control and zooming off each leave a second pointer al
 	state.isZoomable = true;
 	twoDown('touch');
 	expect(claims()).toBe(1);
+});
+
+test('aborting the signal takes every pinch listener off, so neither a held pinch nor a new one moves', () => {
+	const pinched = mountZoom();
+
+	touchAt(pinched.control, 'pointerdown', [1, 200]);
+	touchAt(pinched.control, 'pointerdown', [2, 300]);
+	pinched.controller.abort();
+	touchAt(pinched.control, 'pointermove', [2, 400]);
+	touchAt(pinched.control, 'pointerup', [1, 200]);
+	touchAt(pinched.control, 'pointerup', [2, 400]);
+	expect([pinched.zooms, pinched.gesture.isPinching()]).toEqual([[], true]);
+
+	const fresh = mountZoom();
+
+	touchAt(fresh.control, 'pointerdown', [1, 200]);
+	fresh.controller.abort();
+	touchAt(fresh.control, 'pointerdown', [2, 300]);
+	expect([fresh.claims(), fresh.gesture.isPinching()]).toEqual([0, false]);
 });

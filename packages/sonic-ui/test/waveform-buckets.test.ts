@@ -11,6 +11,12 @@ function silence(pairs: number): { fullScale: number; pairsPerSecond: number; sa
 	return { fullScale: 128, pairsPerSecond, samples: new Int8Array(pairs * 2) };
 }
 
+test('peaks with no rate draw no buckets', () => {
+	const view = { pixelsPerSecond: 100, startSeconds: 0, width: 120 };
+
+	expect(waveformBuckets({ ...silence(400), pairsPerSecond: 0 }, view)).toEqual([]);
+});
+
 test('a window moved by a third of a bucket keeps every bucket and shifts only x', () => {
 	const peaks = silence(4000);
 	const view = { pixelsPerSecond: 90, width: 200 };

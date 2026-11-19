@@ -293,6 +293,18 @@ test('a double press hands the slider role to the entry, holding the value text 
 	}
 });
 
+test('a press while the entry is open leaves it open and drags nothing', () => {
+	const { control, dial } = mountDial('value="50"');
+	const entry = entryOf(control);
+
+	press(control);
+	press(control);
+	pointerAt(control, 'pointerdown', { clientX: 10, clientY: 100 });
+	pointerAt(control, 'pointermove', { clientX: 10, clientY: 20 });
+
+	expect([dial.value, entry.hidden, document.activeElement]).toEqual([50, false, entry]);
+});
+
 test('an entry opening with text parseValue cannot read warns, and formatEntry quiets it', () => {
 	const { control, dial } = mountDial('max="300" min="20" step="0.1" value="120"');
 	const entry = entryOf(control);

@@ -280,6 +280,13 @@ test('a move with a direction never lands back where it started while a value th
 	expect(distribute(full, rule, { direction: -1, index: 0, target: 49 })).toEqual([50, 25, 25]);
 });
 
+test('a move with a direction takes the nearest value that way, not a further one', () => {
+	const snapshot = [member(50), member(30, { step: 5 }), member(20, { step: 10 })];
+	const rule = { mode: 'proportional', total: 100 } as const;
+
+	expect(distribute(snapshot, rule, { direction: 1, index: 0, target: 57 })).toEqual([55, 25, 20]);
+});
+
 test('a sibling whose next step lies past its bound is not stepped there, nor counted as able to step', () => {
 	const pinned: SplitMember = {
 		...member(10, { max: 10, min: 10 }),
@@ -290,6 +297,18 @@ test('a sibling whose next step lies past its bound is not stepped there, nor co
 
 	expect(distribute(snapshot, rule, { index: 0, target: 68 })).toEqual([70, 10, 20]);
 	expect(distribute(snapshot, rule, { direction: -1, index: 0, target: 69 })).toEqual([65, 10, 25]);
+});
+
+test('a mover whose siblings can step no further takes the rest back on its own grid', () => {
+	const overshooting: SplitMember = {
+		...member(20, { max: 35, step: 10 }),
+		stepFrom: (from, direction) => from + direction * 10,
+	};
+	const snapshot = [member(50), overshooting, member(30, { max: 30, step: 10 })];
+
+	expect(
+		distribute(snapshot, { mode: 'proportional', total: 100 }, { index: 0, target: 38 }),
+	).toEqual([40, 30, 30]);
 });
 
 test('a total past what the bounds allow saturates at the bounds', () => {

@@ -80,6 +80,19 @@ test('a key scrub that loses focus changes once, and its keyup adds nothing', ()
 	expect(events).toEqual(['input', 'input', 'change']);
 });
 
+test('a key scrub held against a bound changes nothing', () => {
+	installCanvasFakes();
+
+	const { canvas } = mountWavestrip('max="300" key-step="5" value="300"');
+	const events = recordEvents(document.body);
+
+	keyAt(canvas, 'keydown', true);
+	keyAt(canvas, 'keydown', true);
+	keyAt(canvas, 'keyup', false);
+
+	expect(events).toEqual([]);
+});
+
 test('a single key press changes at once', () => {
 	installCanvasFakes();
 
@@ -406,6 +419,21 @@ test('renderMarker is given each point marker with its own detached element, and
 		['sonic-wavestrip-region', ''],
 		['sonic-wavestrip-marker', 'late'],
 	]);
+});
+
+test('markers written before the strip is appended are drawn once, when it first lays out', () => {
+	installCanvasFakes();
+
+	const wavestrip = document.createElement('sonic-wavestrip');
+	const drawn = recordDrawn(wavestrip);
+
+	wavestrip.max = 300;
+	wavestrip.markers = [{ cue: 'one', start: 105 }];
+	expect(drawn).toEqual([]);
+
+	document.body.replaceChildren(wavestrip);
+	FakeResizeObserver.instances.at(-1)?.report([300, 48], [300, 48]);
+	expect(drawn.map(([cue]) => cue)).toEqual(['one']);
 });
 
 test('a resize, a bound write and a reconnect keep the elements a renderer was handed, and place them', () => {

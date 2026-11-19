@@ -75,6 +75,18 @@ test('a pad set up before it is appended holds its values, and then draws as one
 	expect(appended).toBe(drawnMarkup(box));
 });
 
+test('a pad set up before it is appended formats nothing until it draws', () => {
+	const xy = document.createElement('sonic-xy');
+	const format = vi.fn(String);
+
+	xy.formatValue = format;
+	xy.x = 40;
+	expect(format).not.toHaveBeenCalled();
+
+	document.body.replaceChildren(xy);
+	expect(format).toHaveBeenCalledWith(40, 'x');
+});
+
 test('a value waits for its range, and an unset value rests at its own minimum', () => {
 	const { xy } = mountXy('x="150" x-max="200" y-min="10"');
 
@@ -95,7 +107,7 @@ test('a press on the puck moves nothing until the pointer travels', () => {
 
 	pointerAt(puck, 'pointerdown', { clientX: 60, clientY: 80 });
 	pointerAt(puck, 'pointermove', { clientX: 62, clientY: 80 });
-	expect([xy.x, xy.y]).toEqual([0, 150]);
+	expect([xy.x, xy.y, xy.revealed]).toEqual([0, 150, false]);
 
 	pointerAt(puck, 'pointermove', { clientX: 80, clientY: 70 });
 	expect([xy.x, xy.y]).toEqual([10, 160]);
@@ -220,6 +232,16 @@ test('disabled mid-drag ends the drag with a change, and a later press does noth
 	expect([xy.x, xy.y]).toEqual([10, 150]);
 });
 
+test('a disabled pad ignores a Ctrl-click that would return it to its default', () => {
+	const { box, parent, xy } = mountXy(`${offset} x-default="25" disabled`);
+	const events = recordEvents(parent);
+
+	pointerAt(box, 'pointerdown', { clientX: 200, clientY: 20, ctrlKey: true });
+
+	expect(xy.x).toBe(0);
+	expect(events).toEqual([]);
+});
+
 function partOf(pad: Pad, axis: 'x' | 'y'): HTMLElement {
 	return requireChild(pad.parent, `[data-sonic-axis="${axis}"]`, HTMLDivElement);
 }
@@ -265,7 +287,7 @@ test('a key on the other axis moves the one tab stop and the focus to its part',
 	x.focus();
 	pressKey(x, 'ArrowUp');
 	expect([stopOf(y), stopOf(x)]).toEqual([current, other]);
-	expect(document.activeElement).toBe(y);
+	expect([document.activeElement, pad.xy.revealed]).toEqual([y, true]);
 
 	pad.xy.blur();
 	pad.xy.focus();
@@ -298,6 +320,32 @@ test('Delete returns only the axis that has a default, and passes through with n
 
 	expect(pressKey(partOf(pad, 'x'), 'Delete').defaultPrevented).toBe(true);
 	expect([pad.xy.x, pad.xy.y]).toEqual([60, -6]);
+});
+
+test('a key at a bound moves nothing and reports nothing', () => {
+	const pad = mountXy('x="100" y="0"');
+	const events = recordEvents(pad.parent);
+
+	pressKey(partOf(pad, 'x'), 'ArrowRight');
+	pressKey(partOf(pad, 'x'), 'ArrowDown');
+
+	expect([pad.xy.x, pad.xy.y]).toEqual([100, 0]);
+	expect(events).toEqual([]);
+});
+
+test('a key already taken by a listener on the host is left to it', () => {
+	const pad = mountXy(stepped);
+
+	pad.xy.addEventListener(
+		'keydown',
+		(event) => {
+			event.preventDefault();
+		},
+		{ capture: true },
+	);
+	pressKey(partOf(pad, 'x'), 'ArrowRight');
+
+	expect([pad.xy.x, pad.xy.revealed]).toEqual([60, false]);
 });
 
 test('a disabled XY pad takes both parts out of the tab order and ignores keys', () => {
