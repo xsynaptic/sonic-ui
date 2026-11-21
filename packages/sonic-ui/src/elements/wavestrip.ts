@@ -1,20 +1,27 @@
 import type { ValueAxis } from '#elements/value-gestures.ts';
 import type { WaveMarker } from '#elements/wave-element.ts';
+import type { BandLevels } from '#lib/band-levels.ts';
 import type { SurfaceFrame } from '#lib/canvas-surface.ts';
 import type { Point } from '#lib/marker-band.ts';
+import type { Oklch } from '#lib/oklch.ts';
 import type { StripRegions } from '#lib/strip-scene.ts';
+import type { StripTintSources } from '#lib/strip-tint.ts';
 import type { TimeRegions } from '#lib/time-regions.ts';
 import type { Seconds } from '#lib/units.ts';
+import type { TintCell } from '#lib/wave-tint.ts';
 
 import { RegionLayer } from '#elements/region-layer.ts';
 import { SonicValueEvent } from '#elements/value-event.ts';
-import { SonicWaveElement } from '#elements/wave-element.ts';
+import { paintedChannels, SonicWaveElement } from '#elements/wave-element.ts';
+import { levelTable } from '#lib/band-levels.ts';
 import { outsideCancelZone } from '#lib/cancel-zone.ts';
 import { createMarkerBand } from '#lib/marker-band.ts';
 import { clamp, clampProportion } from '#lib/math.ts';
+import { blendOklch, oklchOf, rgbOf } from '#lib/oklch.ts';
 import { requireChild, template } from '#lib/render.ts';
 import { scrubRegions } from '#lib/scrub.ts';
-import { stripBars, stripGroove, stripRegions } from '#lib/strip-scene.ts';
+import { barLayout, stripBars, stripGroove, stripRegions } from '#lib/strip-scene.ts';
+import { stripTintReadiness, stripTints } from '#lib/strip-tint.ts';
 import { sortedRegions } from '#lib/time-regions.ts';
 
 declare global {
@@ -27,6 +34,17 @@ type Colour = keyof typeof colours;
 
 type Length = keyof typeof lengths;
 
+type Numeric = keyof typeof numbers;
+
+type StateKind = (typeof stateKinds)[number];
+
+interface StripTint {
+	count: number;
+	images: Partial<Record<StateKind, ImageData>>;
+	pitch: number;
+	strip: CanvasRenderingContext2D;
+}
+
 export type MarkerRender = (marker: WaveMarker, element: HTMLElement) => void;
 
 const colours = {
@@ -35,6 +53,25 @@ const colours = {
 	scrub: '--_sonic-wavestrip-scrub',
 	wave: '--_sonic-wavestrip-wave',
 } as const;
+
+const numbers = {
+	bufferedTintAmount: '--_sonic-wavestrip-buffered-tint-amount',
+	playedTintAmount: '--_sonic-wavestrip-played-tint-amount',
+	scrubTintAmount: '--_sonic-wavestrip-scrub-tint-amount',
+	tintOff: '--_sonic-wavestrip-tint-off',
+	tintSensitivity: '--_sonic-wavestrip-tint-sensitivity',
+	tintSteps: '--_sonic-wavestrip-tint-steps',
+	waveTintAmount: '--_sonic-wavestrip-tint-amount',
+} as const satisfies Record<string, `--_sonic-${string}`>;
+
+const stateKinds = ['wave', 'buffered', 'played', 'scrub'] as const;
+
+const amountOf = {
+	buffered: 'bufferedTintAmount',
+	played: 'playedTintAmount',
+	scrub: 'scrubTintAmount',
+	wave: 'waveTintAmount',
+} as const satisfies Record<StateKind, Numeric>;
 
 const lengths = {
 	gapRatio: '--_sonic-wavestrip-bar-gap-ratio',
@@ -80,7 +117,56 @@ function fillRegion(
 	context.restore();
 }
 
-export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
+function unlitProbe(): HTMLDivElement {
+	const probe = document.createElement('div');
+
+	probe.style.setProperty('color', 'var(--_sonic-unlit-solid)');
+
+	return probe;
+}
+
+function stateImage(
+	state: Oklch | undefined,
+	tints: ReadonlyArray<Oklch>,
+	amount: number,
+): ImageData | undefined {
+	if (!state || tints.length === 0 || !(amount > 0)) return undefined;
+
+	const pixels = new Uint8ClampedArray(tints.length * 4);
+
+	for (const [bar, tint] of tints.entries()) {
+		const [red, green, blue] = rgbOf(blendOklch(state, tint, amount));
+
+		pixels.set([red, green, blue, 255], bar * 4);
+	}
+
+	return new ImageData(pixels, tints.length, 1);
+}
+
+function drawTint(
+	context: CanvasRenderingContext2D,
+	{ count, pitch, strip }: StripTint,
+	image: ImageData,
+): void {
+	if (strip.canvas.width < count) strip.canvas.width = count;
+	strip.putImageData(image, 0, 0);
+	context.imageSmoothingEnabled = false;
+	context.drawImage(strip.canvas, 0, 0, count, 1, 0, 0, count * pitch, context.canvas.height);
+	context.imageSmoothingEnabled = true;
+}
+
+export class SonicWavestrip extends SonicWaveElement<Colour, Length, Numeric> {
+	/** One row per slice of the whole track, in any number of slices, stretched to fit the bars as `peaks` is */
+	get bands(): BandLevels | undefined {
+		return this.#bands;
+	}
+
+	set bands(bands: BandLevels | undefined) {
+		this.#bands = bands;
+		this.#bandTable = levelTable(bands);
+		this.surface()?.invalidate();
+	}
+
 	/** Loaded spans, in seconds */
 	// fallow-ignore-next-line code-duplication -- one accessor pair per property
 	get buffered(): Array<[number, number]> {
@@ -121,6 +207,16 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 		this.surface()?.invalidate();
 	}
 
+	/** The track's quiet and loud slices in the units of `peaks`, read as linear amplitude: the 10th and 95th percentiles of the slices above -60 dBFS */
+	get peaksRange(): readonly [quiet: number, loud: number] | undefined {
+		return this.#peaksRange;
+	}
+
+	set peaksRange(range: readonly [quiet: number, loud: number] | undefined) {
+		this.#peaksRange = range && [range[0], range[1]];
+		this.surface()?.invalidate();
+	}
+
 	/** A time a release will seek to, drawn as a scrub's edge; a hold or a hover of the strip's own is drawn instead */
 	get preview(): Seconds | undefined {
 		return this.#preview;
@@ -158,11 +254,15 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 
 	protected readonly lengths = lengths;
 
-	protected readonly numbers = {};
+	protected readonly numbers = numbers;
 
 	protected override readonly sheet = 'wavestrip.css';
 
 	protected readonly sizeProperty = '--_sonic-wavestrip-size';
+
+	#bands: BandLevels | undefined;
+
+	#bandTable: ReturnType<typeof levelTable>;
 
 	#bars: Path2D | undefined;
 
@@ -180,11 +280,21 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 
 	#peaks: ArrayLike<number> | undefined;
 
+	#peaksRange: readonly [number, number] | undefined;
+
 	#preview: Seconds | undefined;
 
 	#regions: RegionLayer | undefined;
 
 	#renderMarker: MarkerRender | undefined;
+
+	#stateColours = new Map<string, Oklch | undefined>();
+
+	#tint: StripTint | undefined;
+
+	#tintKey = '';
+
+	#tintStops: Array<Oklch> | undefined;
 
 	/** Viewport x of a time, clamped to the strip */
 	clientXOf(value: Seconds): number {
@@ -197,8 +307,10 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 		this.upgradeProperties(
 			'buffered',
 			'cancellable',
+			'bands',
 			'formatSpokenRegion',
 			'peaks',
+			'peaksRange',
 			'preview',
 			'renderMarker',
 		);
@@ -284,7 +396,10 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 		return [...this.#markerBand.inReach(point, widthPx), ...regions];
 	}
 
-	protected paint(context: CanvasRenderingContext2D, frame: SurfaceFrame<Colour, Length>): void {
+	protected paint(
+		context: CanvasRenderingContext2D,
+		frame: SurfaceFrame<Colour, Length, Numeric>,
+	): void {
 		const { look, size } = frame;
 		const strip = this.#stripRegions(size.width);
 		const bars = this.#barsFor(frame);
@@ -293,11 +408,28 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 		context.clearRect(0, 0, size.width, size.height);
 		if (!bars) return;
 
+		const tint = this.#tintFor(frame);
+
 		context.fillStyle = look.colours.wave;
 		context.fill(bars);
+		// The bars act as a mask, so from here on only the pixels they cover take colour
+		context.globalCompositeOperation = 'source-atop';
+		if (tint?.images.wave) drawTint(context, tint, tint.images.wave);
 		for (const { from, kind, to } of strip.regions) {
-			fillRegion(context, bars, [from, to, look.colours[kind]]);
+			const image = tint?.images[kind];
+
+			if (!tint || !image) {
+				fillRegion(context, bars, [from, to, look.colours[kind]]);
+				continue;
+			}
+			context.save();
+			context.beginPath();
+			context.rect(from, 0, to - from, size.height);
+			context.clip();
+			drawTint(context, tint, image);
+			context.restore();
 		}
+		context.globalCompositeOperation = 'source-over';
 	}
 
 	protected override renderMarkers(): void {
@@ -392,6 +524,19 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 		this.control.style.setProperty('--_sonic-wavestrip-readout-at', String(at));
 	}
 
+	// Without a skin a state colour is translucent, so it is read as painted over the solid unlit surface
+	#stateColour(strip: CanvasRenderingContext2D, colour: string): Oklch | undefined {
+		if (this.#stateColours.has(colour)) return this.#stateColours.get(colour);
+
+		const [surface = 'transparent'] = this.readProbes([unlitProbe()]);
+		const channels = paintedChannels(strip, surface, colour);
+		const read = channels && oklchOf(channels);
+
+		this.#stateColours.set(colour, read);
+
+		return read;
+	}
+
 	#stripRegions(width: number): StripRegions {
 		const mapping = this.mapping();
 		const { proportionOf } = mapping;
@@ -408,5 +553,72 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length> {
 			},
 			width,
 		);
+	}
+
+	#tintFor({
+		isDirty,
+		isRebuilt,
+		look,
+		size,
+	}: SurfaceFrame<Colour, Length, Numeric>): StripTint | undefined {
+		const ready = this.#tintReady(look.numbers, isRebuilt);
+		if (!ready) return undefined;
+
+		const { numbers: read } = look;
+		const { count, pitch } = barLayout(size, look.lengths);
+		const key = [
+			count,
+			read.tintSteps,
+			read.tintSensitivity,
+			...stateKinds.map((kind) => `${look.colours[kind]}=${String(read[amountOf[kind]])}`),
+		].join('|');
+		if (!isDirty && !isRebuilt && this.#tint && key === this.#tintKey) return this.#tint;
+
+		const tints = stripTints(ready.cell, ready.sources, [
+			{ peaksDepth: 0, steps: read.tintSteps, stops: ready.stops, surfaceLightness: 0 },
+			read.tintSensitivity,
+			count,
+		]);
+		const images: StripTint['images'] = {};
+
+		for (const kind of stateKinds) {
+			const state = this.#stateColour(ready.strip, look.colours[kind]);
+			const image = stateImage(state, tints, read[amountOf[kind]]);
+
+			if (image) images[kind] = image;
+		}
+		this.#tintKey = key;
+		this.#tint = { count, images, pitch, strip: ready.strip };
+
+		return this.#tint;
+	}
+
+	#tintReady(
+		read: Record<Numeric, number>,
+		isRebuilt: boolean,
+	):
+		| undefined
+		| {
+				cell: TintCell;
+				sources: StripTintSources;
+				stops: Array<Oklch>;
+				strip: CanvasRenderingContext2D;
+		  } {
+		if (read.tintOff > 0) return undefined;
+
+		const sources = { bands: this.#bandTable, peaks: this.#peaks, peaksRange: this.#peaksRange };
+		const readiness = stripTintReadiness(this.tintCell(), sources);
+		const strip = this.readyTintCanvas(readiness, {
+			'bands.medians': this.#bands,
+			peaksRange: this.#peaks,
+		});
+		if (!strip || !readiness.isReady) return undefined;
+
+		if (isRebuilt || !this.#tintStops) {
+			this.#stateColours.clear();
+			this.#tintStops = this.readTintPalette(strip, 'wavestrip').stops;
+		}
+
+		return { cell: readiness.cell, sources, stops: this.#tintStops, strip };
 	}
 }

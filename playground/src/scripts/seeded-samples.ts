@@ -36,3 +36,18 @@ export function emptySamples(seconds: number): Int8Array<ArrayBuffer> {
 export function emptyRms(seconds: number): Int8Array<ArrayBuffer> {
 	return new Int8Array(Math.ceil(seconds * pairsPerSecond));
 }
+
+// Takes the 10th and 95th percentiles of the values above -60 dBFS, the way a host's build would
+export function percentileRange(
+	values: Iterable<number>,
+	fullScale: number,
+): [number, number] | undefined {
+	const floor = fullScale / 1000;
+	const heard = [...values]
+		.filter((value) => value > floor)
+		.toSorted((first, second) => first - second);
+	const quiet = heard[Math.floor(heard.length * 0.1)];
+	const loud = heard[Math.floor(heard.length * 0.95)];
+
+	return quiet && loud ? [quiet, loud] : undefined;
+}

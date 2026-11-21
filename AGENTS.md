@@ -4,7 +4,7 @@
 
 ## Where to look
 
-- Vocabulary: `.claude/glossary.md` defines each control, part and value term and the words it replaces; read it before naming anything. Pick the most accurate name for a new thing, even when the glossary already has the word: give the new sense a qualified entry, as Key (of a keyboard) has, and ask when both senses could be meant in one place.
+- Vocabulary: `.claude/glossary.md` defines each control, part and value term and the words it replaces; read it before naming anything. Pick the most accurate name for a new thing, even when the glossary already has the word: give the new sense an entry in the form the glossary's opening sets out, and ask when both senses could be meant in one place.
 - Reasons: `.claude/reference/controls.md` (gitignored, so it may be absent) records why each control behaves as it does. Read the control's section before changing a gesture, a default or an ARIA choice that looks arbitrary.
 - Plans: `.claude/tasks/` (gitignored); each carries a frontmatter `status`, and only `ready` is live work.
 

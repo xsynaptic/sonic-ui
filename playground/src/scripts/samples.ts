@@ -2,9 +2,21 @@ import type { SonicButton, SonicWaveform } from '@xsynaptic/sonic-ui';
 
 import { frameLoop } from '#scripts/frame-loop.ts';
 import { readRegions } from '#scripts/read-regions.ts';
-import { emptyLevels, fillLevels, framesPerSecond, minDecibels } from '#scripts/seeded-bands.ts';
+import {
+	bandMedians,
+	emptyLevels,
+	fillLevels,
+	framesPerSecond,
+	minDecibels,
+} from '#scripts/seeded-bands.ts';
 import { seededPeaks } from '#scripts/seeded-peaks.ts';
-import { emptyRms, emptySamples, fillSamples, pairsPerSecond } from '#scripts/seeded-samples.ts';
+import {
+	emptyRms,
+	emptySamples,
+	fillSamples,
+	pairsPerSecond,
+	percentileRange,
+} from '#scripts/seeded-samples.ts';
 
 const run = document.querySelector<SonicButton>('[data-run]');
 
@@ -39,7 +51,13 @@ function tint(waveform: SonicWaveform, bandCount: number): void {
 		fillLevels(levels, bandCount, [from, Math.floor(start * framesPerSecond)]);
 		from = Math.ceil(end * framesPerSecond);
 	}
-	waveform.bands = { bandCount, framesPerSecond, levels, minDecibels };
+	waveform.bands = {
+		bandCount,
+		framesPerSecond,
+		levels,
+		medians: bandMedians(levels, bandCount),
+		minDecibels,
+	};
 }
 
 for (const waveform of document.querySelectorAll<SonicWaveform>('sonic-waveform[data-samples]')) {
@@ -56,7 +74,11 @@ for (const waveform of document.querySelectorAll<SonicWaveform>('sonic-waveform[
 		]);
 		from = Math.ceil(end * pairsPerSecond);
 	}
-	waveform.peaks = rms ? { pairsPerSecond, rms, samples } : { pairsPerSecond, samples };
+	const range = rms && percentileRange(rms, 128);
+
+	waveform.peaks = rms
+		? { pairsPerSecond, rms, ...(range ? { rmsRange: range } : {}), samples }
+		: { pairsPerSecond, samples };
 	waveform.pending = pending;
 	if (waveform.dataset.bands !== undefined) tint(waveform, Number(waveform.dataset.bands));
 	if (waveform.playing) play(waveform);

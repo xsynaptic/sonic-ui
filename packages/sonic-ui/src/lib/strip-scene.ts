@@ -29,15 +29,23 @@ export interface StripRegions {
 }
 
 // Whole device pixels, or bars alias unevenly and Skia's CPU raster crawls
+export function barLayout(
+	size: SurfaceSize,
+	grid: BarGrid,
+): { count: number; gap: number; pitch: number } {
+	const pitch = Math.max(1, Math.round(grid.pitch * size.dpr));
+	const gap = Math.min(pitch - 1, Math.max(0, Math.round(pitch * grid.gapRatio)));
+
+	return { count: Math.max(0, Math.floor((size.width + gap) / pitch)), gap, pitch };
+}
+
 export function stripBars(
 	peaks: ArrayLike<number>,
 	size: SurfaceSize,
 	grid: BarGrid,
 ): Array<BarRect> {
-	const pitch = Math.max(1, Math.round(grid.pitch * size.dpr));
-	const gap = Math.min(pitch - 1, Math.max(0, Math.round(pitch * grid.gapRatio)));
+	const { count, gap, pitch } = barLayout(size, grid);
 	const width = pitch - gap;
-	const count = Math.max(0, Math.floor((size.width + gap) / pitch));
 
 	return resamplePeaks(peaks, count).map((peak, index) => {
 		const height = Math.max(1, Math.round(clampProportion(peak) * size.height));

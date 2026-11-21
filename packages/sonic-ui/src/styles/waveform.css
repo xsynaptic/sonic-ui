@@ -54,52 +54,34 @@
 	initial-value: 0;
 }
 
-@property --_sonic-waveform-band-amount {
-	syntax: '<number>';
-	inherits: true;
-	initial-value: 1;
-}
-
-@property --_sonic-waveform-band-normalize {
-	syntax: '<number>';
-	inherits: true;
-	initial-value: 1;
-}
-
-@property --_sonic-waveform-band-contrast {
-	syntax: '<number>';
-	inherits: true;
-	initial-value: 1;
-}
-
-@property --_sonic-waveform-band-tilt {
+@property --_sonic-waveform-tint-off {
 	syntax: '<number>';
 	inherits: true;
 	initial-value: 0;
 }
 
-@property --_sonic-waveform-peaks-band-amount {
+@property --_sonic-waveform-peaks-depth {
 	syntax: '<number>';
 	inherits: true;
-	initial-value: 0.5;
+	initial-value: 0.6;
 }
 
-@property --_sonic-waveform-peaks-band-normalize {
-	syntax: '<number>';
-	inherits: true;
-	initial-value: 1;
-}
-
-@property --_sonic-waveform-peaks-band-contrast {
-	syntax: '<number>';
-	inherits: true;
-	initial-value: 1;
-}
-
-@property --_sonic-waveform-peaks-band-tilt {
+@property --_sonic-waveform-tint-steps {
 	syntax: '<number>';
 	inherits: true;
 	initial-value: 0;
+}
+
+@property --_sonic-waveform-tint-sensitivity {
+	syntax: '<number>';
+	inherits: true;
+	initial-value: 12;
+}
+
+@property --_sonic-waveform-tint-smoothing {
+	syntax: '<time>';
+	inherits: true;
+	initial-value: 60ms;
 }
 
 @property --_sonic-waveform-grid {
@@ -176,38 +158,15 @@
 			var(--_sonic-waveform-lit) 50%,
 			var(--_sonic-unlit-solid)
 		);
-		--_sonic-waveform-band-amount-default: 1;
-		--_sonic-waveform-peaks-band-amount-default: 0.5;
 		--_sonic-waveform-base: var(--sonic-waveform-base, var(--_sonic-waveform-lit));
 		--_sonic-waveform-peaks: var(--sonic-waveform-peaks, var(--_sonic-waveform-peaks-default));
 		--_sonic-waveform-shade: var(--_sonic-shade);
 		--_sonic-waveform-shade-clear: color-mix(in srgb, var(--_sonic-shade) 0%, transparent);
 		--_sonic-waveform-edge-shade: var(--sonic-waveform-edge-shade, 0);
-		--_sonic-waveform-band-amount: var(
-			--sonic-waveform-band-amount,
-			var(--_sonic-waveform-band-amount-default)
-		);
-		--_sonic-waveform-band-normalize: var(--sonic-waveform-band-normalize, 1);
-		--_sonic-waveform-band-contrast: var(--sonic-waveform-band-contrast, 1);
-		--_sonic-waveform-band-tilt: var(--sonic-waveform-band-tilt, 0);
-
-		/* Its own default: following the band amount, a tint would hide the body */
-		--_sonic-waveform-peaks-band-amount: var(
-			--sonic-waveform-peaks-band-amount,
-			var(--_sonic-waveform-peaks-band-amount-default)
-		);
-		--_sonic-waveform-peaks-band-normalize: var(
-			--sonic-waveform-peaks-band-normalize,
-			var(--_sonic-waveform-band-normalize)
-		);
-		--_sonic-waveform-peaks-band-contrast: var(
-			--sonic-waveform-peaks-band-contrast,
-			var(--_sonic-waveform-band-contrast)
-		);
-		--_sonic-waveform-peaks-band-tilt: var(
-			--sonic-waveform-peaks-band-tilt,
-			var(--_sonic-waveform-band-tilt)
-		);
+		--_sonic-waveform-peaks-depth: var(--sonic-waveform-peaks-depth, 0.6);
+		--_sonic-waveform-tint-steps: var(--sonic-waveform-tint-steps, 0);
+		--_sonic-waveform-tint-sensitivity: var(--sonic-waveform-tint-sensitivity, 12);
+		--_sonic-waveform-tint-smoothing: var(--sonic-waveform-tint-smoothing, 60ms);
 		--_sonic-waveform-grid: var(--sonic-waveform-grid, var(--_sonic-etch));
 		--_sonic-waveform-ends: var(--sonic-waveform-ends, var(--_sonic-etch));
 		--_sonic-waveform-placeholder: var(--sonic-waveform-placeholder, var(--_sonic-etch));
@@ -256,8 +215,7 @@
 	/* States change only the defaults, so a consumer's token applies in every state */
 	:is([dimmed], :disabled) > .sonic-waveform {
 		--_sonic-waveform-peaks-default: var(--_sonic-waveform-lit);
-		--_sonic-waveform-band-amount-default: 0;
-		--_sonic-waveform-peaks-band-amount-default: 0;
+		--_sonic-waveform-tint-off: 1;
 	}
 
 	[dimmed] > .sonic-waveform {
@@ -330,8 +288,7 @@
 			--_sonic-waveform-base: rgb(from CanvasText r g b / 100%);
 			--_sonic-waveform-peaks: rgb(from CanvasText r g b / 100%);
 			--_sonic-waveform-edge-shade: 0;
-			--_sonic-waveform-band-amount: 0;
-			--_sonic-waveform-peaks-band-amount: 0;
+			--_sonic-waveform-tint-off: 1;
 			--_sonic-waveform-grid: rgb(from GrayText r g b / 100%);
 			--_sonic-waveform-ends: rgb(from GrayText r g b / 100%);
 			--_sonic-waveform-placeholder: rgb(from GrayText r g b / 100%);

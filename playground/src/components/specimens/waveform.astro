@@ -5,12 +5,14 @@ import ZoomOut from '@lucide/astro/icons/zoom-out';
 import Cell from '#components/specimens/cell.astro';
 import Section from '#components/specimens/section.astro';
 import SpecimenGrid from '#components/specimens/specimen-grid.astro';
-import { tonalBands } from '#scripts/specimens/tonal-bands.ts';
+import { tonalTint } from '#scripts/specimens/tonal-tint.ts';
 
 interface Wave {
 	bands?: number;
 	className?: string;
+	dynamics?: 'energy' | 'onsets';
 	hasGlass?: boolean;
+	hue?: 'spectral';
 	id: string;
 	isDimmed?: boolean;
 	isDisabled?: boolean;
@@ -26,13 +28,16 @@ interface Wave {
 	zoom?: number;
 }
 
-function ramp(bandCount: number): string {
-	return Array.from({ length: bandCount }, (_band, band) => {
-		const hue = 25 + (band * 250) / (bandCount - 1);
-
-		return `--sonic-waveform-band-${String(band + 1)}: oklch(0.75 0.19 ${String(hue)})`;
-	}).join('; ');
+function palette(...stops: Array<string>): string {
+	return stops
+		.map((stop, index) => `--sonic-waveform-tint-${String(index + 1)}: ${stop}`)
+		.join('; ');
 }
+
+const spectrum = palette('oklch(0.66 0.2 28)', 'oklch(0.8 0.17 85)', 'oklch(0.74 0.13 210)');
+const amber = palette('oklch(0.46 0.14 48)', 'oklch(0.72 0.17 58)', 'oklch(0.93 0.06 70)');
+const ice = palette('oklch(0.42 0.14 262)', 'oklch(0.68 0.15 240)', 'oklch(0.94 0.05 210)');
+const heat = palette('oklch(0.5 0.17 30)', 'oklch(0.72 0.18 55)', 'oklch(0.92 0.08 92)');
 
 const groups: Array<{ hasZoom?: boolean; title: string; waves: Array<Wave> }> = [
 	{
@@ -52,35 +57,75 @@ const groups: Array<{ hasZoom?: boolean; title: string; waves: Array<Wave> }> = 
 		],
 	},
 	{
-		title: 'Bands',
+		title: 'Tint',
 		waves: [
-			{ bands: 3, id: 'waveform-bands', isPlaying: true, label: 'Low, mid, high', seed: 22 },
+			{
+				dynamics: 'energy',
+				id: 'waveform-energy',
+				isPlaying: true,
+				label: 'Drops',
+				rms: true,
+				seed: 31,
+				style: amber,
+			},
 			{
 				bands: 3,
-				hasGlass: true,
-				id: 'waveform-bands-tonal',
+				dynamics: 'onsets',
+				id: 'waveform-transients',
 				isPlaying: true,
-				label: 'Tonal',
+				label: 'Hits',
+				rms: true,
+				seed: 22,
+				style: ice,
+			},
+			{
+				bands: 3,
+				hue: 'spectral',
+				id: 'waveform-spectral',
+				isPlaying: true,
+				label: 'Timbre',
+				rms: true,
 				seed: 28,
-				style: tonalBands,
+				style: spectrum,
+			},
+			{
+				bands: 3,
+				dynamics: 'energy',
+				hue: 'spectral',
+				id: 'waveform-spectral-energy',
+				isPlaying: true,
+				label: 'Timbre and drops',
+				rms: true,
+				seed: 33,
+				style: spectrum,
+			},
+			{
+				bands: 3,
+				dynamics: 'onsets',
+				hasGlass: true,
+				hue: 'spectral',
+				id: 'waveform-spectral-transients',
+				isPlaying: true,
+				label: 'Timbre and hits',
+				rms: true,
+				seed: 34,
+				style: tonalTint,
+			},
+			{
+				bands: 3,
+				hue: 'spectral',
+				id: 'waveform-stepped',
+				isPlaying: true,
+				label: 'Sections',
+				rms: true,
+				seed: 35,
+				style: `${heat}; --sonic-waveform-tint-steps: 3`,
 			},
 		],
 	},
 	{
 		title: 'RMS',
-		waves: [
-			{ id: 'waveform-rms', isPlaying: true, label: 'Master', rms: true, seed: 31 },
-			{
-				bands: 3,
-				hasGlass: true,
-				id: 'waveform-rms-tonal',
-				isPlaying: true,
-				label: 'Tonal master',
-				rms: true,
-				seed: 33,
-				style: tonalBands,
-			},
-		],
+		waves: [{ id: 'waveform-rms', isPlaying: true, label: 'Master', rms: true, seed: 31 }],
 	},
 	{
 		title: 'Glass',
@@ -103,14 +148,25 @@ const groups: Array<{ hasZoom?: boolean; title: string; waves: Array<Wave> }> = 
 		title: 'States',
 		waves: [
 			{ id: 'waveform-pending', label: 'Pending', pending: '151 162', seed: 9 },
-			{ bands: 3, id: 'waveform-dimmed', isDimmed: true, label: 'Dimmed', rms: true, seed: 24 },
 			{
 				bands: 3,
+				hue: 'spectral',
+				id: 'waveform-dimmed',
+				isDimmed: true,
+				label: 'Dimmed',
+				rms: true,
+				seed: 24,
+				style: spectrum,
+			},
+			{
+				bands: 3,
+				hue: 'spectral',
 				id: 'waveform-disabled',
 				isDisabled: true,
 				label: 'Disabled',
 				rms: true,
 				seed: 25,
+				style: spectrum,
 			},
 		],
 	},
@@ -140,7 +196,9 @@ const groups: Array<{ hasZoom?: boolean; title: string; waves: Array<Wave> }> = 
 							playing={wave.isPlaying}
 							readout={true}
 							step="0"
-							style={wave.style ?? (wave.bands === undefined ? undefined : ramp(wave.bands))}
+							style={wave.style}
+							tint-dynamics={wave.dynamics}
+							tint-hue={wave.hue}
 							value="150"
 							zoom={wave.zoom}
 						></sonic-waveform>

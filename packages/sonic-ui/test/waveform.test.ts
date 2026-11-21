@@ -272,10 +272,11 @@ test('bands written inside requestPeaks ask once, and a write from outside asks 
 	expect(asks).toBe(2);
 });
 
-test('bands written with a new band count read the new band’s colour', () => {
+test('a tint set after the first paint reads the palette, and one missing its reference warns once', () => {
 	const { flushFrames } = installCanvasFakes();
 	const { waveform } = mountWaveform('max="300" step="0" value="100"');
 	const read = vi.spyOn(globalThis, 'getComputedStyle');
+	const warn = vi.spyOn(console, 'warn').mockReturnValue(undefined);
 	const probed = (): Array<string> =>
 		read.mock.calls.map(([element]) =>
 			element instanceof HTMLElement ? element.style.getPropertyValue('color') : '',
@@ -283,10 +284,22 @@ test('bands written with a new band count read the new band’s colour', () => {
 
 	waveform.bands = { bandCount: 2, framesPerSecond: 10, levels: new Uint8Array(6000) };
 	for (let frame = 0; frame < 4; frame += 1) flushFrames();
-	waveform.bands = { bandCount: 3, framesPerSecond: 10, levels: new Uint8Array(9000) };
+	waveform.tintHue = 'spectral';
 	for (let frame = 0; frame < 4; frame += 1) flushFrames();
+	expect(probed()).not.toContain('var(--sonic-waveform-tint-1, transparent)');
+	expect(warn).toHaveBeenCalledTimes(1);
+	expect(warn.mock.calls[0]?.[0]).toContain('bands.medians');
 
-	expect(probed()).toContain('var(--sonic-waveform-band-3, transparent)');
+	waveform.bands = {
+		bandCount: 2,
+		framesPerSecond: 10,
+		levels: new Uint8Array(6000),
+		medians: [9, 9],
+	};
+	for (let frame = 0; frame < 4; frame += 1) flushFrames();
+	expect(waveform.getAttribute('tint-hue')).toBe('spectral');
+	expect(probed()).toContain('var(--sonic-waveform-tint-5, transparent)');
+	expect(warn).toHaveBeenCalledTimes(1);
 });
 
 test('an unchanged pending list written from outside paints nothing', () => {

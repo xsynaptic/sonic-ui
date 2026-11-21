@@ -1,6 +1,6 @@
 # sonic-ui
 
-The words this library uses for its controls, their parts and their values. Where studio hardware has a name for something we use it; otherwise we use the word a web developer would look for. A word with more than one sense here has a qualified entry for each, such as Key (of a keyboard), and keeps its everyday meaning wherever the context settles which is meant. An _Avoid_ names a word that would mislead for that one thing; it leaves the word free everywhere else.
+The words this library uses for its controls, their parts and their values. Where studio hardware has a name for something we use it; otherwise we use the word a web developer would look for. A word with more than one sense here has a qualified entry for each, such as Key (of a keyboard), and keeps its everyday meaning wherever the context settles which is meant. A term that belongs to one feature is entered under a name that carries the feature, such as Wave tint or Spectral balance, so the short word stays free for anything else. An _Avoid_ names a word that would mislead for that one thing; it leaves the word free everywhere else.
 
 ## Language
 
@@ -160,11 +160,13 @@ The words this library uses for its controls, their parts and their values. Wher
 
 **Band**: One of the frequency ranges levels are split into: a wave's, with a level per band per frame, or a spectrum's, drawn as a bar each. _Avoid_: Bin (that is one frequency of a spectrum), zone (that is a stretch of a level display)
 
-**Normalize**: To scale a band mix so that its strongest channel is at full, as peak normalising does a signal. _Avoid_: Lift (in grading that raises the shadows)
+**Wave tint**: The colour a waveform or wave strip takes from its tint palette, by the readings that `tint-hue` and `tint-dynamics` choose. Without one a wave is two-tone.
 
-**Contrast** (of bands): The exponent on each band's weight in the mix. Above 1 the strongest band takes more of the colour.
+**Tint palette**: The colour stops a wave tint is drawn from, bass end first, blended in OKLCH.
 
-**Tilt** (of bands): A gain that rises steadily from the lowest band to the highest, in decibels a band.
+**Spectral balance**: How far a wave's highs lead its bass at a moment, each band measured against its own median over the track. It is the reading `tint-hue="spectral"` takes its hue from. _Avoid_: Balance on its own (that reads as stereo balance), tilt (that is the light's lean)
+
+**Tint dynamics**: A wave tint's second reading, energy or onsets. Energy is the level the wave is drawn from, RMS on a waveform and bar heights on a wave strip. With no hue source the reading picks the position on the tint palette; with one it only brightens and dims the hue. _Avoid_: Lift (in grading that raises the shadows)
 
 **Playhead**: The line that marks the current time on a wave.
 

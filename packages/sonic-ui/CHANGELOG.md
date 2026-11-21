@@ -1,5 +1,13 @@
 # @xsynaptic/sonic-ui
 
+## 0.31.0
+
+### Minor Changes
+
+- Waveform and wave strip: `tint-hue` and `tint-dynamics` colour the wave from a palette set with `--sonic-waveform-tint-1` to `-5` (`--sonic-wavestrip-tint-*` on the strip). The readings take their references from `WaveformBands.medians` and `WaveformPeaks.rmsRange`, or from the strip's new `bands` and `peaksRange`.
+
+  Breaking: the band colour and mix tokens (`--sonic-waveform-band-*` and `--sonic-waveform-peaks-band-*`) are removed, and bands alone no longer tint a waveform.
+
 ## 0.30.0
 
 ### Minor Changes

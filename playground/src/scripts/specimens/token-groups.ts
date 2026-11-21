@@ -14,7 +14,7 @@ interface RangeToken extends TokenBase {
 	max: number;
 	min: number;
 	step: number;
-	unit: '' | 'deg' | 'px' | 'rem';
+	unit: '' | 'deg' | 'ms' | 'px' | 'rem';
 }
 
 // The first option is the baseline: the token left unset
@@ -198,11 +198,10 @@ export const tokenGroups: Array<TokenGroup> = [
 			range('edge shade', '--sonic-waveform-edge-shade', [0, 1, 0.01]),
 			colour('base', '--sonic-waveform-base'),
 			colour('peaks', '--sonic-waveform-peaks'),
-			range('band amount', '--sonic-waveform-band-amount', [0, 1, 0.01]),
-			range('peaks band amount', '--sonic-waveform-peaks-band-amount', [0, 1, 0.01]),
-			range('peaks band normalize', '--sonic-waveform-peaks-band-normalize', [0, 1, 0.01]),
-			range('peaks band contrast', '--sonic-waveform-peaks-band-contrast', [0.25, 4, 0.05]),
-			range('peaks band tilt', '--sonic-waveform-peaks-band-tilt', [-12, 12, 0.5]),
+			range('peaks depth', '--sonic-waveform-peaks-depth', [0, 1, 0.05]),
+			range('tint steps', '--sonic-waveform-tint-steps', [0, 6, 1]),
+			range('tint sensitivity', '--sonic-waveform-tint-sensitivity', [3, 24, 0.5]),
+			range('tint smoothing', '--sonic-waveform-tint-smoothing', [0, 300, 10, 'ms']),
 		],
 	},
 	{

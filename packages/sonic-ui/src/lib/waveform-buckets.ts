@@ -5,6 +5,8 @@ export interface WaveformPeaks {
 	pairsPerSecond: number;
 	/** One linear RMS value per pair, mono, on the same scale as `samples` */
 	rms?: Float32Array | Int8Array | Int16Array;
+	/** The track's quiet and loud RMS in the units of `rms`: the 10th and 95th percentiles of its pairs above -60 dBFS; without it, or without `rms`, an energy tint draws untinted */
+	rmsRange?: readonly [quiet: number, loud: number];
 	samples: Float32Array | Int8Array | Int16Array;
 }
 
@@ -28,14 +30,14 @@ interface BucketView {
 	width: number;
 }
 
-function fullScaleOf({ fullScale, samples }: WaveformPeaks): number {
+export function peaksFullScale({ fullScale, samples }: WaveformPeaks): number {
 	if (fullScale !== undefined) return fullScale;
 	if (samples instanceof Int8Array) return 128;
 
 	return samples instanceof Int16Array ? 32_768 : 1;
 }
 
-function pairsIn(peaks: WaveformPeaks): number {
+export function pairsIn(peaks: WaveformPeaks): number {
 	return Math.floor(peaks.samples.length / (Math.max(1, peaks.channels ?? 1) * 2));
 }
 
@@ -43,7 +45,7 @@ function foldPairs(peaks: WaveformPeaks, fromPair: number, toPair: number): [num
 	const { samples } = peaks;
 	const channels = Math.max(1, peaks.channels ?? 1);
 	const stride = channels * 2;
-	const fullScale = fullScaleOf(peaks);
+	const fullScale = peaksFullScale(peaks);
 	let low = 0;
 	let high = 0;
 
@@ -59,7 +61,11 @@ function foldPairs(peaks: WaveformPeaks, fromPair: number, toPair: number): [num
 	return [low / fullScale, high / fullScale];
 }
 
-function foldRms(peaks: WaveformPeaks, fromPair: number, toPair: number): number | undefined {
+export function foldRms(
+	peaks: WaveformPeaks,
+	fromPair: number,
+	toPair: number,
+): number | undefined {
 	const { rms } = peaks;
 	const from = Math.max(0, fromPair);
 	const to = Math.min(pairsIn(peaks), toPair);
@@ -69,7 +75,7 @@ function foldRms(peaks: WaveformPeaks, fromPair: number, toPair: number): number
 
 	for (let pair = from; pair < to; pair += 1) power += (rms[pair] ?? 0) ** 2;
 
-	return Math.sqrt(power / (to - from)) / fullScaleOf(peaks);
+	return Math.sqrt(power / (to - from)) / peaksFullScale(peaks);
 }
 
 // Keyed to absolute pairs; keyed to the window, the same samples re-bucket every frame and judder

@@ -51,6 +51,8 @@ function readBaseline(row: Row, reader: Reader): string {
 	if (token.kind === 'colour') return toHex(raw, reader);
 
 	const value = dropUnit(raw);
+	// A registered time property computes to seconds, so it is converted back to milliseconds
+	if (token.unit === 'ms') return String(raw.endsWith('ms') ? value : Math.round(value * 1000));
 	if (token.unit !== 'rem') return String(value);
 
 	return String(value / dropUnit(getComputedStyle(document.documentElement).fontSize));

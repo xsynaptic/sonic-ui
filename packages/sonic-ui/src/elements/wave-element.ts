@@ -2,12 +2,18 @@ import type { ValueNotation } from '#elements/value-element.ts';
 import type { Surface, SurfaceFrame } from '#lib/canvas-surface.ts';
 import type { BoxProbe } from '#lib/check-styles.ts';
 import type { Point } from '#lib/marker-band.ts';
+import type { Oklch, Rgb } from '#lib/oklch.ts';
 import type { Seconds } from '#lib/units.ts';
+import type { TintCell, TintDynamics, TintHue } from '#lib/wave-tint.ts';
 
 import { SonicValueElement } from '#elements/value-element.ts';
 import { bindControlSurface } from '#lib/canvas-surface.ts';
 import { formatClock, parseClock } from '#lib/clock.ts';
+import { oklchOf } from '#lib/oklch.ts';
 import { spokenDuration } from '#lib/spoken-duration.ts';
+import { parseTintDynamics, parseTintHue, tintCellOf } from '#lib/wave-tint.ts';
+
+declare const __DEV__: boolean;
 
 declare global {
 	interface HTMLElementEventMap {
@@ -27,6 +33,37 @@ export interface WaveMarker {
 	start: Seconds;
 }
 
+export interface ProbedPalette {
+	stops: Array<Oklch>;
+	surfaceLightness: number;
+}
+
+const maxTintStops = 5;
+
+function probeOf(colour: string): HTMLDivElement {
+	const probe = document.createElement('div');
+
+	probe.style.setProperty('color', colour);
+
+	return probe;
+}
+
+// Painting a pixel is the only reliable way to turn any CSS colour syntax into channels
+export function paintedChannels(
+	strip: CanvasRenderingContext2D,
+	...colours: Array<string>
+): Rgb | undefined {
+	strip.clearRect(0, 0, 1, 1);
+	for (const colour of colours) {
+		strip.fillStyle = colour;
+		strip.fillRect(0, 0, 1, 1);
+	}
+
+	const [red = 0, green = 0, blue = 0, alpha = 0] = strip.getImageData(0, 0, 1, 1).data;
+
+	return alpha === 0 ? undefined : [red, green, blue];
+}
+
 function markerKey(marker: undefined | WaveMarker): string {
 	return marker ? [marker.start, marker.end, marker.kind, marker.label].join('|') : '';
 }
@@ -36,7 +73,12 @@ export abstract class SonicWaveElement<
 	Length extends string = never,
 	Numeric extends string = never,
 > extends SonicValueElement {
-	static override readonly observedAttributes = [...SonicValueElement.observedAttributes, 'fill'];
+	static override readonly observedAttributes = [
+		...SonicValueElement.observedAttributes,
+		'fill',
+		'tint-dynamics',
+		'tint-hue',
+	];
 
 	get currentMarker(): undefined | WaveMarker {
 		return this.#current ? { ...this.#current } : undefined;
@@ -63,6 +105,22 @@ export abstract class SonicWaveElement<
 
 		this.renderMarkers();
 		this.render();
+	}
+
+	get tintDynamics(): TintDynamics | undefined {
+		return parseTintDynamics(this.getAttribute('tint-dynamics'));
+	}
+
+	set tintDynamics(dynamics: TintDynamics | undefined) {
+		this.reflect('tint-dynamics', dynamics);
+	}
+
+	get tintHue(): TintHue | undefined {
+		return parseTintHue(this.getAttribute('tint-hue'));
+	}
+
+	set tintHue(hue: TintHue | undefined) {
+		this.reflect('tint-hue', hue);
 	}
 
 	protected override readonly boxProbe: BoxProbe = {
@@ -94,15 +152,20 @@ export abstract class SonicWaveElement<
 
 	#surface: Surface | undefined;
 
+	#tintCanvas: CanvasRenderingContext2D | undefined;
+
+	readonly #warned = new WeakSet<object>();
+
 	override attributeChangedCallback(name: string): void {
 		super.attributeChangedCallback(name);
 		if (name === 'fill') this.#surface?.setFill(this.fill);
+		else if (name === 'tint-hue' || name === 'tint-dynamics') this.#surface?.rebuild();
 	}
 
 	abstract clientXOf(value: Seconds): number;
 
 	override connectedCallback(): void {
-		this.upgradeProperties('fill', 'markers');
+		this.upgradeProperties('fill', 'markers', 'tintDynamics', 'tintHue');
 		super.connectedCallback();
 	}
 
@@ -181,6 +244,45 @@ export abstract class SonicWaveElement<
 		this.renderMarkers();
 	}
 
+	protected readProbes(probes: Array<HTMLElement>): Array<string> {
+		this.control.append(...probes);
+
+		const read = probes.map((probe) => getComputedStyle(probe).color);
+
+		for (const probe of probes) probe.remove();
+
+		return read;
+	}
+
+	protected readTintPalette(strip: CanvasRenderingContext2D, control: string): ProbedPalette {
+		strip.canvas.height = 1;
+
+		const probes = [
+			...Array.from({ length: maxTintStops }, (_stop, index) =>
+				probeOf(`var(--sonic-${control}-tint-${String(index + 1)}, transparent)`),
+			),
+			probeOf('var(--_sonic-unlit-solid)'),
+		];
+		const read = this.readProbes(probes).map((colour) => paintedChannels(strip, colour));
+		const surface = read.pop();
+
+		return {
+			stops: read.flatMap((channels) => (channels ? [oklchOf(channels)] : [])),
+			surfaceLightness: surface ? oklchOf(surface).lightness : 0,
+		};
+	}
+
+	/** Returns no canvas until the tint has its data, and warns once for each data object whose reference is missing */
+	protected readyTintCanvas<Missing extends string>(
+		readiness: { isReady: false; missing: Missing | undefined } | { isReady: true },
+		sourceOf: Record<Missing, object | undefined>,
+	): CanvasRenderingContext2D | undefined {
+		if (readiness.isReady) return this.tintCanvas();
+		if (readiness.missing) this.#warnTint(readiness.missing, sourceOf[readiness.missing]);
+
+		return undefined;
+	}
+
 	protected renderEmpty(): void {
 		this.toggleState('empty', this.isEmpty());
 	}
@@ -201,5 +303,27 @@ export abstract class SonicWaveElement<
 
 	protected surface(): Surface | undefined {
 		return this.#surface;
+	}
+
+	protected tintCanvas(): CanvasRenderingContext2D | undefined {
+		if (!this.#tintCanvas) {
+			this.#tintCanvas =
+				document.createElement('canvas').getContext('2d', { willReadFrequently: true }) ??
+				undefined;
+		}
+
+		return this.#tintCanvas;
+	}
+
+	protected tintCell(): TintCell | undefined {
+		return tintCellOf(this.tintHue, this.tintDynamics);
+	}
+
+	#warnTint(missing: string, source: object | undefined): void {
+		if (!__DEV__ || !source) return;
+		if (this.#warned.has(source)) return;
+
+		this.#warned.add(source);
+		console.warn(`<${this.localName}> draws untinted until \`${missing}\` is set`);
 	}
 }

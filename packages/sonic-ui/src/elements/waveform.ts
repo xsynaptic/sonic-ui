@@ -1,11 +1,13 @@
 import type { ValueAxis } from '#elements/value-gestures.ts';
 import type { WaveMarker } from '#elements/wave-element.ts';
+import type { ProbedPalette } from '#elements/wave-element.ts';
 import type { SurfaceFrame } from '#lib/canvas-surface.ts';
 import type { Drawn } from '#lib/frame-timeline.ts';
 import type { Point } from '#lib/marker-band.ts';
 import type { PeaksRequest } from '#lib/peaks-request.ts';
 import type { TimeRegions } from '#lib/time-regions.ts';
 import type { Milliseconds, PixelsPerSecond, Seconds } from '#lib/units.ts';
+import type { TintCell, TintTable } from '#lib/wave-tint.ts';
 import type { WaveformBands } from '#lib/waveform-bands.ts';
 import type { WaveformPeaks } from '#lib/waveform-buckets.ts';
 import type { WaveformTint } from '#lib/waveform-scene.ts';
@@ -20,13 +22,9 @@ import { createPeaksRequest } from '#lib/peaks-request.ts';
 import { requireChild, template } from '#lib/render.ts';
 import { dueRegions, readRegions } from '#lib/time-regions.ts';
 import { createTrackingClock } from '#lib/tracking-clock.ts';
-import { bandTable } from '#lib/waveform-bands.ts';
-import {
-	bandChannels,
-	paintWaveform,
-	waveformColours,
-	waveformNumbers,
-} from '#lib/waveform-scene.ts';
+import { tintTable } from '#lib/wave-tint.ts';
+import { bandTable, tintReadiness } from '#lib/waveform-bands.ts';
+import { paintWaveform, waveformColours, waveformNumbers } from '#lib/waveform-scene.ts';
 import { bindZoom, bindZoomKeys } from '#lib/zoom-gesture.ts';
 
 export type { PeaksRequest } from '#lib/peaks-request.ts';
@@ -265,8 +263,6 @@ export class SonicWaveform extends SonicWaveElement<Colour, never, Numeric> {
 
 	protected readonly sizeProperty = '--_sonic-waveform-size';
 
-	#bandColours: Pick<WaveformTint, 'base' | 'peaks'> | undefined;
-
 	#bands: undefined | WaveformBands;
 
 	#bandTable: ReturnType<typeof bandTable>;
@@ -282,6 +278,8 @@ export class SonicWaveform extends SonicWaveElement<Colour, never, Numeric> {
 	#kindColours = new Map<string, string>();
 
 	#paintedKey = '';
+
+	#palette: ProbedPalette | undefined;
 
 	#peaks: undefined | WaveformPeaks;
 
@@ -309,7 +307,9 @@ export class SonicWaveform extends SonicWaveElement<Colour, never, Numeric> {
 		parkProperty: '--_sonic-waveform-label-park',
 	});
 
-	#strip: CanvasRenderingContext2D | undefined;
+	#table: TintTable | undefined;
+
+	#tableKey = '';
 
 	#zoomGesture: undefined | ZoomGesture;
 
@@ -452,7 +452,6 @@ export class SonicWaveform extends SonicWaveElement<Colour, never, Numeric> {
 				context,
 				{ ...view, colours: look.colours, numbers: look.numbers },
 				{
-					bands: this.#tint(isRebuilt),
 					kindColours: this.#kindColours,
 					markers: this.markerList().map((marker) => ({
 						...marker,
@@ -460,6 +459,7 @@ export class SonicWaveform extends SonicWaveElement<Colour, never, Numeric> {
 					})),
 					peaks: this.#peaks,
 					range,
+					tint: this.#tint(isRebuilt, look.numbers),
 				},
 			);
 			this.#peaksRequest.ask(this.#requestPeaks, timeline.wanted);
@@ -561,29 +561,6 @@ export class SonicWaveform extends SonicWaveElement<Colour, never, Numeric> {
 		return this.#drawn ?? { seconds: this.value, startSeconds: this.value };
 	}
 
-	#readBandColours(
-		strip: CanvasRenderingContext2D,
-		bandCount: number,
-	): Pick<WaveformTint, 'base' | 'peaks'> {
-		const bands = Array.from({ length: bandCount }, (_band, index) => String(index + 1));
-		const probes = [
-			...bands.map((band) => `var(--sonic-waveform-band-${band}, transparent)`),
-			...bands.map(
-				(band) =>
-					`var(--sonic-waveform-peaks-band-${band}, var(--sonic-waveform-band-${band}, transparent))`,
-			),
-		].map((colour) => {
-			const probe = document.createElement('div');
-
-			probe.style.setProperty('color', colour);
-
-			return probe;
-		});
-		const read = this.#readProbes(probes).map((colour) => bandChannels(strip, colour));
-
-		return { base: read.slice(0, bandCount), peaks: read.slice(bandCount) };
-	}
-
 	#readKindColours(): Map<string, string> {
 		const kinds = [...new Set(this.markers.map(({ kind }) => kind).filter((kind) => isKind(kind)))];
 		const probes = kinds.map((kind) => {
@@ -595,43 +572,60 @@ export class SonicWaveform extends SonicWaveElement<Colour, never, Numeric> {
 			return probe;
 		});
 
-		const read = this.#readProbes(probes);
+		const read = this.readProbes(probes);
 
 		return new Map(kinds.map((kind, index) => [kind, read[index] ?? '']));
-	}
-
-	#readProbes(probes: Array<HTMLElement>): Array<string> {
-		this.control.append(...probes);
-
-		const read = probes.map((probe) => getComputedStyle(probe).color);
-
-		for (const probe of probes) probe.remove();
-
-		return read;
 	}
 
 	#sourceSeconds(): number {
 		return this.#readTime?.() ?? this.scrubState().played;
 	}
 
-	#tint(isRebuilt: boolean): undefined | WaveformTint {
-		const table = this.#bandTable;
-		if (!table) return undefined;
+	#tint(isRebuilt: boolean, numbers: Record<Numeric, number>): undefined | WaveformTint {
+		const cell = this.tintCell();
+		if (!cell || numbers.tintOff > 0) return undefined;
 
-		const strip =
-			this.#strip ??
-			document.createElement('canvas').getContext('2d', { willReadFrequently: true }) ??
-			undefined;
+		const sources = { bands: this.#bandTable, peaks: this.#peaks };
+		const strip = this.readyTintCanvas(tintReadiness(cell, sources), {
+			'bands.medians': this.#bands,
+			'peaks.rmsRange': this.#peaks,
+		});
 		if (!strip) return undefined;
 
-		this.#strip = strip;
+		const table = this.#tintTable(strip, [cell, numbers, isRebuilt]);
+		if (!table) return undefined;
 
-		if (isRebuilt || this.#bandColours?.base.length !== table.bandCount) {
-			strip.canvas.height = 1;
-			this.#bandColours = this.#readBandColours(strip, table.bandCount);
+		return {
+			settings: {
+				cell,
+				sensitivity: numbers.tintSensitivity,
+				smoothingSeconds: numbers.tintSmoothing,
+				table,
+			},
+			sources,
+			strip,
+		};
+	}
+
+	#tintTable(
+		strip: CanvasRenderingContext2D,
+		[cell, numbers, isRebuilt]: [TintCell, Record<Numeric, number>, boolean],
+	): TintTable | undefined {
+		if (isRebuilt || !this.#palette) this.#palette = this.readTintPalette(strip, 'waveform');
+		if (this.#palette.stops.length === 0) return undefined;
+
+		const key = JSON.stringify([cell, numbers.tintSteps, numbers.peaksDepth, this.#palette]);
+
+		if (!this.#table || key !== this.#tableKey) {
+			this.#tableKey = key;
+			this.#table = tintTable(cell, {
+				...this.#palette,
+				peaksDepth: numbers.peaksDepth,
+				steps: numbers.tintSteps,
+			});
 		}
 
-		return { ...this.#bandColours, strip, table };
+		return this.#table;
 	}
 
 	#zoomTo(target: number): void {

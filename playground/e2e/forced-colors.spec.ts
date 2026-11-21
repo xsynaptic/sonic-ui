@@ -458,6 +458,12 @@ test('a wavestrip plays in opaque Highlight, and a waveform, its RMS body too, a
 	const spectrum = page.locator('#spectrum canvas');
 
 	await wavestrip.scrollIntoViewIfNeeded();
+	await page.locator('#wavestrip').evaluate((host: HTMLElementTagNameMap['sonic-wavestrip']) => {
+		host.style.setProperty('--sonic-wavestrip-tint-1', 'rgb(255 0 0)');
+		host.style.setProperty('--sonic-wavestrip-played-tint-amount', '1');
+		host.peaksRange = [0.01, 1];
+		host.tintDynamics = 'energy';
+	});
 
 	const played = await paintedColour(wavestrip, highlight);
 
@@ -467,7 +473,8 @@ test('a wavestrip plays in opaque Highlight, and a waveform, its RMS body too, a
 
 	await waveform.scrollIntoViewIfNeeded();
 	await page.locator('#waveform').evaluate((host: HTMLElementTagNameMap['sonic-waveform']) => {
-		host.style.setProperty('--sonic-waveform-band-1', 'rgb(255 0 0)');
+		host.style.setProperty('--sonic-waveform-tint-1', 'rgb(255 0 0)');
+		host.setAttribute('tint-dynamics', 'onsets');
 		host.style.setProperty('--sonic-waveform-edge-shade', '0.8');
 		host.peaks = {
 			pairsPerSecond: 10,

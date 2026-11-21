@@ -1,10 +1,10 @@
 import type { View } from '#lib/frame-timeline.ts';
-import type { BandChannels, BandMix, BandStrip, BandTable } from '#lib/waveform-bands.ts';
+import type { TintSettings, TintSources, TintStrip } from '#lib/waveform-bands.ts';
 import type { WaveformPeaks } from '#lib/waveform-buckets.ts';
 
 import { isKind } from '#lib/marker-band.ts';
 import { clamp } from '#lib/math.ts';
-import { bandStrip } from '#lib/waveform-bands.ts';
+import { tintStrip } from '#lib/waveform-bands.ts';
 import { waveformBuckets } from '#lib/waveform-buckets.ts';
 
 type Colour = keyof typeof waveformColours;
@@ -16,26 +16,10 @@ interface Scene extends View {
 	numbers: Record<Numeric, number>;
 }
 
-type BandPalette = ReadonlyArray<BandChannels | undefined>;
-
 export interface WaveformTint {
-	base: BandPalette;
-	peaks: BandPalette;
+	settings: TintSettings;
+	sources: TintSources;
 	strip: CanvasRenderingContext2D;
-	table: BandTable;
-}
-
-interface ZoneTint {
-	amount: number;
-	image: ImageData;
-	placed: BandStrip;
-	strip: CanvasRenderingContext2D;
-}
-
-interface ZoneTints {
-	base: undefined | ZoneTint;
-	isBodyClipped: boolean;
-	peaks: undefined | ZoneTint;
 }
 
 interface Envelope {
@@ -44,11 +28,11 @@ interface Envelope {
 }
 
 interface Drawn {
-	bands: undefined | WaveformTint;
 	kindColours: ReadonlyMap<string, string>;
 	markers: ReadonlyArray<{ dimmed?: boolean; kind?: string; start: number }>;
 	peaks: undefined | WaveformPeaks;
 	range: [number, number];
+	tint: undefined | WaveformTint;
 }
 
 export const waveformColours = {
@@ -63,15 +47,12 @@ export const waveformColours = {
 } as const;
 
 export const waveformNumbers = {
-	bandAmount: '--_sonic-waveform-band-amount',
-	bandContrast: '--_sonic-waveform-band-contrast',
-	bandNormalize: '--_sonic-waveform-band-normalize',
-	bandTilt: '--_sonic-waveform-band-tilt',
 	edgeShade: '--_sonic-waveform-edge-shade',
-	peaksBandAmount: '--_sonic-waveform-peaks-band-amount',
-	peaksBandContrast: '--_sonic-waveform-peaks-band-contrast',
-	peaksBandNormalize: '--_sonic-waveform-peaks-band-normalize',
-	peaksBandTilt: '--_sonic-waveform-peaks-band-tilt',
+	peaksDepth: '--_sonic-waveform-peaks-depth',
+	tintOff: '--_sonic-waveform-tint-off',
+	tintSensitivity: '--_sonic-waveform-tint-sensitivity',
+	tintSmoothing: '--_sonic-waveform-tint-smoothing',
+	tintSteps: '--_sonic-waveform-tint-steps',
 } as const;
 
 const amplitudeMargin = 0.94;
@@ -134,110 +115,17 @@ function paintPlaceholders(context: CanvasRenderingContext2D, scene: Scene): voi
 	context.stroke();
 }
 
-// A painted pixel is the one reading that resolves any colour syntax to channels
-export function bandChannels(
-	strip: CanvasRenderingContext2D,
-	colour: string,
-): BandChannels | undefined {
-	strip.clearRect(0, 0, 1, 1);
-	strip.fillStyle = colour;
-	strip.fillRect(0, 0, 1, 1);
-
-	const [red = 0, green = 0, blue = 0, alpha = 0] = strip.getImageData(0, 0, 1, 1).data;
-
-	return alpha === 0 ? undefined : [red, green, blue];
-}
-
-function isSamePalette(first: BandPalette, second: BandPalette): boolean {
-	return (
-		first.length === second.length &&
-		first.every((colour, band) => String(colour) === String(second[band]))
-	);
-}
-
-function isSameMix(first: BandMix, second: BandMix): boolean {
-	return (
-		first.contrast === second.contrast &&
-		first.normalize === second.normalize &&
-		first.tilt === second.tilt
-	);
-}
-
-function zoneTint(
-	scene: Scene,
-	tint: WaveformTint,
-	[palette, mix, amount]: [BandPalette, BandMix, number],
-): undefined | ZoneTint {
-	if (!(amount > 0)) return undefined;
-
-	const strip = bandStrip(tint.table, palette, { ...scene, mix });
-
-	return (
-		strip && {
-			amount,
-			image: new ImageData(strip.pixels, strip.count, 1),
-			placed: strip,
-			strip: tint.strip,
-		}
-	);
-}
-
-function mixesOf(numbers: Scene['numbers']): [BandMix, BandMix] {
-	return [
-		{ contrast: numbers.bandContrast, normalize: numbers.bandNormalize, tilt: numbers.bandTilt },
-		{
-			contrast: numbers.peaksBandContrast,
-			normalize: numbers.peaksBandNormalize,
-			tilt: numbers.peaksBandTilt,
-		},
-	];
-}
-
-function peaksTint(
-	scene: Scene,
-	tint: WaveformTint,
-	base: undefined | ZoneTint,
-): undefined | ZoneTint {
-	const { peaksBandAmount } = scene.numbers;
-	const [baseMix, peaksMix] = mixesOf(scene.numbers);
-
-	if (base && isSamePalette(tint.base, tint.peaks) && isSameMix(baseMix, peaksMix)) {
-		return peaksBandAmount > 0 ? { ...base, amount: peaksBandAmount } : undefined;
-	}
-
-	return zoneTint(scene, tint, [tint.peaks, peaksMix, peaksBandAmount]);
-}
-
-function isOneDraw(base: undefined | ZoneTint, peaks: undefined | ZoneTint): boolean {
-	return base !== undefined && peaks?.image === base.image && peaks.amount === base.amount;
-}
-
-function drawTint(
+function drawStrip(
 	context: CanvasRenderingContext2D,
 	scene: Scene,
-	{ amount, image, placed, strip }: ZoneTint,
+	[strip, placed, pixels]: [CanvasRenderingContext2D, TintStrip, Uint8ClampedArray<ArrayBuffer>],
 ): void {
 	const { canvas } = strip;
 	const { count, groupWidth, x } = placed;
 
 	if (canvas.width < count) canvas.width = count;
-	strip.putImageData(image, 0, 0);
-	context.globalAlpha = amount;
+	strip.putImageData(new ImageData(pixels, count, 1), 0, 0);
 	context.drawImage(canvas, 0, 0, count, 1, x, 0, count * groupWidth, scene.height);
-	context.globalAlpha = 1;
-}
-
-// Clipping to the body leaves a seam at its edge, so a tint both zones share is drawn once
-function zoneTints(scene: Scene, tint: undefined | WaveformTint, hasBody: boolean): ZoneTints {
-	if (!tint) return { base: undefined, isBodyClipped: false, peaks: undefined };
-
-	const [baseMix] = mixesOf(scene.numbers);
-	const base = zoneTint(scene, tint, [tint.base, baseMix, scene.numbers.bandAmount]);
-	const peaks = hasBody ? peaksTint(scene, tint, base) : undefined;
-
-	return isOneDraw(base, peaks)
-		? { base, isBodyClipped: false, peaks: undefined }
-		: { base, isBodyClipped: hasBody, peaks };
 }
 
 // Painting each zone over the last is cheaper on the GPU than cutting out the peaks zone with an even-odd ring
@@ -246,22 +134,28 @@ function paintZones(
 	scene: Scene,
 	[tint, { body, wave }]: [undefined | WaveformTint, Envelope],
 ): void {
-	const { base, isBodyClipped, peaks } = zoneTints(scene, tint, body !== undefined);
+	const placed = tint && tintStrip(tint.sources, tint.settings, scene);
 
 	context.fillStyle = body ? scene.colours.peaks : scene.colours.base;
 	context.fill(wave);
 	// The flat envelope is the mask: from here only the pixels it covers take colour
 	context.globalCompositeOperation = 'source-atop';
-	if (peaks) drawTint(context, scene, peaks);
-	if (body) {
+	if (!tint || !placed) {
+		if (!body) return;
+
 		context.fillStyle = scene.colours.base;
 		context.fill(body);
+		return;
 	}
-	if (!base) return;
+	if (!body) {
+		drawStrip(context, scene, [tint.strip, placed, placed.base]);
+		return;
+	}
 
+	drawStrip(context, scene, [tint.strip, placed, placed.peaks]);
 	context.save();
-	if (body && isBodyClipped) context.clip(body);
-	drawTint(context, scene, base);
+	context.clip(body);
+	drawStrip(context, scene, [tint.strip, placed, placed.base]);
 	context.restore();
 }
 
@@ -313,7 +207,7 @@ function paintWave(context: CanvasRenderingContext2D, scene: Scene, drawn: Drawn
 			)
 		: undefined;
 
-	paintZones(context, scene, [drawn.bands, { body, wave }]);
+	paintZones(context, scene, [drawn.tint, { body, wave }]);
 	if (scene.numbers.edgeShade > 0) paintEdgeShade(context, scene);
 	context.globalAlpha = 1;
 }

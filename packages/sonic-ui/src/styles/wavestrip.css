@@ -42,6 +42,48 @@
 	initial-value: 0;
 }
 
+@property --_sonic-wavestrip-tint-off {
+	syntax: '<number>';
+	inherits: true;
+	initial-value: 0;
+}
+
+@property --_sonic-wavestrip-tint-steps {
+	syntax: '<number>';
+	inherits: true;
+	initial-value: 0;
+}
+
+@property --_sonic-wavestrip-tint-sensitivity {
+	syntax: '<number>';
+	inherits: true;
+	initial-value: 12;
+}
+
+@property --_sonic-wavestrip-tint-amount {
+	syntax: '<number>';
+	inherits: true;
+	initial-value: 1;
+}
+
+@property --_sonic-wavestrip-buffered-tint-amount {
+	syntax: '<number>';
+	inherits: true;
+	initial-value: 1;
+}
+
+@property --_sonic-wavestrip-played-tint-amount {
+	syntax: '<number>';
+	inherits: true;
+	initial-value: 0;
+}
+
+@property --_sonic-wavestrip-scrub-tint-amount {
+	syntax: '<number>';
+	inherits: true;
+	initial-value: 0;
+}
+
 @property --_sonic-wavestrip-wave {
 	syntax: '<color>';
 	inherits: true;
@@ -138,6 +180,12 @@
 		);
 		--_sonic-wavestrip-played: var(--_sonic-wavestrip-lit);
 		--_sonic-wavestrip-scrub: var(--sonic-scrub, color-mix(in oklab, var(--_sonic-lit) 55%, #fff));
+		--_sonic-wavestrip-tint-steps: var(--sonic-wavestrip-tint-steps, 0);
+		--_sonic-wavestrip-tint-sensitivity: var(--sonic-wavestrip-tint-sensitivity, 12);
+		--_sonic-wavestrip-tint-amount: var(--sonic-wavestrip-tint-amount, 1);
+		--_sonic-wavestrip-buffered-tint-amount: var(--sonic-wavestrip-buffered-tint-amount, 1);
+		--_sonic-wavestrip-played-tint-amount: var(--sonic-wavestrip-played-tint-amount, 0);
+		--_sonic-wavestrip-scrub-tint-amount: var(--sonic-wavestrip-scrub-tint-amount, 0);
 
 		/* fallow-ignore-next-line code-duplication -- a plain box restated, since sheets never import each other */
 		position: relative;
@@ -155,6 +203,10 @@
 	[fill] > .sonic-wavestrip,
 	sonic-wavestrip[fill]:not(:defined, [hidden]) {
 		block-size: 100%;
+	}
+
+	:is([dimmed], :disabled) > .sonic-wavestrip {
+		--_sonic-wavestrip-tint-off: 1;
 	}
 
 	[dimmed] > .sonic-wavestrip {
@@ -230,6 +282,7 @@
 		.sonic-wavestrip {
 			--_sonic-wavestrip-lit: Highlight;
 			--_sonic-wavestrip-wave: rgb(from GrayText r g b / 100%);
+			--_sonic-wavestrip-tint-off: 1;
 			--_sonic-wavestrip-buffered: rgb(
 				from color-mix(in srgb, CanvasText 50%, GrayText) r g b / 100%
 			);

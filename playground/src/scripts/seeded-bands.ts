@@ -77,3 +77,14 @@ export function fillLevels(
 export function emptyLevels(seconds: number, bandCount: number): Uint8Array<ArrayBuffer> {
 	return new Uint8Array(Math.ceil(seconds * framesPerSecond) * bandCount);
 }
+
+// Computed over the whole track the way a host's build would, skipping frames that are still empty
+export function bandMedians(levels: Uint8Array, bandCount: number): Array<number> {
+	return Array.from({ length: bandCount }, (_median, band) => {
+		const heard = levels
+			.filter((level, index) => index % bandCount === band && level > 0)
+			.toSorted();
+
+		return heard[Math.floor(heard.length / 2)] ?? 0;
+	});
+}

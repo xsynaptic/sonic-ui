@@ -2,7 +2,14 @@ import type { Locator, Page } from '@playwright/test';
 
 import { expect } from '@playwright/test';
 
-import { alphaAt, canvasPixels, paintedColour, pixelAt, softPixel } from './canvas-probe.ts';
+import {
+	alphaAt,
+	canvasPixels,
+	expectPixel,
+	paintedColour,
+	pixelAt,
+	softPixel,
+} from './canvas-probe.ts';
 import { clear, systemColour } from './colour.ts';
 import { boxOf, noForcedColours } from './pointer.ts';
 import { readState } from './state.ts';
@@ -179,6 +186,86 @@ test(
 		await expect
 			.poll(async () => [await alphaAtRow(0.2), await alphaAtRow(0.35)])
 			.toEqual([0, 255]);
+	},
+);
+
+test(
+	'a tint mixes over each state by its amount in OKLCH, repaints on an amount, and draws flat when dimmed',
+	{ tag: '@mobile' },
+	async ({ page }) => {
+		const { canvas, wavestrip } = await openWavestrip(page);
+		const tint = 'oklch(0.7 0.12 150)';
+		// These are true greys because browsers disagree about the hue of a near-grey in an OKLCH mix
+		const [unplayed, buffered, lit] = ['rgb(90 90 90)', 'rgb(150 150 150)', 'oklch(0.75 0.15 70)'];
+
+		await wavestrip.evaluate(
+			(host: HTMLElementTagNameMap['sonic-wavestrip'], colours) => {
+				const [stop, wave, loaded, played] = colours;
+				const levels = new Uint8Array(400 * 2);
+
+				for (let row = 0; row < 400; row += 1) levels.set([200, 100], row * 2);
+				host.style.setProperty('--sonic-wavestrip-tint-1', stop);
+				host.style.setProperty('--sonic-unplayed', wave);
+				host.style.setProperty('--sonic-buffered', loaded);
+				host.style.setProperty('--sonic-lit', played);
+				host.peaks = Array.from({ length: 400 }, () => 1);
+				host.bands = { bandCount: 2, levels, medians: [150, 150], minDecibels: -48 };
+				host.value = host.max * 0.25;
+				host.buffered = [[0, host.max * 0.6]];
+				host.tintHue = 'spectral';
+			},
+			[tint, unplayed, buffered, lit] as const,
+		);
+
+		const { device } = await readWidth(canvas);
+		const columns = [0.1, 0.4, 0.8].map(
+			(proportion) => Math.floor((proportion * device) / pitch) * pitch + 1,
+		);
+		const zones = (): Promise<Array<[number, number, number, number] | undefined>> =>
+			canvasPixels(canvas, columns);
+
+		await expect(async () => {
+			const [playedBar, bufferedBar, aheadBar] = await zones();
+
+			expectPixel(playedBar, await paintedColour(canvas, lit));
+			expectPixel(bufferedBar, await paintedColour(canvas, tint));
+			expectPixel(aheadBar, await paintedColour(canvas, tint));
+		}).toPass();
+		await wavestrip.evaluate((host) => {
+			host.style.setProperty('--sonic-wavestrip-tint-amount', '0.6');
+		});
+		await expect(async () => {
+			const bars = await zones();
+
+			expectPixel(
+				bars[2],
+				await paintedColour(canvas, `color-mix(in oklch, ${unplayed} 40%, ${tint})`),
+			);
+		}).toPass();
+		await wavestrip.evaluate((host) => {
+			host.style.setProperty('--sonic-wavestrip-played-tint-amount', '0.5');
+		});
+		await expect(async () => {
+			const [playedBar] = await zones();
+
+			// The blend takes its hue and lightness from an OKLab mix, and its chroma is the mean of 0.15 and 0.12
+			expectPixel(
+				playedBar,
+				await paintedColour(
+					canvas,
+					`oklch(from color-mix(in oklab, ${lit} 50%, ${tint}) l 0.135 h)`,
+				),
+			);
+		}).toPass();
+		await wavestrip.evaluate((host) => {
+			host.setAttribute('dimmed', '');
+		});
+		await expect(async () => {
+			const [, bufferedBar, aheadBar] = await zones();
+
+			expectPixel(bufferedBar, await paintedColour(canvas, buffered));
+			expectPixel(aheadBar, await paintedColour(canvas, unplayed));
+		}).toPass();
 	},
 );
 

@@ -10,16 +10,29 @@ import SpecimenGrid from '#components/specimens/specimen-grid.astro';
 const markers = '30 60..95:intro 140 150 215 260~';
 
 interface Strip {
+	bands?: number;
+	dynamics?: 'energy';
 	hasGlass?: boolean;
 	hasShapes?: boolean;
+	hue?: 'spectral';
 	id: string;
 	isDimmed?: boolean;
 	isDisabled?: boolean;
 	label: string;
 	markers?: string;
 	seed?: number;
+	style?: string;
 	tokens?: string;
 }
+
+function palette(...stops: Array<string>): string {
+	return stops
+		.map((stop, index) => `--sonic-wavestrip-tint-${String(index + 1)}: ${stop}`)
+		.join('; ');
+}
+
+const spectrum = palette('oklch(0.66 0.2 28)', 'oklch(0.8 0.17 85)', 'oklch(0.74 0.13 210)');
+const amber = palette('oklch(0.46 0.14 48)', 'oklch(0.72 0.17 58)', 'oklch(0.93 0.06 70)');
 
 const tracks: Array<Strip> = [
 	{ id: 'wavestrip-default', label: 'Track', seed: 1 },
@@ -40,10 +53,50 @@ const tracks: Array<Strip> = [
 	{ hasGlass: true, id: 'wavestrip-glass', label: 'Deck', seed: 10 },
 ];
 
+const tints: Array<Strip> = [
+	{
+		bands: 3,
+		hue: 'spectral',
+		id: 'wavestrip-spectral',
+		label: 'Timbre',
+		seed: 2,
+		style: spectrum,
+	},
+	{ dynamics: 'energy', id: 'wavestrip-energy', label: 'Drops', seed: 5, style: amber },
+	{
+		bands: 3,
+		hue: 'spectral',
+		id: 'wavestrip-deck',
+		label: 'Deck colours',
+		seed: 7,
+		style: [
+			spectrum,
+			'--sonic-lit: oklch(0.32 0.01 260)',
+			'--sonic-wavestrip-played-tint-amount: 0.3',
+		].join('; '),
+	},
+];
+
 const states: Array<Strip> = [
 	{ id: 'wavestrip-empty', label: 'Empty' },
-	{ id: 'wavestrip-dimmed', isDimmed: true, label: 'Dimmed', seed: 3 },
-	{ id: 'wavestrip-disabled', isDisabled: true, label: 'Disabled', seed: 4 },
+	{
+		bands: 3,
+		hue: 'spectral',
+		id: 'wavestrip-dimmed',
+		isDimmed: true,
+		label: 'Dimmed',
+		seed: 3,
+		style: spectrum,
+	},
+	{
+		bands: 3,
+		hue: 'spectral',
+		id: 'wavestrip-disabled',
+		isDisabled: true,
+		label: 'Disabled',
+		seed: 4,
+		style: spectrum,
+	},
 ];
 
 interface RegionCell {
@@ -74,30 +127,36 @@ const regionCells: Array<RegionCell> = [
 ];
 ---
 
-<Section title="Tracks">
-	<SpecimenGrid size="wide">
-		{tracks.map((strip) => (
-			<Cell id={strip.id} label={strip.label}>
-				<div class:list={[strip.hasGlass && 'sonic-screen']}>
-					<sonic-wavestrip
-						aria-labelledby={strip.id}
-						cancellable={true}
-						class:list={['[--sonic-wavestrip-length:20rem]', strip.tokens]}
-						data-buffered="0 150 190 230"
-						data-format="clock"
-						data-marker-shapes={strip.hasShapes}
-						data-markers={strip.markers ?? markers}
-						data-peaks={strip.seed}
-						key-step="5"
-						max="300"
-						readout={true}
-						value="120"
-					></sonic-wavestrip>
-				</div>
-			</Cell>
-		))}
-	</SpecimenGrid>
-</Section>
+{[['Tracks', tracks] as const, ['Tint', tints] as const].map(([title, list]) => (
+	<Section title={title}>
+		<SpecimenGrid size="wide">
+			{list.map((strip) => (
+				<Cell id={strip.id} label={strip.label}>
+					<div class:list={[strip.hasGlass && 'sonic-screen']}>
+						<sonic-wavestrip
+							aria-labelledby={strip.id}
+							cancellable={true}
+							class:list={['[--sonic-wavestrip-length:20rem]', strip.tokens]}
+							data-bands={strip.bands}
+							data-buffered="0 150 190 230"
+							data-format="clock"
+							data-marker-shapes={strip.hasShapes}
+							data-markers={strip.markers ?? markers}
+							data-peaks={strip.seed}
+							key-step="5"
+							max="300"
+							readout={true}
+							style={strip.style}
+							tint-dynamics={strip.dynamics}
+							tint-hue={strip.hue}
+							value="120"
+						></sonic-wavestrip>
+					</div>
+				</Cell>
+			))}
+		</SpecimenGrid>
+	</Section>
+))}
 <Section title="Regions">
 	<SpecimenGrid size="wide">
 		{regionCells.map((cell) => (
@@ -198,6 +257,7 @@ const regionCells: Array<RegionCell> = [
 				<sonic-wavestrip
 					aria-labelledby={strip.id}
 					class="[--sonic-wavestrip-length:20rem]"
+					data-bands={strip.bands}
 					data-format="clock"
 					data-markers={markers}
 					data-peaks={strip.seed}
@@ -206,6 +266,8 @@ const regionCells: Array<RegionCell> = [
 					key-step="5"
 					max="300"
 					readout={true}
+					style={strip.style}
+					tint-hue={strip.hue}
 					value="120"
 				></sonic-wavestrip>
 			</Cell>
