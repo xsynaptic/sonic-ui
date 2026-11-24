@@ -16,6 +16,7 @@ interface ZoomTarget {
 
 interface ZoomOptions extends ZoomTarget {
 	claim: () => void;
+	isWheelZoom: () => boolean;
 }
 
 interface Touches {
@@ -48,6 +49,13 @@ export function wheelFactor(deltaY: number, deltaMode: number): number {
 	const pixels = deltaMode === pixelMode ? deltaY : deltaY * linePx;
 
 	return Math.exp(-clamp(pixels, -wheelCapPx, wheelCapPx) * wheelRate);
+}
+
+// Sideways wheels stay the page's, for horizontal scroll and history swipes
+function isZoomWheel(event: WheelEvent, isWheelZoom: boolean): boolean {
+	if (event.ctrlKey || event.metaKey) return true;
+
+	return isWheelZoom && Math.abs(event.deltaY) > Math.abs(event.deltaX);
 }
 
 export function pinchFactor(startSpanPx: number, spanPx: number): number {
@@ -121,14 +129,14 @@ function bindPinch(control: HTMLElement, options: ZoomOptions, signal: AbortSign
 
 function bindWheel(
 	control: HTMLElement,
-	options: Pick<Touches, 'isTouched'> & ZoomTarget,
+	options: Omit<ZoomOptions, 'claim'> & Pick<Touches, 'isTouched'>,
 	signal: AbortSignal,
 ): void {
 	// Chromium cannot cancel a wheel heard only on the `display: contents` host
 	control.addEventListener(
 		'wheel',
 		(event) => {
-			if ((!event.ctrlKey && !event.metaKey) || options.isDisabled()) return;
+			if (!isZoomWheel(event, options.isWheelZoom()) || options.isDisabled()) return;
 
 			event.preventDefault();
 			options.zoomTo(options.zoom() * wheelFactor(event.deltaY, event.deltaMode));

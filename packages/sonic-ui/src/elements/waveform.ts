@@ -95,6 +95,7 @@ export class SonicWaveform extends SonicWaveElement<Colour, never, Numeric> {
 		'playing',
 		'playback-rate',
 		'reduced-motion',
+		'wheel-zoom',
 		'zoom',
 		'zoom-max',
 		'zoom-min',
@@ -205,6 +206,14 @@ export class SonicWaveform extends SonicWaveElement<Colour, never, Numeric> {
 	set requestPeaks(request: PeaksRequest | undefined) {
 		this.#requestPeaks = request;
 		this.#peaksRequest.reset();
+	}
+
+	get wheelZoom(): boolean {
+		return this.hasAttribute('wheel-zoom');
+	}
+
+	set wheelZoom(isWheelZoom: boolean) {
+		this.reflect('wheel-zoom', isWheelZoom);
 	}
 
 	get zoom(): PixelsPerSecond {
@@ -337,6 +346,7 @@ export class SonicWaveform extends SonicWaveElement<Colour, never, Numeric> {
 			'reducedMotion',
 			'renderLabel',
 			'requestPeaks',
+			'wheelZoom',
 			'zoom',
 			'zoomable',
 			'zoomMax',
@@ -361,6 +371,7 @@ export class SonicWaveform extends SonicWaveElement<Colour, never, Numeric> {
 				this.abandonHold();
 			},
 			isDisabled: () => this.isDisabled(),
+			isWheelZoom: () => this.wheelZoom,
 			isZoomable: () => this.zoomable,
 			zoom: () => this.zoom,
 			zoomTo: (target: number) => {

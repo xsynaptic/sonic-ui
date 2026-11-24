@@ -1,5 +1,11 @@
 # @xsynaptic/sonic-ui
 
+## 0.32.0
+
+### Minor Changes
+
+- Waveform: `wheel-zoom` lets a plain wheel zoom a `zoomable` waveform.
+
 ## 0.31.0
 
 ### Minor Changes

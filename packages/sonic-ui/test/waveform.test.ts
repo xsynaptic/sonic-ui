@@ -355,6 +355,18 @@ test('a ctrl wheel is left to the page while zoomable is off, and zooms once it 
 	expect(zooms).toEqual([66.31]);
 });
 
+test('wheel-zoom lets a plain wheel zoom, and the page has it back once the attribute goes', () => {
+	const { control, waveform } = mountWaveform('wheel-zoom zoomable zoom="60"');
+	const zooms = zoomEvents(waveform);
+
+	expect(wheelAt(control, { deltaY: -10 }).defaultPrevented).toBe(true);
+	expect(zooms).toEqual([66.31]);
+
+	waveform.wheelZoom = false;
+	expect(wheelAt(control, { deltaY: -10 }).defaultPrevented).toBe(false);
+	expect(zooms).toHaveLength(1);
+});
+
 test('a gesture stops at zoom-min and zoom-max, fires nothing once there, and brings a written zoom back inside', () => {
 	const { control, waveform } = mountWaveform('zoomable zoom="150" zoom-max="160" zoom-min="30"');
 	const zooms = zoomEvents(waveform);

@@ -40,12 +40,12 @@ function mountZoom(isZoomable = true): {
 	control: HTMLElement;
 	controller: AbortController;
 	gesture: ReturnType<typeof bindZoom>;
-	state: { isDisabled: boolean; isZoomable: boolean };
+	state: { isDisabled: boolean; isWheelZoom: boolean; isZoomable: boolean };
 	zooms: Array<number>;
 } {
 	const control = document.createElement('div');
 	const controller = new AbortController();
-	const state = { isDisabled: false, isZoomable };
+	const state = { isDisabled: false, isWheelZoom: false, isZoomable };
 	const zooms: Array<number> = [];
 	let claims = 0;
 
@@ -56,6 +56,7 @@ function mountZoom(isZoomable = true): {
 			claims += 1;
 		},
 		isDisabled: () => state.isDisabled,
+		isWheelZoom: () => state.isWheelZoom,
 		isZoomable: () => state.isZoomable,
 		zoom: () => zooms.at(-1) ?? 60,
 		zoomTo: (zoom: number) => {
@@ -87,6 +88,18 @@ test('a wheel zooms only with Ctrl or Meta held, and a plain one is left to the 
 	wheelAt(control, { deltaY: 10, metaKey: true });
 	expect(zooms[0]).toBeCloseTo(60 * Math.exp(0.1), 9);
 	expect(zooms[1]).toBeCloseTo(60, 9);
+});
+
+test('with wheel zoom a plain wheel zooms too, and one moving mostly sideways is left to the page', () => {
+	const { control, state, zooms } = mountZoom();
+
+	state.isWheelZoom = true;
+	expect(wheelAt(control, { deltaX: 2, deltaY: -10 }).defaultPrevented).toBe(true);
+	expect(zooms[0]).toBeCloseTo(60 * Math.exp(0.1), 9);
+
+	expect(wheelAt(control, { deltaX: 30, deltaY: 10 }).defaultPrevented).toBe(false);
+	expect(wheelAt(control, { deltaX: 0, deltaY: 0 }).defaultPrevented).toBe(false);
+	expect(zooms).toHaveLength(1);
 });
 
 test('the wheel is heard only while zooming is on, as of the last sync, and never once disabled; after an abort no key or Safari gesture is either', () => {

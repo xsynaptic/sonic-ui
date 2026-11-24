@@ -1,13 +1,13 @@
 {
 	"name": "@xsynaptic/sonic-ui",
-	"version": "0.31.0",
+	"version": "0.32.0",
 	"description": "Native custom elements for audio interfaces, skinned with CSS custom properties",
 	"keywords": [
 		"custom-elements",
 		"web-components",
 		"audio",
-		"dial",
-		"slider",
+		"audio-ui",
+		"web-audio",
 		"synth"
 	],
 	"homepage": "https://github.com/xsynaptic/sonic-ui#readme",
