@@ -80,20 +80,6 @@ test(
 );
 
 test(
-	'a press let go inside the bracket seeks to where it landed and leaves the bracket',
-	{ tag: '@mobile' },
-	async ({ page }) => {
-		const { box, canvas, region } = await openStrip(page);
-		const center = await centerOf(box);
-
-		await page.mouse.click(center.x, center.y);
-
-		expect(await valueNow(canvas)).toBeCloseTo(150, 0);
-		expect(await readSpan(region)).toEqual([120, 180]);
-	},
-);
-
-test(
 	'a zero-length region takes a press across its drawn bracket and drags',
 	{ tag: '@mobile' },
 	async ({ page }) => {
@@ -122,34 +108,36 @@ test(
 	},
 );
 
-test('Tab goes from the strip to its region, an arrow moves the region alone, and each glows over its own box', async ({
+test('Tab goes from the strip to its region, an arrow moves the region alone, and each glows over its own box, typed entry included', async ({
 	page,
 }) => {
 	const { box, canvas, part, region } = await openStrip(page);
-	await canvas.focus();
-	await page.keyboard.press('Shift');
-	expect(await isGlowing(canvas)).toBe(true);
-	expect(await boxOf(canvas)).toEqual(await boxOf(box));
 
-	await page.keyboard.press('Tab');
-	await expect(part).toBeFocused();
-	expect(await isGlowing(part)).toBe(true);
-	expect(await isGlowing(canvas)).toBe(false);
+	await test.step('Tab goes from the strip to its region, an arrow moves the region alone, and each glows over its own box', async () => {
+		await canvas.focus();
+		await page.keyboard.press('Shift');
+		expect(await isGlowing(canvas)).toBe(true);
+		expect(await boxOf(canvas)).toEqual(await boxOf(box));
 
-	await page.keyboard.press('ArrowRight');
-	expect(await readSpan(region)).toEqual([123, 183]);
-	expect(await valueNow(canvas)).toBe(30);
-	await expect(part).toHaveAttribute('aria-valuenow', '123');
-});
+		await page.keyboard.press('Tab');
+		await expect(part).toBeFocused();
+		expect(await isGlowing(part)).toBe(true);
+		expect(await isGlowing(canvas)).toBe(false);
 
-test('typed entry on the strip glows the strip and not its region', async ({ page }) => {
-	const { box, canvas, part } = await openStrip(page);
-	await canvas.focus();
-	await page.keyboard.press('Enter');
+		await page.keyboard.press('ArrowRight');
+		expect(await readSpan(region)).toEqual([123, 183]);
+		expect(await valueNow(canvas)).toBe(30);
+		await expect(part).toHaveAttribute('aria-valuenow', '123');
+	});
 
-	await expect(box).toHaveAttribute('data-sonic-editing', '');
-	expect(await isGlowing(canvas)).toBe(true);
-	expect(await isGlowing(part)).toBe(false);
+	await test.step('typed entry on the strip glows the strip and not its region', async () => {
+		await canvas.focus();
+		await page.keyboard.press('Enter');
+
+		await expect(box).toHaveAttribute('data-sonic-editing', '');
+		expect(await isGlowing(canvas)).toBe(true);
+		expect(await isGlowing(part)).toBe(false);
+	});
 });
 
 test('a preview paints the bars between the playhead and itself in the scrub colour', async ({

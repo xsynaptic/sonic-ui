@@ -107,17 +107,3 @@ test("a press on the field reports dragging by its first input and brings the pu
 	expect(await readValues(page)).toEqual(['100', '100']);
 	expectInside(await boxOf(puck), pad);
 });
-
-test('a disabled XY pad takes no press and no focus', async ({ isMobile, page }) => {
-	test.skip(isMobile, mouseOnly);
-
-	const pad = await boxOf(page.locator('#xy-disabled .sonic-xy'));
-
-	await page.mouse.click(pad.x + 10, pad.y + 10);
-
-	await expect(page.locator('#xy-disabled [data-sonic-axis="x"]')).toHaveAttribute(
-		'aria-valuenow',
-		'30',
-	);
-	await expect(page.locator('#xy-disabled .sonic-xy-axis:focus')).toHaveCount(0);
-});

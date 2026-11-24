@@ -2,6 +2,7 @@ import { assert, expect, test, vi } from 'vitest';
 
 import type { RiderLabel, RiderView } from '#lib/marker-rider.ts';
 
+import { runLayoutPass } from '#lib/layout-batch.ts';
 import { createLabelRider, layoutRider } from '#lib/marker-rider.ts';
 
 const view: RiderView = {
@@ -139,10 +140,12 @@ function mountRider(): {
 		parkProperty: '--_sonic-test-park',
 	});
 
-	rider.measure([
-		{ isDimmed: false, start: 1, text: 'Intro' },
-		{ isDimmed: true, start: 10.9, text: 'Drop' },
-	]);
+	runLayoutPass(
+		rider.measure([
+			{ isDimmed: false, start: 1, text: 'Intro' },
+			{ isDimmed: true, start: 10.9, text: 'Drop' },
+		]),
+	);
 
 	const [parked, arriving] = control.querySelectorAll<HTMLElement>('.sonic-test-label');
 	assert(parked && arriving, 'The control holds no label slots');
@@ -206,10 +209,12 @@ test.each([
 test('labels measured out of order park and arrive in order of time', () => {
 	const { arriving, control, parked, rider } = mountRider();
 
-	rider.measure([
-		{ isDimmed: true, start: 10.9, text: 'Drop' },
-		{ isDimmed: false, start: 1, text: 'Intro' },
-	]);
+	runLayoutPass(
+		rider.measure([
+			{ isDimmed: true, start: 10.9, text: 'Drop' },
+			{ isDimmed: false, start: 1, text: 'Intro' },
+		]),
+	);
 	rider.place(early);
 
 	expect([parked.textContent, arriving.textContent]).toEqual(['Intro', 'Drop']);
@@ -220,17 +225,19 @@ test('a parked label fades by the written opacity, and clears it once whole agai
 	const { control, parked, rider } = mountRider();
 
 	control.style.setProperty('--_sonic-test-fade-end', '1');
-	rider.measure([
-		{ isDimmed: false, start: -2, text: 'Intro' },
-		{ isDimmed: false, start: 3, text: 'Drop' },
-	]);
+	runLayoutPass(
+		rider.measure([
+			{ isDimmed: false, start: -2, text: 'Intro' },
+			{ isDimmed: false, start: 3, text: 'Drop' },
+		]),
+	);
 	rider.place(early);
 	expect(parked.style.opacity).toBe('0.600');
 
 	rider.place({ ...early, playheadSeconds: 10 });
 	expect(parked.style.opacity).toBe('0.300');
 
-	rider.measure([{ isDimmed: false, start: -2, text: 'Intro' }]);
+	runLayoutPass(rider.measure([{ isDimmed: false, start: -2, text: 'Intro' }]));
 	rider.place(early);
 	expect(parked.style.opacity).toBe('');
 });
@@ -247,11 +254,11 @@ test('a label with no room left in the window is hidden, not drawn at no width',
 test('a label slot taken over by a marker with no kind drops the kind', () => {
 	const { parked, rider } = mountRider();
 
-	rider.measure([{ isDimmed: false, kind: 'loop', start: 1, text: 'Loop' }]);
+	runLayoutPass(rider.measure([{ isDimmed: false, kind: 'loop', start: 1, text: 'Loop' }]));
 	rider.place(early);
 	expect(parked.style.getPropertyValue('--_sonic-marker')).toContain('--sonic-marker-loop');
 
-	rider.measure([{ isDimmed: false, start: 1, text: 'Intro' }]);
+	runLayoutPass(rider.measure([{ isDimmed: false, start: 1, text: 'Intro' }]));
 	rider.place(early);
 	expect(parked.style.getPropertyValue('--_sonic-marker')).toBe('');
 });
@@ -274,13 +281,13 @@ test('a label with a write function is measured and drawn by it, and the next pl
 
 		return new DOMRect(0, 0, 100, 10);
 	});
-	rider.measure([{ isDimmed: false, start: 1, text: 'Spoken', write: writeTitle }]);
+	runLayoutPass(rider.measure([{ isDimmed: false, start: 1, text: 'Spoken', write: writeTitle }]));
 	rider.place(early);
 
 	expect(measured).toEqual(['Intro<b>Opening</b>']);
 	expect(parked.getHTML()).toBe('Intro<b>Opening</b>');
 
-	rider.measure([{ isDimmed: false, start: 1, text: 'Intro' }]);
+	runLayoutPass(rider.measure([{ isDimmed: false, start: 1, text: 'Intro' }]));
 	rider.place(early);
 
 	expect(parked.getHTML()).toBe('Intro');

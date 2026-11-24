@@ -2,8 +2,7 @@ import type { Locator, Page } from '@playwright/test';
 
 import { expect, test } from '@playwright/test';
 
-import { clear, systemColour } from './colour.ts';
-import { centerOf, noForcedColours } from './pointer.ts';
+import { centerOf } from './pointer.ts';
 import { stillTransitions } from './state.ts';
 
 function recordNotes(page: Page): Promise<void> {
@@ -33,23 +32,6 @@ function frontOf(key: Locator): Promise<number> {
 		const cap = element.querySelector('.sonic-keyboard-cap');
 
 		return cap ? Number(getComputedStyle(cap, '::before').bottom.replace(/px$/, '')) : NaN;
-	});
-}
-
-function forcedPaint(
-	target: Locator,
-): Promise<{ dot: string; outline: string; outlineColour: string; top: string }> {
-	return target.evaluate((element) => {
-		const cap = element.querySelector('.sonic-keyboard-cap');
-		const style = getComputedStyle(element);
-		const top = cap ? getComputedStyle(cap, '::before') : undefined;
-
-		return {
-			dot: top?.backgroundImage.split(/,(?![^(]*\))/, 3)[1]?.trim() ?? '',
-			outline: style.outlineStyle,
-			outlineColour: style.outlineColor,
-			top: top?.backgroundColor ?? '',
-		};
 	});
 }
 
@@ -190,54 +172,6 @@ test('with no skin a white key is an edge with no fill, and a pressed one fills'
 	await page.mouse.up();
 
 	expect(pressed.fill).not.toMatch(clearStop);
-});
-
-test('forced colours outline only the focused key, and a pressed highlighted key keeps its dot', async ({
-	browserName,
-	page,
-}) => {
-	test.skip(browserName === 'webkit', noForcedColours);
-
-	await page.emulateMedia({ forcedColors: 'active' });
-	await page.goto('/fixtures/');
-
-	const key = page.locator('#keyboard [data-sonic-note="52"]');
-
-	await key.focus();
-	await page.keyboard.press('ArrowRight');
-	await page.keyboard.press('ArrowLeft');
-	await page.keyboard.down(' ');
-
-	const pressed = await forcedPaint(key);
-	const resting = await forcedPaint(page.locator('#keyboard [data-sonic-note="55"]'));
-
-	await page.keyboard.up(' ');
-
-	expect(pressed.outline).toBe('solid');
-	expect(pressed.outlineColour).not.toMatch(clear);
-	expect(pressed.top).toBe(await systemColour(page, 'Highlight'));
-	expect(pressed.dot).toContain(await systemColour(page, 'HighlightText'));
-	expect(resting.outline).toBe('none');
-});
-
-test('a disabled keyboard dims, and keeps full opacity in forced colours', async ({
-	browserName,
-	page,
-}) => {
-	test.skip(browserName === 'webkit', noForcedColours);
-
-	await page.goto('/fixtures/');
-
-	const keyboard = page.locator('#keyboard');
-	const group = keyboard.locator('.sonic-keyboard');
-
-	await keyboard.evaluate((element) => {
-		element.toggleAttribute('disabled', true);
-	});
-	await expect(group).not.toHaveCSS('opacity', '1');
-
-	await page.emulateMedia({ forcedColors: 'active' });
-	await expect(group).toHaveCSS('opacity', '1');
 });
 
 test('Space and Enter each play one note, and a click from script plays a short one', async ({

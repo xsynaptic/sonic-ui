@@ -15,6 +15,7 @@ import { SonicValueEvent } from '#elements/value-event.ts';
 import { paintedChannels, SonicWaveElement } from '#elements/wave-element.ts';
 import { levelTable } from '#lib/band-levels.ts';
 import { outsideCancelZone } from '#lib/cancel-zone.ts';
+import { queueLayout } from '#lib/layout-batch.ts';
 import { createMarkerBand } from '#lib/marker-band.ts';
 import { clamp, clampProportion } from '#lib/math.ts';
 import { blendOklch, oklchOf, rgbOf } from '#lib/oklch.ts';
@@ -433,7 +434,9 @@ export class SonicWavestrip extends SonicWaveElement<Colour, Length, Numeric> {
 	}
 
 	protected override renderMarkers(): void {
-		this.#markerBand.render(this.markerList(), this.markerProportions(), this.#drawMarker);
+		queueLayout(this, () =>
+			this.#markerBand.layout(this.markerList(), this.markerProportions(), this.#drawMarker),
+		);
 	}
 
 	protected override scrubsKeyRepeat(): boolean {

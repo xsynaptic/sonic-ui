@@ -59,30 +59,32 @@ function readHeard(waveform: Locator): Promise<Heard> {
 test.describe('by wheel', () => {
 	test.skip(({ isMobile }) => isMobile, mouseOnly);
 
-	test('a ctrl wheel zooms once, by the capped notch, and leaves the page where it was', async ({
+	test('a ctrl wheel zooms once, by the capped notch, and a plain wheel scrolls the page and leaves the zoom', async ({
 		page,
 	}) => {
 		const { center, waveform } = await openZoomable(page);
-		const before = await readHeard(waveform);
 
-		await page.mouse.move(center.x, center.y);
-		await page.keyboard.down('Control');
-		await page.mouse.wheel(0, -100);
-		await page.keyboard.up('Control');
+		await test.step('a ctrl wheel zooms once, by the capped notch, and leaves the page where it was', async () => {
+			const before = await readHeard(waveform);
 
-		await expect.poll(() => readOne(waveform, 'zoom')).toBe(77.04);
-		expect(await readHeard(waveform)).toEqual({ ...before, zoom: 77.04, zooms: 1 });
-	});
+			await page.mouse.move(center.x, center.y);
+			await page.keyboard.down('Control');
+			await page.mouse.wheel(0, -100);
+			await page.keyboard.up('Control');
 
-	test('a plain wheel scrolls the page and leaves the zoom', async ({ page }) => {
-		const { center, waveform } = await openZoomable(page);
-		const before = await readHeard(waveform);
+			await expect.poll(() => readOne(waveform, 'zoom')).toBe(77.04);
+			expect(await readHeard(waveform)).toEqual({ ...before, zoom: 77.04, zooms: 1 });
+		});
 
-		await page.mouse.move(center.x, center.y);
-		await page.mouse.wheel(0, 100);
+		await test.step('a plain wheel scrolls the page and leaves the zoom', async () => {
+			const before = await readHeard(waveform);
 
-		await expect.poll(() => readOne(waveform, 'scrollY')).toBeGreaterThan(before.scrollY);
-		expect(await readHeard(waveform)).toMatchObject({ zoom: 60, zooms: 0 });
+			await page.mouse.move(center.x, center.y);
+			await page.mouse.wheel(0, 100);
+
+			await expect.poll(() => readOne(waveform, 'scrollY')).toBeGreaterThan(before.scrollY);
+			expect(await readHeard(waveform)).toMatchObject({ zoom: before.zoom, zooms: before.zooms });
+		});
 	});
 });
 

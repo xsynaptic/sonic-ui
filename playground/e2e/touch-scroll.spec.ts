@@ -91,48 +91,52 @@ async function readScrollAlong(page: Page, axis: 'x' | 'y'): Promise<number> {
 	return scroll[axis];
 }
 
-for (const { name, role, selector, value } of [
-	{ name: 'Level', role: 'slider', selector: '#level .sonic-dial', value: '50' },
-	{ name: 'Fader', role: 'slider', selector: '#fader .sonic-slider', value: '0' },
-	{ name: 'Tempo', role: 'spinbutton', selector: '#tempo .sonic-number', value: '120' },
-] as const) {
-	test(`a mostly sideways swipe from ${name}, which drags up and down, scrolls the page and leaves the value`, async ({
-		page,
-	}) => {
-		await page.goto('/fixtures/');
-		await page.addStyleTag({ content: roomToPan });
+test('a mostly sideways swipe from a dial, a fader or a number box, which drag up and down, scrolls the page and leaves the value', async ({
+	page,
+}) => {
+	await page.goto('/fixtures/');
+	await page.addStyleTag({ content: roomToPan });
 
-		const from = await centerInView(page, selector);
-		const scrolled = await readScroll(page);
+	for (const { name, role, selector, value } of [
+		{ name: 'Level', role: 'slider', selector: '#level .sonic-dial', value: '50' },
+		{ name: 'Fader', role: 'slider', selector: '#fader .sonic-slider', value: '0' },
+		{ name: 'Tempo', role: 'spinbutton', selector: '#tempo .sonic-number', value: '120' },
+	] as const) {
+		await test.step(`a mostly sideways swipe from ${name}, which drags up and down, scrolls the page and leaves the value`, async () => {
+			const from = await centerInView(page, selector);
+			const scrolled = await readScroll(page);
 
-		await swipe(page, from, { x: from.x - 150, y: from.y - 30 });
+			await swipe(page, from, { x: from.x - 150, y: from.y - 30 });
 
-		await expect.poll(() => readScrollAlong(page, 'x')).toBeGreaterThan(scrolled.x);
-		await expect(page.getByRole(role, { name })).toHaveAttribute('aria-valuenow', value);
-	});
-}
+			await expect.poll(() => readScrollAlong(page, 'x')).toBeGreaterThan(scrolled.x);
+			await expect(page.getByRole(role, { name })).toHaveAttribute('aria-valuenow', value);
+		});
+	}
+});
 
-for (const { name, selector } of [
-	{ name: 'Position', selector: '#wavestrip .sonic-wavestrip' },
-	{ name: 'Detail', selector: '#waveform .sonic-waveform' },
-	{ name: 'Zoomable', selector: '#waveform-zoomable .sonic-waveform' },
-]) {
-	test(`a mostly vertical swipe from ${name}, off its center, scrolls the page and leaves the value`, async ({
-		page,
-	}) => {
-		await page.goto('/fixtures/');
-		await page.addStyleTag({ content: roomToPan });
+test('a mostly vertical swipe from a wave strip or a waveform, off its center, scrolls the page and leaves the value', async ({
+	page,
+}) => {
+	await page.goto('/fixtures/');
+	await page.addStyleTag({ content: roomToPan });
 
-		const center = await centerInView(page, selector);
-		const from = { x: center.x - 60, y: center.y };
-		const scrolled = await readScroll(page);
+	for (const { name, selector } of [
+		{ name: 'Position', selector: '#wavestrip .sonic-wavestrip' },
+		{ name: 'Detail', selector: '#waveform .sonic-waveform' },
+		{ name: 'Zoomable', selector: '#waveform-zoomable .sonic-waveform' },
+	]) {
+		await test.step(`a mostly vertical swipe from ${name}, off its center, scrolls the page and leaves the value`, async () => {
+			const center = await centerInView(page, selector);
+			const from = { x: center.x - 60, y: center.y };
+			const scrolled = await readScroll(page);
 
-		await swipe(page, from, { x: from.x + 30, y: from.y - 150 });
+			await swipe(page, from, { x: from.x + 30, y: from.y - 150 });
 
-		await expect.poll(() => readScrollAlong(page, 'y')).toBeGreaterThan(scrolled.y);
-		await expect(page.getByRole('slider', { name })).toHaveAttribute('aria-valuenow', '150');
-	});
-}
+			await expect.poll(() => readScrollAlong(page, 'y')).toBeGreaterThan(scrolled.y);
+			await expect(page.getByRole('slider', { name })).toHaveAttribute('aria-valuenow', '150');
+		});
+	}
+});
 
 test('a swipe on an envelope handle turns its dials and never the page, and one beside it scrolls', async ({
 	page,

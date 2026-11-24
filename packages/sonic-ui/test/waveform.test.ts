@@ -318,6 +318,34 @@ test('an unchanged pending list written from outside paints nothing', () => {
 	expect(paints()).toBe(2);
 });
 
+test('the pending state follows a region in the window, clears when it lands or leaves, and waits out pending-delay', () => {
+	const { flushFrames } = installCanvasFakes();
+	const { waveform } = mountWaveform('max="300" step="0" value="150"');
+	const now = vi.spyOn(performance, 'now').mockReturnValue(1000);
+	const isPending = (): boolean => waveform.querySelector(':scope > [data-sonic-pending]') !== null;
+
+	waveform.pending = [[149, 151]];
+	flushFrames();
+	expect(isPending()).toBe(true);
+
+	waveform.pending = [];
+	flushFrames();
+	expect(isPending()).toBe(false);
+
+	waveform.pending = [[250, 260]];
+	flushFrames();
+	expect(isPending()).toBe(false);
+
+	waveform.pendingDelay = 300;
+	waveform.pending = [[149, 152]];
+	flushFrames();
+	expect(isPending()).toBe(false);
+
+	now.mockReturnValue(1300);
+	flushFrames();
+	expect(isPending()).toBe(true);
+});
+
 function zoomEvents(waveform: SonicWaveform): Array<number> {
 	const zooms: Array<number> = [];
 

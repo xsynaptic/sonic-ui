@@ -11,31 +11,39 @@ test.beforeEach(async ({ page }) => {
 	await page.goto('/fixtures/');
 });
 
-test('a 32px drag moves a dial by a fifth of its 160px travel, dragging only while held', async ({
+test('a 32px drag moves a dial by a fifth of its 160px travel while held, and a travel in rem resolves to px', async ({
 	page,
 }) => {
 	const host = page.locator('#level');
-	const start = await centerOf(host.locator('.sonic-dial'));
 
-	await page.mouse.move(start.x, start.y);
-	await page.mouse.down();
-	await page.mouse.move(start.x, start.y - 32, { steps: 4 });
-	expect(await readState(host, 'dragging')).toBe(true);
+	await test.step('a 32px drag moves a dial by a fifth of its 160px travel, dragging only while held', async () => {
+		const start = await centerOf(host.locator('.sonic-dial'));
 
-	await page.mouse.up();
-	expect(await readState(host, 'dragging')).toBe(false);
-	await expect(host.getByRole('slider')).toHaveAttribute('aria-valuenow', '70');
-});
+		await page.mouse.move(start.x, start.y);
+		await page.mouse.down();
+		await page.mouse.move(start.x, start.y - 32, { steps: 4 });
+		expect(await readState(host, 'dragging')).toBe(true);
 
-test('a dial travel in rem resolves to px', async ({ page }) => {
-	const host = page.locator('#level');
-
-	await host.evaluate((element) => {
-		element.style.setProperty('--sonic-dial-travel', '5rem');
+		await page.mouse.up();
+		expect(await readState(host, 'dragging')).toBe(false);
+		await expect(host.getByRole('slider')).toHaveAttribute('aria-valuenow', '70');
 	});
-	await drag(page, host.locator('.sonic-dial'), { x: 0, y: -32 });
 
-	await expect(host.getByRole('slider')).toHaveAttribute('aria-valuenow', '90');
+	await test.step('a dial travel in rem resolves to px', async () => {
+		await host.evaluate((element) => {
+			element.setAttribute('value', '50');
+			element.style.setProperty('--sonic-dial-travel', '5rem');
+		});
+		// A second press on the same spot within 500ms opens typed entry
+		const start = await centerOf(host.locator('.sonic-dial'));
+
+		await page.mouse.move(start.x + 8, start.y);
+		await page.mouse.down();
+		await page.mouse.move(start.x + 8, start.y - 32, { steps: 4 });
+		await page.mouse.up();
+
+		await expect(host.getByRole('slider')).toHaveAttribute('aria-valuenow', '90');
+	});
 });
 
 test('a single drag or press moves a slider by its groove or its cap, a number box over its travel and a dial through its detent', async ({
@@ -107,23 +115,6 @@ test('a single drag or press moves a slider by its groove or its cap, a number b
 		await drag(page, dial, { x: 0, y: -30 });
 		await expect.soft(slider).toHaveAttribute('aria-valuenow', '2');
 	});
-});
-
-test('Cmd-click on an Apple platform, or Ctrl-click elsewhere, resets to the default', async ({
-	page,
-}) => {
-	// `ControlOrMeta` follows the host; the control follows the page's `navigator.platform`
-	const isApple = await page.evaluate(() => /^(Mac|iP)/.test(navigator.platform));
-	const [reset, other] = isApple ? (['Meta', 'Control'] as const) : (['Control', 'Meta'] as const);
-	const dial = page.locator('#level .sonic-dial');
-	const level = page.getByRole('slider', { name: 'Level' });
-	const before = await level.getAttribute('aria-valuenow');
-
-	await dial.click({ modifiers: [other] });
-	await expect(level).toHaveAttribute('aria-valuenow', before ?? '');
-
-	await dial.click({ modifiers: [reset] });
-	await expect(level).toHaveAttribute('aria-valuenow', '20');
 });
 
 test('a double press opens typed entry and Enter commits it', async ({ page }) => {

@@ -148,87 +148,85 @@ test('a label click focuses the value control and the segmented control, flips a
 	await expect(button).toHaveAttribute('aria-pressed', 'false');
 });
 
-test(
-	'the form submits each value, a latching button only when pressed, and a reset returns every control to its attributes',
-	{ tag: '@stripped' },
-	async ({ page }) => {
-		const initial: Array<[string, string]> = [
-			['cutoff', '40'],
-			['send', '30'],
-			['tempo', '120'],
-			['solo', 'yes'],
-			['mode', 'lp'],
-			['assign', 'x'],
-			['route', 'in'],
-			['late', '10'],
-			['touch.x', '40'],
-			['touch.y', '60'],
-			['position', '150'],
-			['loop.start', '60'],
-			['loop.end', '90'],
-			['detail', '90'],
-		];
+test('the form submits each value, a latching button only when pressed, and a reset returns every control to its attributes', async ({
+	page,
+}) => {
+	const initial: Array<[string, string]> = [
+		['cutoff', '40'],
+		['send', '30'],
+		['tempo', '120'],
+		['solo', 'yes'],
+		['mode', 'lp'],
+		['assign', 'x'],
+		['route', 'in'],
+		['late', '10'],
+		['touch.x', '40'],
+		['touch.y', '60'],
+		['position', '150'],
+		['loop.start', '60'],
+		['loop.end', '90'],
+		['detail', '90'],
+	];
 
-		expect(await readFormData(page)).toEqual(initial);
+	expect(await readFormData(page)).toEqual(initial);
 
-		await page.locator('#cutoff .sonic-dial').press('ArrowUp');
-		await page.locator('#tempo .sonic-number').press('ArrowDown');
-		await page.locator('#mute .sonic-button').click();
-		await page.locator('#solo .sonic-button').click();
-		await page.getByRole('radio', { name: 'HP' }).click();
-		await page.locator('#sync [role="switch"]').click();
-		await page.getByRole('radio', { name: 'Y' }).click();
-		await page.locator('#link [role="switch"]').click();
-		await page.getByRole('radio', { name: 'Out' }).click();
-		await page.locator('#touch [data-sonic-axis="x"]').press('ArrowUp');
-		await page.locator('#touch [data-sonic-axis="y"]').press('ArrowRight');
-		await page.locator('#position .sonic-wavestrip-canvas').press('ArrowRight');
-		await page.locator('#position .sonic-region').press('ArrowRight');
-		await page.locator('#detail .sonic-waveform').press('ArrowLeft');
+	await page.locator('#cutoff .sonic-dial').press('ArrowUp');
+	await page.locator('#tempo .sonic-number').press('ArrowDown');
+	await page.locator('#mute .sonic-button').click();
+	await page.locator('#solo .sonic-button').click();
+	await page.getByRole('radio', { name: 'HP' }).click();
+	await page.locator('#sync [role="switch"]').click();
+	await page.getByRole('radio', { name: 'Y' }).click();
+	await page.locator('#link [role="switch"]').click();
+	await page.getByRole('radio', { name: 'Out' }).click();
+	await page.locator('#touch [data-sonic-axis="x"]').press('ArrowUp');
+	await page.locator('#touch [data-sonic-axis="y"]').press('ArrowRight');
+	await page.locator('#position .sonic-wavestrip-canvas').press('ArrowRight');
+	await page.locator('#position .sonic-region').press('ArrowRight');
+	await page.locator('#detail .sonic-waveform').press('ArrowLeft');
 
-		expect(await readFormData(page)).toEqual([
-			['cutoff', '45'],
-			['send', '30'],
-			['tempo', '119.5'],
-			['mute', 'on'],
-			['mode', 'hp'],
-			['sync', 'on'],
-			['assign', 'y'],
-			['link', 'on'],
-			['route', 'out'],
-			['late', '10'],
-			['touch.x', '45'],
-			['touch.y', '61'],
-			['position', '155'],
-			['loop.start', '65'],
-			['loop.end', '95'],
-			['detail', '88'],
-		]);
+	expect(await readFormData(page)).toEqual([
+		['cutoff', '45'],
+		['send', '30'],
+		['tempo', '119.5'],
+		['mute', 'on'],
+		['mode', 'hp'],
+		['sync', 'on'],
+		['assign', 'y'],
+		['link', 'on'],
+		['route', 'out'],
+		['late', '10'],
+		['touch.x', '45'],
+		['touch.y', '61'],
+		['position', '155'],
+		['loop.start', '65'],
+		['loop.end', '95'],
+		['detail', '88'],
+	]);
 
-		await page.locator('#patch').evaluate((form) => {
-			if (form instanceof HTMLFormElement) form.reset();
-		});
+	await page.locator('#patch').evaluate((form) => {
+		if (form instanceof HTMLFormElement) form.reset();
+	});
 
-		for (const [control, name, value] of [
-			[page.locator('#cutoff .sonic-dial'), 'aria-valuenow', '40'],
-			[page.locator('#tempo .sonic-number'), 'aria-valuenow', '120'],
-			[page.locator('#mute .sonic-button'), 'aria-pressed', 'false'],
-			[page.locator('#solo .sonic-button'), 'aria-pressed', 'true'],
-			[page.getByRole('radio', { name: 'LP' }), 'aria-checked', 'true'],
-			[page.locator('#sync [role="switch"]'), 'aria-checked', 'false'],
-			[page.getByRole('radio', { name: 'X' }), 'aria-checked', 'true'],
-			[page.locator('#link [role="switch"]'), 'aria-checked', 'false'],
-			[page.getByRole('radio', { exact: true, name: 'In' }), 'aria-checked', 'true'],
-			[page.locator('#touch [data-sonic-axis="x"]'), 'aria-valuenow', '40'],
-			[page.locator('#touch [data-sonic-axis="y"]'), 'aria-valuenow', '60'],
-			[page.locator('#position .sonic-wavestrip-canvas'), 'aria-valuenow', '150'],
-			[page.locator('#detail .sonic-waveform'), 'aria-valuenow', '90'],
-		] as const) {
-			await expect(control).toHaveAttribute(name, value);
-		}
-		expect(await readFormData(page)).toEqual(initial);
-	},
-);
+	for (const [control, name, value] of [
+		[page.locator('#cutoff .sonic-dial'), 'aria-valuenow', '40'],
+		[page.locator('#tempo .sonic-number'), 'aria-valuenow', '120'],
+		[page.locator('#mute .sonic-button'), 'aria-pressed', 'false'],
+		[page.locator('#solo .sonic-button'), 'aria-pressed', 'true'],
+		[page.getByRole('radio', { name: 'LP' }), 'aria-checked', 'true'],
+		[page.locator('#sync [role="switch"]'), 'aria-checked', 'false'],
+		[page.getByRole('radio', { name: 'X' }), 'aria-checked', 'true'],
+		[page.locator('#link [role="switch"]'), 'aria-checked', 'false'],
+		[page.getByRole('radio', { exact: true, name: 'In' }), 'aria-checked', 'true'],
+		[page.locator('#touch [data-sonic-axis="x"]'), 'aria-valuenow', '40'],
+		[page.locator('#touch [data-sonic-axis="y"]'), 'aria-valuenow', '60'],
+		[page.locator('#position .sonic-wavestrip-canvas'), 'aria-valuenow', '150'],
+		[page.locator('#detail .sonic-waveform'), 'aria-valuenow', '90'],
+	] as const) {
+		await expect(control).toHaveAttribute(name, value);
+	}
+	expect(await readFormData(page)).toEqual(initial);
+});
 
 test('a disabled fieldset disables the dial inside it until re-enabled', async ({
 	isMobile,

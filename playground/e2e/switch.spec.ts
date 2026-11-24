@@ -14,36 +14,69 @@ function readCheckedPosition(page: Page): Promise<null | string> {
 		.evaluate((position) => position.textContent.trim());
 }
 
-test('a trusted press holds the momentary position and a release springs it back', async ({
+test('a trusted press or a drag on the bat throws a switch through its positions, a momentary one springs back, and the focus and the bat follow', async ({
 	isMobile,
 	page,
 }) => {
 	test.skip(isMobile, mouseOnly);
 
-	const box = await boxOf(page.getByRole('radio', { name: 'Duck' }));
+	await test.step('a trusted press holds the momentary position and a release springs it back', async () => {
+		const box = await boxOf(page.getByRole('radio', { name: 'Duck' }));
 
-	await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-	await page.mouse.down();
-	expect(await readCheckedPosition(page)).toBe('Duck');
-	await expect(page.locator('#talk')).toHaveJSProperty('value', 'duck');
+		await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+		await page.mouse.down();
+		expect(await readCheckedPosition(page)).toBe('Duck');
+		await expect(page.locator('#talk')).toHaveJSProperty('value', 'duck');
 
-	await page.mouse.move(box.x + box.width / 2, box.y + box.height * 4, { steps: 3 });
-	expect(await readCheckedPosition(page)).toBe('Duck');
+		await page.mouse.move(box.x + box.width / 2, box.y + box.height * 4, { steps: 3 });
+		expect(await readCheckedPosition(page)).toBe('Duck');
 
-	await page.mouse.up();
-	expect(await readCheckedPosition(page)).toBe('Off');
-});
+		await page.mouse.up();
+		expect(await readCheckedPosition(page)).toBe('Off');
+	});
 
-test('the bat moves toward the checked position', async ({ page }) => {
-	const ballOffset = (): Promise<string> =>
-		page
-			.locator('#talk .sonic-switch-bat')
-			.evaluate((bat) => getComputedStyle(bat, '::after').translate);
+	await test.step('a drag on the bat throws it through its positions', async () => {
+		const at = await centerOf(page.locator('#talk .sonic-switch-bat'));
 
-	expect(await ballOffset()).toMatch(/^0px( 0px)?$/);
+		await page.mouse.move(at.x, at.y);
+		await page.mouse.down();
+		await page.mouse.move(at.x, at.y + 14, { steps: 4 });
+		expect(await readCheckedPosition(page)).toBe('On');
+		await page.mouse.move(at.x, at.y - 40, { steps: 8 });
+		expect(await readCheckedPosition(page)).toBe('Duck');
+		await page.mouse.up();
+		expect(await readCheckedPosition(page)).toBe('Off');
+	});
 
-	await page.getByRole('radio', { name: 'On' }).click();
-	await expect.poll(ballOffset).toMatch(/^0px [1-9]/);
+	await test.step('a press or a drag on the bat carries the focus the switch held to the new position', async () => {
+		const at = await centerOf(page.locator('#talk .sonic-switch-bat'));
+
+		await page.getByRole('radio', { name: 'Off' }).focus();
+		await page.mouse.click(at.x, at.y);
+		await expect(page.getByRole('radio', { name: 'On' })).toBeChecked();
+		await expect(page.getByRole('radio', { name: 'On' })).toBeFocused();
+
+		const thrown = await centerOf(page.locator('#talk .sonic-switch-bat'));
+
+		await page.mouse.move(thrown.x, thrown.y);
+		await page.mouse.down();
+		await page.mouse.move(thrown.x, thrown.y - 14, { steps: 4 });
+		await page.mouse.up();
+		await expect(page.getByRole('radio', { name: 'Off' })).toBeChecked();
+		await expect(page.getByRole('radio', { name: 'Off' })).toBeFocused();
+	});
+
+	await test.step('the bat moves toward the checked position', async () => {
+		const ballOffset = (): Promise<string> =>
+			page
+				.locator('#talk .sonic-switch-bat')
+				.evaluate((bat) => getComputedStyle(bat, '::after').translate);
+
+		await expect.poll(ballOffset).toMatch(/^0px( 0px)?$/);
+
+		await page.getByRole('radio', { name: 'On' }).click();
+		await expect.poll(ballOffset).toMatch(/^0px [1-9]/);
+	});
 });
 
 test('a trusted press on a switch flips it once, and a drag sets it by direction', async ({
@@ -64,42 +97,4 @@ test('a trusted press on a switch flips it once, and a drag sets it by direction
 	await expect(bare).toHaveAttribute('aria-checked', 'false');
 	await page.mouse.up();
 	await expect(bare).toHaveAttribute('aria-checked', 'false');
-});
-
-test('a drag on the bat throws it through its positions', async ({ isMobile, page }) => {
-	test.skip(isMobile, mouseOnly);
-
-	const at = await centerOf(page.locator('#talk .sonic-switch-bat'));
-
-	await page.mouse.move(at.x, at.y);
-	await page.mouse.down();
-	await page.mouse.move(at.x, at.y + 14, { steps: 4 });
-	expect(await readCheckedPosition(page)).toBe('On');
-	await page.mouse.move(at.x, at.y - 40, { steps: 8 });
-	expect(await readCheckedPosition(page)).toBe('Duck');
-	await page.mouse.up();
-	expect(await readCheckedPosition(page)).toBe('Off');
-});
-
-test('a press or a drag on the bat carries the focus the switch held to the new position', async ({
-	isMobile,
-	page,
-}) => {
-	test.skip(isMobile, mouseOnly);
-
-	const at = await centerOf(page.locator('#talk .sonic-switch-bat'));
-
-	await page.getByRole('radio', { name: 'Off' }).focus();
-	await page.mouse.click(at.x, at.y);
-	await expect(page.getByRole('radio', { name: 'On' })).toBeChecked();
-	await expect(page.getByRole('radio', { name: 'On' })).toBeFocused();
-
-	const thrown = await centerOf(page.locator('#talk .sonic-switch-bat'));
-
-	await page.mouse.move(thrown.x, thrown.y);
-	await page.mouse.down();
-	await page.mouse.move(thrown.x, thrown.y - 14, { steps: 4 });
-	await page.mouse.up();
-	await expect(page.getByRole('radio', { name: 'Off' })).toBeChecked();
-	await expect(page.getByRole('radio', { name: 'Off' })).toBeFocused();
 });

@@ -2,8 +2,7 @@ import type { Locator, Page } from '@playwright/test';
 
 import { expect, test } from '@playwright/test';
 
-import { systemColour } from './colour.ts';
-import { boxOf, centerOf, mouseOnly, noForcedColours } from './pointer.ts';
+import { boxOf, centerOf, mouseOnly } from './pointer.ts';
 import { readState, stillTransitions } from './state.ts';
 
 test.beforeEach(async ({ page }) => {
@@ -15,91 +14,67 @@ function readInk(page: Page, id: string): Promise<string> {
 }
 
 test(
-	'an armed button inks apart from a plain button and a latched one, and latches to the latched ink',
+	'a button inks apart when armed, latched, expanded or disabled, and a busy one pulses its legend after its delay',
 	{ tag: '@mobile' },
 	async ({ page }) => {
 		await stillTransitions(page);
 
-		const [plain, armed] = [await readInk(page, 'next'), await readInk(page, 'armed')];
+		await test.step('an armed button inks apart from a plain button and a latched one, and latches to the latched ink', async () => {
+			const [plain, armed] = [await readInk(page, 'next'), await readInk(page, 'armed')];
 
-		await page.locator('#mute .sonic-button').click();
+			await page.locator('#mute .sonic-button').click();
 
-		const latched = await readInk(page, 'mute');
+			const latched = await readInk(page, 'mute');
 
-		expect(latched).not.toBe(plain);
-		expect(armed).not.toBe(plain);
-		expect(armed).not.toBe(latched);
+			expect(latched).not.toBe(plain);
+			expect(armed).not.toBe(plain);
+			expect(armed).not.toBe(latched);
 
-		await page.locator('#armed .sonic-button').click();
-		expect(await readInk(page, 'armed')).toBe(latched);
-	},
-);
-
-test('a busy button pulses its legend after its delay, and holds it steady under reduced motion', async ({
-	page,
-}) => {
-	const legend = page.locator('#loading .sonic-button-cap > svg');
-
-	await expect(legend).toHaveCSS('animation-name', 'sonic-button-busy');
-	await expect(page.locator('#loading-delayed .sonic-button-cap > svg')).toHaveCSS(
-		'animation-delay',
-		'0.4s',
-	);
-
-	await page.emulateMedia({ reducedMotion: 'reduce' });
-	await expect(legend).toHaveCSS('animation-name', 'none');
-	await expect(legend).toHaveCSS('opacity', '1');
-});
-
-test('a disabled button is drawn in the disabled ink', async ({ page }) => {
-	await page.locator('#next').evaluate((element) => {
-		element.style.setProperty('--sonic-ink-disabled', 'rgb(1, 2, 3)');
-		element.setAttribute('disabled', '');
-	});
-
-	await expect(page.locator('#next .sonic-button')).toHaveCSS('color', 'rgb(1, 2, 3)');
-});
-
-test(
-	'a button’s legend cannot be selected, so a long press on touch selects nothing',
-	{ tag: '@mobile' },
-	async ({ page }) => {
-		await expect(page.locator('#next .sonic-button')).toHaveCSS('user-select', 'none');
-	},
-);
-
-test('a button is lit while expanded, as a latched one is', async ({ page }) => {
-	const host = page.locator('#next');
-	const button = host.locator('.sonic-button');
-
-	await host.evaluate((element) => {
-		element.style.setProperty('--sonic-lit', 'rgb(1, 200, 3)');
-		element.setAttribute('expanded', 'false');
-	});
-	await expect(button).not.toHaveCSS('color', 'rgb(1, 200, 3)');
-
-	await host.evaluate((element) => {
-		element.setAttribute('expanded', 'true');
-	});
-	await expect(button).toHaveCSS('color', 'rgb(1, 200, 3)');
-});
-
-test.describe('forced colours', () => {
-	test.use({ forcedColors: 'active' });
-	test.skip(({ browserName }) => browserName === 'webkit', noForcedColours);
-
-	test('a disabled button takes the system colour over the disabled ink', async ({ page }) => {
-		await page.locator('#next').evaluate((element) => {
-			element.style.setProperty('--sonic-ink-disabled', 'rgb(1, 2, 3)');
-			element.setAttribute('disabled', '');
+			await page.locator('#armed .sonic-button').click();
+			expect(await readInk(page, 'armed')).toBe(latched);
 		});
 
-		await expect(page.locator('#next .sonic-button')).toHaveCSS(
-			'color',
-			await systemColour(page, 'GrayText'),
-		);
-	});
-});
+		await test.step('a button is lit while expanded, as a latched one is', async () => {
+			const host = page.locator('#next');
+			const button = host.locator('.sonic-button');
+
+			await host.evaluate((element) => {
+				element.style.setProperty('--sonic-lit', 'rgb(1, 200, 3)');
+				element.setAttribute('expanded', 'false');
+			});
+			await expect(button).not.toHaveCSS('color', 'rgb(1, 200, 3)');
+
+			await host.evaluate((element) => {
+				element.setAttribute('expanded', 'true');
+			});
+			await expect(button).toHaveCSS('color', 'rgb(1, 200, 3)');
+		});
+
+		await test.step('a disabled button is drawn in the disabled ink', async () => {
+			await page.locator('#next').evaluate((element) => {
+				element.removeAttribute('expanded');
+				element.style.setProperty('--sonic-ink-disabled', 'rgb(1, 2, 3)');
+				element.setAttribute('disabled', '');
+			});
+
+			await expect(page.locator('#next .sonic-button')).toHaveCSS('color', 'rgb(1, 2, 3)');
+		});
+
+		await test.step('a busy button pulses its legend after its delay, and holds it steady under reduced motion', async () => {
+			const legend = page.locator('#loading .sonic-button-cap > svg');
+
+			await expect(legend).toHaveCSS('animation-name', 'sonic-button-busy');
+			await expect(page.locator('#loading-delayed .sonic-button-cap > svg')).toHaveCSS(
+				'animation-delay',
+				'0.4s',
+			);
+
+			await page.emulateMedia({ reducedMotion: 'reduce' });
+			await expect(legend).toHaveCSS('animation-name', 'none');
+			await expect(legend).toHaveCSS('opacity', '1');
+		});
+	},
+);
 
 function scaleOf(cap: Locator): () => Promise<string> {
 	return () => cap.evaluate((element) => getComputedStyle(element).scale);
@@ -107,57 +82,61 @@ function scaleOf(cap: Locator): () => Promise<string> {
 
 const atRest = /^(1|none)$/;
 
-test('Space holds a button’s cap down, and lifting or leaving lets it up', async ({
+test('Space holds the cap of a button, an option and a toggle down, and lifting, leaving or an arrow lets it up', async ({
 	browserName,
 	page,
 }) => {
-	const scale = scaleOf(page.locator('#next .sonic-button-cap'));
+	await test.step('Space holds a button’s cap down, and lifting or leaving lets it up', async () => {
+		const scale = scaleOf(page.locator('#next .sonic-button-cap'));
 
-	await page.locator('#next .sonic-button').focus();
-	await page.keyboard.down('Space');
-	await expect.poll(scale).toBe('0.985');
+		await page.locator('#next .sonic-button').focus();
+		await page.keyboard.down('Space');
+		await expect.poll(scale).toBe('0.985');
 
-	await page.keyboard.up('Space');
-	await expect.poll(scale).toMatch(atRest);
+		await page.keyboard.up('Space');
+		await expect.poll(scale).toMatch(atRest);
 
-	// WebKit leaves `:active` on a button that focus left mid-hold, and the pointer still needs `:active`
-	if (browserName === 'webkit') return;
+		// WebKit leaves `:active` on a button that focus left mid-hold, and the pointer still needs `:active`
+		if (browserName === 'webkit') return;
 
-	await page.keyboard.down('Space');
-	await expect.poll(scale).toBe('0.985');
-	await page.keyboard.press('Tab');
-	await expect.poll(scale).toMatch(atRest);
-});
+		await page.keyboard.down('Space');
+		await expect.poll(scale).toBe('0.985');
+		await page.keyboard.press('Tab');
+		await expect.poll(scale).toMatch(atRest);
+		await page.keyboard.up('Space');
+	});
 
-test('Space holds an option’s cap down, and leaving or an arrow lets it up', async ({ page }) => {
-	const option = page.getByRole('radio', { name: 'HP' });
-	const scale = scaleOf(option.locator('.sonic-segmented-cap'));
+	await test.step('Space holds an option’s cap down, and leaving or an arrow lets it up', async () => {
+		const option = page.getByRole('radio', { name: 'HP' });
+		const scale = scaleOf(option.locator('.sonic-segmented-cap'));
 
-	await option.focus();
-	await page.keyboard.down('Space');
-	await expect.poll(scale).toBe('0.985');
+		await option.focus();
+		await page.keyboard.down('Space');
+		await expect.poll(scale).toBe('0.985');
 
-	await page.keyboard.press('Tab');
-	await expect.poll(scale).toMatch(atRest);
-	await page.keyboard.up('Space');
+		await page.keyboard.press('Tab');
+		await expect.poll(scale).toMatch(atRest);
+		await page.keyboard.up('Space');
 
-	await option.focus();
-	await page.keyboard.down('Space');
-	await expect.poll(scale).toBe('0.985');
-	await page.keyboard.press('ArrowLeft');
-	await expect(page.getByRole('radio', { name: 'LP' })).toBeFocused();
-	await expect.poll(scale).toMatch(atRest);
-});
+		await option.focus();
+		await page.keyboard.down('Space');
+		await expect.poll(scale).toBe('0.985');
+		await page.keyboard.press('ArrowLeft');
+		await expect(page.getByRole('radio', { name: 'LP' })).toBeFocused();
+		await expect.poll(scale).toMatch(atRest);
+		await page.keyboard.up('Space');
+	});
 
-test('Space holds a toggle’s cap down and lets it up again', async ({ page }) => {
-	const scale = scaleOf(page.locator('#route .sonic-toggle-cap'));
+	await test.step('Space holds a toggle’s cap down and lets it up again', async () => {
+		const scale = scaleOf(page.locator('#route .sonic-toggle-cap'));
 
-	await page.locator('#route .sonic-toggle-position[tabindex="0"]').focus();
-	await page.keyboard.down('Space');
-	await expect.poll(scale).toBe('0.985');
+		await page.locator('#route .sonic-toggle-position[tabindex="0"]').focus();
+		await page.keyboard.down('Space');
+		await expect.poll(scale).toBe('0.985');
 
-	await page.keyboard.up('Space');
-	await expect.poll(scale).toMatch(atRest);
+		await page.keyboard.up('Space');
+		await expect.poll(scale).toMatch(atRest);
+	});
 });
 
 function readChanges(page: Page): Promise<string | undefined> {

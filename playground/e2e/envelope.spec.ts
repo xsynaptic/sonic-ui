@@ -10,49 +10,55 @@ test.beforeEach(async ({ page }) => {
 	});
 });
 
-test('an envelope ahead of its dials in the document still draws them', async ({ page }) => {
-	await expect(page.locator('#envelope .sonic-envelope-line')).toHaveAttribute('d', /^M0 1L/);
-	await expect(page.locator('#envelope .sonic-envelope-handle:not([hidden])')).toHaveCount(3);
-});
-
-test('a drag on the decay handle turns the decay and sustain dials', async ({ isMobile, page }) => {
+test('an envelope ahead of its dials draws them, a stage handle turns its dials and a curve handle its curve', async ({
+	isMobile,
+	page,
+}) => {
 	test.skip(isMobile, mouseOnly);
 
-	const handle = page.locator('#envelope .sonic-envelope-handle[data-sonic-stage="decay"]');
-	const [decay, sustain] = [
-		page.getByRole('slider', { exact: true, name: 'Envelope decay' }),
-		page.getByRole('slider', { name: 'Envelope sustain' }),
-	];
-	const box = await boxOf(handle);
+	await test.step('an envelope ahead of its dials in the document still draws them', async () => {
+		await expect(page.locator('#envelope .sonic-envelope-line')).toHaveAttribute('d', /^M0 1L/);
+		await expect(page.locator('#envelope .sonic-envelope-handle:not([hidden])')).toHaveCount(3);
+	});
 
-	await drag(page, handle, { x: 20, y: 12 });
+	await test.step('a drag on the decay handle turns the decay and sustain dials', async () => {
+		const handle = page.locator('#envelope .sonic-envelope-handle[data-sonic-stage="decay"]');
+		const [decay, sustain] = [
+			page.getByRole('slider', { exact: true, name: 'Envelope decay' }),
+			page.getByRole('slider', { name: 'Envelope sustain' }),
+		];
+		const box = await boxOf(handle);
 
-	await expect.poll(() => valueNow(decay)).toBeGreaterThan(45);
-	await expect.poll(() => valueNow(sustain)).toBeLessThan(0.6);
+		await drag(page, handle, { x: 20, y: 12 });
 
-	const moved = await handle.boundingBox();
+		await expect.poll(() => valueNow(decay)).toBeGreaterThan(45);
+		await expect.poll(() => valueNow(sustain)).toBeLessThan(0.6);
 
-	expect(moved?.x).toBeGreaterThan(box.x);
-	expect(moved?.y).toBeGreaterThan(box.y);
-});
+		const moved = await handle.boundingBox();
 
-test('a curve handle bows its stage and turns only its curve dial', async ({ isMobile, page }) => {
-	test.skip(isMobile, mouseOnly);
+		expect(moved?.x).toBeGreaterThan(box.x);
+		expect(moved?.y).toBeGreaterThan(box.y);
+	});
 
-	const curveHandle = page.locator(
-		'#envelope-curves .sonic-envelope-curve[data-sonic-stage="decay"]',
-	);
-	const curve = page.getByRole('slider', { name: 'Envelope decay curve' });
-	const line = page.locator('#envelope-curves .sonic-envelope-line');
-	const before = await line.getAttribute('d');
+	await test.step('a curve handle bows its stage and turns only its curve dial', async () => {
+		const curveHandle = page.locator(
+			'#envelope-curves .sonic-envelope-curve[data-sonic-stage="decay"]',
+		);
+		const curve = page.getByRole('slider', { name: 'Envelope decay curve' });
+		const line = page.locator('#envelope-curves .sonic-envelope-line');
+		const decay = page.getByRole('slider', { exact: true, name: 'Envelope decay' });
+		const [before, decayBefore] = [
+			await line.getAttribute('d'),
+			await decay.getAttribute('aria-valuenow'),
+		];
 
-	await expect(page.locator('#envelope-curves .sonic-envelope-curve:not([hidden])')).toHaveCount(2);
-	await drag(page, curveHandle, { x: 0, y: -12 });
+		await expect(page.locator('#envelope-curves .sonic-envelope-curve:not([hidden])')).toHaveCount(
+			2,
+		);
+		await drag(page, curveHandle, { x: 0, y: -12 });
 
-	await expect.poll(() => valueNow(curve)).toBeGreaterThan(3);
-	await expect(page.getByRole('slider', { exact: true, name: 'Envelope decay' })).toHaveAttribute(
-		'aria-valuenow',
-		'45',
-	);
-	expect(await line.getAttribute('d')).not.toBe(before);
+		await expect.poll(() => valueNow(curve)).toBeGreaterThan(3);
+		await expect(decay).toHaveAttribute('aria-valuenow', decayBefore ?? '');
+		expect(await line.getAttribute('d')).not.toBe(before);
+	});
 });

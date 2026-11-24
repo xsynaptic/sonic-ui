@@ -79,18 +79,6 @@ test('a slider is at its origin, and its child LED lights only there', async ({
 	expect(await readLens(led)).toBe(unlit);
 });
 
-test('with no origin a slider rests only at its minimum', async ({ page }) => {
-	const host = page.locator('#rest');
-
-	await host.evaluate((element) => {
-		element.removeAttribute('origin');
-	});
-	expect(await readState(host, 'at-origin')).toBe(false);
-
-	await host.locator('.sonic-slider').press('Home');
-	expect(await readState(host, 'at-origin')).toBe(true);
-});
-
 test('an LED in a disabled latched button dims and does not go out', async ({ page }) => {
 	const host = page.locator('#power');
 	const held = host.locator('.sonic-button .sonic-led');

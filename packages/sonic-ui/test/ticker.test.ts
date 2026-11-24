@@ -161,7 +161,8 @@ test('new content of the same width starts over, and content that now fits ends 
 
 	expect(tape.textContent).toBe('Another title');
 	expect(legs).toHaveLength(before + 1);
-	expect(legs.at(-1)?.translate).toEqual(['0px', '-55px']);
+	expect(legs.at(-1)).toMatchObject({ delay: 2000, translate: ['0px', '-55px'] });
+	expect(control.dataset.sonicClipped).toBe('end');
 
 	widths.tape = 120;
 	ticker.text = 'Short';

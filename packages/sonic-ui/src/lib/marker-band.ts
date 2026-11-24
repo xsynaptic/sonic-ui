@@ -1,3 +1,5 @@
+import type { LayoutPass } from '#lib/layout-batch.ts';
+
 import { readPxProperty } from '#lib/read-px-property.ts';
 
 interface MarkerLook {
@@ -13,11 +15,11 @@ export interface Point {
 
 interface MarkerBand<Marker extends MarkerLook> {
 	inReach: (point: Point, widthPx: number) => Array<number>;
-	render: (
+	layout: (
 		markers: ReadonlyArray<Marker>,
 		proportions: ReadonlyArray<[number, number]>,
 		draw?: (marker: Marker, part: HTMLElement) => void,
-	) => void;
+	) => LayoutPass;
 }
 
 // Interpolated into a style, so anything else falls back to the default colour
@@ -51,6 +53,12 @@ function createPart(marker: MarkerLook): HTMLElement {
 export function createMarkerBand<Marker extends MarkerLook>(band: HTMLElement): MarkerBand<Marker> {
 	type Draw = (marker: Marker, part: HTMLElement) => void;
 
+	interface Placement {
+		markers: ReadonlyArray<Marker>;
+		parts: ReadonlyArray<HTMLElement>;
+		proportions: ReadonlyArray<[number, number]>;
+	}
+
 	let built:
 		| undefined
 		| { draw: Draw | undefined; markers: ReadonlyArray<Marker>; parts: Array<HTMLElement> };
@@ -76,6 +84,30 @@ export function createMarkerBand<Marker extends MarkerLook>(band: HTMLElement): 
 		return parts;
 	}
 
+	function place(
+		{ markers, parts, proportions }: Placement,
+		[widthPx, stepPx]: [number, number],
+	): void {
+		const points = markers.flatMap((marker, index) =>
+			marker.end === undefined ? [{ at: proportions[index]?.[0] ?? 0, index }] : [],
+		);
+		const lanes = markerLanes(
+			points.map(({ at }) => at * widthPx),
+			stepPx,
+		);
+
+		placed = points.map((point, order) => ({ ...point, lane: lanes[order] ?? 0 }));
+		for (const [index, part] of parts.entries()) {
+			const [from, to] = proportions[index] ?? [0, 0];
+
+			part.style.setProperty('--_sonic-marker-from', String(from));
+			part.style.setProperty('--_sonic-marker-to', String(to));
+		}
+		for (const { index, lane } of placed) {
+			parts[index]?.style.setProperty('--_sonic-marker-lane', String(lane));
+		}
+	}
+
 	return {
 		inReach: (point, widthPx) => {
 			const size = px('--_sonic-marker-size');
@@ -87,29 +119,24 @@ export function createMarkerBand<Marker extends MarkerLook>(band: HTMLElement): 
 				size / 2 + snapMarginPx,
 			).flatMap((order) => placed[order]?.index ?? []);
 		},
-		render: (markers, proportions, draw) => {
-			const widthPx = band.getBoundingClientRect().width;
-			const points = markers.flatMap((marker, index) =>
-				marker.end === undefined ? [{ at: proportions[index]?.[0] ?? 0, index }] : [],
-			);
-			const lanes = markerLanes(
-				points.map(({ at }) => at * widthPx),
-				px('--_sonic-marker-step'),
-			);
-			// A `markers` write always makes a new array, so the same array and renderer mean no write
-			const parts =
-				built?.markers === markers && built.draw === draw ? built.parts : build(markers, draw);
+		layout: (markers, proportions, draw) => {
+			let parts: Array<HTMLElement> = [];
 
-			placed = points.map((point, order) => ({ ...point, lane: lanes[order] ?? 0 }));
-			for (const [index, part] of parts.entries()) {
-				const [from, to] = proportions[index] ?? [0, 0];
+			return {
+				measure: () => {
+					const widthPx = band.getBoundingClientRect().width;
+					const stepPx = px('--_sonic-marker-step');
 
-				part.style.setProperty('--_sonic-marker-from', String(from));
-				part.style.setProperty('--_sonic-marker-to', String(to));
-			}
-			for (const { index, lane } of placed) {
-				parts[index]?.style.setProperty('--_sonic-marker-lane', String(lane));
-			}
+					return () => {
+						place({ markers, parts, proportions }, [widthPx, stepPx]);
+					};
+				},
+				prepare: () => {
+					// A `markers` write always makes a new array, so the same array and renderer mean no write
+					parts =
+						built?.markers === markers && built.draw === draw ? built.parts : build(markers, draw);
+				},
+			};
 		},
 	};
 }

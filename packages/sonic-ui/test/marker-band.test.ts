@@ -1,5 +1,6 @@
 import { expect, test } from 'vitest';
 
+import { runLayoutPass } from '#lib/layout-batch.ts';
 import { centersInReach, createMarkerBand, markerLanes } from '#lib/marker-band.ts';
 
 test('a marker closer than the minimum to the last in every lane opens a new one', () => {
@@ -86,13 +87,15 @@ test('reach is measured across both axes at once', () => {
 test('only a dimmed marker carries the dimmed state', () => {
 	const band = document.createElement('div');
 
-	createMarkerBand(band).render(
-		[{ dimmed: true }, { dimmed: false }, {}],
-		[
-			[0.2, 0.2],
-			[0.5, 0.5],
-			[0.8, 0.8],
-		],
+	runLayoutPass(
+		createMarkerBand(band).layout(
+			[{ dimmed: true }, { dimmed: false }, {}],
+			[
+				[0.2, 0.2],
+				[0.5, 0.5],
+				[0.8, 0.8],
+			],
+		),
 	);
 
 	expect(

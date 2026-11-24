@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 
 import { expect, test } from '@playwright/test';
 
@@ -550,4 +550,71 @@ test('each focusable element focused by a key paints its outline outside its box
 		.evaluate((puck) => getComputedStyle(puck, '::before').outlineStyle);
 
 	expect.soft(puckRing).toBe('none');
+});
+
+function forcedKeyPaint(
+	target: Locator,
+): Promise<{ dot: string; outline: string; outlineColour: string; top: string }> {
+	return target.evaluate((element) => {
+		const cap = element.querySelector('.sonic-keyboard-cap');
+		const style = getComputedStyle(element);
+		const top = cap ? getComputedStyle(cap, '::before') : undefined;
+
+		return {
+			dot: top?.backgroundImage.split(/,(?![^(]*\))/, 3)[1]?.trim() ?? '',
+			outline: style.outlineStyle,
+			outlineColour: style.outlineColor,
+			top: top?.backgroundColor ?? '',
+		};
+	});
+}
+
+test('a disabled button takes GrayText, the keyboard outlines only its focused key, and a disabled keyboard keeps full opacity', async ({
+	page,
+}) => {
+	await test.step('a disabled button takes the system colour over the disabled ink', async () => {
+		await page.locator('#next').evaluate((element) => {
+			element.style.setProperty('--sonic-ink-disabled', 'rgb(1, 2, 3)');
+			element.setAttribute('disabled', '');
+		});
+
+		await expect(page.locator('#next .sonic-button')).toHaveCSS(
+			'color',
+			await systemColour(page, 'GrayText'),
+		);
+	});
+
+	await test.step('forced colours outline only the focused key, and a pressed highlighted key keeps its dot', async () => {
+		const key = page.locator('#keyboard [data-sonic-note="52"]');
+
+		await key.focus();
+		await page.keyboard.press('ArrowRight');
+		await page.keyboard.press('ArrowLeft');
+		await page.keyboard.down(' ');
+
+		const pressed = await forcedKeyPaint(key);
+		const resting = await forcedKeyPaint(page.locator('#keyboard [data-sonic-note="55"]'));
+
+		await page.keyboard.up(' ');
+
+		expect(pressed.outline).toBe('solid');
+		expect(pressed.outlineColour).not.toMatch(clear);
+		expect(pressed.top).toBe(await systemColour(page, 'Highlight'));
+		expect(pressed.dot).toContain(await systemColour(page, 'HighlightText'));
+		expect(resting.outline).toBe('none');
+	});
+
+	await test.step('a disabled keyboard dims, and keeps full opacity in forced colours', async () => {
+		const keyboard = page.locator('#keyboard');
+		const group = keyboard.locator('.sonic-keyboard');
+
+		await page.emulateMedia({ forcedColors: 'none' });
+		await keyboard.evaluate((element) => {
+			element.toggleAttribute('disabled', true);
+		});
+		await expect(group).not.toHaveCSS('opacity', '1');
+
+		await page.emulateMedia({ forcedColors: 'active' });
+		await expect(group).toHaveCSS('opacity', '1');
+	});
 });

@@ -1,5 +1,11 @@
 # @xsynaptic/sonic-ui
 
+## 0.32.1
+
+### Patch Changes
+
+- Waveform and wave strip: marker layout settles in a microtask after a `markers` write, batched across controls, so read marker parts or call `markersFromPoint` after an await.
+
 ## 0.32.0
 
 ### Minor Changes

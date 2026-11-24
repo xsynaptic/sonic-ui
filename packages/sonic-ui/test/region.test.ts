@@ -94,10 +94,11 @@ test('a press let go inside a region before it travels seeks to the press, on th
 	expect(events).toEqual(['input sonic-wavestrip', 'change sonic-wavestrip']);
 });
 
-test('a point marker inside a region still takes the press, and seeks at once', () => {
+test('a point marker inside a region still takes the press, and seeks at once', async () => {
 	const { control, region, wavestrip } = mountStrip();
 
 	wavestrip.markers = [{ start: 112 }];
+	await nextTask();
 	pointerAt(control, 'pointerdown', { clientX: 80, clientY: 2 });
 	pointerAt(control, 'pointermove', { clientX: 95, clientY: 2 });
 

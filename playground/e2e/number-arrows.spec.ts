@@ -45,20 +45,22 @@ test('a held arrow steps on the press and repeats, with one change on a release 
 	const spinbutton = page.getByRole('spinbutton', { name: 'Tempo' });
 	const at = await centerOf(host.locator('.sonic-number-increment'));
 
+	await page.clock.install();
 	await countEvents(host);
 	await page.mouse.move(at.x, at.y);
 	await page.mouse.down();
 	await expect(spinbutton).toHaveAttribute('aria-valuenow', '120.5');
 	await expect(spinbutton).toBeFocused();
 
-	await expect.poll(() => valueNow(spinbutton)).toBeGreaterThanOrEqual(121.5);
+	await page.clock.runFor(1000);
+	expect(await valueNow(spinbutton)).toBeGreaterThanOrEqual(121.5);
 	await page.mouse.move(at.x, at.y + 200);
 	await page.mouse.up();
 
 	const released = await valueNow(spinbutton);
 
 	// Without capture a release off the arrow never reaches it, and the repeat runs on
-	await page.waitForTimeout(400);
+	await page.clock.runFor(1000);
 	expect(await valueNow(spinbutton)).toBe(released);
 
 	const counts = await readCounts(host);

@@ -1,3 +1,5 @@
+import type { LayoutPass } from '#lib/layout-batch.ts';
+
 import { writeKind } from '#lib/marker-band.ts';
 import { clamp } from '#lib/math.ts';
 import { readPxProperty } from '#lib/read-px-property.ts';
@@ -168,12 +170,11 @@ function writeLabel(
 	writePlacement(slot, placement, label.widthPx);
 }
 
-function measureWidths(
-	control: HTMLElement,
+function createProbes(
 	className: string,
 	labels: ReadonlyArray<Omit<RiderLabel, 'widthPx'>>,
-): Array<number> {
-	const probes = labels.map((label) => {
+): Array<HTMLElement> {
+	return labels.map((label) => {
 		const probe = document.createElement('div');
 
 		probe.className = className;
@@ -181,14 +182,6 @@ function measureWidths(
 
 		return probe;
 	});
-
-	control.append(...probes);
-
-	const widths = probes.map((probe) => probe.getBoundingClientRect().width);
-
-	for (const probe of probes) probe.remove();
-
-	return widths;
 }
 
 export function createLabelRider(
@@ -201,7 +194,7 @@ export function createLabelRider(
 		parkProperty: `--_sonic-${string}`;
 	},
 ): {
-	measure: (labels: ReadonlyArray<Omit<RiderLabel, 'widthPx'>>) => void;
+	measure: (labels: ReadonlyArray<Omit<RiderLabel, 'widthPx'>>) => LayoutPass;
 	place: (window: RiderWindow) => void;
 } {
 	const { className, colourProperty, fadeProperties, insetProperty, parkProperty } = options;
@@ -215,17 +208,30 @@ export function createLabelRider(
 
 	return {
 		measure: (labels) => {
-			const widths = measureWidths(control, className, labels);
+			let probes: Array<HTMLElement> = [];
 
-			const styles = getComputedStyle(control);
+			return {
+				measure: () => {
+					const widths = probes.map((probe) => probe.getBoundingClientRect().width);
+					const styles = getComputedStyle(control);
 
-			fadeStart = readPxProperty(styles, fadeProperties[0], 0);
-			fadeEnd = readPxProperty(styles, fadeProperties[1], 1);
-			insetPx = readPxProperty(styles, insetProperty, 0);
-			parkPx = readPxProperty(styles, parkProperty, 0);
-			measured = labels
-				.map((label, index) => ({ ...label, widthPx: widths[index] ?? 0 }))
-				.toSorted((first, second) => first.start - second.start);
+					fadeStart = readPxProperty(styles, fadeProperties[0], 0);
+					fadeEnd = readPxProperty(styles, fadeProperties[1], 1);
+					insetPx = readPxProperty(styles, insetProperty, 0);
+					parkPx = readPxProperty(styles, parkProperty, 0);
+					measured = labels
+						.map((label, index) => ({ ...label, widthPx: widths[index] ?? 0 }))
+						.toSorted((first, second) => first.start - second.start);
+
+					return () => {
+						for (const probe of probes) probe.remove();
+					};
+				},
+				prepare: () => {
+					probes = createProbes(className, labels);
+					control.append(...probes);
+				},
+			};
 		},
 		place: (window) => {
 			const layout = layoutRider(measured, { ...window, fadeEnd, fadeStart, insetPx, parkPx });

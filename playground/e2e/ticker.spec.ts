@@ -156,30 +156,32 @@ async function mouseDrag(page: Page, from: Point, by: number): Promise<void> {
 	await page.mouse.move(from.x + by, from.y, { steps: 4 });
 }
 
-test('content that fits is not overflowing, runs no leg and has no mask', async ({ page }) => {
-	const tape = await readTape(page.locator('#fits'));
-
-	expect(tape).toMatchObject({ isOverflowing: false, mask: 'none' });
-	expect(tape.clipped).toBeUndefined();
-	expect(tape.leg).toBeUndefined();
-});
-
-test('content that does not fit runs a leg across the distance at the rate, after the hold', async ({
+test('content that fits runs no leg and has no mask, and content that does not fit runs a leg across the distance at the rate, after the hold', async ({
 	page,
 }) => {
-	const ticker = page.locator('#long');
+	await test.step('content that fits is not overflowing, runs no leg and has no mask', async () => {
+		const tape = await readTape(page.locator('#fits'));
 
-	await startOverPaused(ticker);
-
-	const tape = await readTape(ticker);
-
-	expect(tape.distance).toBeGreaterThan(100);
-	expect(tape).toMatchObject({ display: 'inline-block', isOverflowing: true });
-	expect(tape.leg).toMatchObject({
-		delay: hold,
-		translate: ['0px', `${String(-tape.distance)}px`],
+		expect(tape).toMatchObject({ isOverflowing: false, mask: 'none' });
+		expect(tape.clipped).toBeUndefined();
+		expect(tape.leg).toBeUndefined();
 	});
-	expect(tape.leg?.duration).toBeCloseTo((tape.distance / rate) * 1000, 3);
+
+	await test.step('content that does not fit runs a leg across the distance at the rate, after the hold', async () => {
+		const ticker = page.locator('#long');
+
+		await startOverPaused(ticker);
+
+		const tape = await readTape(ticker);
+
+		expect(tape.distance).toBeGreaterThan(100);
+		expect(tape).toMatchObject({ display: 'inline-block', isOverflowing: true });
+		expect(tape.leg).toMatchObject({
+			delay: hold,
+			translate: ['0px', `${String(-tape.distance)}px`],
+		});
+		expect(tape.leg?.duration).toBeCloseTo((tape.distance / rate) * 1000, 3);
+	});
 });
 
 test('a fade is full with the tape well clear of its end, a third of what is past it close by, and gone at it', async ({
@@ -269,39 +271,6 @@ test('resized mid-travel, the tape carries on from where it was over the new dis
 	expect(after.leg?.delay).toBe(0);
 });
 
-test('new content mid-travel puts the tape back at the start, held', async ({ page }) => {
-	const ticker = page.locator('#steady');
-
-	expect(await holdMidTravel(ticker)).toBeGreaterThan(50);
-	await ticker.evaluate((host: HTMLElement & { text: string }) => {
-		host.text = 'Another title altogether, every bit as long as the one before it was';
-	});
-
-	await expect.poll(() => positionOf(ticker)).toBe(0);
-	expect(await legOf(ticker)).toMatchObject({ delay: hold });
-	await expect(ticker.locator('.sonic-ticker')).toHaveAttribute('data-sonic-clipped', 'end');
-});
-
-test('the same text written mid-travel leaves the tape where it is', async ({ page }) => {
-	const ticker = page.locator('#steady');
-	const position = await holdMidTravel(ticker);
-
-	expect(position).toBeGreaterThan(50);
-	await ticker.evaluate((host: HTMLElement & { text: string }) => {
-		const { text } = host;
-
-		host.text = text;
-	});
-	await page.evaluate(
-		() =>
-			new Promise((resolve) => {
-				setTimeout(resolve, 0);
-			}),
-	);
-
-	expect(await positionOf(ticker)).toBe(position);
-});
-
 test('disabled mid-travel, the tape rests at the start under the ellipsis with no mask and no grab', async ({
 	page,
 }) => {
@@ -388,12 +357,16 @@ test('scrolled out of view the tape stops, and carries on from the same place wh
 	await expect.poll(() => legStateOf(ticker)).toBe('paused');
 	await expect(ticker.locator('.sonic-ticker')).not.toHaveAttribute('data-sonic-paused');
 
-	await page.waitForTimeout(100);
+	await expect.poll(() => positionOf(ticker)).toBeGreaterThan(0);
 
 	const position = await positionOf(ticker);
 
-	expect(position).toBeGreaterThan(0);
-	await page.waitForTimeout(300);
+	await page.evaluate(
+		() =>
+			new Promise((resolve) => {
+				requestAnimationFrame(() => requestAnimationFrame(resolve));
+			}),
+	);
 	expect(await positionOf(ticker)).toBe(position);
 
 	await page.evaluate(() => {

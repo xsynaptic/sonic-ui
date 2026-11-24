@@ -16,7 +16,7 @@ async function openPinned(page: Page): Promise<{ host: Locator; strip: Locator }
 
 // Two dots 5.25px apart at any strip width: one lane at a 5px step, two at the 96px strip's own 5.5px
 function laneTops(host: Locator, edgeWidth: string): Promise<Array<string>> {
-	return host.evaluate((element: HTMLElementTagNameMap['sonic-wavestrip'], width) => {
+	return host.evaluate(async (element: HTMLElementTagNameMap['sonic-wavestrip'], width) => {
 		const canvas = element.querySelector('canvas');
 		if (!canvas) throw new Error('The strip has no canvas');
 
@@ -24,6 +24,7 @@ function laneTops(host: Locator, edgeWidth: string): Promise<Array<string>> {
 
 		element.style.setProperty('--sonic-wavestrip-marker-edge-width', width);
 		element.markers = [{ start: 60 }, { start: 60 + 5.25 * secondsPerPx }];
+		await Promise.resolve();
 
 		return [...element.querySelectorAll('.sonic-wavestrip-marker')].map(
 			(dot) => getComputedStyle(dot).top,

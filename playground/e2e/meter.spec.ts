@@ -47,32 +47,51 @@ function isUnlit(runs: Array<[number, number]>, [from, to]: [number, number]): b
 
 // 30 segments of 4px over 60 dB, the first starting 1px in from the end
 test(
-	'a level lights the bar to its decibels, then the bar falls away under the peak it holds',
+	'a level lights the bar to its decibels, the bar falls away under the peak it holds, and 0 dBFS lights the clip lens until its hold is over',
 	{ tag: '@mobile' },
 	async ({ page }) => {
 		const meter = page.locator('#meter');
 
-		await setLevel(page, meter, -30);
+		await test.step('a level lights the bar to its decibels, then the bar falls away under the peak it holds', async () => {
+			await setLevel(page, meter, -30);
 
-		const risen = await litRuns(meter, 'y');
+			const risen = await litRuns(meter, 'y');
 
-		expectEdge(risen.at(0)?.[0], 1);
-		expectEdge(risen.at(-1)?.[1], 60);
-		expect(isUnlit(risen, [62, 128])).toBe(true);
+			expectEdge(risen.at(0)?.[0], 1);
+			expectEdge(risen.at(-1)?.[1], 60);
+			expect(isUnlit(risen, [62, 128])).toBe(true);
 
-		await meter.evaluate((element) => {
-			Object.assign(element, { level: 0 });
+			await meter.evaluate((element) => {
+				Object.assign(element, { level: 0 });
+			});
+			await page.clock.runFor(750);
+
+			const falling = await litRuns(meter, 'y');
+
+			expectEdge(falling.at(-1)?.[1], 60);
+			expect(isUnlit(falling, [34, 56])).toBe(true);
+			expect(isUnlit(falling, [1, 28])).toBe(false);
+
+			await page.clock.runFor(2500);
+			expect(await litRuns(meter, 'y')).toEqual([]);
 		});
-		await page.clock.runFor(750);
 
-		const falling = await litRuns(meter, 'y');
+		await test.step('reaching 0 dBFS lights the clip lens, which goes out once its hold is over', async () => {
+			const lensRuns = async (): Promise<number> => {
+				const line = await paintedLine(meter.locator('.sonic-meter-clip'), 'x');
 
-		expectEdge(falling.at(-1)?.[1], 60);
-		expect(isUnlit(falling, [34, 56])).toBe(true);
-		expect(isUnlit(falling, [1, 28])).toBe(false);
+				return paintedRuns(line, isLit).length;
+			};
 
-		await page.clock.runFor(2500);
-		expect(await litRuns(meter, 'y')).toEqual([]);
+			expect(await lensRuns()).toBe(0);
+
+			await setLevel(page, meter, 0);
+			expect(await lensRuns()).toBe(1);
+
+			await setLevel(page, meter, -30);
+			await page.clock.runFor(1500);
+			expect(await lensRuns()).toBe(0);
+		});
 	},
 );
 
@@ -119,28 +138,6 @@ test(
 		const linearWarm = await warmRuns();
 
 		expectEdge(linearWarm.at(0)?.[0], 97);
-	},
-);
-
-test(
-	'reaching 0 dBFS lights the clip lens, which goes out once its hold is over',
-	{ tag: '@mobile' },
-	async ({ page }) => {
-		const meter = page.locator('#meter');
-		const lensRuns = async (): Promise<number> => {
-			const line = await paintedLine(meter.locator('.sonic-meter-clip'), 'x');
-
-			return paintedRuns(line, isLit).length;
-		};
-
-		expect(await lensRuns()).toBe(0);
-
-		await setLevel(page, meter, 0);
-		expect(await lensRuns()).toBe(1);
-
-		await setLevel(page, meter, -30);
-		await page.clock.runFor(1500);
-		expect(await lensRuns()).toBe(0);
 	},
 );
 

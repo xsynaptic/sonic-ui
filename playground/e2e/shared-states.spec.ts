@@ -21,46 +21,43 @@ async function holdOn(page: Page, target: Locator): Promise<void> {
 	await page.mouse.down();
 }
 
-test('a latched button rests at the latched scale and dips to the press scale while held', async ({
+test('a latched button and a chosen option rest at the latched scale and dip to the press scale while held', async ({
 	isMobile,
 	page,
 }) => {
 	test.skip(isMobile, mouseOnly);
 
-	const button = page.locator('#mute .sonic-button');
-	const cap = page.locator('#mute .sonic-button-cap');
+	await test.step('a latched button rests at the latched scale and dips to the press scale while held', async () => {
+		const button = page.locator('#mute .sonic-button');
+		const cap = page.locator('#mute .sonic-button-cap');
 
-	await setTokens(page, { '--sonic-button-press-scale': '0.9' });
-	await button.click();
-	await expect(button).toHaveAttribute('aria-pressed', 'true');
-	await expect(cap).toHaveCSS('scale', '0.9');
+		await setTokens(page, { '--sonic-button-press-scale': '0.9' });
+		await button.click();
+		await expect(button).toHaveAttribute('aria-pressed', 'true');
+		await expect(cap).toHaveCSS('scale', '0.9');
 
-	await setTokens(page, { '--sonic-button-latched-scale': '1' });
-	await expect(cap).toHaveCSS('scale', '1');
+		await setTokens(page, { '--sonic-button-latched-scale': '1' });
+		await expect(cap).toHaveCSS('scale', '1');
 
-	await holdOn(page, button);
-	await expect(cap).toHaveCSS('scale', '0.9');
-	await page.mouse.up();
-});
+		await holdOn(page, button);
+		await expect(cap).toHaveCSS('scale', '0.9');
+		await page.mouse.up();
+	});
 
-test('a chosen option rests at the latched scale and dips to the press scale while held', async ({
-	isMobile,
-	page,
-}) => {
-	test.skip(isMobile, mouseOnly);
+	await test.step('a chosen option rests at the latched scale and dips to the press scale while held', async () => {
+		const chosen = page.locator('#mode .sonic-segmented-option[aria-checked="true"]');
+		const cap = chosen.locator('.sonic-segmented-cap');
 
-	const chosen = page.locator('#mode .sonic-segmented-option[aria-checked="true"]');
-	const cap = chosen.locator('.sonic-segmented-cap');
+		await setTokens(page, { '--sonic-segmented-press-scale': '0.9' });
+		await expect(cap).toHaveCSS('scale', '0.9');
 
-	await setTokens(page, { '--sonic-segmented-press-scale': '0.9' });
-	await expect(cap).toHaveCSS('scale', '0.9');
+		await setTokens(page, { '--sonic-segmented-latched-scale': '1' });
+		await expect(cap).toHaveCSS('scale', '1');
 
-	await setTokens(page, { '--sonic-segmented-latched-scale': '1' });
-	await expect(cap).toHaveCSS('scale', '1');
-
-	await holdOn(page, chosen);
-	await expect(cap).toHaveCSS('scale', '0.9');
-	await page.mouse.up();
+		await holdOn(page, chosen);
+		await expect(cap).toHaveCSS('scale', '0.9');
+		await page.mouse.up();
+	});
 });
 
 test('keyboard focus draws the focus outline, and no glow at strength 0', async ({
@@ -144,18 +141,6 @@ test('the focus radius rounds the focus of a box with no corner, a toggle positi
 	await expect(position).toHaveCSS('border-top-left-radius', well);
 });
 
-test('a press focuses a slider without the focus outline', async ({ isMobile, page }) => {
-	test.skip(isMobile, mouseOnly);
-
-	const slider = page.locator('#send .sonic-slider');
-
-	await setTokens(page, { '--sonic-focus-outline': '3px solid rgb(1, 2, 3)' });
-	await holdOn(page, slider);
-	await expect(slider).toBeFocused();
-	await expect(slider).not.toHaveCSS('outline-color', 'rgb(1, 2, 3)');
-	await page.mouse.up();
-});
-
 async function disable(page: Page): Promise<void> {
 	await setTokens(page, { '--sonic-disabled-opacity': '0.4' });
 	for (const id of ['#next', '#send', '#route', '#talk', '#mode']) {
@@ -165,18 +150,35 @@ async function disable(page: Page): Promise<void> {
 	}
 }
 
-test('a disabled control fades to the disabled opacity', async ({ page }) => {
-	await disable(page);
-	for (const selector of [
-		'#next .sonic-button',
-		'#send .sonic-slider',
-		'#route .sonic-toggle',
-		'#talk .sonic-switch',
-		'#mode .sonic-segmented-option[aria-checked="true"]',
-	]) {
-		await expect(page.locator(selector)).toHaveCSS('opacity', '0.4');
-	}
-	await expect(page.locator('#mute .sonic-button')).toHaveCSS('opacity', '1');
+test('a press focuses a slider without the focus outline, and a disabled control fades to the disabled opacity', async ({
+	isMobile,
+	page,
+}) => {
+	test.skip(isMobile, mouseOnly);
+
+	await test.step('a press focuses a slider without the focus outline', async () => {
+		const slider = page.locator('#send .sonic-slider');
+
+		await setTokens(page, { '--sonic-focus-outline': '3px solid rgb(1, 2, 3)' });
+		await holdOn(page, slider);
+		await expect(slider).toBeFocused();
+		await expect(slider).not.toHaveCSS('outline-color', 'rgb(1, 2, 3)');
+		await page.mouse.up();
+	});
+
+	await test.step('a disabled control fades to the disabled opacity', async () => {
+		await disable(page);
+		for (const selector of [
+			'#next .sonic-button',
+			'#send .sonic-slider',
+			'#route .sonic-toggle',
+			'#talk .sonic-switch',
+			'#mode .sonic-segmented-option[aria-checked="true"]',
+		]) {
+			await expect(page.locator(selector)).toHaveCSS('opacity', '0.4');
+		}
+		await expect(page.locator('#mute .sonic-button')).toHaveCSS('opacity', '1');
+	});
 });
 
 test.describe('forced colours', () => {
@@ -197,40 +199,42 @@ const controls = [
 	},
 ];
 
-for (const { focused, lit, property } of controls) {
-	test(`a press focuses without the focus glow, a shortcut leaves it off, and the next key lights it: ${focused}`, async ({
-		isMobile,
-		page,
-	}) => {
-		test.skip(isMobile, mouseOnly);
+test('a press focuses a dial or an XY pad without the focus glow, a shortcut leaves it off, and the next key lights it', async ({
+	isMobile,
+	page,
+}) => {
+	test.skip(isMobile, mouseOnly);
 
-		const readGlow = () =>
-			page
-				.locator(lit)
-				.evaluate(
-					(element, name) => getComputedStyle(element).getPropertyValue(name).trim(),
-					property,
-				);
-		const rest = await readGlow();
+	for (const { focused, lit, property } of controls) {
+		await test.step(`a press focuses without the focus glow, a shortcut leaves it off, and the next key lights it: ${focused}`, async () => {
+			const readGlow = () =>
+				page
+					.locator(lit)
+					.evaluate(
+						(element, name) => getComputedStyle(element).getPropertyValue(name).trim(),
+						property,
+					);
+			const rest = await readGlow();
 
-		await page.locator(lit).scrollIntoViewIfNeeded();
+			await page.locator(lit).scrollIntoViewIfNeeded();
 
-		const at = await centerOf(page.locator(lit));
+			const at = await centerOf(page.locator(lit));
 
-		await page.mouse.move(at.x, at.y);
-		await page.mouse.down();
-		await expect(page.locator(focused)).toBeFocused();
-		expect(await readGlow()).toBe(rest);
+			await page.mouse.move(at.x, at.y);
+			await page.mouse.down();
+			await expect(page.locator(focused)).toBeFocused();
+			expect(await readGlow()).toBe(rest);
 
-		await page.mouse.move(at.x + 6, at.y - 6, { steps: 2 });
-		await page.mouse.up();
-		expect(await readGlow()).toBe(rest);
+			await page.mouse.move(at.x + 6, at.y - 6, { steps: 2 });
+			await page.mouse.up();
+			expect(await readGlow()).toBe(rest);
 
-		await page.keyboard.press('ControlOrMeta+c');
-		await page.keyboard.press('Alt+F6');
-		expect(await readGlow()).toBe(rest);
+			await page.keyboard.press('ControlOrMeta+c');
+			await page.keyboard.press('Alt+F6');
+			expect(await readGlow()).toBe(rest);
 
-		await page.keyboard.press('ArrowUp');
-		expect(await readGlow()).not.toBe(rest);
-	});
-}
+			await page.keyboard.press('ArrowUp');
+			expect(await readGlow()).not.toBe(rest);
+		});
+	}
+});

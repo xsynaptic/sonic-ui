@@ -5,7 +5,7 @@ import type { SonicWavestrip } from '#elements/wavestrip.ts';
 import '#define/wavestrip.ts';
 
 import { FakeResizeObserver, installCanvasFakes } from './canvas-fakes.ts';
-import { mountControl, pointerAt, recordEvents } from './helpers.ts';
+import { mountControl, nextTask, pointerAt, recordEvents } from './helpers.ts';
 
 afterEach(() => {
 	document.body.replaceChildren();
@@ -143,7 +143,7 @@ test('without cancellable, the same drag keeps scrubbing and changes on release'
 	expect(events).toEqual(['input', 'change']);
 });
 
-test('a mouse over the strip reads out the time under it, or a marker within reach', () => {
+test('a mouse over the strip reads out the time under it, or a marker within reach', async () => {
 	installCanvasFakes();
 
 	const { control, wavestrip } = mountWavestrip('readout min="30" max="330" step="0" value="30"');
@@ -156,6 +156,7 @@ test('a mouse over the strip reads out the time under it, or a marker within rea
 	expect(readoutText(control)).toBe('105 s');
 
 	wavestrip.markers = [{ start: 200 }];
+	await nextTask();
 	midPointerAt(control, 'pointermove', { clientX: 172, clientY: 2, pointerType: 'mouse' });
 	expect(readoutText(control)).toBe('200 s');
 });
@@ -250,16 +251,20 @@ test.each([
 	[172, 2, 200],
 	[176, 2, 206],
 	[172, 8, 202],
-])('a press at %ipx, %ipx by a marker at 170px, 0px lands at %d', (clientX, clientY, expected) => {
-	installCanvasFakes();
+])(
+	'a press at %ipx, %ipx by a marker at 170px, 0px lands at %d',
+	async (clientX, clientY, expected) => {
+		installCanvasFakes();
 
-	const { control, wavestrip } = mountWavestrip('min="30" max="330" step="0" value="50"');
+		const { control, wavestrip } = mountWavestrip('min="30" max="330" step="0" value="50"');
 
-	wavestrip.markers = [{ start: 200 }];
-	midPointerAt(control, 'pointerdown', { clientX, clientY });
+		wavestrip.markers = [{ start: 200 }];
+		await nextTask();
+		midPointerAt(control, 'pointerdown', { clientX, clientY });
 
-	expect(wavestrip.value).toBe(expected);
-});
+		expect(wavestrip.value).toBe(expected);
+	},
+);
 
 test('a drag from a marker scrubs from the press, and crossing the marker never snaps to it', () => {
 	installCanvasFakes();
@@ -277,12 +282,13 @@ test('a drag from a marker scrubs from the press, and crossing the marker never 
 	expect(values).toEqual([206, 198]);
 });
 
-test('a marker sits at its proportion between the bounds', () => {
+test('a marker sits at its proportion between the bounds', async () => {
 	installCanvasFakes();
 
 	const { control, wavestrip } = mountWavestrip('min="30" max="330"');
 
 	wavestrip.markers = [{ end: 255, start: 105 }];
+	await nextTask();
 
 	const [region] = markerParts(control);
 
@@ -290,12 +296,13 @@ test('a marker sits at its proportion between the bounds', () => {
 	expect(region?.style.getPropertyValue('--_sonic-marker-to')).toBe('0.75');
 });
 
-test('the band holds one part per marker in the order `markers` reads back', () => {
+test('the band holds one part per marker in the order `markers` reads back', async () => {
 	installCanvasFakes();
 
 	const { control, wavestrip } = mountWavestrip('min="30" max="330" step="0" value="50"');
 
 	wavestrip.markers = [{ start: 200 }, { end: 150, start: 100 }, { start: 50 }];
+	await nextTask();
 
 	expect(
 		markerParts(control).map((part) => [
@@ -309,16 +316,18 @@ test('the band holds one part per marker in the order `markers` reads back', () 
 	]);
 });
 
-test('a value write leaves the marker parts as they were built', () => {
+test('a value write leaves the marker parts as they were built', async () => {
 	installCanvasFakes();
 
 	const { control, wavestrip } = mountWavestrip('max="300" value="10"');
 
 	wavestrip.markers = [{ start: 60 }, { end: 120, kind: 'loop', start: 90 }];
+	await nextTask();
 
 	const built = markerParts(control);
 
 	wavestrip.value = 200;
+	await nextTask();
 
 	const after = markerParts(control);
 
@@ -338,7 +347,7 @@ function mountLanedWavestrip(): { control: HTMLElement; wavestrip: SonicWavestri
 	return mounted;
 }
 
-test('markersFromPoint lists a cluster across lanes nearest first, and a press there seeks to the first', () => {
+test('markersFromPoint lists a cluster across lanes nearest first, and a press there seeks to the first', async () => {
 	installCanvasFakes();
 
 	const { control, wavestrip } = mountLanedWavestrip();
@@ -348,6 +357,7 @@ test('markersFromPoint lists a cluster across lanes nearest first, and a press t
 		cue: `cue-${String(start)}`,
 		start,
 	}));
+	await nextTask();
 
 	const found = wavestrip.markersFromPoint(point.clientX, point.clientY);
 
@@ -363,7 +373,7 @@ test('markersFromPoint lists a cluster across lanes nearest first, and a press t
 	expect(wavestrip.value).toBe(found[0]?.start);
 });
 
-test('markersFromPoint lists a region after every point marker, only where its span is painted', () => {
+test('markersFromPoint lists a region after every point marker, only where its span is painted', async () => {
 	installCanvasFakes();
 
 	const { wavestrip } = mountLanedWavestrip();
@@ -373,6 +383,7 @@ test('markersFromPoint lists a region after every point marker, only where its s
 		{ label: 'Point', start: 202 },
 		{ end: 300, label: 'Later', start: 280 },
 	];
+	await nextTask();
 
 	const labels = (clientX: number, clientY: number): Array<string | undefined> =>
 		wavestrip.markersFromPoint(clientX, clientY).map(({ label }) => label);
@@ -398,7 +409,7 @@ function recordDrawn(wavestrip: SonicWavestrip): Array<[unknown, HTMLElement, bo
 	return drawn;
 }
 
-test('renderMarker is given each point marker with its own detached element, and a region is left alone', () => {
+test('renderMarker is given each point marker with its own detached element, and a region is left alone', async () => {
 	installCanvasFakes();
 
 	const { control, wavestrip } = mountWavestrip('min="30" max="330"');
@@ -409,6 +420,7 @@ test('renderMarker is given each point marker with its own detached element, and
 		{ cue: 'span', end: 150, start: 100 },
 		{ cue: 'early', start: 50 },
 	];
+	await nextTask();
 
 	expect(drawn.map(([cue, , isConnected]) => [cue, isConnected])).toEqual([
 		['early', false],
@@ -421,7 +433,7 @@ test('renderMarker is given each point marker with its own detached element, and
 	]);
 });
 
-test('markers written before the strip is appended are drawn once, when it first lays out', () => {
+test('markers written before the strip is appended are drawn once, when it first lays out', async () => {
 	installCanvasFakes();
 
 	const wavestrip = document.createElement('sonic-wavestrip');
@@ -433,10 +445,11 @@ test('markers written before the strip is appended are drawn once, when it first
 
 	document.body.replaceChildren(wavestrip);
 	FakeResizeObserver.instances.at(-1)?.report([300, 48], [300, 48]);
+	await nextTask();
 	expect(drawn.map(([cue]) => cue)).toEqual(['one']);
 });
 
-test('a resize, a bound write and a reconnect keep the elements a renderer was handed, and place them', () => {
+test('a resize, a bound write and a reconnect keep the elements a renderer was handed, and place them', async () => {
 	installCanvasFakes();
 
 	const { control, wavestrip } = mountWavestrip('min="30" max="330"');
@@ -446,14 +459,17 @@ test('a resize, a bound write and a reconnect keep the elements a renderer was h
 		{ cue: 'one', start: 105 },
 		{ cue: 'two', start: 180 },
 	];
+	await nextTask();
 
 	const built = markerParts(control);
 
 	FakeResizeObserver.instances.at(-1)?.report([200, 48], [200, 48]);
+	await nextTask();
 	wavestrip.max = 180;
 	wavestrip.remove();
 	document.body.append(wavestrip);
 	FakeResizeObserver.instances.at(-1)?.report([300, 48], [300, 48]);
+	await nextTask();
 
 	expect(drawn).toHaveLength(2);
 	expect(markerParts(control).map((part, index) => part === built[index])).toEqual([true, true]);
@@ -463,7 +479,7 @@ test('a resize, a bound write and a reconnect keep the elements a renderer was h
 	]);
 });
 
-test('a markers write of the same content and a renderMarker write each draw every point marker afresh', () => {
+test('a markers write of the same content and a renderMarker write each draw every point marker afresh', async () => {
 	installCanvasFakes();
 
 	const { control, wavestrip } = mountWavestrip('min="30" max="330"');
@@ -474,11 +490,14 @@ test('a markers write of the same content and a renderMarker write each draw eve
 		{ cue: 'one', start: 105 },
 		{ cue: 'two', start: 180 },
 	];
+	await nextTask();
 
 	const sameContent = wavestrip.markers;
 
 	wavestrip.markers = sameContent;
+	await nextTask();
 	wavestrip.renderMarker = render;
+	await nextTask();
 
 	expect(drawn.map(([cue, , isConnected]) => [cue, isConnected])).toEqual(
 		Array.from({ length: 3 }, () => [
@@ -493,18 +512,20 @@ test('a markers write of the same content and a renderMarker write each draw eve
 	]);
 });
 
-test('clearing renderMarker brings back markers that paint themselves', () => {
+test('clearing renderMarker brings back markers that paint themselves', async () => {
 	installCanvasFakes();
 
 	const { control, wavestrip } = mountWavestrip('min="30" max="330"');
 
 	wavestrip.markers = [{ cue: 'one', start: 50 }];
 	recordDrawn(wavestrip);
+	await nextTask();
 	expect(markerParts(control)[0]?.style.getPropertyValue('--_sonic-marker-paint')).toBe(
 		'transparent',
 	);
 
 	wavestrip.renderMarker = undefined;
+	await nextTask();
 
 	const [plain] = markerParts(control);
 
@@ -512,7 +533,7 @@ test('clearing renderMarker brings back markers that paint themselves', () => {
 	expect(plain?.style.getPropertyValue('--_sonic-marker-paint')).toBe('');
 });
 
-test('a kind names its token, and a kind that is not a plain name draws in the default colour', () => {
+test('a kind names its token, and a kind that is not a plain name draws in the default colour', async () => {
 	installCanvasFakes();
 
 	const { control, wavestrip } = mountWavestrip('');
@@ -521,6 +542,7 @@ test('a kind names its token, and a kind that is not a plain name draws in the d
 		{ kind: 'loop', start: 20 },
 		{ kind: 'x);background:red', start: 40 },
 	];
+	await nextTask();
 
 	const [loop, hostile] = markerParts(control);
 
@@ -563,7 +585,7 @@ test('Escape on the strip itself still holds the hover off through a pointer mov
 	expect(wavestrip.hoverValue).toBe(120);
 });
 
-test('with no readout, the hovered value is public and reports each change once', () => {
+test('with no readout, the hovered value is public and reports each change once', async () => {
 	installCanvasFakes();
 
 	const { control, wavestrip } = mountWavestrip('min="30" max="330" step="0" value="30"');
@@ -573,6 +595,7 @@ test('with no readout, the hovered value is public and reports each change once'
 		hovered.push(wavestrip.hoverValue);
 	});
 	wavestrip.markers = [{ start: 200 }];
+	await nextTask();
 
 	midPointerAt(control, 'pointermove', { clientX: 75, pointerType: 'touch' });
 	midPointerAt(control, 'pointermove', { clientX: 75, pointerType: 'mouse' });

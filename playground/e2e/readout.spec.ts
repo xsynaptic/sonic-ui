@@ -9,10 +9,13 @@ function readOpen(readout: Locator): Promise<boolean> {
 }
 
 // Whole pixels, since Firefox and WebKit round the pointer
-async function pressDial(page: Page): Promise<{ x: number; y: number }> {
+async function pressDial(page: Page, offset = 0): Promise<{ x: number; y: number }> {
 	const box = await boxOf(page.locator('#level .sonic-dial'));
 
-	const start = { x: Math.round(box.x + box.width / 2), y: Math.round(box.y + box.height / 2) };
+	const start = {
+		x: Math.round(box.x + box.width / 2 + offset),
+		y: Math.round(box.y + box.height / 2),
+	};
 
 	await page.mouse.move(start.x, start.y);
 	await page.mouse.down();
@@ -53,59 +56,64 @@ test.describe('reveal', () => {
 		await page.clock.pauseAt(60_000);
 	});
 
-	test('a held press shows the readout after 250ms, until release, and a 4px drag shows it at once', async ({
+	test('a held press shows the readout after the reveal delay until release, a drag shows it at once, and a key shows it for a second', async ({
 		page,
 	}) => {
 		const readout = page.locator('#level .sonic-dial-readout');
 
-		await pressDial(page);
-		expect(await readOpen(readout)).toBe(false);
+		await test.step('a held press shows the readout after 250ms, until release, and a 4px drag shows it at once', async () => {
+			await pressDial(page);
+			expect(await readOpen(readout)).toBe(false);
 
-		await page.clock.runFor(250);
-		expect(await readOpen(readout)).toBe(true);
+			await page.clock.runFor(250);
+			expect(await readOpen(readout)).toBe(true);
 
-		await page.mouse.up();
-		expect(await readOpen(readout)).toBe(false);
+			await page.mouse.up();
+			expect(await readOpen(readout)).toBe(false);
 
-		// Past the double-press window, so the second press is a press of its own
-		await page.clock.runFor(1000);
+			// Past the double-press window, so the second press is a press of its own
+			await page.clock.runFor(1000);
 
-		const start = await pressDial(page);
+			const start = await pressDial(page);
 
-		expect(await readOpen(readout)).toBe(false);
+			expect(await readOpen(readout)).toBe(false);
 
-		await page.mouse.move(start.x, start.y - 4);
-		expect(await readOpen(readout)).toBe(true);
-	});
-
-	test('the reveal delay token sets how long a held press waits', async ({ page }) => {
-		const readout = page.locator('#level .sonic-dial-readout');
-
-		await page.locator('#level').evaluate((host) => {
-			host.style.setProperty('--sonic-reveal-delay', '0.4s');
+			await page.mouse.move(start.x, start.y - 4);
+			expect(await readOpen(readout)).toBe(true);
+			await page.mouse.up();
 		});
-		await pressDial(page);
-		await page.clock.runFor(399);
-		expect(await readOpen(readout)).toBe(false);
 
-		await page.clock.runFor(1);
-		expect(await readOpen(readout)).toBe(true);
-	});
+		await test.step('the reveal delay token sets how long a held press waits', async () => {
+			await page.locator('#level').evaluate((host) => {
+				host.style.setProperty('--sonic-reveal-delay', '0.4s');
+			});
+			await page.clock.runFor(1000);
+			// Off the last press's spot, which would read as a double press
+			await pressDial(page, 8);
+			await page.clock.runFor(399);
+			expect(await readOpen(readout)).toBe(false);
 
-	test('a key shows the readout, which hides a second after the last key', async ({ page }) => {
-		const readout = page.locator('#level .sonic-dial-readout');
+			await page.clock.runFor(1);
+			expect(await readOpen(readout)).toBe(true);
+			await page.mouse.up();
+			await page.locator('#level').evaluate((host) => {
+				host.style.removeProperty('--sonic-reveal-delay');
+			});
+		});
 
-		await page.getByRole('slider', { name: 'Level' }).focus();
-		await page.keyboard.press('ArrowUp');
-		expect(await readOpen(readout)).toBe(true);
+		await test.step('a key shows the readout, which hides a second after the last key', async () => {
+			await page.getByRole('slider', { name: 'Level' }).focus();
+			await page.keyboard.press('ArrowUp');
+			expect(await readOpen(readout)).toBe(true);
 
-		await page.clock.runFor(900);
-		await page.keyboard.press('ArrowUp');
-		await page.clock.runFor(900);
-		expect(await readOpen(readout)).toBe(true);
+			await page.clock.runFor(900);
+			await page.keyboard.press('ArrowUp');
+			await page.clock.runFor(900);
+			expect(await readOpen(readout)).toBe(true);
 
-		await page.clock.runFor(100);
-		expect(await readOpen(readout)).toBe(false);
+			await page.clock.runFor(100);
+			expect(await readOpen(readout)).toBe(false);
+		});
 	});
 });
 

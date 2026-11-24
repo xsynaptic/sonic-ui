@@ -13,8 +13,8 @@ test(
 		await page.goto('/fixtures/');
 		await expect(page.getByRole('slider', { name: 'Level' })).toBeVisible();
 
-		// Axe reads the same DOM in every engine
-		if (browserName === 'chromium') {
+		// Axe reads the same DOM in every engine, stripped or not
+		if (browserName === 'chromium' && testInfo.project.name !== strippedProject) {
 			const results = await new AxeBuilder({ page })
 				.withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])
 				.analyze();
@@ -55,7 +55,7 @@ test(
 );
 
 // axe exempts custom-element hosts from `aria-prohibited-attr` and never checks that a name reaches the inner control
-test('each control takes its name from the host', { tag: '@stripped' }, async ({ page }) => {
+test('each control takes its name from the host', async ({ page }) => {
 	await page.goto('/fixtures/');
 
 	await expect(page.getByRole('slider', { name: 'Level' })).toBeVisible();
@@ -65,16 +65,3 @@ test('each control takes its name from the host', { tag: '@stripped' }, async ({
 	await expect(page.getByRole('radiogroup', { name: 'Mode' })).toBeVisible();
 	await expect(page.getByRole('radio', { checked: true, name: 'LP' })).toBeVisible();
 });
-
-test(
-	'a wave strip speaks its position as a duration, or as the clock where `Intl.DurationFormat` is missing',
-	{ tag: '@stripped' },
-	async ({ page }, testInfo) => {
-		await page.goto('/fixtures/');
-
-		await expect(page.locator('#wavestrip-fill .sonic-wavestrip-canvas')).toHaveAttribute(
-			'aria-valuetext',
-			testInfo.project.name === strippedProject ? '2:30' : '2 minutes, 30 seconds',
-		);
-	},
-);

@@ -4,6 +4,7 @@ import type { ProbedPalette } from '#elements/wave-element.ts';
 import type { SurfaceFrame } from '#lib/canvas-surface.ts';
 import type { Drawn } from '#lib/frame-timeline.ts';
 import type { Point } from '#lib/marker-band.ts';
+import type { RiderLabel } from '#lib/marker-rider.ts';
 import type { PeaksRequest } from '#lib/peaks-request.ts';
 import type { TimeRegions } from '#lib/time-regions.ts';
 import type { Milliseconds, PixelsPerSecond, Seconds } from '#lib/units.ts';
@@ -15,6 +16,7 @@ import type { ZoomGesture } from '#lib/zoom-gesture.ts';
 
 import { SonicWaveElement } from '#elements/wave-element.ts';
 import { frameTimeline } from '#lib/frame-timeline.ts';
+import { queueLayout } from '#lib/layout-batch.ts';
 import { isKind, writeKind } from '#lib/marker-band.ts';
 import { createLabelRider } from '#lib/marker-rider.ts';
 import { clamp, roundTo } from '#lib/math.ts';
@@ -479,31 +481,7 @@ export class SonicWaveform extends SonicWaveElement<Colour, never, Numeric> {
 	}
 
 	protected override renderMarkers(): void {
-		const bounds = this.mapping().bounds;
-
-		const render = this.#renderLabel;
-
-		this.#rider.measure(
-			this.markers.flatMap((marker) =>
-				marker.label === undefined || marker.label === ''
-					? []
-					: [
-							{
-								isDimmed: marker.dimmed === true,
-								...(marker.kind === undefined ? {} : { kind: marker.kind }),
-								start: clamp(marker.start, ...bounds),
-								text: marker.label,
-								...(render
-									? {
-											write: (element: HTMLElement) => {
-												render(marker, element);
-											},
-										}
-									: {}),
-							},
-						],
-			),
-		);
+		queueLayout(this, () => this.#rider.measure(this.#riderLabels()));
 		this.surface()?.rebuild();
 	}
 
@@ -586,6 +564,31 @@ export class SonicWaveform extends SonicWaveElement<Colour, never, Numeric> {
 		const read = this.readProbes(probes);
 
 		return new Map(kinds.map((kind, index) => [kind, read[index] ?? '']));
+	}
+
+	#riderLabels(): Array<Omit<RiderLabel, 'widthPx'>> {
+		const bounds = this.mapping().bounds;
+		const render = this.#renderLabel;
+
+		return this.markers.flatMap((marker) =>
+			marker.label === undefined || marker.label === ''
+				? []
+				: [
+						{
+							isDimmed: marker.dimmed === true,
+							...(marker.kind === undefined ? {} : { kind: marker.kind }),
+							start: clamp(marker.start, ...bounds),
+							text: marker.label,
+							...(render
+								? {
+										write: (element: HTMLElement) => {
+											render(marker, element);
+										},
+									}
+								: {}),
+						},
+					],
+		);
 	}
 
 	#sourceSeconds(): number {

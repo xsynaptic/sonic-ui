@@ -109,55 +109,59 @@ test('a trusted press flips a toggle with no positions once, and a drag back tur
 	await expect(link).toHaveAttribute('aria-checked', 'false');
 });
 
-test('with no skin, a trusted press that wobbles on the cap still flips, and the cap shrinks once and grows once', async ({
+test('with no skin or no relief, a held cap shrinks, and a trusted press that wobbles on the cap still flips, shrinking once and growing once', async ({
 	isMobile,
 	page,
 }) => {
 	test.skip(isMobile, mouseOnly);
 
-	await page.evaluate(() => {
-		document.documentElement.classList.remove('sonic-skin-amber');
-	});
-
-	const link = page.getByRole('switch', { name: 'Link' });
-	const cap = page.locator('#link .sonic-toggle-cap');
-	const at = await centerOf(cap);
-
-	await cap.evaluate((element) => {
-		element.dataset.scaled = '0';
-		element.addEventListener('transitionrun', (event) => {
-			if (!(event instanceof TransitionEvent) || event.propertyName !== 'scale') return;
-
-			element.dataset.scaled = String(Number(element.dataset.scaled) + 1);
+	await test.step('with no skin, a trusted press that wobbles on the cap still flips, and the cap shrinks once and grows once', async () => {
+		await page.evaluate(() => {
+			document.documentElement.classList.remove('sonic-skin-amber');
 		});
+
+		const link = page.getByRole('switch', { name: 'Link' });
+		const cap = page.locator('#link .sonic-toggle-cap');
+		const at = await centerOf(cap);
+
+		await cap.evaluate((element) => {
+			element.dataset.scaled = '0';
+			element.addEventListener('transitionrun', (event) => {
+				if (!(event instanceof TransitionEvent) || event.propertyName !== 'scale') return;
+
+				element.dataset.scaled = String(Number(element.dataset.scaled) + 1);
+			});
+		});
+		await page.mouse.move(at.x, at.y);
+		await page.mouse.down();
+		await page.mouse.move(at.x + 2, at.y);
+		await page.mouse.move(at.x + 4, at.y + 1);
+		await expect
+			.poll(() => cap.evaluate((element) => getComputedStyle(element).scale))
+			.toBe('0.985');
+		await page.mouse.up();
+
+		await expect(link).toHaveAttribute('aria-checked', 'true');
+		await expect.poll(() => cap.evaluate((element) => getComputedStyle(element).scale)).toBe('1');
+		await expect(cap).toHaveAttribute('data-scaled', '2');
 	});
-	await page.mouse.move(at.x, at.y);
-	await page.mouse.down();
-	await page.mouse.move(at.x + 2, at.y);
-	await page.mouse.move(at.x + 4, at.y + 1);
-	await expect.poll(() => cap.evaluate((element) => getComputedStyle(element).scale)).toBe('0.985');
-	await page.mouse.up();
 
-	await expect(link).toHaveAttribute('aria-checked', 'true');
-	await expect.poll(() => cap.evaluate((element) => getComputedStyle(element).scale)).toBe('1');
-	await expect(cap).toHaveAttribute('data-scaled', '2');
-});
+	await test.step('a held cap shrinks with no relief too', async () => {
+		const cap = page.locator('#route .sonic-toggle-cap');
 
-test('a held cap shrinks with no relief too', async ({ isMobile, page }) => {
-	test.skip(isMobile, mouseOnly);
+		await page.evaluate(() => {
+			document.documentElement.classList.add('sonic-skin-flat');
+		});
 
-	const cap = page.locator('#route .sonic-toggle-cap');
+		const at = await centerOf(cap);
 
-	await page.evaluate(() => {
-		document.documentElement.classList.replace('sonic-skin-amber', 'sonic-skin-flat');
+		await page.mouse.move(at.x, at.y);
+		await page.mouse.down();
+		await expect
+			.poll(() => cap.evaluate((element) => getComputedStyle(element).scale))
+			.toBe('0.985');
+		await page.mouse.up();
 	});
-
-	const at = await centerOf(cap);
-
-	await page.mouse.move(at.x, at.y);
-	await page.mouse.down();
-	await expect.poll(() => cap.evaluate((element) => getComputedStyle(element).scale)).toBe('0.985');
-	await page.mouse.up();
 });
 
 type Colour = [number, number, number];

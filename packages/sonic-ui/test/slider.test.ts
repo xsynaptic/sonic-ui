@@ -38,6 +38,20 @@ test('the slider writes its proportion, origin and position count, and moving th
 	expect(slider.value).toBe(20);
 });
 
+test('with no origin a slider rests only at its minimum', () => {
+	const { control, slider } = mountSlider('min="-8" max="8" step="0.1" origin="0" value="0"');
+	const isAtOrigin = (): boolean =>
+		slider.querySelector(':scope > [data-sonic-at-origin]') !== null;
+
+	expect(isAtOrigin()).toBe(true);
+
+	slider.removeAttribute('origin');
+	expect(isAtOrigin()).toBe(false);
+
+	pressKey(control, 'Home');
+	expect([slider.value, isAtOrigin()]).toEqual([-8, true]);
+});
+
 test.each([
 	['value="30" modulation="25"', '0.5', '0.75'],
 	['value="30" modulation="-35"', '0.15', '0.5'],
