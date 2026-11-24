@@ -49,7 +49,7 @@ Run `pnpm fix` after a chunk of work; it autofixes, then runs the rest of `pnpm 
 
 Run `pnpm test-e2e` after changing a gesture, a control's naming, or its drawn parts; reach for `pnpm test-e2e-full` when a change is engine-specific.
 
-Library changes get a changeset (`pnpm changeset`). Until 1.0, keep changesets short and grouped.
+Library changes get a changeset (`pnpm changeset`). Until 1.0, keep changesets short and grouped. The operator commits the version bump and publishes, through `pnpm release`.
 
 The package README is written for an agent wiring the library into an app. Until 1.0 it holds setup and the contracts every control shares, and nothing about one control. A single control's behaviour, however surprising, goes in the changeset; update the README only when a change adds or breaks a contract that crosses controls, or moves a row of its material table.
 

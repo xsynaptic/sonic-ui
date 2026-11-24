@@ -90,7 +90,7 @@ function reportFlakyTests(output: string) {
 	console.log(styleText('yellow', [heading, ...flakyTests].join('\n')));
 }
 
-function exitWith(message: string) {
+function exitWith(message: string): never {
 	console.error(styleText('red', message));
 	process.exit(1);
 }
@@ -135,7 +135,7 @@ const hasChangesets = readdirSync('.changeset').some(
 	(fileName) => fileName.endsWith('.md') && fileName !== 'README.md',
 );
 
-if (hasChangesets) exitWith('Pending changesets; run `pnpm changeset version` and commit first');
+if (hasChangesets) exitWith('Pending changesets; run `pnpm version-packages` and commit first');
 
 const fetchResult = capture('git', ['fetch', '--quiet', 'origin', 'main']);
 

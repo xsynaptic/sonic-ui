@@ -27,6 +27,7 @@
 		"mutant-diff": "node scripts/mutant-diff.ts",
 		"capture": "pnpm build && pnpm -F @playground/sonic-ui capture",
 		"changeset": "changeset",
+		"version-packages": "changeset version && pnpm install --ignore-scripts",
 		"check": "lefthook run check",
 		"fix": "lefthook run fix",
 		"release": "node scripts/release.ts"
